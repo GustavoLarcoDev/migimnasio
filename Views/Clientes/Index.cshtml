@@ -1,0 +1,132 @@
+
+<button id="btnExportExcel" class="btn btn-success mb-3">
+    Exportar a Excel
+</button>
+
+<button id="btnCrearCliente" class="btn btn-primary mb-3">
+    Crear Cliente
+</button>
+<div class="modal fade" id="crearClienteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Crear Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <form id="crearClienteForm">
+
+                    <div class="mb-2">
+                        <label>Nombre</label>
+                        <input type="text" class="form-control" name="Nombre" required />
+                    </div>
+
+                    <div class="mb-2">
+                        <label>Apellido</label>
+                        <input type="text" class="form-control" name="Apellido" required />
+                    </div>
+
+                    <div class="mb-2">
+                        <label>Email</label>
+                        <input type="email" class="form-control" name="Email" />
+                    </div>
+
+                    <div class="mb-2">
+                        <label>Teléfono</label>
+                        <input type="text" class="form-control" name="Telefono" required />
+                    </div>
+
+                    <div class="mb-2">
+                        <label>Dirección</label>
+                        <input type="text" class="form-control" name="Direccion" />
+                    </div>
+
+                    <div class="mb-2">
+                        <label>Fecha de Nacimiento</label>
+                        <input type="date" class="form-control" name="FechaNacimiento" required />
+                    </div>
+
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="button" id="guardarCliente" class="btn btn-success">
+                    Guardar
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<table id="clientesTable" class="table table-striped">
+    <thead>
+    <tr>
+        <th>Nombre</th>
+        <th>Apellido</th>
+        <th>Email</th>
+        <th>Teléfono</th>
+        <th>Dirección</th>
+    </tr>
+    </thead>
+</table>
+
+
+@section Scripts {
+    <script>
+    var tablaClientes;
+
+    $(document).ready(function () {
+        tablaClientes = $('#clientesTable').DataTable({
+            ajax: {
+                url: '/Clientes/GetClientes',
+                type: 'GET',
+                dataSrc:''
+            },
+            columns: [
+                { data: 'nombre' },
+                { data: 'apellido' },
+                { data: 'email' },
+                { data: 'telefono' },
+                { data: 'direccion' }
+            ]
+        });
+    });
+
+    $('#btnCrearCliente').click(function () {
+        $('#crearClienteModal').modal('show');
+    });
+    
+    $('#guardarCliente').click(function () {
+        $.ajax({
+            url: '/Clientes/Crear',
+            type: 'POST',
+            data: $('#crearClienteForm').serialize(),
+            success: function (response) {
+                if (response.success) {
+                    $('#crearClienteModal').modal('hide');
+                    $('#crearClienteForm')[0].reset();
+
+                    // 🔥 ESTO ES LA CLAVE
+                    tablaClientes.ajax.reload(null, false);
+                    toastr.success('Cliente fue creado con exito');
+                }
+            },
+            error: function () {
+                toastr.error('Error al guardar el cliente');
+            }
+        });
+    });
+
+    $('#btnExportExcel').click(function () {
+        window.location.href = '/Clientes/ExportExcel';
+    });
+
+    </script>
+
+}

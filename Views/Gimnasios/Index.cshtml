@@ -1,0 +1,132 @@
+
+<button id="btnExportExcel" class="btn btn-success mb-3">
+    Exportar a Excel
+</button>
+
+<button id="btnCrearGimnasio" class="btn btn-primary mb-3">
+    Crear Gimnasio
+</button>
+<div class="modal fade" id="crearGimnasioModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Crear Gimnasio</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <form id="Gimnasio">
+
+                    <div class="mb-2">
+                        <label>Nombre</label>
+                        <input type="text" class="form-control" name="Nombre" required />
+                    </div>
+
+                    <div class="mb-2">
+                        <label>Apellido</label>
+                        <input type="text" class="form-control" name="Apellido" required />
+                    </div>
+
+                    <div class="mb-2">
+                        <label>Email</label>
+                        <input type="email" class="form-control" name="Email" />
+                    </div>
+
+                    <div class="mb-2">
+                        <label>Teléfono</label>
+                        <input type="text" class="form-control" name="Telefono" required />
+                    </div>
+
+                    <div class="mb-2">
+                        <label>Dirección</label>
+                        <input type="text" class="form-control" name="Direccion" />
+                    </div>
+
+                    <div class="mb-2">
+                        <label>Fecha de Nacimiento</label>
+                        <input type="date" class="form-control" name="FechaNacimiento" required />
+                    </div>
+
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="button" id="guardarGimnasio" class="btn btn-success">
+                    Guardar
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<table id="gimnasiosTable" class="table table-striped">
+    <thead>
+    <tr>
+        <th>Nombre</th>
+        <th>Apellido</th>
+        <th>Email</th>
+        <th>Teléfono</th>
+        <th>Dirección</th>
+    </tr>
+    </thead>
+</table>
+
+
+@section Scripts {
+    <script>
+    var tablaGimnasios;
+
+    $(document).ready(function () {
+        tablaGimnasios = $('#gimnasiosTable').DataTable({
+            ajax: {
+                url: '/Gimnasios/GetGimnasios',
+                type: 'GET',
+                dataSrc:''
+            },
+            columns: [
+                { data: 'nombre' },
+                { data: 'apellido' },
+                { data: 'email' },
+                { data: 'telefono' },
+                { data: 'direccion' }
+            ]
+        });
+    });
+
+    $('#btnCrearGimnasio').click(function () {
+        $('#crearGimnasioModal').modal('show');
+    });
+    
+    $('#guardarGimnasio').click(function () {
+        $.ajax({
+            url: '/Gimnasios/Crear',
+            type: 'POST',
+            data: $('#crearGimnasioForm').serialize(),
+            success: function (response) {
+                if (response.success) {
+                    $('#crearGimnasioModal').modal('hide');
+                    $('#crearGimnasioForm')[0].reset();
+
+                    // 🔥 ESTO ES LA CLAVE
+                    tablaGimnasios.ajax.reload(null, false);
+                    toastr.success('Gimnasio fue creado con exito');
+                }
+            },
+            error: function () {
+                toastr.error('Error al guardar el Gimnasio');
+            }
+        });
+    });
+
+    $('#btnExportExcel').click(function () {
+        window.location.href = '/Gimnasios/ExportExcel';
+    });
+
+    </script>
+
+}
