@@ -1,0 +1,1024 @@
+﻿@{
+    ViewData["Title"] = "MiGimnasio - Software de Gestión para Gimnasios";
+}
+
+@* 
+    Requisitos recomendados en tu _Layout.cshtml:
+    - Bootstrap 5 (CSS/JS)
+    - Bootstrap Icons (si usas los <i class="bi ...">)
+    - AOS (opcional) para animaciones data-aos
+*@
+
+<!-- Hero Section -->
+<div class="position-relative overflow-hidden hero-gradient" style="min-height: 90vh;">
+    <!-- Grid Overlay (sin SVG para evitar problemas de comillas) -->
+    <div class="position-absolute w-100 h-100 hero-grid-overlay"></div>
+
+    <div class="container position-relative" style="padding-top: 8rem; padding-bottom: 8rem;">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-5 mb-lg-0" data-aos="fade-right">
+                <div class="badge bg-white bg-opacity-25 text-white px-4 py-2 rounded-pill mb-4 backdrop-blur">
+                    <i class="bi bi-lightning-charge-fill me-2"></i>
+                    Software líder para gimnasios
+                </div>
+
+                <h1 class="display-2 fw-bolder text-white mb-4 lh-sm">
+                    Gestiona tu gimnasio
+                    <span class="d-block text-warning">desde tu teléfono</span>
+                </h1>
+
+                <p class="fs-4 text-white mb-5 opacity-90 pe-lg-5">
+                    Abandona las hojas de papel y Excel. Controla ventas, pagos y clientes con un sistema que trabaja por ti las 24 horas.
+                </p>
+
+                <div class="d-flex flex-column flex-sm-row gap-3 mb-5">
+                    <a href="#planes" class="btn btn-warning btn-lg px-5 py-3 fw-bold shadow-lg">
+                        <i class="bi bi-rocket-takeoff me-2"></i>
+                        Comenzar Ahora
+                    </a>
+                    <a href="#demo" class="btn btn-outline-light btn-lg px-5 py-3 fw-semibold">
+                        <i class="bi bi-play-circle me-2"></i>
+                        Ver Cómo Funciona
+                    </a>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="row g-3">
+                    <div class="col-4">
+                        <div class="card bg-white bg-opacity-10 border-0 backdrop-blur text-white text-center py-3">
+                            <div class="fs-2 fw-bold">$30</div>
+                            <div class="small opacity-75">por mes</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="card bg-white bg-opacity-10 border-0 backdrop-blur text-white text-center py-3">
+                            <div class="fs-2 fw-bold">5min</div>
+                            <div class="small opacity-75">configuración</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="card bg-white bg-opacity-10 border-0 backdrop-blur text-white text-center py-3">
+                            <div class="fs-2 fw-bold">∞</div>
+                            <div class="small opacity-75">clientes</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6" data-aos="fade-left">
+                <div class="position-relative">
+                    <!-- Floating Card Mockup -->
+                    <div class="card border-0 shadow-lg" style="transform: rotate(-3deg); background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center mb-4">
+                                <div class="bg-primary rounded-circle p-2 me-3">
+                                    <i class="bi bi-graph-up text-white fs-4"></i>
+                                </div>
+                                <div>
+                                    <div class="small text-muted">Ingresos del mes</div>
+                                    <div class="fs-3 fw-bold text-primary">$12,450</div>
+                                </div>
+                            </div>
+                            <div class="progress mb-3" style="height: 8px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: 75%"></div>
+                            </div>
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <div class="small text-muted">Nuevos clientes</div>
+                                    <div class="fs-4 fw-bold">+24</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="small text-muted">Tasa retención</div>
+                                    <div class="fs-4 fw-bold text-success">94%</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Floating Elements -->
+                    <div class="position-absolute top-0 start-0 translate-middle">
+                        <div class="bg-success text-white rounded-circle p-3 shadow-lg pulse-animation">
+                            <i class="bi bi-check-lg fs-4"></i>
+                        </div>
+                    </div>
+
+                    <div class="position-absolute bottom-0 end-0 translate-middle-y">
+                        <div class="bg-warning text-white rounded-circle p-3 shadow-lg pulse-animation" style="animation-delay: 1s;">
+                            <i class="bi bi-bell-fill fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wave Bottom -->
+    <div class="position-absolute bottom-0 start-0 w-100">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 120" style="display: block;">
+            <path fill="#ffffff" d="M0,64L48,69.3C96,75,192,85,288,80C384,75,480,53,576,48C672,43,768,53,864,58.7C960,64,1056,64,1152,58.7C1248,53,1344,43,1392,37.3L1440,32L1440,120L1392,120C1344,120,1248,120,1152,120C1056,120,960,120,864,120C768,120,672,120,576,120C480,120,384,120,288,120C192,120,96,120,48,120L0,120Z"></path>
+        </svg>
+    </div>
+</div>
+
+<!-- Problemas Section -->
+<div class="py-7 bg-light">
+    <div class="container">
+        <div class="text-center mb-6" data-aos="fade-up">
+            <span class="badge bg-danger bg-opacity-10 text-danger fs-6 fw-semibold px-4 py-2 rounded-pill mb-3">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                El caos diario
+            </span>
+            <h2 class="display-4 fw-bolder mb-4">¿Cansado de esto?</h2>
+            <p class="fs-5 text-muted mx-auto" style="max-width: 650px;">
+                Reconocemos los desafíos que enfrentas cada día al gestionar tu gimnasio
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="card border-0 shadow-hover h-100">
+                    <div class="card-body p-5 text-center">
+                        <div class="mb-4">
+                            <div class="bg-danger bg-opacity-10 rounded-4 d-inline-flex p-4">
+                                <i class="bi bi-file-earmark-x fs-1 text-danger"></i>
+                            </div>
+                        </div>
+                        <h4 class="fw-bold mb-3">Documentos perdidos</h4>
+                        <p class="text-muted mb-0 lh-lg">
+                            Contratos extraviados, registros que desaparecen y horas buscando información que debería estar al alcance.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="card border-0 shadow-hover h-100">
+                    <div class="card-body p-5 text-center">
+                        <div class="mb-4">
+                            <div class="bg-warning bg-opacity-10 rounded-4 d-inline-flex p-4">
+                                <i class="bi bi-hourglass-split fs-1 text-warning"></i>
+                            </div>
+                        </div>
+                        <h4 class="fw-bold mb-3">Tiempo desperdiciado</h4>
+                        <p class="text-muted mb-0 lh-lg">
+                            Excel desactualizados, cálculos manuales y procesos repetitivos que consumen tu día productivo.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="card border-0 shadow-hover h-100">
+                    <div class="card-body p-5 text-center">
+                        <div class="mb-4">
+                            <div class="bg-primary bg-opacity-10 rounded-4 d-inline-flex p-4">
+                                <i class="bi bi-cash-stack fs-1 text-primary"></i>
+                            </div>
+                        </div>
+                        <h4 class="fw-bold mb-3">Dinero perdido</h4>
+                        <p class="text-muted mb-0 lh-lg">
+                            Pagos retrasados, renovaciones olvidadas y un flujo de caja irregular que afecta tu negocio.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Solución Section -->
+<div class="py-7" id="demo">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-5 mb-lg-0" data-aos="fade-right">
+                <span class="badge bg-success bg-opacity-10 text-success fs-6 fw-semibold px-4 py-2 rounded-pill mb-3">
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                    La solución definitiva
+                </span>
+                <h2 class="display-4 fw-bolder mb-4">
+                    Automatiza todo y enfócate en crecer
+                </h2>
+                <p class="fs-5 text-muted mb-5 lh-lg">
+                    MiGimnasio elimina el trabajo tedioso y te da control total desde cualquier lugar. Solo registra un cliente y el sistema hace el resto.
+                </p>
+
+                <!-- Feature List -->
+                <div class="vstack gap-4">
+                    <div class="d-flex gap-3">
+                        <div class="flex-shrink-0">
+                            <div class="bg-primary rounded-3 p-3 shadow-sm">
+                                <i class="bi bi-person-plus-fill text-white fs-4"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-2">Registro instantáneo</h5>
+                            <p class="text-muted mb-0">Añade clientes en segundos con formularios inteligentes que se autocompletar.</p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3">
+                        <div class="flex-shrink-0">
+                            <div class="bg-success rounded-3 p-3 shadow-sm">
+                                <i class="bi bi-robot text-white fs-4"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-2">Seguimiento automático</h5>
+                            <p class="text-muted mb-0">El sistema envía recordatorios, gestiona renovaciones y promociones sin intervención.</p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3">
+                        <div class="flex-shrink-0">
+                            <div class="bg-info rounded-3 p-3 shadow-sm">
+                                <i class="bi bi-phone-fill text-white fs-4"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-2">Control desde móvil</h5>
+                            <p class="text-muted mb-0">Gestiona ventas, consulta reportes y atiende clientes desde tu smartphone.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-5 d-flex flex-column flex-sm-row gap-3">
+                    <a href="#contacto" class="btn btn-primary btn-lg px-4">
+                        <i class="bi bi-chat-dots me-2"></i>
+                        Hablar con ventas
+                    </a>
+                    <a href="#planes" class="btn btn-outline-secondary btn-lg px-4">
+                        <i class="bi bi-tags me-2"></i>
+                        Ver planes
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-6" data-aos="fade-left">
+                <!-- Dashboard Preview -->
+                <div class="position-relative">
+                    <div class="card border-0 shadow-lg">
+                        <div class="card-header bg-dark text-white py-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="bg-danger rounded-circle" style="width: 12px; height: 12px;"></div>
+                                <div class="bg-warning rounded-circle" style="width: 12px; height: 12px;"></div>
+                                <div class="bg-success rounded-circle" style="width: 12px; height: 12px;"></div>
+                                <span class="ms-3 small">migimnasio.com/dashboard</span>
+                            </div>
+                        </div>
+                        <div class="card-body p-4 bg-light">
+                            <!-- Mini Dashboard -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-6">
+                                    <div class="bg-white rounded-3 p-3 border">
+                                        <div class="small text-muted mb-1">Clientes Activos</div>
+                                        <div class="h4 fw-bold mb-0 text-primary">156</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="bg-white rounded-3 p-3 border">
+                                        <div class="small text-muted mb-1">Ingresos Hoy</div>
+                                        <div class="h4 fw-bold mb-0 text-success">$890</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-3 p-3 border mb-3">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="fw-semibold">Renovaciones pendientes</span>
+                                    <span class="badge bg-warning">12</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-warning" style="width: 40%"></div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white rounded-3 p-3 border">
+                                <div class="small text-muted mb-2">Últimos registros</div>
+
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <div class="bg-primary rounded-circle p-1">
+                                        <i class="bi bi-person text-white small"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="small fw-semibold">María González</div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">Hace 5 min</div>
+                                    </div>
+                                    <span class="badge bg-success">Pagado</span>
+                                </div>
+
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="bg-primary rounded-circle p-1">
+                                        <i class="bi bi-person text-white small"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <div class="small fw-semibold">Carlos Ruiz</div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">Hace 12 min</div>
+                                    </div>
+                                    <span class="badge bg-success">Pagado</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Floating Badge -->
+                    <div class="position-absolute top-0 end-0 translate-middle">
+                        <div class="bg-success text-white rounded-pill px-3 py-2 shadow-lg">
+                            <i class="bi bi-shield-check me-1"></i>
+                            <span class="small fw-semibold">100% Seguro</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Características Grid -->
+<div class="py-7 bg-light">
+    <div class="container">
+        <div class="text-center mb-6" data-aos="fade-up">
+            <span class="badge bg-primary bg-opacity-10 text-primary fs-6 fw-semibold px-4 py-2 rounded-pill mb-3">
+                <i class="bi bi-stars me-2"></i>
+                Herramientas poderosas
+            </span>
+            <h2 class="display-4 fw-bolder mb-4">Todo lo que necesitas incluido</h2>
+            <p class="fs-5 text-muted mx-auto" style="max-width: 650px;">
+                Funciones profesionales diseñadas específicamente para gimnasios
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6 col-lg-3" data-aos="zoom-in" data-aos-delay="50">
+                <div class="card border-0 h-100 text-center p-4 feature-card">
+                    <div class="mb-3">
+                        <div class="bg-primary bg-opacity-10 rounded-4 d-inline-flex p-3">
+                            <i class="bi bi-people-fill fs-2 text-primary"></i>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-2">Gestión de Clientes</h5>
+                    <p class="text-muted small mb-0">Perfiles completos con historial y métricas</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3" data-aos="zoom-in" data-aos-delay="100">
+                <div class="card border-0 h-100 text-center p-4 feature-card">
+                    <div class="mb-3">
+                        <div class="bg-success bg-opacity-10 rounded-4 d-inline-flex p-3">
+                            <i class="bi bi-graph-up-arrow fs-2 text-success"></i>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-2">Reportes Avanzados</h5>
+                    <p class="text-muted small mb-0">Análisis de ventas e ingresos en tiempo real</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3" data-aos="zoom-in" data-aos-delay="150">
+                <div class="card border-0 h-100 text-center p-4 feature-card">
+                    <div class="mb-3">
+                        <div class="bg-warning bg-opacity-10 rounded-4 d-inline-flex p-3">
+                            <i class="bi bi-bell-fill fs-2 text-warning"></i>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-2">Recordatorios</h5>
+                    <p class="text-muted small mb-0">Mensajes automáticos de pago y renovación</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3" data-aos="zoom-in" data-aos-delay="200">
+                <div class="card border-0 h-100 text-center p-4 feature-card">
+                    <div class="mb-3">
+                        <div class="bg-info bg-opacity-10 rounded-4 d-inline-flex p-3">
+                            <i class="bi bi-phone-fill fs-2 text-info"></i>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-2">App Móvil</h5>
+                    <p class="text-muted small mb-0">Gestiona desde iOS y Android nativamente</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3" data-aos="zoom-in" data-aos-delay="250">
+                <div class="card border-0 h-100 text-center p-4 feature-card">
+                    <div class="mb-3">
+                        <div class="bg-danger bg-opacity-10 rounded-4 d-inline-flex p-3">
+                            <i class="bi bi-credit-card-fill fs-2 text-danger"></i>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-2">Pagos Online</h5>
+                    <p class="text-muted small mb-0">Cobra con tarjeta y transferencias digitales</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3" data-aos="zoom-in" data-aos-delay="300">
+                <div class="card border-0 h-100 text-center p-4 feature-card">
+                    <div class="mb-3">
+                        <div class="bg-secondary bg-opacity-10 rounded-4 d-inline-flex p-3">
+                            <i class="bi bi-calendar-check fs-2 text-secondary"></i>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-2">Asistencias</h5>
+                    <p class="text-muted small mb-0">Control de accesos con código QR</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3" data-aos="zoom-in" data-aos-delay="350">
+                <div class="card border-0 h-100 text-center p-4 feature-card">
+                    <div class="mb-3">
+                        <div class="bg-primary bg-opacity-10 rounded-4 d-inline-flex p-3">
+                            <i class="bi bi-tag-fill fs-2 text-primary"></i>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-2">Promociones</h5>
+                    <p class="text-muted small mb-0">Crea ofertas y descuentos automáticos</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-3" data-aos="zoom-in" data-aos-delay="400">
+                <div class="card border-0 h-100 text-center p-4 feature-card">
+                    <div class="mb-3">
+                        <div class="bg-success bg-opacity-10 rounded-4 d-inline-flex p-3">
+                            <i class="bi bi-shield-lock-fill fs-2 text-success"></i>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-2">Seguridad Total</h5>
+                    <p class="text-muted small mb-0">Encriptación bancaria y backups diarios</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pricing Section -->
+<div class="py-7 position-relative overflow-hidden" id="planes" style="background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);">
+    <div class="container position-relative">
+        <div class="text-center mb-6" data-aos="fade-up">
+            <span class="badge bg-white bg-opacity-25 text-white fs-6 fw-semibold px-4 py-2 rounded-pill mb-3">
+                <i class="bi bi-currency-dollar me-2"></i>
+                Precio transparente
+            </span>
+            <h2 class="display-4 fw-bolder text-white mb-4">
+                Un precio, todas las funciones
+            </h2>
+            <p class="fs-5 text-white opacity-90 mx-auto" style="max-width: 600px;">
+                Sin letra pequeña, sin sorpresas. Todo incluido por $30 mensuales.
+            </p>
+        </div>
+
+        <div class="row justify-content-center" data-aos="zoom-in">
+            <div class="col-lg-5 col-xl-4">
+                <div class="card border-0 shadow-lg position-relative overflow-hidden">
+                    <!-- Popular Badge -->
+                    <div class="position-absolute top-0 end-0">
+                        <div class="bg-warning text-dark px-3 py-1 fw-bold small" style="border-bottom-left-radius: 0.5rem;">
+                            MÁS POPULAR
+                        </div>
+                    </div>
+
+                    <div class="card-body p-5">
+                        <div class="text-center mb-5">
+                            <div class="mb-3">
+                                <div class="bg-primary bg-opacity-10 rounded-4 d-inline-flex p-3">
+                                    <i class="bi bi-lightning-charge-fill fs-1 text-primary"></i>
+                                </div>
+                            </div>
+                            <h3 class="fw-bold mb-3">Plan Profesional</h3>
+                            <div class="d-flex align-items-baseline justify-content-center gap-2 my-4">
+                                <span class="display-3 fw-bolder text-primary">$30</span>
+                                <span class="fs-5 text-muted">USD / mes</span>
+                            </div>
+                            <p class="text-muted mb-0">Facturación mensual sin permanencia</p>
+                        </div>
+
+                        <ul class="list-unstyled mb-5 vstack gap-3">
+                            <li class="d-flex align-items-start gap-3">
+                                <i class="bi bi-check-circle-fill text-success fs-5 flex-shrink-0"></i>
+                                <span><strong>Clientes ilimitados</strong> sin cargos extras</span>
+                            </li>
+                            <li class="d-flex align-items-start gap-3">
+                                <i class="bi bi-check-circle-fill text-success fs-5 flex-shrink-0"></i>
+                                <span><strong>Recordatorios automáticos</strong> por WhatsApp y SMS</span>
+                            </li>
+                            <li class="d-flex align-items-start gap-3">
+                                <i class="bi bi-check-circle-fill text-success fs-5 flex-shrink-0"></i>
+                                <span><strong>Reportes en tiempo real</strong> con gráficas interactivas</span>
+                            </li>
+                            <li class="d-flex align-items-start gap-3">
+                                <i class="bi bi-check-circle-fill text-success fs-5 flex-shrink-0"></i>
+                                <span><strong>Acceso móvil completo</strong> iOS y Android</span>
+                            </li>
+                            <li class="d-flex align-items-start gap-3">
+                                <i class="bi bi-check-circle-fill text-success fs-5 flex-shrink-0"></i>
+                                <span><strong>Soporte prioritario</strong> 7 días a la semana</span>
+                            </li>
+                            <li class="d-flex align-items-start gap-3">
+                                <i class="bi bi-check-circle-fill text-success fs-5 flex-shrink-0"></i>
+                                <span><strong>Actualizaciones automáticas</strong> siempre gratis</span>
+                            </li>
+                            <li class="d-flex align-items-start gap-3">
+                                <i class="bi bi-check-circle-fill text-success fs-5 flex-shrink-0"></i>
+                                <span><strong>Backups diarios</strong> de toda tu información</span>
+                            </li>
+                            <li class="d-flex align-items-start gap-3">
+                                <i class="bi bi-check-circle-fill text-success fs-5 flex-shrink-0"></i>
+                                <span><strong>Usuarios ilimitados</strong> para tu equipo</span>
+                            </li>
+                        </ul>
+
+                        <div class="d-grid gap-3">
+                            <a href="#contacto" class="btn btn-primary btn-lg fw-bold py-3">
+                                <i class="bi bi-rocket-takeoff me-2"></i>
+                                Empezar hoy
+                            </a>
+                            <a href="#faq" class="btn btn-outline-secondary btn-lg fw-semibold py-3">
+                                <i class="bi bi-question-circle me-2"></i>
+                                Ver preguntas frecuentes
+                            </a>
+                        </div>
+
+                        <div class="text-center mt-4 small text-muted">
+                            <i class="bi bi-shield-check me-1"></i>
+                            Pago seguro. Cancela cuando quieras.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trust Row -->
+        <div class="row justify-content-center mt-5" data-aos="fade-up" data-aos-delay="100">
+            <div class="col-lg-10">
+                <div class="row g-3 text-white">
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center gap-3 p-3 rounded-3 bg-white bg-opacity-10 backdrop-blur">
+                            <i class="bi bi-clock-history fs-3"></i>
+                            <div>
+                                <div class="fw-semibold">Setup rápido</div>
+                                <div class="small opacity-75">En menos de 1 hora</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center gap-3 p-3 rounded-3 bg-white bg-opacity-10 backdrop-blur">
+                            <i class="bi bi-cloud-check fs-3"></i>
+                            <div>
+                                <div class="fw-semibold">En la nube</div>
+                                <div class="small opacity-75">Accede desde cualquier lugar</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex align-items-center gap-3 p-3 rounded-3 bg-white bg-opacity-10 backdrop-blur">
+                            <i class="bi bi-headset fs-3"></i>
+                            <div>
+                                <div class="fw-semibold">Soporte humano</div>
+                                <div class="small opacity-75">Chat y onboarding</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Testimonials -->
+<div class="py-7 bg-light">
+    <div class="container">
+        <div class="text-center mb-6" data-aos="fade-up">
+            <span class="badge bg-success bg-opacity-10 text-success fs-6 fw-semibold px-4 py-2 rounded-pill mb-3">
+                <i class="bi bi-chat-quote-fill me-2"></i>
+                Resultados reales
+            </span>
+            <h2 class="display-5 fw-bolder mb-3">Gimnasios que ya se ordenaron</h2>
+            <p class="text-muted mx-auto" style="max-width: 650px;">
+                Menos caos, más caja, más clientes contentos.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="50">
+                <div class="card border-0 shadow-hover h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                                <i class="bi bi-person-fill text-primary"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">Andrea M.</div>
+                                <div class="small text-muted">Dueña de gimnasio</div>
+                            </div>
+                        </div>
+                        <p class="mb-0 text-muted">
+                            “Dejamos Excel y ahora sé quién debe, quién renueva y cuánto vendimos hoy sin preguntar a nadie.”
+                        </p>
+                        <div class="mt-3 text-warning">
+                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="card border-0 shadow-hover h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="bg-success bg-opacity-10 rounded-circle p-3">
+                                <i class="bi bi-person-fill text-success"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">Carlos R.</div>
+                                <div class="small text-muted">Administrador</div>
+                            </div>
+                        </div>
+                        <p class="mb-0 text-muted">
+                            “Los recordatorios redujeron atrasos. El flujo de caja mejoró y mis coaches ya no pierden tiempo.”
+                        </p>
+                        <div class="mt-3 text-warning">
+                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4" data-aos="fade-up" data-aos-delay="150">
+                <div class="card border-0 shadow-hover h-100">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <div class="bg-warning bg-opacity-10 rounded-circle p-3">
+                                <i class="bi bi-person-fill text-warning"></i>
+                            </div>
+                            <div>
+                                <div class="fw-bold">Sofía G.</div>
+                                <div class="small text-muted">Gimnasio boutique</div>
+                            </div>
+                        </div>
+                        <p class="mb-0 text-muted">
+                            “En 1 semana ya tenía control de renovaciones y ventas. La parte móvil es lo mejor.”
+                        </p>
+                        <div class="mt-3 text-warning">
+                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FAQ -->
+<div class="py-7" id="faq">
+    <div class="container">
+        <div class="row align-items-start g-5">
+            <div class="col-lg-5" data-aos="fade-right">
+                <span class="badge bg-primary bg-opacity-10 text-primary fs-6 fw-semibold px-4 py-2 rounded-pill mb-3">
+                    <i class="bi bi-question-circle me-2"></i>
+                    FAQ
+                </span>
+                <h2 class="display-6 fw-bolder mb-3">Preguntas frecuentes</h2>
+                <p class="text-muted mb-0">
+                    Si necesitas algo más específico, escríbenos y te respondemos en minutos.
+                </p>
+
+                <div class="mt-4">
+                    <a href="#contacto" class="btn btn-outline-primary btn-lg">
+                        <i class="bi bi-chat-dots me-2"></i>
+                        Hacer una pregunta
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-7" data-aos="fade-left">
+                <div class="accordion shadow-sm" id="faqAccordion">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="q1">
+                            <button class="accordion-button fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#a1" aria-expanded="true" aria-controls="a1">
+                                ¿Puedo cancelar cuando quiera?
+                            </button>
+                        </h2>
+                        <div id="a1" class="accordion-collapse collapse show" aria-labelledby="q1" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted">
+                                Sí. Es mensual sin permanencia. Si cancelas, no se vuelve a facturar el siguiente ciclo.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="q2">
+                            <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#a2" aria-expanded="false" aria-controls="a2">
+                                ¿Necesito instalar algo?
+                            </button>
+                        </h2>
+                        <div id="a2" class="accordion-collapse collapse" aria-labelledby="q2" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted">
+                                No. Funciona en la nube. Entras desde navegador en PC o móvil.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="q3">
+                            <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#a3" aria-expanded="false" aria-controls="a3">
+                                ¿Puedo migrar mis clientes desde Excel?
+                            </button>
+                        </h2>
+                        <div id="a3" class="accordion-collapse collapse" aria-labelledby="q3" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted">
+                                Sí. Te damos una plantilla y te ayudamos con la importación para que quede limpio.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="q4">
+                            <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#a4" aria-expanded="false" aria-controls="a4">
+                                ¿Cómo protegen mis datos?
+                            </button>
+                        </h2>
+                        <div id="a4" class="accordion-collapse collapse" aria-labelledby="q4" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted">
+                                Cifrado en tránsito y en reposo, backups diarios y controles de acceso por roles.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contacto -->
+<div class="py-7 bg-light mb-6" id="contacto">
+    <div class="container mb-6">
+        <div class="text-center mb-6" data-aos="fade-up">
+            <span class="badge bg-warning bg-opacity-10 text-warning fs-6 fw-semibold px-4 py-2 rounded-pill mb-3">
+                <i class="bi bi-envelope-paper-heart me-2"></i>
+                Contacto
+            </span>
+            <h2 class="display-5 fw-bolder mb-3">Recibe una demo y cotización</h2>
+            <p class="fs-5 text-muted mx-auto" style="max-width: 720px;">
+                Déjanos tus datos y te contactamos. También puedes habilitar WhatsApp abajo.
+            </p>
+        </div>
+
+        <div class="row g-4 align-items-stretch">
+            <div class="col-lg-5" data-aos="fade-right">
+                <div class="card border-0 shadow-hover h-100">
+                    <div class="card-body p-4 p-lg-5">
+                        <h4 class="fw-bold mb-3">¿Qué obtienes?</h4>
+                        <div class="vstack gap-3 text-muted">
+                            <div class="d-flex gap-3">
+                                <i class="bi bi-check2-circle text-success fs-5"></i>
+                                <div>Diagnóstico rápido de tu proceso actual</div>
+                            </div>
+                            <div class="d-flex gap-3">
+                                <i class="bi bi-check2-circle text-success fs-5"></i>
+                                <div>Demo guiada y configuración inicial</div>
+                            </div>
+                            <div class="d-flex gap-3">
+                                <i class="bi bi-check2-circle text-success fs-5"></i>
+                                <div>Importación de clientes (si vienes de Excel)</div>
+                            </div>
+                            <div class="d-flex gap-3">
+                                <i class="bi bi-check2-circle text-success fs-5"></i>
+                                <div>Recomendaciones para mejorar cobranza y retención</div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4" />
+
+                        <div class="small text-muted">
+                            <div class="fw-semibold mb-2">Contacto directo (edita estos valores)</div>
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="bi bi-envelope"></i>
+                                <span>ventas@migimnasio.com</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <i class="bi bi-telephone"></i>
+                                <span>+593 00 000 0000</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-whatsapp"></i>
+                                <span>WhatsApp disponible</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-7" data-aos="fade-left">
+                <div class="card border-0 shadow-lg h-100">
+                    <div class="card-body p-4 p-lg-5">
+                        <h4 class="fw-bold mb-4">Solicitar demo</h4>
+
+                        <form id="leadForm" method="post" action="@Url.Action("Lead", "Home")" class="row g-3">
+                            @Html.AntiForgeryToken()
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Nombre</label>
+                                <input type="text" class="form-control form-control-lg" name="Name" required maxlength="120" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Nombre del gimnasio</label>
+                                <input type="text" class="form-control form-control-lg" name="GymName" required maxlength="150" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Email</label>
+                                <input type="email" class="form-control form-control-lg" name="Email" required maxlength="180" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Teléfono / WhatsApp</label>
+                                <input type="tel" class="form-control form-control-lg" name="Phone" maxlength="40" />
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Mensaje</label>
+                                <textarea class="form-control form-control-lg" name="Message" rows="4" placeholder="Cuéntanos cuántos clientes tienes, si usas Excel, y qué te gustaría mejorar." maxlength="1200"></textarea>
+                            </div>
+
+                            <div class="col-12 d-flex flex-column flex-sm-row gap-3 mt-2">
+                                <button type="submit" class="btn btn-primary btn-lg px-4 fw-bold">
+                                    <i class="bi bi-send me-2"></i>
+                                    Enviar
+                                </button>
+
+                                <!-- WhatsApp: reemplaza el número por el tuyo (formato internacional sin +) -->
+                                <a class="btn btn-outline-success btn-lg px-4 fw-semibold"
+                                   target="_blank"
+                                   rel="noopener"
+                                   href="https://wa.me/593000000000?text=Hola%20quiero%20una%20demo%20de%20MiGimnasio">
+                                    <i class="bi bi-whatsapp me-2"></i>
+                                    Escribir por WhatsApp
+                                </a>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="small text-muted">
+                                    Al enviar aceptas que te contactemos para coordinar la demo. No compartimos tus datos con terceros.
+                                </div>
+                            </div>
+                        </form>
+
+                        <!-- Toasts -->
+                        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+                            <div id="leadToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                <div class="d-flex">
+                                    <div class="toast-body">
+                                        Listo. Recibimos tu solicitud y te contactaremos pronto.
+                                    </div>
+                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                </div>
+                            </div>
+
+                            <div id="leadToastError" class="toast align-items-center text-bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                <div class="d-flex">
+                                    <div class="toast-body">
+                                        Ocurrió un problema enviando el formulario. Intenta de nuevo.
+                                    </div>
+                                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="py-5 bg-dark text-white">
+    <div class="container">
+        <div class="row g-4 align-items-center">
+            <div class="col-md-6">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="bg-primary rounded-3 p-2">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">MiGimnasio</div>
+                        <div class="small text-white-50">Software de gestión para gimnasios</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 text-md-end">
+                <a class="text-white-50 me-3 text-decoration-none" href="#demo">Demo</a>
+                <a class="text-white-50 me-3 text-decoration-none" href="#planes">Planes</a>
+                <a class="text-white-50 text-decoration-none" href="#contacto">Contacto</a>
+                <div class="small text-white-50 mt-2">
+                    © @DateTime.Now.Year MiGimnasio. Todos los derechos reservados.
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Back to top -->
+<button id="btnTop" type="button" class="btn btn-primary shadow-lg rounded-circle d-none"
+        style="position: fixed; right: 18px; bottom: 18px; z-index: 1070; width: 52px; height: 52px;">
+    <i class="bi bi-arrow-up"></i>
+</button>
+
+@section Styles {
+    <style>
+        /* Utilidades si no tienes Metronic */
+        .py-7 { padding-top: 5rem; padding-bottom: 5rem; }
+        .mb-6 { margin-bottom: 3rem; }
+
+        .backdrop-blur { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+
+        .shadow-hover { transition: transform .2s ease, box-shadow .2s ease; }
+        .shadow-hover:hover { transform: translateY(-4px); box-shadow: 0 1rem 2.5rem rgba(0,0,0,.12) !important; }
+
+        .feature-card { transition: transform .2s ease, box-shadow .2s ease; }
+        .feature-card:hover { transform: translateY(-6px); box-shadow: 0 1rem 2.5rem rgba(0,0,0,.10) !important; }
+
+        .pulse-animation { animation: pulse 2.2s ease-in-out infinite; }
+        @@keyframes pulse {
+            0%   { transform: scale(1);   box-shadow: 0 0 0 0 rgba(25,135,84,.35); }
+            70%  { transform: scale(1.06); box-shadow: 0 0 0 18px rgba(25,135,84,0); }
+            100% { transform: scale(1);   box-shadow: 0 0 0 0 rgba(25,135,84,0); }
+        }
+
+        .hero-gradient {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%);
+        }
+
+        .hero-grid-overlay {
+            opacity: .28;
+            background-image:
+                linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+    </style>
+}
+
+@section Scripts {
+    <!-- AOS (opcional). Si ya lo cargas en _Layout, puedes borrar estas 2 líneas -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
+    <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+
+    <script>
+        (function () {
+            // AOS init (si existe)
+            if (window.AOS) {
+                AOS.init({ duration: 750, once: true, offset: 80 });
+            }
+
+            // Back to top
+            var btnTop = document.getElementById('btnTop');
+            var toggleTop = function () {
+                if (!btnTop) return;
+                if (window.scrollY > 500) btnTop.classList.remove('d-none');
+                else btnTop.classList.add('d-none');
+            };
+            window.addEventListener('scroll', toggleTop);
+            toggleTop();
+
+            if (btnTop) {
+                btnTop.addEventListener('click', function () {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
+            }
+
+            // Envío del formulario con fetch (degradación: si falla, hace POST normal)
+            var form = document.getElementById('leadForm');
+            if (!form) return;
+
+            form.addEventListener('submit', async function (e) {
+                // Si quieres forzar POST normal, comenta todo este bloque y listo.
+                e.preventDefault();
+
+                try {
+                    var formData = new FormData(form);
+
+                    // Antiforgery (si usas ValidateAntiForgeryToken en el endpoint)
+                    var tokenInput = form.querySelector('input[name="__RequestVerificationToken"]');
+                    var token = tokenInput ? tokenInput.value : null;
+
+                    var res = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        headers: token ? { 'RequestVerificationToken': token } : {}
+                    });
+
+                    if (!res.ok) throw new Error('Bad response');
+
+                    // Mostrar toast success
+                    var toastEl = document.getElementById('leadToast');
+                    if (toastEl && window.bootstrap) new bootstrap.Toast(toastEl).show();
+
+                    form.reset();
+                } catch (err) {
+                    // Mostrar toast error y permitir fallback si deseas
+                    var toastErrEl = document.getElementById('leadToastError');
+                    if (toastErrEl && window.bootstrap) new bootstrap.Toast(toastErrEl).show();
+                }
+            });
+        })();
+    </script>
+}
