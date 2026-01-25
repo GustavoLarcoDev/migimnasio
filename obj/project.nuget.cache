@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "LPxBUWdU2sg=",
+  "dgSpecHash": "lCAmKtyvdcM=",
   "success": true,
-  "projectFilePath": "/Users/gustavolarco/RiderProjects/Gimnasio/Gimnasio/Gimnasio.csproj",
+  "projectFilePath": "/Users/gustavolarco/Desktop/Gimnasio/Gimnasio.csproj",
   "expectedPackageFiles": [
     "/Users/gustavolarco/.nuget/packages/azure.core/1.38.0/azure.core.1.38.0.nupkg.sha512",
     "/Users/gustavolarco/.nuget/packages/azure.identity/1.11.4/azure.identity.1.11.4.nupkg.sha512",
@@ -11,6 +11,7 @@
     "/Users/gustavolarco/.nuget/packages/documentformat.openxml/3.1.1/documentformat.openxml.3.1.1.nupkg.sha512",
     "/Users/gustavolarco/.nuget/packages/documentformat.openxml.framework/3.1.1/documentformat.openxml.framework.3.1.1.nupkg.sha512",
     "/Users/gustavolarco/.nuget/packages/excelnumberformat/1.1.0/excelnumberformat.1.1.0.nupkg.sha512",
+    "/Users/gustavolarco/.nuget/packages/httpcontextextensions/0.1.3/httpcontextextensions.0.1.3.nupkg.sha512",
     "/Users/gustavolarco/.nuget/packages/humanizer.core/2.14.1/humanizer.core.2.14.1.nupkg.sha512",
     "/Users/gustavolarco/.nuget/packages/microsoft.bcl.asyncinterfaces/7.0.0/microsoft.bcl.asyncinterfaces.7.0.0.nupkg.sha512",
     "/Users/gustavolarco/.nuget/packages/microsoft.build.framework/17.8.3/microsoft.build.framework.17.8.3.nupkg.sha512",

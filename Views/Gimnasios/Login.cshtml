@@ -1,0 +1,470 @@
+@{
+    ViewData["Title"] = "Login - MiGimnasio";
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>@ViewData["Title"]</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.1/font/bootstrap-icons.min.css"/>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bs-body-font-family: 'Inter', sans-serif;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+        }
+        
+        .login-root {
+            min-height: 100vh;
+            display: flex;
+        }
+        
+        /* Left Side - Brand */
+        .login-aside {
+            position: relative;
+            width: 50%;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .login-aside::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .login-aside-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            padding: 3rem;
+            max-width: 500px;
+        }
+        
+        .brand-logo {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .floating-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        .shape {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 20s infinite ease-in-out;
+        }
+        
+        .shape-1 {
+            width: 300px;
+            height: 300px;
+            top: -100px;
+            left: -100px;
+            animation-delay: 0s;
+        }
+        
+        .shape-2 {
+            width: 200px;
+            height: 200px;
+            bottom: -50px;
+            right: -50px;
+            animation-delay: 5s;
+        }
+        
+        .shape-3 {
+            width: 150px;
+            height: 150px;
+            top: 50%;
+            right: 10%;
+            animation-delay: 10s;
+        }
+        
+        
+@{
+    object keyframes = null;
+}
+@keyframes float {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-30px) rotate(180deg);
+            }
+        }
+        
+        /* Right Side - Form */
+        .login-content {
+            width: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background: #f8f9fa;
+        }
+        
+        .login-form-wrapper {
+            width: 100%;
+            max-width: 450px;
+            background: white;
+            padding: 3rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+        }
+        
+        .form-control-lg {
+            padding: 0.875rem 1.25rem;
+            font-size: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+        
+        .form-control-lg:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.15);
+        }
+        
+        .btn-lg {
+            padding: 0.875rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+        }
+        
+        .alert {
+            border-radius: 0.5rem;
+            border: none;
+            padding: 1rem 1.25rem;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: start;
+            margin-bottom: 1.5rem;
+        }
+        
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+        
+        /* Responsive */
+        
+@{
+    object media = null;
+}
+@media (max-width: 991px) {
+            .login-root {
+                flex-direction: column;
+            }
+            
+            .login-aside,
+            .login-content {
+                width: 100%;
+            }
+            
+            .login-aside {
+                min-height: 300px;
+            }
+            
+            .login-form-wrapper {
+                margin-top: -2rem;
+                position: relative;
+                z-index: 10;
+            }
+        }
+        
+        /* Loading Animation */
+        .btn-loading {
+            position: relative;
+            pointer-events: none;
+        }
+        
+        .btn-loading::after {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            right: 1rem;
+            margin-top: -8px;
+            border: 2px solid transparent;
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.6s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="login-root">
+    
+    <!-- Left Side - Brand & Features -->
+    <div class="login-aside">
+        <div class="floating-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+        
+        <div class="login-aside-content">
+            <div class="brand-logo">
+                <i class="bi bi-lightning-charge-fill text-white" style="font-size: 2.5rem;"></i>
+            </div>
+            
+            <h1 class="text-white fw-bolder mb-4" style="font-size: 2.5rem;">
+                MiGimnasio
+            </h1>
+            
+            <p class="text-white fs-5 opacity-75 mb-5">
+                La plataforma completa para gestionar tu gimnasio de forma profesional
+            </p>
+            
+            <div class="text-start mt-5">
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="bi bi-people-fill text-white"></i>
+                    </div>
+                    <div class="text-white">
+                        <h6 class="fw-bold mb-1">Gestión de Clientes</h6>
+                        <p class="opacity-75 mb-0 small">Control completo de membresías y pagos</p>
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="bi bi-graph-up text-white"></i>
+                    </div>
+                    <div class="text-white">
+                        <h6 class="fw-bold mb-1">Reportes en Tiempo Real</h6>
+                        <p class="opacity-75 mb-0 small">Analiza ingresos y estadísticas al instante</p>
+                    </div>
+                </div>
+                
+                <div class="feature-item">
+                    <div class="feature-icon">
+                        <i class="bi bi-phone-fill text-white"></i>
+                    </div>
+                    <div class="text-white">
+                        <h6 class="fw-bold mb-1">Acceso Móvil</h6>
+                        <p class="opacity-75 mb-0 small">Gestiona desde cualquier dispositivo</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Side - Login Form -->
+    <div class="login-content">
+        <div class="login-form-wrapper">
+            
+            <div class="text-center mb-5">
+                <h2 class="fw-bolder mb-2" style="color: #1e293b;">Bienvenido de nuevo</h2>
+                <p class="text-muted mb-0">Ingresa tus credenciales para continuar</p>
+            </div>
+
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-danger d-flex align-items-center mb-4">
+                    <i class="bi bi-exclamation-triangle-fill me-3 fs-4"></i>
+                    <div>
+                        <strong>Error:</strong> @ViewBag.Error
+                    </div>
+                </div>
+            }
+
+            @if (ViewBag.Success != null)
+            {
+                <div class="alert alert-success d-flex align-items-center mb-4">
+                    <i class="bi bi-check-circle-fill me-3 fs-4"></i>
+                    <div>@ViewBag.Success</div>
+                </div>
+            }
+
+            <form method="post" action="@Url.Action("Login", "Gimnasios")" id="loginForm">
+
+                <!-- Email -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold text-dark mb-2">
+                        <i class="bi bi-envelope me-2 text-muted"></i>
+                        Correo Electrónico
+                    </label>
+                    <input type="email"
+                           name="email"
+                           id="email"
+                           class="form-control form-control-lg"
+                           placeholder="tu@gimnasio.com"
+                           autocomplete="email"
+                           required />
+                </div>
+
+                <!-- Password -->
+                <div class="mb-4">
+                    <label class="form-label fw-semibold text-dark mb-2">
+                        <i class="bi bi-lock me-2 text-muted"></i>
+                        Contraseña
+                    </label>
+                    <div class="position-relative">
+                        <input type="password"
+                               name="password"
+                               id="password"
+                               class="form-control form-control-lg"
+                               placeholder="••••••••"
+                               autocomplete="current-password"
+                               required />
+                        <button type="button"
+                                class="btn btn-link position-absolute top-50 end-0 translate-middle-y text-muted"
+                                id="togglePassword"
+                                style="text-decoration: none;">
+                            <i class="bi bi-eye" id="eyeIcon"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Remember Me & Forgot Password -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="rememberMe" name="rememberMe">
+                        <label class="form-check-label text-muted" for="rememberMe">
+                            Recordarme
+                        </label>
+                    </div>
+                    <a href="#" class="text-primary text-decoration-none fw-semibold small">
+                        ¿Olvidaste tu contraseña?
+                    </a>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="d-grid mb-4">
+                    <button type="submit" id="submitBtn" class="btn btn-primary btn-lg fw-bold">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>
+                        Iniciar Sesión
+                    </button>
+                </div>
+
+                <!-- Divider -->
+                <div class="separator my-4">
+                    <div class="border-bottom w-100"></div>
+                </div>
+
+                <!-- Sign Up Link -->
+                <div class="text-center">
+                    <span class="text-muted">¿No tienes una cuenta?</span>
+                    <a href="@Url.Action("Index", "Home")" class="text-primary fw-bold text-decoration-none ms-1">
+                        Regístrate aquí
+                    </a>
+                </div>
+
+            </form>
+
+            <!-- Footer -->
+            <div class="text-center mt-5">
+                <p class="text-muted small mb-0">
+                    © @DateTime.Now.Year MiGimnasio. Todos los derechos reservados.
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Toggle Password Visibility
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const passwordInput = document.getElementById('password');
+        const eyeIcon = document.getElementById('eyeIcon');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            eyeIcon.classList.remove('bi-eye');
+            eyeIcon.classList.add('bi-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            eyeIcon.classList.remove('bi-eye-slash');
+            eyeIcon.classList.add('bi-eye');
+        }
+    });
+
+    // Form Submit Loading State
+    document.getElementById('loginForm').addEventListener('submit', function() {
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.classList.add('btn-loading');
+        submitBtn.disabled = true;
+    });
+
+    // Auto-focus en email al cargar
+    window.addEventListener('load', function() {
+        document.getElementById('email').focus();
+    });
+</script>
+
+</body>
+</html>

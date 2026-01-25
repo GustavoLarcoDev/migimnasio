@@ -8,6 +8,7 @@
 
     <ItemGroup>
       <PackageReference Include="ClosedXML" Version="0.105.0" />
+      <PackageReference Include="HttpContextExtensions" Version="0.1.3" />
       <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.10" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.10" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.10" />
@@ -19,6 +20,10 @@
 
     <ItemGroup>
       <AdditionalFiles Include="Views\Gimnasios\Index.cshtml" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Views\Clientes\Index.cshtml" />
     </ItemGroup>
 
 </Project>

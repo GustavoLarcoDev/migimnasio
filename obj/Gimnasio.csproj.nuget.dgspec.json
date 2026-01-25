@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/gustavolarco/RiderProjects/Gimnasio/Gimnasio/Gimnasio.csproj": {}
+    "/Users/gustavolarco/Desktop/Gimnasio/Gimnasio.csproj": {}
   },
   "projects": {
-    "/Users/gustavolarco/RiderProjects/Gimnasio/Gimnasio/Gimnasio.csproj": {
+    "/Users/gustavolarco/Desktop/Gimnasio/Gimnasio.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/gustavolarco/RiderProjects/Gimnasio/Gimnasio/Gimnasio.csproj",
+        "projectUniqueName": "/Users/gustavolarco/Desktop/Gimnasio/Gimnasio.csproj",
         "projectName": "Gimnasio",
-        "projectPath": "/Users/gustavolarco/RiderProjects/Gimnasio/Gimnasio/Gimnasio.csproj",
+        "projectPath": "/Users/gustavolarco/Desktop/Gimnasio/Gimnasio.csproj",
         "packagesPath": "/Users/gustavolarco/.nuget/packages/",
-        "outputPath": "/Users/gustavolarco/RiderProjects/Gimnasio/Gimnasio/obj/",
+        "outputPath": "/Users/gustavolarco/Desktop/Gimnasio/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/gustavolarco/.nuget/NuGet/NuGet.Config"
@@ -47,6 +47,10 @@
             "ClosedXML": {
               "target": "Package",
               "version": "[0.105.0, )"
+            },
+            "HttpContextExtensions": {
+              "target": "Package",
+              "version": "[0.1.3, )"
             },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
