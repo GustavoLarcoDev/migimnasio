@@ -12,15 +12,37 @@ namespace Gimnasio.Controllers
     public class GimnasiosController : Controller
     {
         private readonly ApplicationDbContext _context;
+        
+        // Constantes para el administrador
+        private const string ADMIN_EMAIL = "migimnasio10@gmail.com";
+        private const string ADMIN_PASSWORD = "DanielMaurizio2025!";
 
         public GimnasiosController(ApplicationDbContext context)
         {
             _context = context;
         }
-
+        #region  Administradores de Gimnasios
+        // Método helper para verificar si el usuario es admin
+        private bool IsAdmin()
+        {
+            if (!User.Identity.IsAuthenticated)
+                return false;
+                
+            var emailClaim = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Email);
+            return emailClaim != null && emailClaim.Value == ADMIN_EMAIL;
+        }
+        
         // GET: Gimnasios
+        [Microsoft.AspNetCore.Authorization.Authorize]
         public IActionResult Index()
         {
+            // Verificar si es admin
+            if (!IsAdmin())
+            {
+                TempData["Error"] = "No tiene permisos para acceder a esta página";
+                return RedirectToAction("Login");
+            }
+            
             return View();
         }
         
@@ -30,6 +52,12 @@ namespace Gimnasio.Controllers
         {
             try
             {
+                // Verificar si es admin
+                if (!IsAdmin())
+                {
+                    return Forbid();
+                }
+                
                 var gimnasios = await _context.Gimnasios
                     .Select(g => new
                     {
@@ -54,12 +82,18 @@ namespace Gimnasio.Controllers
             }
         }
 
-        // GET: Gimnasios/GetGimnasio/5
+        // GET: Gimnasios/GetGimnasio/id
         [HttpGet]
         public async Task<IActionResult> GetGimnasio(Guid id)
         {
             try
             {
+                // Verificar si es admin
+                if (!IsAdmin())
+                {
+                    return Forbid();
+                }
+                
                 var gimnasio = await _context.Gimnasios.FindAsync(id);
 
                 if (gimnasio == null)
@@ -89,6 +123,13 @@ namespace Gimnasio.Controllers
         [HttpGet]
         public IActionResult Crear()
         {
+            // Verificar si es admin
+            if (!IsAdmin())
+            {
+                TempData["Error"] = "No tiene permisos para acceder a esta página";
+                return RedirectToAction("Login");
+            }
+            
             return View("Create");
         }
 
@@ -99,6 +140,12 @@ namespace Gimnasio.Controllers
         {
             try
             {
+                // Verificar si es admin
+                if (!IsAdmin())
+                {
+                    return Forbid();
+                }
+                
                 // Validación: No pueden ser ambos true o ambos false
                 if (isActive && esPrueba)
                 {
@@ -151,8 +198,8 @@ namespace Gimnasio.Controllers
                     Telefono = telefono,
                     Email = EmailGimnasio,
                     Password = passwordGimnasio,
-                    IsActive = isActive,      // true si es de pago, false si es prueba
-                    EsPrueba = esPrueba,      // true si es prueba, false si es de pago
+                    IsActive = isActive,
+                    EsPrueba = esPrueba,
                     FechaCreacion = DateTime.Now,
                     FechaDeActualizacion = DateTime.Now,
                 };
@@ -174,6 +221,12 @@ namespace Gimnasio.Controllers
         {
             try
             {
+                // Verificar si es admin
+                if (!IsAdmin())
+                {
+                    return Forbid();
+                }
+                
                 if (!ModelState.IsValid)
                 {
                     return BadRequest(new { success = false, message = "Datos inválidos" });
@@ -237,6 +290,12 @@ namespace Gimnasio.Controllers
         {
             try
             {
+                // Verificar si es admin
+                if (!IsAdmin())
+                {
+                    return Forbid();
+                }
+                
                 var gimnasio = await _context.Gimnasios
                     .Include(g => g.Clientes)
                     .FirstOrDefaultAsync(g => g.GimnasioId == id);
@@ -273,6 +332,12 @@ namespace Gimnasio.Controllers
         {
             try
             {
+                // Verificar si es admin
+                if (!IsAdmin())
+                {
+                    return Forbid();
+                }
+                
                 var gimnasio = await _context.Gimnasios.FindAsync(id);
 
                 if (gimnasio == null)
@@ -280,19 +345,13 @@ namespace Gimnasio.Controllers
                     return NotFound(new { success = false, message = "Gimnasio no encontrado" });
                 }
 
-                // LÓGICA CORRECTA: Toggle entre Activo/Pago y Prueba
-                // Si está activo (pago), cambiarlo a prueba
-                // Si está en prueba, cambiarlo a activo (pago)
-        
                 if (gimnasio.IsActive)
                 {
-                    // Era de pago (activo), ahora será de prueba
                     gimnasio.IsActive = false;
                     gimnasio.EsPrueba = true;
                 }
                 else
                 {
-                    // Era de prueba, ahora será de pago (activo)
                     gimnasio.IsActive = true;
                     gimnasio.EsPrueba = false;
                 }
@@ -317,6 +376,77 @@ namespace Gimnasio.Controllers
                 return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
+        
+        // GET: Gimnasios/ExportExcel
+        public async Task<IActionResult> ExportExcel()
+        {
+            try
+            {
+                // Verificar si es admin
+                if (!IsAdmin())
+                {
+                    return Forbid();
+                }
+                
+                var gimnasios = await _context.Gimnasios
+                    .Include(g => g.Clientes)
+                    .OrderByDescending(g => g.FechaCreacion)
+                    .ToListAsync();
+
+                using var workbook = new XLWorkbook();
+                var worksheet = workbook.Worksheets.Add("Gimnasios");
+
+                // Encabezados
+                worksheet.Cell(1, 1).Value = "Nombre del Gimnasio";
+                worksheet.Cell(1, 2).Value = "Dueño";
+                worksheet.Cell(1, 3).Value = "Email";
+                worksheet.Cell(1, 4).Value = "Teléfono";
+                worksheet.Cell(1, 5).Value = "Estado";
+                worksheet.Cell(1, 6).Value = "Es Prueba";
+                worksheet.Cell(1, 7).Value = "Total Clientes";
+                worksheet.Cell(1, 8).Value = "Fecha Creación";
+
+                // Estilo encabezados
+                var headerRange = worksheet.Range(1, 1, 1, 8);
+                headerRange.Style.Font.Bold = true;
+                headerRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#3b82f6");
+                headerRange.Style.Font.FontColor = XLColor.White;
+
+                // Datos
+                int row = 2;
+                foreach (var gimnasio in gimnasios)
+                {
+                    worksheet.Cell(row, 1).Value = gimnasio.GimnasioNombre;
+                    worksheet.Cell(row, 2).Value = gimnasio.DuenoGimnasio;
+                    worksheet.Cell(row, 3).Value = gimnasio.Email;
+                    worksheet.Cell(row, 4).Value = gimnasio.Telefono;
+                    worksheet.Cell(row, 5).Value = gimnasio.IsActive ? "Activo" : "Inactivo";
+                    worksheet.Cell(row, 6).Value = gimnasio.EsPrueba ? "Sí" : "No";
+                    worksheet.Cell(row, 7).Value = gimnasio.Clientes.Count;
+                    worksheet.Cell(row, 8).Value = gimnasio.FechaCreacion.ToString("dd/MM/yyyy");
+                    row++;
+                }
+
+                worksheet.Columns().AdjustToContents();
+
+                using var stream = new MemoryStream();
+                workbook.SaveAs(stream);
+                var content = stream.ToArray();
+
+                return File(
+                    content,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    $"Gimnasios_{DateTime.Now:yyyyMMdd}.xlsx"
+                );
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+        #endregion
+        
+        #region Autenticacion de Gimnasios
 
         // GET: Gimnasios/Login
         [HttpGet]
@@ -324,7 +454,13 @@ namespace Gimnasio.Controllers
         {
             if (User.Identity.IsAuthenticated)
             {
-                // Si el usuario ya está autenticado, redirigir al Dashboard
+                // Si es admin, redirigir al índice de gimnasios
+                if (IsAdmin())
+                {
+                    return RedirectToAction("Index");
+                }
+                
+                // Si es un gimnasio regular, redirigir a su dashboard
                 var gimnasioIdClaim = User.Claims.FirstOrDefault(c => c.Type == "GimnasioId");
                 if (gimnasioIdClaim != null)
                 {
@@ -346,6 +482,31 @@ namespace Gimnasio.Controllers
                     return View();
                 }
 
+                // Verificar si es el administrador
+                if (email == ADMIN_EMAIL && password == ADMIN_PASSWORD)
+                {
+                    var adminClaims = new List<System.Security.Claims.Claim>
+                    {
+                        new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, "Administrador"),
+                        new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Email, ADMIN_EMAIL),
+                        new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, "Admin")
+                    };
+
+                    var adminIdentity = new System.Security.Claims.ClaimsIdentity(adminClaims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    var adminAuthProperties = new AuthenticationProperties
+                    {
+                        IsPersistent = true,
+                    };
+
+                    await HttpContext.SignInAsync(
+                        CookieAuthenticationDefaults.AuthenticationScheme,
+                        new System.Security.Claims.ClaimsPrincipal(adminIdentity),
+                        adminAuthProperties);
+
+                    return RedirectToAction("Index");
+                }
+
+                // Si no es admin, buscar en gimnasios
                 var gimnasio = await _context.Gimnasios
                     .FirstOrDefaultAsync(g => g.Email == email && g.Password == password);
 
@@ -355,28 +516,29 @@ namespace Gimnasio.Controllers
                     return View();
                 }
 
-                if (!gimnasio.IsActive && !gimnasio.EsPrueba) // Validación extra por si acaso
+                if (!gimnasio.IsActive && !gimnasio.EsPrueba)
                 {
                     ViewBag.Error = "Su cuenta no está activa. Contacte al administrador.";
                     return View();
                 }
 
-                // Crear Claims
+                // Crear Claims para gimnasio
                 var claims = new List<System.Security.Claims.Claim>
                 {
                     new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, gimnasio.GimnasioNombre),
                     new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Email, gimnasio.Email),
-                    new System.Security.Claims.Claim("GimnasioId", gimnasio.GimnasioId.ToString())
+                    new System.Security.Claims.Claim("GimnasioId", gimnasio.GimnasioId.ToString()),
+                    new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, "Gimnasio")
                 };
 
-                var claimsIdentity = new System.Security.Claims.ClaimsIdentity(claims, Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
-                var authProperties = new Microsoft.AspNetCore.Authentication.AuthenticationProperties
+                var claimsIdentity = new System.Security.Claims.ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var authProperties = new AuthenticationProperties
                 {
                     IsPersistent = true,
                 };
 
                 await HttpContext.SignInAsync(
-                    Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme,
+                    CookieAuthenticationDefaults.AuthenticationScheme,
                     new System.Security.Claims.ClaimsPrincipal(claimsIdentity),
                     authProperties);
 
@@ -392,11 +554,13 @@ namespace Gimnasio.Controllers
         // GET: Gimnasios/Logout
         public async Task<IActionResult> Logout()
         {
-            await HttpContext.SignOutAsync(
-                Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             
             return RedirectToAction("Login");
         }
+        #endregion
+
+        #region Datos y tablas del dashboard
 
         // GET: Gimnasios/Dashboard/5
         [Microsoft.AspNetCore.Authorization.Authorize]
@@ -409,7 +573,7 @@ namespace Gimnasio.Controllers
                 var gimnasioIdClaim = User.Claims.FirstOrDefault(c => c.Type == "GimnasioId");
                 if (gimnasioIdClaim == null || gimnasioIdClaim.Value != id.ToString())
                 {
-                    return Forbid(); // O redirigir a Login/Home con mensaje de error
+                    return Forbid();
                 }
 
                 var gimnasio = await _context.Gimnasios
@@ -428,71 +592,8 @@ namespace Gimnasio.Controllers
                  return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
-
-// POST: Gimnasios/CrearCliente
-         [Microsoft.AspNetCore.Authorization.Authorize]
-         [HttpPost]
-         public async Task<IActionResult> CrearCliente([FromForm] ClienteCreateModel model)
-         {
-             try
-             {
-                 // Verificar autorización
-                 var gimnasioIdClaim = User.Claims.FirstOrDefault(c => c.Type == "GimnasioId");
-                 if (gimnasioIdClaim == null || model.GimnasioId.ToString() != gimnasioIdClaim.Value)
-                 {
-                      return Forbid();
-                 }
-
-                 // Validaciones básicas
-                 if (string.IsNullOrWhiteSpace(model.Nombre) || string.IsNullOrWhiteSpace(model.Apellido))
-                 {
-                     return BadRequest(new { success = false, message = "Nombre y Apellido son obligatorios" });
-                 }
-
-                 if (string.IsNullOrWhiteSpace(model.Telefono))
-                 {
-                     return BadRequest(new { success = false, message = "Teléfono es obligatorio" });
-                 }
-
-                 if (model.Dias <= 0)
-                 {
-                     return BadRequest(new { success = false, message = "Los días deben ser mayor a 0" });
-                 }
-
-                 if (model.Precio <= 0)
-                 {
-                     return BadRequest(new { success = false, message = "El precio debe ser mayor a 0" });
-                 }
-
-                 var cliente = new Cliente
-                 {
-                     ClienteId = Guid.NewGuid(),
-                     GimnasioId = model.GimnasioId,
-                     Nombre = model.Nombre,
-                     Apellido = model.Apellido,
-                     Email = model.Email,
-                     Telefono = model.Telefono,
-                     Direccion = model.Direccion,
-                     Dias = model.Dias,
-                     Precio = model.Precio,
-                     EsDiario = model.EsDiario,
-                     FechaDeCreacion = DateTime.Now,
-                     FechaDeActualizacion = DateTime.Now,
-                     FechaQueTermina = DateTime.Now.AddDays(model.Dias)
-                 };
-
-                 _context.Clientes.Add(cliente);
-                 await _context.SaveChangesAsync();
-
-                 return Ok(new { success = true, message = "Cliente creado exitosamente" });
-             }
-              catch (Exception ex)
-             {
-                 return StatusCode(500, new { success = false, message = ex.Message });
-             }
-         }
-
-// GET: Gimnasios/GetDashboardStats
+        
+        // GET: Gimnasios/GetDashboardStats
          [Microsoft.AspNetCore.Authorization.Authorize]
          [HttpGet]
          public async Task<IActionResult> GetDashboardStats(Guid gimnasioId)
@@ -563,7 +664,7 @@ namespace Gimnasio.Controllers
             }
         }
 
-// GET: Gimnasios/GetClientes
+        // GET: Gimnasios/GetClientes
          [Microsoft.AspNetCore.Authorization.Authorize]
          [HttpGet]
          public async Task<IActionResult> GetClientes(Guid gimnasioId)
@@ -601,8 +702,73 @@ namespace Gimnasio.Controllers
                 return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
+         #endregion
+         
+         #region Todo relacionado con CRUD clientes de los gimnasios
+         // POST: Gimnasios/CrearCliente
+         [Microsoft.AspNetCore.Authorization.Authorize]
+         [HttpPost]
+         public async Task<IActionResult> CrearCliente([FromForm] ClienteCreateModel model)
+         {
+             try
+             {
+                 // Verificar autorización
+                 var gimnasioIdClaim = User.Claims.FirstOrDefault(c => c.Type == "GimnasioId");
+                 if (gimnasioIdClaim == null || model.GimnasioId.ToString() != gimnasioIdClaim.Value)
+                 {
+                      return Forbid();
+                 }
 
-// GET: Gimnasios/GetCliente
+                 // Validaciones básicas
+                 if (string.IsNullOrWhiteSpace(model.Nombre) || string.IsNullOrWhiteSpace(model.Apellido))
+                 {
+                     return BadRequest(new { success = false, message = "Nombre y Apellido son obligatorios" });
+                 }
+
+                 if (string.IsNullOrWhiteSpace(model.Telefono))
+                 {
+                     return BadRequest(new { success = false, message = "Teléfono es obligatorio" });
+                 }
+
+                 if (model.Dias <= 0)
+                 {
+                     return BadRequest(new { success = false, message = "Los días deben ser mayor a 0" });
+                 }
+
+                 if (model.Precio <= 0)
+                 {
+                     return BadRequest(new { success = false, message = "El precio debe ser mayor a 0" });
+                 }
+
+                 var cliente = new Cliente
+                 {
+                     ClienteId = Guid.NewGuid(),
+                     GimnasioId = model.GimnasioId,
+                     Nombre = model.Nombre,
+                     Apellido = model.Apellido,
+                     Email = model.Email,
+                     Telefono = model.Telefono,
+                     Direccion = model.Direccion,
+                     Dias = model.Dias,
+                     Precio = model.Precio,
+                     EsDiario = model.EsDiario,
+                     FechaDeCreacion = DateTime.Now,
+                     FechaDeActualizacion = DateTime.Now,
+                     FechaQueTermina = DateTime.Now.AddDays(model.Dias)
+                 };
+
+                 _context.Clientes.Add(cliente);
+                 await _context.SaveChangesAsync();
+
+                 return Ok(new { success = true, message = "Cliente creado exitosamente" });
+             }
+              catch (Exception ex)
+             {
+                 return StatusCode(500, new { success = false, message = ex.Message });
+             }
+         }
+
+        // GET: Gimnasios/GetCliente
          [Microsoft.AspNetCore.Authorization.Authorize]
          [HttpGet]
          public async Task<IActionResult> GetCliente(Guid id, Guid gimnasioId)
@@ -625,7 +791,7 @@ namespace Gimnasio.Controllers
             }
         }
 
-// POST: Gimnasios/EditarCliente
+        // POST: Gimnasios/EditarCliente
          [Microsoft.AspNetCore.Authorization.Authorize]
          [HttpPost]
          public async Task<IActionResult> EditarCliente([FromForm] ClienteCreateModel model)
@@ -693,7 +859,7 @@ namespace Gimnasio.Controllers
              }
          }
 
-// POST: Gimnasios/EliminarCliente
+        // POST: Gimnasios/EliminarCliente
          [Microsoft.AspNetCore.Authorization.Authorize]
          [HttpPost]
          public async Task<IActionResult> EliminarCliente(Guid id, Guid gimnasioId)
@@ -719,7 +885,7 @@ namespace Gimnasio.Controllers
             }
         }
 
-// POST: Gimnasios/RenovarCliente
+        // POST: Gimnasios/RenovarCliente
          [Microsoft.AspNetCore.Authorization.Authorize]
          [HttpPost]
          public async Task<IActionResult> RenovarCliente(Guid id, Guid gimnasioId, int dias, decimal precio)
@@ -767,7 +933,7 @@ namespace Gimnasio.Controllers
             }
         }
 
-// GET: Gimnasios/ExportClientesExcel
+        // GET: Gimnasios/ExportClientesExcel
          [Microsoft.AspNetCore.Authorization.Authorize]
          public async Task<IActionResult> ExportClientesExcel(Guid gimnasioId)
         {
@@ -834,67 +1000,6 @@ namespace Gimnasio.Controllers
                 return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
-
-        // GET: Gimnasios/ExportExcel
-        public async Task<IActionResult> ExportExcel()
-        {
-            try
-            {
-                var gimnasios = await _context.Gimnasios
-                    .Include(g => g.Clientes)
-                    .OrderByDescending(g => g.FechaCreacion)
-                    .ToListAsync();
-
-                using var workbook = new XLWorkbook();
-                var worksheet = workbook.Worksheets.Add("Gimnasios");
-
-                // Encabezados
-                worksheet.Cell(1, 1).Value = "Nombre del Gimnasio";
-                worksheet.Cell(1, 2).Value = "Dueño";
-                worksheet.Cell(1, 3).Value = "Email";
-                worksheet.Cell(1, 4).Value = "Teléfono";
-                worksheet.Cell(1, 5).Value = "Estado";
-                worksheet.Cell(1, 6).Value = "Es Prueba";
-                worksheet.Cell(1, 7).Value = "Total Clientes";
-                worksheet.Cell(1, 8).Value = "Fecha Creación";
-
-                // Estilo encabezados
-                var headerRange = worksheet.Range(1, 1, 1, 8);
-                headerRange.Style.Font.Bold = true;
-                headerRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#3b82f6");
-                headerRange.Style.Font.FontColor = XLColor.White;
-
-                // Datos
-                int row = 2;
-                foreach (var gimnasio in gimnasios)
-                {
-                    worksheet.Cell(row, 1).Value = gimnasio.GimnasioNombre;
-                    worksheet.Cell(row, 2).Value = gimnasio.DuenoGimnasio;
-                    worksheet.Cell(row, 3).Value = gimnasio.Email;
-                    worksheet.Cell(row, 4).Value = gimnasio.Telefono;
-                    worksheet.Cell(row, 5).Value = gimnasio.IsActive ? "Activo" : "Inactivo";
-                    worksheet.Cell(row, 6).Value = gimnasio.EsPrueba ? "Sí" : "No";
-                    worksheet.Cell(row, 7).Value = gimnasio.Clientes.Count;
-                    worksheet.Cell(row, 8).Value = gimnasio.FechaCreacion.ToString("dd/MM/yyyy");
-                    row++;
-                }
-
-                worksheet.Columns().AdjustToContents();
-
-                using var stream = new MemoryStream();
-                workbook.SaveAs(stream);
-                var content = stream.ToArray();
-
-                return File(
-                    content,
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    $"Gimnasios_{DateTime.Now:yyyyMMdd}.xlsx"
-                );
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { success = false, message = ex.Message });
-            }
-        }
+         #endregion
     }
 }
