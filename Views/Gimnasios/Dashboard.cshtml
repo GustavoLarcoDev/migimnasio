@@ -6,191 +6,283 @@ var gimnasioId = Model.GimnasioId;
 }
 
 <!-- Toolbar -->
-<div class="d-flex flex-wrap align-items-center mb-6 px-5">
+<div class="d-flex flex-wrap align-items-center mb-4 px-5 pt-4">
     <div>
         <h1 class="fw-bolder text-dark mb-2">Dashboard</h1>
-        <p class="text-muted mb-0">
-            Bienvenido, <strong>@Model.DuenoGimnasio</strong>
-        </p>
+        <p class="text-muted mb-0">Bienvenido, <strong>@Model.DuenoGimnasio</strong></p>
     </div>
-
     <div class="d-flex gap-2 ms-auto">
-        <button id="btnExportClientesExcel" class="btn btn-sm btn-success">
-            <i class="bi bi-file-earmark-excel me-2"></i>
-            Exportar Clientes
-        </button>
-
-        <button id="btnCrearCliente" class="btn btn-sm btn-primary">
-            <i class="bi bi-plus-circle me-2"></i>
-            Nuevo Cliente
-        </button>
-
         <a href="@Url.Action("Logout", "Gimnasios")" class="btn btn-sm btn-light-danger">
-            <i class="bi bi-box-arrow-right me-2"></i>
-            Cerrar Sesión
+            <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
         </a>
     </div>
 </div>
 
-<!-- Stats Cards Row 1 -->
-<div class="row g-4 mb-5 px-5">
-    <div class="col-xl-3 col-md-6">
-        <div class="card border-0 shadow-sm h-100 bg-light-primary">
-            <div class="card-body">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div class="flex-grow-1">
-                        <span class="text-muted fw-semibold d-block fs-7 mb-1">Total Clientes</span>
-                        <span class="text-dark fw-bolder fs-2x" id="totalClientes">0</span>
-                    </div>
-                    <div class="bg-primary rounded-3 p-3">
-                        <i class="bi bi-people-fill text-white fs-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 px-5">
-        <div class="card border-0 shadow-sm h-100 bg-light-success">
-            <div class="card-body">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div class="flex-grow-1">
-                        <span class="text-muted fw-semibold d-block fs-7 mb-1">Clientes Activos</span>
-                        <span class="text-dark fw-bolder fs-2x" id="clientesActivos">0</span>
-                    </div>
-                    <div class="bg-success rounded-3 p-3">
-                        <i class="bi bi-check-circle-fill text-white fs-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 px-5">
-        <div class="card border-0 shadow-sm h-100 bg-light-danger">
-            <div class="card-body">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div class="flex-grow-1">
-                        <span class="text-muted fw-semibold d-block fs-7 mb-1">Clientes Vencidos</span>
-                        <span class="text-dark fw-bolder fs-2x" id="clientesVencidos">0</span>
-                    </div>
-                    <div class="bg-danger rounded-3 p-3">
-                        <i class="bi bi-x-circle-fill text-white fs-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 px-5">
-        <div class="card border-0 shadow-sm h-100 bg-light-info">
-            <div class="card-body">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div class="flex-grow-1">
-                        <span class="text-muted fw-semibold d-block fs-7 mb-1">Ingresos del Mes</span>
-                        <span class="text-dark fw-bolder fs-2x" id="ingresosMes">$0</span>
-                    </div>
-                    <div class="bg-info rounded-3 p-3">
-                        <i class="bi bi-currency-dollar text-white fs-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- Navigation Tabs -->
+<div class="px-5">
+    <ul class="nav nav-tabs nav-tabs-line mb-4" id="dashboardTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active fw-semibold" data-bs-toggle="tab" data-bs-target="#clientesTab" type="button">
+                <i class="bi bi-people me-2"></i>Clientes
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#logsTab" type="button">
+                <i class="bi bi-journal-text me-2"></i>Logs+
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link fw-semibold" data-bs-toggle="tab" data-bs-target="#ventasTab" type="button">
+                <i class="bi bi-graph-up me-2"></i>Ventas
+            </button>
+        </li>
+    </ul>
 </div>
 
-<!-- Stats Cards Row 2 -->
-<div class="row g-4 mb-5 px-5">
-    <div class="col-md-4">
+<div class="tab-content px-5 pb-5" id="dashboardTabsContent">
+    <!-- TAB CLIENTES -->
+    <div class="tab-pane fade show active" id="clientesTab" role="tabpanel">
+        <!-- Stats Cards -->
+        <div class="row g-4 mb-5">
+            <div class="col-xl-3 col-md-6">
+                <div class="card border-0 shadow-sm h-100 bg-light-primary">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <span class="text-muted fw-semibold d-block fs-7 mb-1">Total Clientes</span>
+                                <span class="text-dark fw-bolder fs-2x" id="totalClientes">0</span>
+                            </div>
+                            <div class="bg-primary rounded-3 p-3"><i class="bi bi-people-fill text-white fs-2x"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card border-0 shadow-sm h-100 bg-light-success">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <span class="text-muted fw-semibold d-block fs-7 mb-1">Clientes Activos</span>
+                                <span class="text-dark fw-bolder fs-2x" id="clientesActivos">0</span>
+                            </div>
+                            <div class="bg-success rounded-3 p-3"><i class="bi bi-check-circle-fill text-white fs-2x"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card border-0 shadow-sm h-100 bg-light-danger">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <span class="text-muted fw-semibold d-block fs-7 mb-1">Clientes Vencidos</span>
+                                <span class="text-dark fw-bolder fs-2x" id="clientesVencidos">0</span>
+                            </div>
+                            <div class="bg-danger rounded-3 p-3"><i class="bi bi-x-circle-fill text-white fs-2x"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card border-0 shadow-sm h-100 bg-light-info">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <span class="text-muted fw-semibold d-block fs-7 mb-1">Ingresos del Mes</span>
+                                <span class="text-dark fw-bolder fs-2x" id="ingresosMes">$0</span>
+                            </div>
+                            <div class="bg-info rounded-3 p-3"><i class="bi bi-currency-dollar text-white fs-2x"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex gap-2 mb-4">
+            <button id="btnCrearCliente" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>Nuevo Cliente</button>
+            <button id="btnExportClientesExcel" class="btn btn-success"><i class="bi bi-file-earmark-excel me-2"></i>Exportar</button>
+            <button id="btnImportarExcel" class="btn btn-outline-primary"><i class="bi bi-upload me-2"></i>Importar Excel</button>
+        </div>
+
+        <!-- Import Zone (hidden by default) -->
+        <div id="importZone" class="card border-2 border-dashed mb-4 d-none">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-cloud-upload fs-1 text-primary mb-3 d-block"></i>
+                <h5>Arrastra tu archivo Excel aquí</h5>
+                <p class="text-muted">O haz clic para seleccionar (solo Nombre y Apellido son obligatorios)</p>
+                <input type="file" id="excelFileInput" accept=".xlsx,.xls" class="d-none">
+            </div>
+        </div>
+
+        <!-- Clients Table -->
         <div class="card border-0 shadow-sm">
             <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="symbol symbol-50px me-3 bg-light-warning">
-                        <i class="bi bi-calendar-plus text-warning fs-2x"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <span class="text-muted fw-semibold d-block fs-8 mb-1">Nuevos Hoy</span>
-                        <span class="text-dark fw-bold fs-4" id="clientesNuevosHoy">0</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4 px-5">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="symbol symbol-50px me-3 bg-light-primary">
-                        <i class="bi bi-calendar-check text-primary fs-2x"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <span class="text-muted fw-semibold d-block fs-8 mb-1">Nuevos Este Mes</span>
-                        <span class="text-dark fw-bold fs-4" id="clientesNuevosMes">0</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-4 px-5">
-        <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="symbol symbol-50px me-3 bg-light-success">
-                        <i class="bi bi-cash-stack text-success fs-2x"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <span class="text-muted fw-semibold d-block fs-8 mb-1">Ingresos Hoy</span>
-                        <span class="text-dark fw-bold fs-4" id="ingresosHoy">$0</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Content Row -->
-<div class="row g-4 mb-5 px-5">
-    <!-- Próximos a Vencer -->
-    <div class="col-xl-4">
-        <div class="card border-0 shadow-sm h-100">
-            <div class="card-header bg-white border-0 pt-5">
-                <h3 class="card-title fw-bold text-dark">
-                    <i class="bi bi-clock-history text-warning me-2"></i>
-                    Próximos a Vencer
-                </h3>
-            </div>
-            <div class="card-body pt-2" id="proximosVencerContainer" style="max-height: 400px; overflow-y: auto;">
-                <div class="text-center text-muted py-5">
-                    <i class="bi bi-hourglass-split fs-2x mb-3 d-block"></i>
-                    <p>Cargando...</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tabla de Clientes -->
-    <div class="col-xl-8">
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-white border-0 pt-5 pb-3">
-                <h3 class="card-title fw-bold text-dark">Todos los Clientes</h3>
-            </div>
-            <div class="card-body pt-0">
-                <table id="clientesTable" class="table table-row-bordered table-row-gray-100 align-middle gs-0 gy-3">
+                <table id="clientesTable" class="table table-row-bordered align-middle gs-0 gy-3">
                     <thead>
                     <tr class="fw-bold text-muted">
-                        <th class="min-w-150px">Cliente</th>
-                        <th class="min-w-120px">Contacto</th>
-                        <th class="min-w-100px">Membresía</th>
-                        <th class="min-w-100px">Vencimiento</th>
-                        <th class="min-w-80px">Estado</th>
-                        <th class="min-w-100px text-end">Acciones</th>
+                        <th>Cliente</th>
+                        <th>Precio</th>
+                        <th>Fecha Inicio</th>
+                        <th>Vencimiento</th>
+                        <th>Días Rest.</th>
+                        <th class="text-end">Acciones</th>
                     </tr>
                     </thead>
-                    <tbody class="text-gray-600 fw-semibold">
-                    </tbody>
+                    <tbody class="text-gray-600 fw-semibold"></tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB LOGS+ -->
+    <div class="tab-pane fade" id="logsTab" role="tabpanel">
+        <!-- Quick Add Form -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="fw-bold mb-3"><i class="bi bi-plus-circle me-2"></i>Registrar Movimiento</h5>
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-6">
+                        <label class="form-label">Descripción</label>
+                        <input type="text" class="form-control form-control-lg" id="logDescripcion" placeholder="Ej: Vendido un Gatorade">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Monto ($)</label>
+                        <input type="number" step="0.01" class="form-control form-control-lg" id="logMonto" placeholder="4 o -15">
+                    </div>
+                    <div class="col-md-3">
+                        <button id="btnRegistrarLog" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-check-lg me-2"></i>Registrar
+                        </button>
+                    </div>
+                </div>
+                <small class="text-muted mt-2 d-block">Usa valores positivos para ingresos y negativos para gastos</small>
+            </div>
+        </div>
+
+        <!-- Filters and Export -->
+        <div class="d-flex gap-2 mb-4 flex-wrap">
+            <div class="btn-group" role="group">
+                <button class="btn btn-outline-primary filtro-log active" data-filtro="dia">Hoy</button>
+                <button class="btn btn-outline-primary filtro-log" data-filtro="semana">Semana</button>
+                <button class="btn btn-outline-primary filtro-log" data-filtro="mes">Mes</button>
+                <button class="btn btn-outline-primary filtro-log" data-filtro="anio">Año</button>
+            </div>
+            <button id="btnExportLogsExcel" class="btn btn-success ms-auto"><i class="bi bi-file-earmark-excel me-2"></i>Exportar</button>
+        </div>
+
+        <!-- Logs Table -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <table id="logsTable" class="table table-row-bordered align-middle gs-0 gy-3">
+                    <thead>
+                    <tr class="fw-bold text-muted">
+                        <th>Descripción</th>
+                        <th>Monto</th>
+                        <th>Fecha</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB VENTAS -->
+    <div class="tab-pane fade" id="ventasTab" role="tabpanel">
+        <!-- Refresh Button -->
+        <div class="d-flex justify-content-end mb-3">
+            <button id="btnRefrescarVentas" class="btn btn-outline-primary"><i class="bi bi-arrow-clockwise me-2"></i>Refrescar Ventas</button>
+        </div>
+        
+        <!-- Ventas Stats Cards -->
+        <div class="row g-4 mb-5">
+            <div class="col-xl-4 col-md-6">
+                <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="card-body text-white">
+                        <span class="d-block mb-2 opacity-75">Ingresos del Día</span>
+                        <span class="fs-2x fw-bolder" id="ventasIngresosDia">$0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4 col-md-6">
+                <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                    <div class="card-body text-white">
+                        <span class="d-block mb-2 opacity-75">Gastos del Día</span>
+                        <span class="fs-2x fw-bolder" id="ventasGastosDia">$0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4 col-md-6">
+                <div class="card border-0 shadow-sm h-100" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+                    <div class="card-body text-white">
+                        <span class="d-block mb-2 opacity-75">Ganancia Neta del Día</span>
+                        <span class="fs-2x fw-bolder" id="ventasGananciaDia">$0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-5">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="bi bi-calendar-check text-primary fs-1 mb-2"></i>
+                        <h6 class="text-muted">Membresías 30 días (mes)</h6>
+                        <span class="fs-3 fw-bold" id="ventasMembresias">$0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="bi bi-person-walking text-info fs-1 mb-2"></i>
+                        <h6 class="text-muted">Clientes Diarios Hoy</h6>
+                        <span class="fs-3 fw-bold" id="ventasClientesDiarios">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body text-center">
+                        <i class="bi bi-graph-up-arrow text-success fs-1 mb-2"></i>
+                        <h6 class="text-muted">Ganancia del Mes</h6>
+                        <span class="fs-3 fw-bold" id="ventasGananciaMes">$0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="fw-bold mb-0">Ingresos vs Gastos (Hoy)</h5>
+                    </div>
+                    <div class="card-body"><div id="chartPie"></div></div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="fw-bold mb-0">Ventas Diarias (Última Semana)</h5>
+                    </div>
+                    <div class="card-body"><div id="chartDiario"></div></div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0"><h5 class="fw-bold mb-0">Ventas Mensuales</h5></div>
+                    <div class="card-body"><div id="chartMensual"></div></div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-0"><h5 class="fw-bold mb-0">Ventas Anuales</h5></div>
+                    <div class="card-body"><div id="chartAnual"></div></div>
+                </div>
             </div>
         </div>
     </div>
@@ -204,83 +296,62 @@ var gimnasioId = Model.GimnasioId;
                 <h3 class="modal-title fw-bolder" id="modalTitle">Nuevo Cliente</h3>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-
             <div class="modal-body">
                 <form id="clienteForm">
                     <input type="hidden" id="clienteId" name="ClienteId" />
                     <input type="hidden" name="GimnasioId" value="@gimnasioId" />
-
                     <div class="row">
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-6 mb-3">
                             <label class="form-label fw-semibold required">Nombre</label>
-                            <input type="text" class="form-control form-control-lg" name="Nombre" id="nombre" required />
+                            <input type="text" class="form-control" name="Nombre" id="nombre" required />
                         </div>
-
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-6 mb-3">
                             <label class="form-label fw-semibold required">Apellido</label>
-                            <input type="text" class="form-control form-control-lg" name="Apellido" id="apellido" required />
+                            <input type="text" class="form-control" name="Apellido" id="apellido" required />
                         </div>
                     </div>
-
                     <div class="row">
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-6 mb-3">
                             <label class="form-label fw-semibold">Email</label>
-                            <input type="email" class="form-control form-control-lg" name="Email" id="email" />
+                            <input type="email" class="form-control" name="Email" id="email" />
                         </div>
-
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-6 mb-3">
                             <label class="form-label fw-semibold required">Teléfono</label>
-                            <input type="tel" class="form-control form-control-lg" name="Telefono" id="telefono" required />
+                            <input type="tel" class="form-control" name="Telefono" id="telefono" required />
                         </div>
                     </div>
-
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label class="form-label fw-semibold">Dirección</label>
-                        <input type="text" class="form-control form-control-lg" name="Direccion" id="direccion" />
+                        <input type="text" class="form-control" name="Direccion" id="direccion" />
                     </div>
-
                     <div class="row">
-                        <div class="col-md-4 mb-4">
-                            <label class="form-label fw-semibold required">Días de Membresía</label>
-                            <input type="number" class="form-control form-control-lg" name="Dias" id="dias" min="1" required />
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold required">Días</label>
+                            <input type="number" class="form-control" name="Dias" id="dias" min="1" required />
                         </div>
-
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-4 mb-3">
                             <label class="form-label fw-semibold required">Precio ($)</label>
-                            <input type="number" step="0.01" class="form-control form-control-lg" name="Precio" id="precio" min="0" required />
+                            <input type="number" step="0.01" class="form-control" name="Precio" id="precio" min="0" required />
                         </div>
-
-                        <div class="col-md-4 mb-4">
-                            <label class="form-label fw-semibold">Tipo</label>
-                            <div class="form-check form-switch form-check-custom mt-3">
-                                <!-- Hidden input for false value when unchecked -->
+                        <div class="col-md-4 mb-3 pt-4">
+                            <div class="form-check form-switch mt-2">
                                 <input type="hidden" name="EsDiario" value="false" />
                                 <input class="form-check-input" type="checkbox" name="EsDiario" id="esDiario" value="true" />
-                                <label class="form-check-label fw-semibold" for="esDiario">
-                                    Es Diario
-                                </label>
+                                <label class="form-check-label fw-semibold" for="esDiario">Es Diario</label>
                             </div>
                         </div>
                     </div>
-
                 </form>
             </div>
-
             <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">
-                    Cancelar
-                </button>
-                <button type="button" id="btnGuardarCliente" class="btn btn-primary">
-                    <i class="bi bi-save me-2"></i>
-                    Guardar
-                </button>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" id="btnGuardarCliente" class="btn btn-primary"><i class="bi bi-save me-2"></i>Guardar</button>
             </div>
-
         </div>
     </div>
 </div>
 
-<!-- Modal Renovar Cliente -->
+<!-- Modal Renovar -->
 <div class="modal fade" id="renovarModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -288,425 +359,341 @@ var gimnasioId = Model.GimnasioId;
                 <h3 class="modal-title fw-bolder">Renovar Membresía</h3>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-
             <div class="modal-body">
                 <input type="hidden" id="renovarClienteId" />
                 <p class="text-muted mb-4">Cliente: <strong id="renovarClienteNombre"></strong></p>
-
-                <div class="mb-4">
-                    <label class="form-label fw-semibold required">Días de Renovación</label>
-                    <input type="number" class="form-control form-control-lg" id="renovarDias" min="1" required />
+                <div class="mb-3">
+                    <label class="form-label fw-semibold required">Días</label>
+                    <input type="number" class="form-control" id="renovarDias" min="1" required />
                 </div>
-
-                <div class="mb-4">
+                <div class="mb-3">
                     <label class="form-label fw-semibold required">Precio ($)</label>
-                    <input type="number" step="0.01" class="form-control form-control-lg" id="renovarPrecio" min="0" required />
+                    <input type="number" step="0.01" class="form-control" id="renovarPrecio" min="0" required />
                 </div>
             </div>
-
             <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">
-                    Cancelar
-                </button>
-                <button type="button" id="btnConfirmarRenovar" class="btn btn-success">
-                    <i class="bi bi-arrow-repeat me-2"></i>
-                    Renovar
-                </button>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" id="btnConfirmarRenovar" class="btn btn-success"><i class="bi bi-arrow-repeat me-2"></i>Renovar</button>
             </div>
+        </div>
+    </div>
+</div>
 
+<!-- Modal Import Results -->
+<div class="modal fade" id="importResultModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h3 class="modal-title fw-bolder">Resultado de Importación</h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="importResultBody"></div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
-    <script>
-    const gimnasioId = '@gimnasioId';
-    let tablaClientes;
-    let modoEdicion = false;
+<script>
+const gimnasioId = '@gimnasioId';
+let tablaClientes, tablaLogs;
+let modoEdicion = false;
+let filtroLogActual = 'dia';
 
-    $(document).ready(function () {
-        cargarEstadisticas();
-        cargarTablaClientes();
-    });
-
-    function cargarEstadisticas() {
-        $.ajax({
-            url: '/Gimnasios/GetDashboardStats',
-            type: 'GET',
-            data: { gimnasioId: gimnasioId },
-            success: function (data) {
-                $('#totalClientes').text(data.totalClientes);
-                $('#clientesActivos').text(data.clientesActivos);
-                $('#clientesVencidos').text(data.clientesVencidos);
-                $('#clientesNuevosHoy').text(data.clientesNuevosHoy);
-                $('#clientesNuevosMes').text(data.clientesNuevosMes);
-                $('#ingresosMes').text('$' + data.ingresosMes.toFixed(2));
-                $('#ingresosHoy').text('$' + data.ingresosHoy.toFixed(2));
-
-                mostrarProximosVencer(data.proximosVencer);
-            },
-            error: function () {
-                toastr.error('Error al cargar estadísticas');
-            }
-        });
-    }
-
-    function mostrarProximosVencer(clientes) {
-        const container = $('#proximosVencerContainer');
-        if (clientes.length === 0) {
-            container.html(`
-                <div class="text-center text-muted py-5">
-                    <i class="bi bi-check-circle fs-2x mb-3 d-block text-success"></i>
-                    <p>No hay clientes próximos a vencer</p>
-                </div>
-            `);
-            return;
+$(document).ready(function () {
+    cargarEstadisticas();
+    cargarTablaClientes();
+    initLogsTab();
+    
+    // Tab change handlers
+    $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
+        if (e.target.dataset.bsTarget === '#ventasTab') {
+            cargarVentasStats();
+            cargarCharts();
+        } else if (e.target.dataset.bsTarget === '#logsTab') {
+            if (!tablaLogs) cargarTablaLogs();
         }
+    });
+});
 
-        let html = '';
-        clientes.forEach(cliente => {
-            const badgeClass = cliente.diasRestantes <= 2 ? 'badge-light-danger' : 'badge-light-warning';
-            html += `
-                <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
-                    <div class="symbol symbol-40px me-3 bg-light-warning">
-                        <i class="bi bi-person text-warning"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <span class="text-dark fw-bold d-block mb-1">${cliente.nombreCompleto}</span>
-                        <span class="text-muted fw-semibold fs-8">${cliente.telefono || 'Sin teléfono'}</span>
-                    </div>
-                    <div class="text-end">
-                        <span class="badge ${badgeClass} mb-1">${cliente.diasRestantes} día${cliente.diasRestantes !== 1 ? 's' : ''}</span>
-                        <span class="text-muted fw-semibold fs-8 d-block">${new Date(cliente.fechaQueTermina).toLocaleDateString('es-MX')}</span>
-                    </div>
-                </div>
-            `;
-        });
-        container.html(html);
-    }
+// ===== CLIENTES =====
+function cargarEstadisticas() {
+    $.get('/Gimnasios/GetDashboardStats', { gimnasioId }, function(data) {
+        $('#totalClientes').text(data.totalClientes);
+        $('#clientesActivos').text(data.clientesActivos);
+        $('#clientesVencidos').text(data.clientesVencidos);
+        $('#ingresosMes').text('$' + data.ingresosMes.toFixed(2));
+    });
+}
 
-    function cargarTablaClientes() {
-        tablaClientes = $('#clientesTable').DataTable({
-            ajax: {
-                url: '/Gimnasios/GetClientes',
-                type: 'GET',
-                data: { gimnasioId: gimnasioId },
-                dataSrc: ''
-            },
-            columns: [
-                {
-                    data: null,
-                    render: function(data, type, row) {
-                        return `
-                            <div class="d-flex align-items-center">
-                                <div class="symbol symbol-40px me-3">
-                                    <div class="symbol-label bg-light-primary">
-                                        <i class="bi bi-person text-primary fs-4"></i>
-                                    </div>
-                                </div>
-                                <div class="d-flex justify-content-start flex-column">
-                                    <span class="text-dark fw-bold fs-6">${row.nombreCompleto}</span>
-                                    <span class="text-muted fw-semibold d-block fs-8">${row.direccion || 'Sin dirección'}</span>
-                                </div>
-                            </div>
-                        `;
-                    }
-                },
-                {
-                    data: null,
-                    render: function(data, type, row) {
-                        return `
-                            <div class="d-flex flex-column">
-                                ${row.email ? `<span class="text-dark fw-semibold mb-1"><i class="bi bi-envelope me-1 text-muted"></i>${row.email}</span>` : ''}
-                                <span class="text-muted fw-semibold"><i class="bi bi-telephone me-1"></i>${row.telefono}</span>
-                            </div>
-                        `;
-                    }
-                },
-                {
-                    data: null,
-                    render: function(data, type, row) {
-                        const tipo = row.esDiario ? '<span class="badge badge-light-info">Diario</span>' : '<span class="badge badge-light-primary">Regular</span>';
-                        return `
-                            <div>
-                                ${tipo}
-                                <div class="text-muted fw-semibold fs-8 mt-1">${row.dias} días - $${row.precio.toFixed(2)}</div>
-                            </div>
-                        `;
-                    }
-                },
-                {
-                    data: 'fechaQueTermina',
-                    render: function(data, type, row) {
-                        const fecha = new Date(data).toLocaleDateString('es-MX');
-                        let badge = '';
-                        if (row.diasRestantes < 0) {
-                            badge = `<span class="badge badge-light-danger">Vencido</span>`;
-                        } else if (row.diasRestantes <= 3) {
-                            badge = `<span class="badge badge-light-warning">${row.diasRestantes} días</span>`;
-                        } else {
-                            badge = `<span class="badge badge-light-success">${row.diasRestantes} días</span>`;
-                        }
-                        return `
-                            <div>
-                                <span class="text-dark fw-semibold d-block">${fecha}</span>
-                                ${badge}
-                            </div>
-                        `;
-                    }
-                },
-                {
-                    data: 'estaActivo',
-                    render: function(data) {
-                        return data
-                            ? '<span class="badge badge-light-success">Activo</span>'
-                            : '<span class="badge badge-light-danger">Vencido</span>';
-                    }
-                },
-                {
-                    data: null,
-                    orderable: false,
-                    className: 'text-end',
-                    render: function(data, type, row) {
-                        return `
-                            <div class="d-flex justify-content-end gap-1">
-                                <button class="btn btn-icon btn-bg-light btn-active-color-success btn-sm" onclick="abrirModalRenovar('${row.clienteId}', '${row.nombreCompleto}')" title="Renovar">
-                                    <i class="bi bi-arrow-repeat fs-5"></i>
-                                </button>
-                                <button class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm" onclick="editarCliente('${row.clienteId}')" title="Editar">
-                                    <i class="bi bi-pencil fs-5"></i>
-                                </button>
-                                <button class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm" onclick="eliminarCliente('${row.clienteId}', '${row.nombreCompleto}')" title="Eliminar">
-                                    <i class="bi bi-trash fs-5"></i>
-                                </button>
-                            </div>
-                        `;
-                    }
-                }
-            ],
-            order: [[3, 'asc']], // Ordenar por fecha de vencimiento
-            language: {
-                url: '//cdn.datatables.net/plug-ins/2.3.6/i18n/es-ES.json'
-            },
-            responsive: true,
-            pageLength: 10
-        });
-    }
+function cargarTablaClientes() {
+    tablaClientes = $('#clientesTable').DataTable({
+        ajax: { url: '/Gimnasios/GetClientes', data: { gimnasioId }, dataSrc: '' },
+        columns: [
+            { data: null, render: (d,t,r) => `<strong>${r.nombreCompleto}</strong><br><small class="text-muted">${r.telefono || '-'}</small>` },
+            { data: 'precio', render: d => '$' + d.toFixed(2) },
+            { data: 'fechaDeCreacion', render: d => new Date(d).toLocaleDateString('es-MX') },
+            { data: 'fechaQueTermina', render: d => new Date(d).toLocaleDateString('es-MX') },
+            { data: 'diasRestantes', render: d => d < 0 ? '<span class="badge bg-danger">Vencido</span>' : `<span class="badge bg-${d <= 3 ? 'warning' : 'success'}">${d} días</span>` },
+            { data: null, orderable: false, className: 'text-end', render: (d,t,r) => `
+                <button class="btn btn-sm btn-icon btn-light-success" onclick="abrirModalRenovar('${r.clienteId}','${r.nombreCompleto}')" title="Renovar"><i class="bi bi-arrow-repeat"></i></button>
+                <button class="btn btn-sm btn-icon btn-light-primary" onclick="editarCliente('${r.clienteId}')" title="Editar"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-sm btn-icon btn-light-danger" onclick="eliminarCliente('${r.clienteId}','${r.nombreCompleto}')" title="Eliminar"><i class="bi bi-trash"></i></button>
+            ` }
+        ],
+        order: [[5, 'asc']],
+        responsive: true
+    });
+}
 
-    // Crear Cliente
-    $('#btnCrearCliente').click(function () {
-        modoEdicion = false;
-        $('#modalTitle').text('Nuevo Cliente');
-        $('#clienteForm')[0].reset();
-        $('#clienteId').val('');
+$('#btnCrearCliente').click(function() {
+    modoEdicion = false;
+    $('#modalTitle').text('Nuevo Cliente');
+    $('#clienteForm')[0].reset();
+    $('#clienteId').val('');
+    $('#clienteModal').modal('show');
+});
+
+$('#btnGuardarCliente').click(function() {
+    if (!$('#clienteForm')[0].checkValidity()) { $('#clienteForm')[0].reportValidity(); return; }
+    const url = modoEdicion ? '/Gimnasios/EditarCliente' : '/Gimnasios/CrearCliente';
+    $.post(url, $('#clienteForm').serialize(), function(r) {
+        if (r.success) { $('#clienteModal').modal('hide'); tablaClientes.ajax.reload(); cargarEstadisticas(); toastr.success(r.message); }
+    }).fail(xhr => toastr.error(xhr.responseJSON?.message || 'Error'));
+});
+
+function editarCliente(id) {
+    $.get('/Gimnasios/GetCliente', { id, gimnasioId }, function(d) {
+        modoEdicion = true;
+        $('#modalTitle').text('Editar Cliente');
+        $('#clienteId').val(d.clienteId);
+        $('#nombre').val(d.nombre);
+        $('#apellido').val(d.apellido);
+        $('#email').val(d.email);
+        $('#telefono').val(d.telefono);
+        $('#direccion').val(d.direccion);
+        $('#dias').val(d.dias);
+        $('#precio').val(d.precio);
+        $('#esDiario').prop('checked', d.esDiario);
         $('#clienteModal').modal('show');
     });
+}
 
-    // Guardar Cliente
-    $('#btnGuardarCliente').click(function () {
-        if (!$('#clienteForm')[0].checkValidity()) {
-            $('#clienteForm')[0].reportValidity();
-            return;
-        }
-
-        const url = modoEdicion ? '/Gimnasios/EditarCliente' : '/Gimnasios/CrearCliente';
-        const formData = $('#clienteForm').serialize();
-
-        $.ajax({
-            url: url,
-            type: 'POST',
-            data: formData,
-            success: function (response) {
-                if (response.success) {
-                    $('#clienteModal').modal('hide');
-                    tablaClientes.ajax.reload(null, false);
-                    cargarEstadisticas();
-                    toastr.success(response.message);
-                }
-            },
-            error: function (xhr) {
-                const response = xhr.responseJSON;
-                toastr.error(response?.message || 'Error al guardar el cliente');
-            }
-        });
-    });
-
-    // Editar Cliente
-    function editarCliente(id) {
-        $.ajax({
-            url: '/Gimnasios/GetCliente',
-            type: 'GET',
-            data: { id: id, gimnasioId: gimnasioId },
-            success: function (data) {
-                modoEdicion = true;
-                $('#modalTitle').text('Editar Cliente');
-
-                $('#clienteId').val(data.clienteId);
-                $('#nombre').val(data.nombre);
-                $('#apellido').val(data.apellido);
-                $('#email').val(data.email);
-                $('#telefono').val(data.telefono);
-                $('#direccion').val(data.direccion);
-                $('#dias').val(data.dias);
-                $('#precio').val(data.precio);
-                $('#esDiario').prop('checked', data.esDiario);
-
-                $('#clienteModal').modal('show');
-            },
-            error: function () {
-                toastr.error('Error al cargar los datos del cliente');
-            }
-        });
+function eliminarCliente(id, nombre) {
+    if (confirm(`¿Eliminar a "${nombre}"?`)) {
+        $.post('/Gimnasios/EliminarCliente', { id, gimnasioId }, function(r) {
+            if (r.success) { tablaClientes.ajax.reload(); cargarEstadisticas(); toastr.success(r.message); }
+        }).fail(xhr => toastr.error(xhr.responseJSON?.message || 'Error'));
     }
+}
 
-    // Eliminar Cliente
-    function eliminarCliente(id, nombre) {
-        if (confirm(`¿Estás seguro de eliminar al cliente "${nombre}"?`)) {
-            $.ajax({
-                url: '/Gimnasios/EliminarCliente',
-                type: 'POST',
-                data: { id: id, gimnasioId: gimnasioId },
-                success: function (response) {
-                    if (response.success) {
-                        tablaClientes.ajax.reload(null, false);
-                        cargarEstadisticas();
-                        toastr.success(response.message);
+function abrirModalRenovar(id, nombre) {
+    $('#renovarClienteId').val(id);
+    $('#renovarClienteNombre').text(nombre);
+    $('#renovarDias').val('30');
+    $('#renovarPrecio').val('');
+    $('#renovarModal').modal('show');
+}
+
+$('#btnConfirmarRenovar').click(function() {
+    const id = $('#renovarClienteId').val();
+    const dias = $('#renovarDias').val();
+    const precio = $('#renovarPrecio').val();
+    if (!dias || !precio) { toastr.error('Complete todos los campos'); return; }
+    $.post('/Gimnasios/RenovarCliente', { id, gimnasioId, dias, precio }, function(r) {
+        if (r.success) { $('#renovarModal').modal('hide'); tablaClientes.ajax.reload(); cargarEstadisticas(); toastr.success(r.message); }
+    }).fail(xhr => toastr.error(xhr.responseJSON?.message || 'Error'));
+});
+
+$('#btnExportClientesExcel').click(() => window.location.href = '/Gimnasios/ExportClientesExcel?gimnasioId=' + gimnasioId);
+
+// Import Excel
+$('#btnImportarExcel').click(() => $('#importZone').toggleClass('d-none'));
+$('#importZone').on('click', () => $('#excelFileInput').click());
+$('#excelFileInput').on('change', function() { if (this.files.length) uploadExcel(this.files[0]); });
+$('#importZone').on('dragover', e => { e.preventDefault(); $(e.currentTarget).addClass('border-primary'); });
+$('#importZone').on('dragleave', e => $(e.currentTarget).removeClass('border-primary'));
+$('#importZone').on('drop', function(e) { e.preventDefault(); $(this).removeClass('border-primary'); if (e.originalEvent.dataTransfer.files.length) uploadExcel(e.originalEvent.dataTransfer.files[0]); });
+
+function uploadExcel(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('gimnasioId', gimnasioId);
+    $.ajax({
+        url: '/Gimnasios/ImportarClientesExcel',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(r) {
+            let html = `<div class="alert alert-success"><strong>${r.clientesCreados}</strong> clientes creados</div>`;
+            if (r.clientesOmitidos > 0) html += `<div class="alert alert-warning"><strong>${r.clientesOmitidos}</strong> omitidos (duplicados)</div>`;
+            if (r.erroresCount > 0) html += `<div class="alert alert-danger"><strong>${r.erroresCount}</strong> errores</div>`;
+            $('#importResultBody').html(html);
+            $('#importResultModal').modal('show');
+            tablaClientes.ajax.reload();
+            cargarEstadisticas();
+            $('#importZone').addClass('d-none');
+        },
+        error: xhr => toastr.error(xhr.responseJSON?.message || 'Error al importar')
+    });
+}
+
+// ===== LOGS =====
+function initLogsTab() {
+    $('.filtro-log').click(function() {
+        $('.filtro-log').removeClass('active');
+        $(this).addClass('active');
+        filtroLogActual = $(this).data('filtro');
+        cargarTablaLogs();
+    });
+}
+
+function cargarTablaLogs() {
+    if (tablaLogs) { tablaLogs.destroy(); }
+    tablaLogs = $('#logsTable').DataTable({
+        ajax: { url: '/Gimnasios/GetLogs', data: { gimnasioId, filtro: filtroLogActual }, dataSrc: '' },
+        columns: [
+            { data: 'message' },
+            { data: 'monto', render: d => `<span class="${d >= 0 ? 'text-success' : 'text-danger'} fw-bold">${d >= 0 ? '+' : ''}$${d.toFixed(2)}</span>` },
+            { data: 'fecha', render: d => new Date(d).toLocaleString('es-MX') },
+            { data: null, orderable: false, className: 'text-end', render: (d,t,r) => `
+                <button class="btn btn-sm btn-icon btn-light-danger" onclick="eliminarLog('${r.id}')" title="Eliminar"><i class="bi bi-trash"></i></button>
+            ` }
+        ],
+        order: [[2, 'desc']]
+    });
+}
+
+$('#btnRegistrarLog').click(function() {
+    const message = $('#logDescripcion').val();
+    const monto = $('#logMonto').val();
+    if (!message || monto === '') { toastr.error('Complete todos los campos'); return; }
+    $.post('/Gimnasios/CrearLog', { GimnasioId: gimnasioId, Message: message, Monto: monto }, function(r) {
+        if (r.success) { $('#logDescripcion').val(''); $('#logMonto').val(''); tablaLogs.ajax.reload(); toastr.success(r.message); }
+    }).fail(xhr => toastr.error(xhr.responseJSON?.message || 'Error'));
+});
+
+function eliminarLog(id) {
+    if (confirm('¿Eliminar este registro?')) {
+        $.post('/Gimnasios/EliminarLog', { id, gimnasioId }, function(r) {
+            if (r.success) { tablaLogs.ajax.reload(); toastr.success(r.message); }
+        }).fail(xhr => toastr.error(xhr.responseJSON?.message || 'Error'));
+    }
+}
+
+$('#btnExportLogsExcel').click(() => window.location.href = `/Gimnasios/ExportLogsExcel?gimnasioId=${gimnasioId}&filtro=${filtroLogActual}`);
+
+// ===== VENTAS =====
+let chartsLoaded = false;
+
+function cargarVentasStats() {
+    $.get('/Gimnasios/GetVentasStats', { gimnasioId }, function(d) {
+        $('#ventasIngresosDia').text('$' + d.ingresosDia.toFixed(2));
+        $('#ventasGastosDia').text('$' + d.gastosDia.toFixed(2));
+        $('#ventasGananciaDia').text('$' + d.gananciaDia.toFixed(2));
+        $('#ventasMembresias').text('$' + d.membresias30Dias.toFixed(2));
+        $('#ventasClientesDiarios').text(d.clientesDiariosHoy);
+        $('#ventasGananciaMes').text('$' + d.gananciaMes.toFixed(2));
+        
+        // Pie chart - render with today's stats (use gananciaMes if ingresosDia is 0 for better visualization)
+        const ingresos = d.ingresosDia > 0 ? d.ingresosDia : d.ingresosMes || 1;
+        const gastos = d.gastosDia > 0 ? d.gastosDia : d.gastosMes || 0;
+        
+        if (!chartsLoaded || $('#chartPie').html() === '') {
+            new ApexCharts(document.querySelector("#chartPie"), {
+                series: [ingresos, gastos],
+                chart: { type: 'donut', height: 300 },
+                labels: ['Ingresos', 'Gastos'],
+                colors: ['#10b981', '#ef4444'],
+                legend: { position: 'bottom' },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            labels: {
+                                show: true,
+                                total: {
+                                    show: true,
+                                    label: 'Total',
+                                    formatter: function(w) {
+                                        return '$' + w.globals.seriesTotals.reduce((a, b) => a + b, 0).toFixed(2);
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
-                error: function (xhr) {
-                    const response = xhr.responseJSON;
-                    toastr.error(response?.message || 'Error al eliminar el cliente');
-                }
-            });
+                dataLabels: { enabled: true, formatter: (val) => val.toFixed(1) + '%' },
+                noData: { text: 'Sin datos' }
+            }).render();
         }
-    }
-
-    // Renovar Cliente
-    function abrirModalRenovar(id, nombre) {
-        $('#renovarClienteId').val(id);
-        $('#renovarClienteNombre').text(nombre);
-        $('#renovarDias').val('30');
-        $('#renovarPrecio').val('');
-        $('#renovarModal').modal('show');
-    }
-
-    $('#btnConfirmarRenovar').click(function () {
-        const id = $('#renovarClienteId').val();
-        const dias = $('#renovarDias').val();
-        const precio = $('#renovarPrecio').val();
-
-        if (!dias || !precio) {
-            toastr.error('Días y precio son requeridos');
-            return;
-        }
-
-        $.ajax({
-            url: '/Gimnasios/RenovarCliente',
-            type: 'POST',
-            data: {
-                id: id,
-                gimnasioId: gimnasioId,
-                dias: dias,
-                precio: precio
-            },
-            success: function (response) {
-                if (response.success) {
-                    $('#renovarModal').modal('hide');
-                    tablaClientes.ajax.reload(null, false);
-                    cargarEstadisticas();
-                    toastr.success(response.message);
-                }
-            },
-            error: function (xhr) {
-                const response = xhr.responseJSON;
-                toastr.error(response?.message || 'Error al renovar el cliente');
-            }
-        });
     });
+}
 
-    // Exportar Excel
-    $('#btnExportClientesExcel').click(function () {
-        window.location.href = '/Gimnasios/ExportClientesExcel?gimnasioId=' + gimnasioId;
+function cargarCharts() {
+    // Chart Diario (semana)
+    $.get('/Gimnasios/GetChartData', { gimnasioId, periodo: 'semana' }, function(d) {
+        new ApexCharts(document.querySelector("#chartDiario"), {
+            series: [{ name: 'Ingresos', data: d.ingresos }, { name: 'Gastos', data: d.gastos }],
+            chart: { type: 'bar', height: 300 },
+            colors: ['#10b981', '#ef4444'],
+            xaxis: { categories: d.labels }
+        }).render();
     });
+    
+    // Chart Mensual
+    $.get('/Gimnasios/GetChartData', { gimnasioId, periodo: 'mes' }, function(d) {
+        new ApexCharts(document.querySelector("#chartMensual"), {
+            series: [{ name: 'Ingresos', data: d.ingresos }, { name: 'Gastos', data: d.gastos }],
+            chart: { type: 'area', height: 250 },
+            colors: ['#3b82f6', '#f59e0b'],
+            xaxis: { categories: d.labels }
+        }).render();
+    });
+    
+    // Chart Anual
+    $.get('/Gimnasios/GetChartData', { gimnasioId, periodo: 'anio' }, function(d) {
+        new ApexCharts(document.querySelector("#chartAnual"), {
+            series: [{ name: 'Ingresos', data: d.ingresos }, { name: 'Gastos', data: d.gastos }],
+            chart: { type: 'line', height: 250 },
+            colors: ['#8b5cf6', '#ec4899'],
+            xaxis: { categories: d.labels },
+            stroke: { curve: 'smooth' }
+        }).render();
+    });
+    
+    chartsLoaded = true;
+}
 
+// Refrescar ventas
+$('#btnRefrescarVentas').click(function() {
+    // Clear charts and reload
+    $('#chartPie, #chartDiario, #chartMensual, #chartAnual').html('');
+    chartsLoaded = false;
+    cargarVentasStats();
+    cargarCharts();
+    toastr.success('Ventas actualizadas');
+});
 </script>
 }
 
 <style>
-    .bg-light-primary { background-color: rgba(13, 110, 253, 0.1); }
-    .bg-light-success { background-color: rgba(25, 135, 84, 0.1); }
-    .bg-light-warning { background-color: rgba(255, 193, 7, 0.1); }
-    .bg-light-info { background-color: rgba(13, 202, 240, 0.1); }
-    .bg-light-danger { background-color: rgba(220, 53, 69, 0.1); }
-
-    .badge-light-primary { background-color: rgba(13, 110, 253, 0.1); color: #0d6efd; }
-    .badge-light-success { background-color: rgba(25, 135, 84, 0.1); color: #198754; }
-    .badge-light-warning { background-color: rgba(255, 193, 7, 0.1); color: #ffc107; }
-    .badge-light-info { background-color: rgba(13, 202, 240, 0.1); color: #0dcaf0; }
-    .badge-light-danger { background-color: rgba(220, 53, 69, 0.1); color: #dc3545; }
-
-    .required:after {
-        content: " *";
-        color: #dc3545;
-    }
-
-    /* Symbols (Metronic-style) */
-    .symbol {
-        display: inline-flex;
-        flex-shrink: 0;
-        position: relative;
-        border-radius: 0.475rem;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .symbol-40px { width: 40px; height: 40px; }
-    .symbol-50px { width: 50px; height: 50px; }
-
-    .symbol-label {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 100%;
-    }
-
-    /* Font sizes */
-    .fs-7 { font-size: 0.85rem; }
-    .fs-8 { font-size: 0.75rem; }
-
-    /* Icon buttons */
-    .btn-icon {
-        width: 35px;
-        height: 35px;
-        padding: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    /* Tables */
-    #clientesTable tbody tr:hover {
-        background-color: rgba(0, 0, 0, 0.025);
-    }
-
-    /* Modals */
-    .modal-content {
-        border-radius: 0.75rem;
-    }
-
-    .modal-header,
-    .modal-footer {
-        border: none;
-    }
-
-    /* Scroll container */
-    #proximosVencerContainer::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    #proximosVencerContainer::-webkit-scrollbar-thumb {
-        background-color: rgba(0, 0, 0, 0.15);
-        border-radius: 3px;
-    }
+.bg-light-primary { background-color: rgba(13, 110, 253, 0.1); }
+.bg-light-success { background-color: rgba(25, 135, 84, 0.1); }
+.bg-light-warning { background-color: rgba(255, 193, 7, 0.1); }
+.bg-light-info { background-color: rgba(13, 202, 240, 0.1); }
+.bg-light-danger { background-color: rgba(220, 53, 69, 0.1); }
+.fs-7 { font-size: 0.85rem; }
+.fs-2x { font-size: 1.75rem; }
+.required:after { content: " *"; color: #dc3545; }
+.btn-icon { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+.btn-light-success { background-color: rgba(25, 135, 84, 0.1); color: #198754; }
+.btn-light-primary { background-color: rgba(13, 110, 253, 0.1); color: #0d6efd; }
+.btn-light-danger { background-color: rgba(220, 53, 69, 0.1); color: #dc3545; }
+.nav-tabs-line .nav-link { border: none; border-bottom: 3px solid transparent; padding: 1rem 1.5rem; }
+.nav-tabs-line .nav-link.active { border-bottom-color: #0d6efd; color: #0d6efd; }
+.border-dashed { border-style: dashed !important; }
+footer.footer { display: none !important; }
 </style>
