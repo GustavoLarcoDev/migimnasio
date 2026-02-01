@@ -6,15 +6,18 @@ var gimnasioId = Model.GimnasioId;
 }
 
 <!-- Toolbar -->
-<div class="d-flex flex-wrap align-items-center mb-4 px-5 pt-4">
-    <div>
-        <h1 class="fw-bolder text-dark mb-2">Dashboard</h1>
-        <p class="text-muted mb-0">Bienvenido, <strong>@Model.DuenoGimnasio</strong></p>
-    </div>
-    <div class="d-flex gap-2 ms-auto">
-        <a href="@Url.Action("Logout", "Gimnasios")" class="btn btn-sm btn-light-danger">
-            <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
-        </a>
+<div class="px-5 pt-4 mb-4">
+    <!-- Header Section -->
+    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="fw-bolder text-dark mb-2">Dashboard</h1>
+            <p class="text-muted mb-0">Bienvenido, <strong>@Model.DuenoGimnasio</strong></p>
+        </div>
+        <div>
+            <a href="@Url.Action("Logout", "Gimnasios")" class="btn btn-sm btn-light-danger">
+                <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
+            </a>
+        </div>
     </div>
 </div>
 
@@ -42,8 +45,20 @@ var gimnasioId = Model.GimnasioId;
 <div class="tab-content px-5 pb-5" id="dashboardTabsContent">
     <!-- TAB CLIENTES -->
     <div class="tab-pane fade show active" id="clientesTab" role="tabpanel">
+        <!-- Action Buttons - Centered -->
+        <div class="d-flex flex-wrap justify-content-center gap-2 pt-0 pb-2">
+            <button id="btnCrearCliente" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Nuevo Cliente
+            </button>
+            <button id="btnExportClientesExcel" class="btn btn-success">
+                <i class="bi bi-file-earmark-excel me-2"></i>Exportar
+            </button>
+            <button id="btnImportarExcel" class="btn btn-outline-primary">
+                <i class="bi bi-upload me-2"></i>Importar Excel
+            </button>
+        </div>
         <!-- Stats Cards -->
-        <div class="row g-4 mb-5">
+        <div class="row g-4 mb-1">
             <div class="col-xl-3 col-md-6">
                 <div class="card border-0 shadow-sm h-100 bg-light-primary">
                     <div class="card-body">
@@ -96,13 +111,6 @@ var gimnasioId = Model.GimnasioId;
                     </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="d-flex gap-2 mb-4">
-            <button id="btnCrearCliente" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>Nuevo Cliente</button>
-            <button id="btnExportClientesExcel" class="btn btn-success"><i class="bi bi-file-earmark-excel me-2"></i>Exportar</button>
-            <button id="btnImportarExcel" class="btn btn-outline-primary"><i class="bi bi-upload me-2"></i>Importar Excel</button>
         </div>
 
         <!-- Import Zone (hidden by default) -->
@@ -272,16 +280,28 @@ var gimnasioId = Model.GimnasioId;
                     <div class="card-body"><div id="chartDiario"></div></div>
                 </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white border-0"><h5 class="fw-bold mb-0">Ventas Mensuales</h5></div>
-                    <div class="card-body"><div id="chartMensual"></div></div>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-white border-0"><h5 class="fw-bold mb-0">Ventas Anuales</h5></div>
-                    <div class="card-body"><div id="chartAnual"></div></div>
+                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold mb-0">Usuarios Diarios</h5>
+                        <button id="btnEnviarMensajesMasivos" class="btn btn-sm btn-success">
+                            <i class="bi bi-whatsapp me-2"></i>Mensaje
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                            <table id="tablaUsuariosDiarios" class="table table-row-bordered align-middle gs-0 gy-3">
+                                <thead>
+                                    <tr class="fw-bold text-muted">
+                                        <th>Nombre</th>
+                                        <th>Teléfono</th>
+                                        <th>Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -335,7 +355,7 @@ var gimnasioId = Model.GimnasioId;
                         </div>
                         <div class="col-md-4 mb-3 pt-4">
                             <div class="form-check form-switch mt-2">
-                                <input type="hidden" name="EsDiario" value="false" />
+                            <div class="form-check form-switch mt-2">
                                 <input class="form-check-input" type="checkbox" name="EsDiario" id="esDiario" value="true" />
                                 <label class="form-check-label fw-semibold" for="esDiario">Es Diario</label>
                             </div>
@@ -398,7 +418,7 @@ var gimnasioId = Model.GimnasioId;
 @section Scripts {
 <script>
 const gimnasioId = '@gimnasioId';
-let tablaClientes, tablaLogs;
+let tablaClientes, tablaLogs, tablaUsuariosDiarios;
 let modoEdicion = false;
 let filtroLogActual = 'dia';
 
@@ -411,7 +431,7 @@ $(document).ready(function () {
     $('button[data-bs-toggle="tab"]').on('shown.bs.tab', function(e) {
         if (e.target.dataset.bsTarget === '#ventasTab') {
             cargarVentasStats();
-            cargarCharts();
+            cargarCharts(); // This will also init the new table
         } else if (e.target.dataset.bsTarget === '#logsTab') {
             if (!tablaLogs) cargarTablaLogs();
         }
@@ -598,7 +618,7 @@ function cargarVentasStats() {
         $('#ventasClientesDiarios').text(d.clientesDiariosHoy);
         $('#ventasGananciaMes').text('$' + d.gananciaMes.toFixed(2));
         
-        // Pie chart - render with today's stats (use gananciaMes if ingresosDia is 0 for better visualization)
+        // Pie chart
         const ingresos = d.ingresosDia > 0 ? d.ingresosDia : d.ingresosMes || 1;
         const gastos = d.gastosDia > 0 ? d.gastosDia : d.gastosMes || 0;
         
@@ -609,22 +629,7 @@ function cargarVentasStats() {
                 labels: ['Ingresos', 'Gastos'],
                 colors: ['#10b981', '#ef4444'],
                 legend: { position: 'bottom' },
-                plotOptions: {
-                    pie: {
-                        donut: {
-                            labels: {
-                                show: true,
-                                total: {
-                                    show: true,
-                                    label: 'Total',
-                                    formatter: function(w) {
-                                        return '$' + w.globals.seriesTotals.reduce((a, b) => a + b, 0).toFixed(2);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
+                plotOptions: { pie: { donut: { labels: { show: true, total: { show: true, label: 'Total', formatter: w => '$' + w.globals.seriesTotals.reduce((a,b)=>a+b,0).toFixed(2) } } } } },
                 dataLabels: { enabled: true, formatter: (val) => val.toFixed(1) + '%' },
                 noData: { text: 'Sin datos' }
             }).render();
@@ -643,40 +648,50 @@ function cargarCharts() {
         }).render();
     });
     
-    // Chart Mensual
-    $.get('/Gimnasios/GetChartData', { gimnasioId, periodo: 'mes' }, function(d) {
-        new ApexCharts(document.querySelector("#chartMensual"), {
-            series: [{ name: 'Ingresos', data: d.ingresos }, { name: 'Gastos', data: d.gastos }],
-            chart: { type: 'area', height: 250 },
-            colors: ['#3b82f6', '#f59e0b'],
-            xaxis: { categories: d.labels }
-        }).render();
+    // TABLA USUARIOS DIARIOS (Replacement for Monthly Chart)
+    if (tablaUsuariosDiarios) { tablaUsuariosDiarios.destroy(); }
+    tablaUsuariosDiarios = $('#tablaUsuariosDiarios').DataTable({
+        ajax: { url: '/Gimnasios/GetClientesDiarios', data: { gimnasioId }, dataSrc: '' },
+        columns: [
+            { data: 'nombreCompleto' },
+            { data: 'telefono', render: d => d || '<span class="text-muted">No registrado</span>' },
+            { data: 'fechaDeCreacion', render: d => new Date(d).toLocaleDateString('es-MX') }
+        ],
+        pageLength: 5,
+        lengthChange: false,
+        searching: false,
+        info: false
     });
     
-    // Chart Anual
-    $.get('/Gimnasios/GetChartData', { gimnasioId, periodo: 'anio' }, function(d) {
-        new ApexCharts(document.querySelector("#chartAnual"), {
-            series: [{ name: 'Ingresos', data: d.ingresos }, { name: 'Gastos', data: d.gastos }],
-            chart: { type: 'line', height: 250 },
-            colors: ['#8b5cf6', '#ec4899'],
-            xaxis: { categories: d.labels },
-            stroke: { curve: 'smooth' }
-        }).render();
-    });
+    
     
     chartsLoaded = true;
 }
 
-// Refrescar ventas
-$('#btnRefrescarVentas').click(function() {
-    // Clear charts and reload
-    $('#chartPie, #chartDiario, #chartMensual, #chartAnual').html('');
-    chartsLoaded = false;
-    cargarVentasStats();
-    cargarCharts();
-    toastr.success('Ventas actualizadas');
+// Boton Mensajes Masivos
+$('#btnEnviarMensajesMasivos').click(function() {
+    if (confirm('¿Estás seguro de enviar un mensaje de WhatsApp a TODOS los usuarios diarios registrados?')) {
+        const btn = $(this);
+        const originalContent = btn.html();
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Enviando...');
+        
+        $.post('/Gimnasios/EnviarMensajesMasivos', { gimnasioId }, function(r) {
+            if (r.success) {
+                toastr.success(r.message);
+            } else {
+                toastr.warning(r.message);
+            }
+        }).fail(function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Error al enviar mensajes');
+        }).always(function() {
+            btn.prop('disabled', false).html(originalContent);
+        });
+    }
 });
+
+
 </script>
+
 }
 
 <style>

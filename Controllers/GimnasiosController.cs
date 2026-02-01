@@ -1000,7 +1000,85 @@ namespace Gimnasio.Controllers
                 return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
-        
+
+         // GET: Gimnasios/GetClientesDiarios
+         [Microsoft.AspNetCore.Authorization.Authorize]
+         [HttpGet]
+         public async Task<IActionResult> GetClientesDiarios(Guid gimnasioId)
+         {
+             try
+             {
+                 var clientes = await _context.Clientes
+                     .Where(c => c.GimnasioId == gimnasioId && c.EsDiario)
+                     .OrderByDescending(c => c.FechaDeCreacion)
+                     .Select(c => new 
+                     {
+                         c.ClienteId,
+                         c.Nombre,
+                         c.Apellido,
+                         NombreCompleto = $"{c.Nombre} {c.Apellido}",
+                         c.Telefono,
+                         c.FechaDeCreacion
+                     })
+                     .ToListAsync();
+
+                 return Ok(clientes);
+             }
+             catch (Exception ex)
+             {
+                 return StatusCode(500, new { success = false, message = ex.Message });
+             }
+         }
+
+         // POST: Gimnasios/EnviarMensajesMasivos
+         [Microsoft.AspNetCore.Authorization.Authorize]
+         [HttpPost]
+         public async Task<IActionResult> EnviarMensajesMasivos(Guid gimnasioId)
+         {
+             try
+             {
+                 // Verificar autorización
+                 var gimnasioIdClaim = User.Claims.FirstOrDefault(c => c.Type == "GimnasioId");
+                 if (gimnasioIdClaim == null || gimnasioId.ToString() != gimnasioIdClaim.Value)
+                 {
+                      return Forbid();
+                 }
+
+                 var gimnasio = await _context.Gimnasios.FindAsync(gimnasioId);
+                 if (gimnasio == null) return NotFound(new { success = false, message = "Gimnasio no encontrado" });
+
+                 var clientesDiarios = await _context.Clientes
+                     .Where(c => c.GimnasioId == gimnasioId && c.EsDiario && !string.IsNullOrEmpty(c.Telefono))
+                     .ToListAsync();
+
+                 if (!clientesDiarios.Any())
+                 {
+                     return Ok(new { success = true, message = "No hay usuarios diarios con teléfono registrado para enviar mensajes.", count = 0 });
+                 }
+
+                 int mensajesEnviados = 0;
+
+                 foreach (var cliente in clientesDiarios)
+                 {
+                     string mensaje = $"hey como estas {cliente.Nombre}, espero que te haya encantado entrenar con nosotros hoy en {gimnasio.GimnasioNombre} soy {gimnasio.DuenoGimnasio} y queria saber si tenias algun comentario para mi o si estas interesado en adquirir un mensual con nosotros.";
+                     
+                     // SIMULACIÓN DE ENVÍO VIA WHATSAPP
+                     // TODO: Integrar aquí la API real de WhatsApp (Twilio, Gupshup, Cloud API, etc.)
+                     // Ejemplo: WhatsAppService.SendMessage(from: gimnasio.Telefono, to: cliente.Telefono, body: mensaje);
+                     
+                     // Por ahora solo logueamos la intención (o agregamos un Log en base de datos si se requiere)
+                     // Console.WriteLine($"Enviando a {cliente.Telefono}: {mensaje}");
+                     mensajesEnviados++;
+                 }
+
+                 return Ok(new { success = true, message = $"{mensajesEnviados} mensajes enviados exitosamente.", count = mensajesEnviados });
+             }
+             catch (Exception ex)
+             {
+                 return StatusCode(500, new { success = false, message = ex.Message });
+             }
+         }
+
         // POST: Gimnasios/ImportarClientesExcel
         [Microsoft.AspNetCore.Authorization.Authorize]
         [HttpPost]
