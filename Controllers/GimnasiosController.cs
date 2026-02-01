@@ -69,7 +69,7 @@ namespace Gimnasio.Controllers
                         g.IsActive,
                         g.EsPrueba,
                         g.FechaCreacion,
-                        TotalClientes = g.Clientes.Count
+                        TotalClientes = _context.Clientes.Count(c => c.GimnasioId == g.GimnasioId)
                     })
                     .OrderByDescending(g => g.FechaCreacion)
                     .ToListAsync();
@@ -688,7 +688,7 @@ namespace Gimnasio.Controllers
                         c.Direccion,
                         c.Dias,
                         c.Precio,
-                        c.EsDiario,
+                        c.FechaDeCreacion,
                         c.FechaQueTermina,
                         DiasRestantes = (c.FechaQueTermina.Date - DateTime.Now.Date).Days,
                         EstaActivo = c.FechaQueTermina.Date >= DateTime.Now.Date
@@ -1000,6 +1000,620 @@ namespace Gimnasio.Controllers
                 return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
+        
+        // POST: Gimnasios/ImportarClientesExcel
+        [Microsoft.AspNetCore.Authorization.Authorize]
+        [HttpPost]
+        public async Task<IActionResult> ImportarClientesExcel(Guid gimnasioId, IFormFile file)
+        {
+            try
+            {
+                // Verificar autorización
+                var gimnasioIdClaim = User.Claims.FirstOrDefault(c => c.Type == "GimnasioId");
+                if (gimnasioIdClaim == null || gimnasioId.ToString() != gimnasioIdClaim.Value)
+                {
+                    return Forbid();
+                }
+
+                if (file == null || file.Length == 0)
+                {
+                    return BadRequest(new { success = false, message = "No se ha proporcionado ningún archivo" });
+                }
+
+                var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+                if (extension != ".xlsx" && extension != ".xls")
+                {
+                    return BadRequest(new { success = false, message = "El archivo debe ser un Excel (.xlsx o .xls)" });
+                }
+
+                var clientesCreados = new List<string>();
+                var clientesOmitidos = new List<string>();
+                var errores = new List<string>();
+
+                using var stream = new MemoryStream();
+                await file.CopyToAsync(stream);
+                stream.Position = 0;
+
+                using var workbook = new XLWorkbook(stream);
+                var worksheet = workbook.Worksheet(1);
+                var rows = worksheet.RangeUsed()?.RowsUsed().Skip(1); // Saltar encabezado
+
+                if (rows == null)
+                {
+                    return BadRequest(new { success = false, message = "El archivo está vacío" });
+                }
+
+                // Obtener clientes existentes para validación de duplicados
+                var clientesExistentes = await _context.Clientes
+                    .Where(c => c.GimnasioId == gimnasioId)
+                    .Select(c => new { c.Nombre, c.Apellido })
+                    .ToListAsync();
+
+                int rowNumber = 2;
+                foreach (var row in rows)
+                {
+                    try
+                    {
+                        var nombre = row.Cell(1).GetValue<string>()?.Trim();
+                        var apellido = row.Cell(2).GetValue<string>()?.Trim();
+
+                        if (string.IsNullOrWhiteSpace(nombre) || string.IsNullOrWhiteSpace(apellido))
+                        {
+                            errores.Add($"Fila {rowNumber}: Nombre y Apellido son obligatorios");
+                            rowNumber++;
+                            continue;
+                        }
+
+                        // Validación case-sensitive de duplicados
+                        var existeDuplicado = clientesExistentes.Any(c => 
+                            c.Nombre == nombre && c.Apellido == apellido);
+
+                        if (existeDuplicado)
+                        {
+                            clientesOmitidos.Add($"{nombre} {apellido}");
+                            rowNumber++;
+                            continue;
+                        }
+
+                        // Leer campos opcionales
+                        var email = row.Cell(3).GetValue<string>()?.Trim();
+                        var telefono = row.Cell(4).GetValue<string>()?.Trim();
+                        var direccion = row.Cell(5).GetValue<string>()?.Trim();
+                        
+                        int dias = 30; // Por defecto 30 días
+                        decimal precio = 0;
+                        
+                        try { dias = row.Cell(6).GetValue<int>(); } catch { }
+                        try { precio = row.Cell(7).GetValue<decimal>(); } catch { }
+                        if (dias <= 0) dias = 30;
+
+                        var cliente = new Cliente
+                        {
+                            ClienteId = Guid.NewGuid(),
+                            GimnasioId = gimnasioId,
+                            Nombre = nombre,
+                            Apellido = apellido,
+                            Email = email,
+                            Telefono = telefono ?? "",
+                            Direccion = direccion,
+                            Dias = dias,
+                            Precio = precio,
+                            EsDiario = false,
+                            FechaDeCreacion = DateTime.Now,
+                            FechaDeActualizacion = DateTime.Now,
+                            FechaQueTermina = DateTime.Now.AddDays(dias)
+                        };
+
+                        _context.Clientes.Add(cliente);
+                        clientesCreados.Add($"{nombre} {apellido}");
+                        
+                        // Agregar a la lista de existentes para evitar duplicados dentro del mismo archivo
+                        clientesExistentes.Add(new { Nombre = nombre, Apellido = apellido });
+                    }
+                    catch (Exception ex)
+                    {
+                        errores.Add($"Fila {rowNumber}: {ex.Message}");
+                    }
+                    rowNumber++;
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    success = true,
+                    message = $"Importación completada",
+                    clientesCreados = clientesCreados.Count,
+                    clientesOmitidos = clientesOmitidos.Count,
+                    erroresCount = errores.Count,
+                    detalleCreados = clientesCreados,
+                    detalleOmitidos = clientesOmitidos,
+                    detalleErrores = errores
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = ex.Message });
+            }
+        }
+         #endregion
+         
+         #region CRUD de Logs
+         
+         // POST: Gimnasios/CrearLog
+         [Microsoft.AspNetCore.Authorization.Authorize]
+         [HttpPost]
+         public async Task<IActionResult> CrearLog([FromForm] LogCreateModel model)
+         {
+             try
+             {
+                 // Verificar autorización
+                 var gimnasioIdClaim = User.Claims.FirstOrDefault(c => c.Type == "GimnasioId");
+                 if (gimnasioIdClaim == null || model.GimnasioId.ToString() != gimnasioIdClaim.Value)
+                 {
+                     return Forbid();
+                 }
+
+                 if (string.IsNullOrWhiteSpace(model.Message))
+                 {
+                     return BadRequest(new { success = false, message = "La descripción es obligatoria" });
+                 }
+
+                 var log = new Logs
+                 {
+                     Id = Guid.NewGuid(),
+                     GimnasioId = model.GimnasioId,
+                     Message = model.Message,
+                     Monto = model.Monto,
+                     Tipo = model.Monto >= 0 ? "ingreso" : "gasto",
+                     Fecha = DateTime.Now
+                 };
+
+                 _context.Logs.Add(log);
+                 await _context.SaveChangesAsync();
+
+                 return Ok(new { success = true, message = "Log registrado exitosamente" });
+             }
+             catch (Exception ex)
+             {
+                 return StatusCode(500, new { success = false, message = ex.Message });
+             }
+         }
+
+         // GET: Gimnasios/GetLogs
+         [Microsoft.AspNetCore.Authorization.Authorize]
+         [HttpGet]
+         public async Task<IActionResult> GetLogs(Guid gimnasioId, string filtro = "mes")
+         {
+             try
+             {
+                 var query = _context.Logs.Where(l => l.GimnasioId == gimnasioId);
+
+                 // Aplicar filtros de fecha
+                 var hoy = DateTime.Now.Date;
+                 switch (filtro.ToLower())
+                 {
+                     case "dia":
+                         query = query.Where(l => l.Fecha.Date == hoy);
+                         break;
+                     case "semana":
+                         var inicioSemana = hoy.AddDays(-(int)hoy.DayOfWeek);
+                         query = query.Where(l => l.Fecha.Date >= inicioSemana);
+                         break;
+                     case "mes":
+                         query = query.Where(l => l.Fecha.Month == hoy.Month && l.Fecha.Year == hoy.Year);
+                         break;
+                     case "año":
+                     case "anio":
+                         query = query.Where(l => l.Fecha.Year == hoy.Year);
+                         break;
+                     default:
+                         // Sin filtro = todos
+                         break;
+                 }
+
+                 var logs = await query
+                     .OrderByDescending(l => l.Fecha)
+                     .Select(l => new
+                     {
+                         l.Id,
+                         l.Message,
+                         l.Monto,
+                         l.Tipo,
+                         l.Fecha
+                     })
+                     .ToListAsync();
+
+                 return Ok(logs);
+             }
+             catch (Exception ex)
+             {
+                 return StatusCode(500, new { success = false, message = ex.Message });
+             }
+         }
+
+         // GET: Gimnasios/GetLog
+         [Microsoft.AspNetCore.Authorization.Authorize]
+         [HttpGet]
+         public async Task<IActionResult> GetLog(Guid id, Guid gimnasioId)
+         {
+             try
+             {
+                 var log = await _context.Logs
+                     .FirstOrDefaultAsync(l => l.Id == id && l.GimnasioId == gimnasioId);
+
+                 if (log == null)
+                 {
+                     return NotFound(new { success = false, message = "Log no encontrado" });
+                 }
+
+                 return Ok(log);
+             }
+             catch (Exception ex)
+             {
+                 return StatusCode(500, new { success = false, message = ex.Message });
+             }
+         }
+
+         // POST: Gimnasios/EditarLog
+         [Microsoft.AspNetCore.Authorization.Authorize]
+         [HttpPost]
+         public async Task<IActionResult> EditarLog(Guid id, Guid gimnasioId, string message, decimal monto)
+         {
+             try
+             {
+                 var log = await _context.Logs
+                     .FirstOrDefaultAsync(l => l.Id == id && l.GimnasioId == gimnasioId);
+
+                 if (log == null)
+                 {
+                     return NotFound(new { success = false, message = "Log no encontrado" });
+                 }
+
+                 log.Message = message;
+                 log.Monto = monto;
+                 log.Tipo = monto >= 0 ? "ingreso" : "gasto";
+
+                 _context.Update(log);
+                 await _context.SaveChangesAsync();
+
+                 return Ok(new { success = true, message = "Log actualizado exitosamente" });
+             }
+             catch (Exception ex)
+             {
+                 return StatusCode(500, new { success = false, message = ex.Message });
+             }
+         }
+
+         // POST: Gimnasios/EliminarLog
+         [Microsoft.AspNetCore.Authorization.Authorize]
+         [HttpPost]
+         public async Task<IActionResult> EliminarLog(Guid id, Guid gimnasioId)
+         {
+             try
+             {
+                 var log = await _context.Logs
+                     .FirstOrDefaultAsync(l => l.Id == id && l.GimnasioId == gimnasioId);
+
+                 if (log == null)
+                 {
+                     return NotFound(new { success = false, message = "Log no encontrado" });
+                 }
+
+                 _context.Logs.Remove(log);
+                 await _context.SaveChangesAsync();
+
+                 return Ok(new { success = true, message = "Log eliminado exitosamente" });
+             }
+             catch (Exception ex)
+             {
+                 return StatusCode(500, new { success = false, message = ex.Message });
+             }
+         }
+
+         // GET: Gimnasios/ExportLogsExcel
+         [Microsoft.AspNetCore.Authorization.Authorize]
+         public async Task<IActionResult> ExportLogsExcel(Guid gimnasioId, string filtro = "mes")
+         {
+             try
+             {
+                 var query = _context.Logs.Where(l => l.GimnasioId == gimnasioId);
+
+                 var hoy = DateTime.Now.Date;
+                 switch (filtro.ToLower())
+                 {
+                     case "dia":
+                         query = query.Where(l => l.Fecha.Date == hoy);
+                         break;
+                     case "semana":
+                         var inicioSemana = hoy.AddDays(-(int)hoy.DayOfWeek);
+                         query = query.Where(l => l.Fecha.Date >= inicioSemana);
+                         break;
+                     case "mes":
+                         query = query.Where(l => l.Fecha.Month == hoy.Month && l.Fecha.Year == hoy.Year);
+                         break;
+                     case "año":
+                     case "anio":
+                         query = query.Where(l => l.Fecha.Year == hoy.Year);
+                         break;
+                 }
+
+                 var logs = await query.OrderByDescending(l => l.Fecha).ToListAsync();
+
+                 using var workbook = new XLWorkbook();
+                 var worksheet = workbook.Worksheets.Add("Logs");
+
+                 // Encabezados
+                 worksheet.Cell(1, 1).Value = "Descripción";
+                 worksheet.Cell(1, 2).Value = "Monto";
+                 worksheet.Cell(1, 3).Value = "Tipo";
+                 worksheet.Cell(1, 4).Value = "Fecha";
+
+                 var headerRange = worksheet.Range(1, 1, 1, 4);
+                 headerRange.Style.Font.Bold = true;
+                 headerRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#3b82f6");
+                 headerRange.Style.Font.FontColor = XLColor.White;
+
+                 int row = 2;
+                 decimal totalIngresos = 0;
+                 decimal totalGastos = 0;
+
+                 foreach (var log in logs)
+                 {
+                     worksheet.Cell(row, 1).Value = log.Message;
+                     worksheet.Cell(row, 2).Value = log.Monto;
+                     worksheet.Cell(row, 3).Value = log.Tipo;
+                     worksheet.Cell(row, 4).Value = log.Fecha.ToString("dd/MM/yyyy HH:mm");
+
+                     if (log.Monto >= 0)
+                     {
+                         worksheet.Cell(row, 2).Style.Font.FontColor = XLColor.Green;
+                         totalIngresos += log.Monto;
+                     }
+                     else
+                     {
+                         worksheet.Cell(row, 2).Style.Font.FontColor = XLColor.Red;
+                         totalGastos += Math.Abs(log.Monto);
+                     }
+                     row++;
+                 }
+
+                 // Totales
+                 row++;
+                 worksheet.Cell(row, 1).Value = "Total Ingresos:";
+                 worksheet.Cell(row, 2).Value = totalIngresos;
+                 worksheet.Cell(row, 2).Style.Font.FontColor = XLColor.Green;
+                 row++;
+                 worksheet.Cell(row, 1).Value = "Total Gastos:";
+                 worksheet.Cell(row, 2).Value = totalGastos;
+                 worksheet.Cell(row, 2).Style.Font.FontColor = XLColor.Red;
+                 row++;
+                 worksheet.Cell(row, 1).Value = "Balance:";
+                 worksheet.Cell(row, 2).Value = totalIngresos - totalGastos;
+                 worksheet.Cell(row, 1).Style.Font.Bold = true;
+                 worksheet.Cell(row, 2).Style.Font.Bold = true;
+
+                 worksheet.Columns().AdjustToContents();
+
+                 using var stream = new MemoryStream();
+                 workbook.SaveAs(stream);
+                 var content = stream.ToArray();
+
+                 return File(
+                     content,
+                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                     $"Logs_{filtro}_{DateTime.Now:yyyyMMdd}.xlsx"
+                 );
+             }
+             catch (Exception ex)
+             {
+                 return StatusCode(500, new { success = false, message = ex.Message });
+             }
+         }
+         #endregion
+         
+         #region Estadísticas de Ventas
+         
+         // GET: Gimnasios/GetVentasStats
+         [Microsoft.AspNetCore.Authorization.Authorize]
+         [HttpGet]
+         public async Task<IActionResult> GetVentasStats(Guid gimnasioId)
+         {
+             try
+             {
+                 var hoy = DateTime.Now.Date;
+                 var inicioMes = new DateTime(hoy.Year, hoy.Month, 1);
+                 var inicioAnio = new DateTime(hoy.Year, 1, 1);
+
+                 // Obtener clientes y logs
+                 var clientes = await _context.Clientes
+                     .Where(c => c.GimnasioId == gimnasioId)
+                     .ToListAsync();
+
+                 var logs = await _context.Logs
+                     .Where(l => l.GimnasioId == gimnasioId)
+                     .ToListAsync();
+
+                 // Membresías de 30 días vendidas este mes
+                 var membresias30Dias = clientes
+                     .Where(c => c.Dias >= 30 && c.FechaDeCreacion >= inicioMes)
+                     .Sum(c => c.Precio);
+
+                 // Clientes diarios de hoy
+                 var clientesDiariosHoy = clientes
+                     .Count(c => c.EsDiario && c.FechaDeCreacion.Date == hoy);
+
+                 // Ingresos del día (clientes + logs positivos)
+                 var ingresosClientesHoy = clientes
+                     .Where(c => c.FechaDeCreacion.Date == hoy)
+                     .Sum(c => c.Precio);
+                 var ingresosLogsHoy = logs
+                     .Where(l => l.Fecha.Date == hoy && l.Monto > 0)
+                     .Sum(l => l.Monto);
+                 var ingresosDia = ingresosClientesHoy + ingresosLogsHoy;
+
+                 // Ingresos del mes
+                 var ingresosClientesMes = clientes
+                     .Where(c => c.FechaDeCreacion >= inicioMes)
+                     .Sum(c => c.Precio);
+                 var ingresosLogsMes = logs
+                     .Where(l => l.Fecha >= inicioMes && l.Monto > 0)
+                     .Sum(l => l.Monto);
+                 var ingresosMes = ingresosClientesMes + ingresosLogsMes;
+
+                 // Ingresos del año
+                 var ingresosClientesAnio = clientes
+                     .Where(c => c.FechaDeCreacion >= inicioAnio)
+                     .Sum(c => c.Precio);
+                 var ingresosLogsAnio = logs
+                     .Where(l => l.Fecha >= inicioAnio && l.Monto > 0)
+                     .Sum(l => l.Monto);
+                 var ingresosAnio = ingresosClientesAnio + ingresosLogsAnio;
+
+                 // Gastos (logs negativos)
+                 var gastosDia = logs
+                     .Where(l => l.Fecha.Date == hoy && l.Monto < 0)
+                     .Sum(l => Math.Abs(l.Monto));
+                 var gastosMes = logs
+                     .Where(l => l.Fecha >= inicioMes && l.Monto < 0)
+                     .Sum(l => Math.Abs(l.Monto));
+                 var gastosAnio = logs
+                     .Where(l => l.Fecha >= inicioAnio && l.Monto < 0)
+                     .Sum(l => Math.Abs(l.Monto));
+
+                 // Ganancia neta
+                 var gananciaDia = ingresosDia - gastosDia;
+                 var gananciaMes = ingresosMes - gastosMes;
+                 var gananciaAnio = ingresosAnio - gastosAnio;
+
+                 return Ok(new
+                 {
+                     membresias30Dias,
+                     clientesDiariosHoy,
+                     
+                     ingresosDia,
+                     ingresosMes,
+                     ingresosAnio,
+                     
+                     gastosDia,
+                     gastosMes,
+                     gastosAnio,
+                     
+                     gananciaDia,
+                     gananciaMes,
+                     gananciaAnio
+                 });
+             }
+             catch (Exception ex)
+             {
+                 return StatusCode(500, new { success = false, message = ex.Message });
+             }
+         }
+
+         // GET: Gimnasios/GetChartData
+         [Microsoft.AspNetCore.Authorization.Authorize]
+         [HttpGet]
+         public async Task<IActionResult> GetChartData(Guid gimnasioId, string periodo = "semana")
+         {
+             try
+             {
+                 var hoy = DateTime.Now.Date;
+                 var clientes = await _context.Clientes
+                     .Where(c => c.GimnasioId == gimnasioId)
+                     .ToListAsync();
+
+                 var logs = await _context.Logs
+                     .Where(l => l.GimnasioId == gimnasioId)
+                     .ToListAsync();
+
+                 var labels = new List<string>();
+                 var ingresos = new List<decimal>();
+                 var gastos = new List<decimal>();
+
+                 switch (periodo.ToLower())
+                 {
+                     case "semana":
+                         // Últimos 7 días
+                         for (int i = 6; i >= 0; i--)
+                         {
+                             var fecha = hoy.AddDays(-i);
+                             labels.Add(fecha.ToString("dd/MM"));
+
+                             var ingresoDia = clientes
+                                 .Where(c => c.FechaDeActualizacion.Date == fecha)
+                                 .Sum(c => c.Precio)
+                                 + logs.Where(l => l.Fecha.Date == fecha && l.Monto > 0)
+                                     .Sum(l => l.Monto);
+
+                             var gastoDia = logs
+                                 .Where(l => l.Fecha.Date == fecha && l.Monto < 0)
+                                 .Sum(l => Math.Abs(l.Monto));
+
+                             ingresos.Add(ingresoDia);
+                             gastos.Add(gastoDia);
+                         }
+                         break;
+
+                     case "mes":
+                         // Últimas 4 semanas
+                         for (int i = 3; i >= 0; i--)
+                         {
+                             var inicioSemana = hoy.AddDays(-7 * i - (int)hoy.DayOfWeek);
+                             var finSemana = inicioSemana.AddDays(6);
+                             labels.Add($"Sem {4 - i}");
+
+                             var ingresoSemana = clientes
+                                 .Where(c => c.FechaDeActualizacion.Date >= inicioSemana && c.FechaDeActualizacion.Date <= finSemana)
+                                 .Sum(c => c.Precio)
+                                 + logs.Where(l => l.Fecha.Date >= inicioSemana && l.Fecha.Date <= finSemana && l.Monto > 0)
+                                     .Sum(l => l.Monto);
+
+                             var gastoSemana = logs
+                                 .Where(l => l.Fecha.Date >= inicioSemana && l.Fecha.Date <= finSemana && l.Monto < 0)
+                                 .Sum(l => Math.Abs(l.Monto));
+
+                             ingresos.Add(ingresoSemana);
+                             gastos.Add(gastoSemana);
+                         }
+                         break;
+
+                     case "anio":
+                         // Últimos 12 meses
+                         for (int i = 11; i >= 0; i--)
+                         {
+                             var fecha = hoy.AddMonths(-i);
+                             var inicioMes = new DateTime(fecha.Year, fecha.Month, 1);
+                             var finMes = inicioMes.AddMonths(1).AddDays(-1);
+                             labels.Add(fecha.ToString("MMM"));
+
+                             var ingresoMes = clientes
+                                 .Where(c => c.FechaDeActualizacion.Date >= inicioMes && c.FechaDeActualizacion.Date <= finMes)
+                                 .Sum(c => c.Precio)
+                                 + logs.Where(l => l.Fecha.Date >= inicioMes && l.Fecha.Date <= finMes && l.Monto > 0)
+                                     .Sum(l => l.Monto);
+
+                             var gastoMes = logs
+                                 .Where(l => l.Fecha.Date >= inicioMes && l.Fecha.Date <= finMes && l.Monto < 0)
+                                 .Sum(l => Math.Abs(l.Monto));
+
+                             ingresos.Add(ingresoMes);
+                             gastos.Add(gastoMes);
+                         }
+                         break;
+                 }
+
+                 return Ok(new
+                 {
+                     labels,
+                     ingresos,
+                     gastos
+                 });
+             }
+             catch (Exception ex)
+             {
+                 return StatusCode(500, new { success = false, message = ex.Message });
+             }
+         }
          #endregion
     }
 }
