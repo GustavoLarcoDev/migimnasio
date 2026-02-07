@@ -760,6 +760,17 @@ namespace Gimnasio.Controllers
                  _context.Clientes.Add(cliente);
                  await _context.SaveChangesAsync();
 
+                 // Create automatic log for client creation
+                 var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
+                 await CreateLogAsync(
+                     gimnasioId: model.GimnasioId,
+                     tipo: "cliente_creado",
+                     message: $"Nuevo cliente creado: {nombreCompleto}",
+                     monto: model.Precio,
+                     clienteId: cliente.ClienteId,
+                     nombreCliente: nombreCompleto
+                 );
+
                  return Ok(new { success = true, message = "Cliente creado exitosamente" });
              }
               catch (Exception ex)
@@ -851,6 +862,17 @@ namespace Gimnasio.Controllers
                  _context.Update(cliente);
                  await _context.SaveChangesAsync();
 
+                 // Create automatic log for client update
+                 var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
+                 await CreateLogAsync(
+                     gimnasioId: model.GimnasioId,
+                     tipo: "cliente_editado",
+                     message: $"Cliente editado: {nombreCompleto}",
+                     monto: 0,
+                     clienteId: cliente.ClienteId,
+                     nombreCliente: nombreCompleto
+                 );
+
                  return Ok(new { success = true, message = "Cliente actualizado exitosamente" });
              }
              catch (Exception ex)
@@ -874,8 +896,20 @@ namespace Gimnasio.Controllers
                     return NotFound(new { success = false, message = "Cliente no encontrado" });
                 }
 
+                var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
+                
                 _context.Clientes.Remove(cliente);
                 await _context.SaveChangesAsync();
+
+                // Create automatic log for client deletion
+                await CreateLogAsync(
+                    gimnasioId: gimnasioId,
+                    tipo: "cliente_eliminado",
+                    message: $"Cliente eliminado: {nombreCompleto}",
+                    monto: 0,
+                    clienteId: cliente.ClienteId,
+                    nombreCliente: nombreCompleto
+                );
 
                 return Ok(new { success = true, message = "Cliente eliminado exitosamente" });
             }
@@ -924,6 +958,17 @@ namespace Gimnasio.Controllers
 
                 _context.Update(cliente);
                 await _context.SaveChangesAsync();
+
+                // Create automatic log for client renewal
+                var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
+                await CreateLogAsync(
+                    gimnasioId: gimnasioId,
+                    tipo: "cliente_renovado",
+                    message: $"Renovación: {nombreCompleto} ({dias} días)",
+                    monto: precio,
+                    clienteId: cliente.ClienteId,
+                    nombreCliente: nombreCompleto
+                );
 
                 return Ok(new { success = true, message = "Membresía renovada exitosamente" });
             }
@@ -1030,54 +1075,7 @@ namespace Gimnasio.Controllers
              }
          }
 
-         // POST: Gimnasios/EnviarMensajesMasivos
-         [Microsoft.AspNetCore.Authorization.Authorize]
-         [HttpPost]
-         public async Task<IActionResult> EnviarMensajesMasivos(Guid gimnasioId)
-         {
-             try
-             {
-                 // Verificar autorización
-                 var gimnasioIdClaim = User.Claims.FirstOrDefault(c => c.Type == "GimnasioId");
-                 if (gimnasioIdClaim == null || gimnasioId.ToString() != gimnasioIdClaim.Value)
-                 {
-                      return Forbid();
-                 }
 
-                 var gimnasio = await _context.Gimnasios.FindAsync(gimnasioId);
-                 if (gimnasio == null) return NotFound(new { success = false, message = "Gimnasio no encontrado" });
-
-                 var clientesDiarios = await _context.Clientes
-                     .Where(c => c.GimnasioId == gimnasioId && c.EsDiario && !string.IsNullOrEmpty(c.Telefono))
-                     .ToListAsync();
-
-                 if (!clientesDiarios.Any())
-                 {
-                     return Ok(new { success = true, message = "No hay usuarios diarios con teléfono registrado para enviar mensajes.", count = 0 });
-                 }
-
-                 int mensajesEnviados = 0;
-
-                 foreach (var cliente in clientesDiarios)
-                 {
-                     string mensaje = $"hey como estas {cliente.Nombre}, espero que te haya encantado entrenar con nosotros hoy en {gimnasio.GimnasioNombre} soy {gimnasio.DuenoGimnasio} y queria saber si tenias algun comentario para mi o si estas interesado en adquirir un mensual con nosotros.";
-                     
-                     // SIMULACIÓN DE ENVÍO VIA WHATSAPP
-                     // TODO: Integrar aquí la API real de WhatsApp (Twilio, Gupshup, Cloud API, etc.)
-                     // Ejemplo: WhatsAppService.SendMessage(from: gimnasio.Telefono, to: cliente.Telefono, body: mensaje);
-                     
-                     // Por ahora solo logueamos la intención (o agregamos un Log en base de datos si se requiere)
-                     // Console.WriteLine($"Enviando a {cliente.Telefono}: {mensaje}");
-                     mensajesEnviados++;
-                 }
-
-                 return Ok(new { success = true, message = $"{mensajesEnviados} mensajes enviados exitosamente.", count = mensajesEnviados });
-             }
-             catch (Exception ex)
-             {
-                 return StatusCode(500, new { success = false, message = ex.Message });
-             }
-         }
 
         // POST: Gimnasios/ImportarClientesExcel
         [Microsoft.AspNetCore.Authorization.Authorize]
@@ -1216,7 +1214,33 @@ namespace Gimnasio.Controllers
         }
          #endregion
          
-         #region CRUD de Logs
+         private async Task CreateLogAsync(Guid gimnasioId, string tipo, string message, decimal monto = 0, Guid? clienteId = null, string nombreCliente = null)
+        {
+            try
+            {
+                var log = new Logs
+                {
+                    Id = Guid.NewGuid(),
+                    GimnasioId = gimnasioId,
+                    Message = message,
+                    Monto = monto,
+                    Tipo = tipo,
+                    ClienteId = clienteId,
+                    NombreCliente = nombreCliente,
+                    Fecha = DateTime.Now
+                };
+
+                _context.Logs.Add(log);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't throw to avoid breaking main operations
+                Console.WriteLine($"Error creating log: {ex.Message}");
+            }
+        }
+
+        #region CRUD de Logs
          
          // POST: Gimnasios/CrearLog
          [Microsoft.AspNetCore.Authorization.Authorize]
@@ -1261,36 +1285,19 @@ namespace Gimnasio.Controllers
          // GET: Gimnasios/GetLogs
          [Microsoft.AspNetCore.Authorization.Authorize]
          [HttpGet]
-         public async Task<IActionResult> GetLogs(Guid gimnasioId, string filtro = "mes")
+         public async Task<IActionResult> GetLogs(Guid gimnasioId)
          {
              try
              {
-                 var query = _context.Logs.Where(l => l.GimnasioId == gimnasioId);
-
-                 // Aplicar filtros de fecha
-                 var hoy = DateTime.Now.Date;
-                 switch (filtro.ToLower())
+                 // Verificar autorización
+                 var gimnasioIdClaim = User.Claims.FirstOrDefault(c => c.Type == "GimnasioId");
+                 if (gimnasioIdClaim == null || gimnasioId.ToString() != gimnasioIdClaim.Value)
                  {
-                     case "dia":
-                         query = query.Where(l => l.Fecha.Date == hoy);
-                         break;
-                     case "semana":
-                         var inicioSemana = hoy.AddDays(-(int)hoy.DayOfWeek);
-                         query = query.Where(l => l.Fecha.Date >= inicioSemana);
-                         break;
-                     case "mes":
-                         query = query.Where(l => l.Fecha.Month == hoy.Month && l.Fecha.Year == hoy.Year);
-                         break;
-                     case "año":
-                     case "anio":
-                         query = query.Where(l => l.Fecha.Year == hoy.Year);
-                         break;
-                     default:
-                         // Sin filtro = todos
-                         break;
+                     return Forbid();
                  }
 
-                 var logs = await query
+                 var logs = await _context.Logs
+                     .Where(l => l.GimnasioId == gimnasioId)
                      .OrderByDescending(l => l.Fecha)
                      .Select(l => new
                      {
@@ -1298,6 +1305,8 @@ namespace Gimnasio.Controllers
                          l.Message,
                          l.Monto,
                          l.Tipo,
+                         l.ClienteId,
+                         l.NombreCliente,
                          l.Fecha
                      })
                      .ToListAsync();
@@ -1391,32 +1400,21 @@ namespace Gimnasio.Controllers
 
          // GET: Gimnasios/ExportLogsExcel
          [Microsoft.AspNetCore.Authorization.Authorize]
-         public async Task<IActionResult> ExportLogsExcel(Guid gimnasioId, string filtro = "mes")
+         public async Task<IActionResult> ExportLogsExcel(Guid gimnasioId)
          {
              try
              {
-                 var query = _context.Logs.Where(l => l.GimnasioId == gimnasioId);
-
-                 var hoy = DateTime.Now.Date;
-                 switch (filtro.ToLower())
+                 // Verificar autorización
+                 var gimnasioIdClaim = User.Claims.FirstOrDefault(c => c.Type == "GimnasioId");
+                 if (gimnasioIdClaim == null || gimnasioId.ToString() != gimnasioIdClaim.Value)
                  {
-                     case "dia":
-                         query = query.Where(l => l.Fecha.Date == hoy);
-                         break;
-                     case "semana":
-                         var inicioSemana = hoy.AddDays(-(int)hoy.DayOfWeek);
-                         query = query.Where(l => l.Fecha.Date >= inicioSemana);
-                         break;
-                     case "mes":
-                         query = query.Where(l => l.Fecha.Month == hoy.Month && l.Fecha.Year == hoy.Year);
-                         break;
-                     case "año":
-                     case "anio":
-                         query = query.Where(l => l.Fecha.Year == hoy.Year);
-                         break;
+                     return Forbid();
                  }
 
-                 var logs = await query.OrderByDescending(l => l.Fecha).ToListAsync();
+                 var logs = await _context.Logs
+                     .Where(l => l.GimnasioId == gimnasioId)
+                     .OrderByDescending(l => l.Fecha)
+                     .ToListAsync();
 
                  using var workbook = new XLWorkbook();
                  var worksheet = workbook.Worksheets.Add("Logs");
@@ -1425,9 +1423,10 @@ namespace Gimnasio.Controllers
                  worksheet.Cell(1, 1).Value = "Descripción";
                  worksheet.Cell(1, 2).Value = "Monto";
                  worksheet.Cell(1, 3).Value = "Tipo";
-                 worksheet.Cell(1, 4).Value = "Fecha";
+                 worksheet.Cell(1, 4).Value = "Cliente";
+                 worksheet.Cell(1, 5).Value = "Fecha";
 
-                 var headerRange = worksheet.Range(1, 1, 1, 4);
+                 var headerRange = worksheet.Range(1, 1, 1, 5);
                  headerRange.Style.Font.Bold = true;
                  headerRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#3b82f6");
                  headerRange.Style.Font.FontColor = XLColor.White;
@@ -1441,7 +1440,8 @@ namespace Gimnasio.Controllers
                      worksheet.Cell(row, 1).Value = log.Message;
                      worksheet.Cell(row, 2).Value = log.Monto;
                      worksheet.Cell(row, 3).Value = log.Tipo;
-                     worksheet.Cell(row, 4).Value = log.Fecha.ToString("dd/MM/yyyy HH:mm");
+                     worksheet.Cell(row, 4).Value = log.NombreCliente ?? "-";
+                     worksheet.Cell(row, 5).Value = log.Fecha.ToString("dd/MM/yyyy HH:mm");
 
                      if (log.Monto >= 0)
                      {
@@ -1478,10 +1478,10 @@ namespace Gimnasio.Controllers
                  var content = stream.ToArray();
 
                  return File(
-                     content,
-                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                     $"Logs_{filtro}_{DateTime.Now:yyyyMMdd}.xlsx"
-                 );
+                    content,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    $"Logs_{DateTime.Now:yyyyMMdd}.xlsx"
+                );
              }
              catch (Exception ex)
              {
