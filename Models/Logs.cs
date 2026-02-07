@@ -20,10 +20,21 @@ public class Logs
     public decimal Monto { get; set; } = 0;
     
     /// <summary>
-    /// Tipo de log: "ingreso" o "gasto"
+    /// Tipo de log: "ingreso", "gasto", "cliente_creado", "cliente_editado", "cliente_renovado", "cliente_eliminado"
     /// </summary>
     [MaxLength(50)]
     public string Tipo { get; set; } = "ingreso";
+    
+    /// <summary>
+    /// ID del cliente relacionado (si aplica)
+    /// </summary>
+    public Guid? ClienteId { get; set; }
+    
+    /// <summary>
+    /// Nombre del cliente relacionado (para referencia histórica)
+    /// </summary>
+    [MaxLength(200)]
+    public string NombreCliente { get; set; }
     
     public DateTime Fecha { get; set; } = DateTime.Now;
 }
