@@ -100,10 +100,30 @@ public class ClienteService : IClienteService
             return (false, "Nombre y Apellido son obligatorios");
         if (string.IsNullOrWhiteSpace(model.Telefono))
             return (false, "Teléfono es obligatorio");
-        if (model.Dias <= 0)
-            return (false, "Los días deben ser mayor a 0");
         if (model.Precio <= 0)
             return (false, "El precio debe ser mayor a 0");
+
+        var fechaInicio = model.FechaInicio ?? DateTime.Now;
+        DateTime fechaFin;
+        int dias;
+
+        if (model.FechaFin.HasValue)
+        {
+            fechaFin = model.FechaFin.Value;
+            dias = (fechaFin - fechaInicio).Days;
+        }
+        else if (model.Dias > 0)
+        {
+            dias = model.Dias;
+            fechaFin = fechaInicio.AddDays(dias);
+        }
+        else
+        {
+            return (false, "Debe indicar la fecha de finalización o los días");
+        }
+
+        if (dias <= 0)
+            return (false, "La fecha de finalización debe ser posterior a la fecha de inicio");
 
         var cliente = new Cliente
         {
@@ -114,12 +134,12 @@ public class ClienteService : IClienteService
             Email = model.Email,
             Telefono = model.Telefono,
             Direccion = model.Direccion,
-            Dias = model.Dias,
+            Dias = dias,
             Precio = model.Precio,
             EsDiario = model.EsDiario,
-            FechaDeCreacion = DateTime.Now,
+            FechaDeCreacion = fechaInicio,
             FechaDeActualizacion = DateTime.Now,
-            FechaQueTermina = DateTime.Now.AddDays(model.Dias)
+            FechaQueTermina = fechaFin
         };
 
         _context.Clientes.Add(cliente);
@@ -143,19 +163,41 @@ public class ClienteService : IClienteService
             return (false, "Nombre y Apellido son obligatorios");
         if (string.IsNullOrWhiteSpace(model.Telefono))
             return (false, "Teléfono es obligatorio");
-        if (model.Dias <= 0)
-            return (false, "Los días deben ser mayor a 0");
         if (model.Precio <= 0)
             return (false, "El precio debe ser mayor a 0");
+
+        var fechaInicio = model.FechaInicio ?? cliente.FechaDeCreacion;
+        DateTime fechaFin;
+        int dias;
+
+        if (model.FechaFin.HasValue)
+        {
+            fechaFin = model.FechaFin.Value;
+            dias = (fechaFin - fechaInicio).Days;
+        }
+        else if (model.Dias > 0)
+        {
+            dias = model.Dias;
+            fechaFin = fechaInicio.AddDays(dias);
+        }
+        else
+        {
+            return (false, "Debe indicar la fecha de finalización o los días");
+        }
+
+        if (dias <= 0)
+            return (false, "La fecha de finalización debe ser posterior a la fecha de inicio");
 
         cliente.Nombre = model.Nombre;
         cliente.Apellido = model.Apellido;
         cliente.Email = model.Email;
         cliente.Telefono = model.Telefono;
         cliente.Direccion = model.Direccion;
-        cliente.Dias = model.Dias;
+        cliente.Dias = dias;
         cliente.Precio = model.Precio;
         cliente.EsDiario = model.EsDiario;
+        cliente.FechaDeCreacion = fechaInicio;
+        cliente.FechaQueTermina = fechaFin;
         cliente.FechaDeActualizacion = DateTime.Now;
 
         _context.Update(cliente);
@@ -187,22 +229,19 @@ public class ClienteService : IClienteService
         return (true, "Cliente eliminado exitosamente");
     }
 
-    public async Task<(bool success, string message)> RenovarClienteAsync(Guid id, Guid gimnasioId, int dias, decimal precio)
+    public async Task<(bool success, string message)> RenovarClienteAsync(Guid id, Guid gimnasioId, DateTime nuevaFechaFin, decimal precio)
     {
         var cliente = await _context.Clientes
             .FirstOrDefaultAsync(c => c.ClienteId == id && c.GimnasioId == gimnasioId);
 
         if (cliente == null)
             return (false, "Cliente no encontrado");
-        if (dias <= 0)
-            return (false, "Días debe ser mayor a 0");
+        if (nuevaFechaFin <= cliente.FechaQueTermina)
+            return (false, "La nueva fecha debe ser posterior a la fecha de finalización actual");
 
-        if (cliente.FechaQueTermina < DateTime.Now)
-            cliente.FechaQueTermina = DateTime.Now.AddDays(dias);
-        else
-            cliente.FechaQueTermina = cliente.FechaQueTermina.AddDays(dias);
-
-        cliente.Dias = dias;
+        var diasAgregados = (nuevaFechaFin - cliente.FechaQueTermina).Days;
+        cliente.FechaQueTermina = nuevaFechaFin;
+        cliente.Dias = diasAgregados;
         cliente.Precio = precio;
         cliente.FechaDeActualizacion = DateTime.Now;
 
@@ -211,7 +250,8 @@ public class ClienteService : IClienteService
 
         var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
         await _logService.CreateLogAsync(gimnasioId, "cliente_renovado",
-            $"Renovación: {nombreCompleto} ({dias} días)", precio, cliente.ClienteId, nombreCompleto);
+            $"Cliente {nombreCompleto} ha renovado su suscripción, ahora su suscripción termina en {nuevaFechaFin:dd/MM/yyyy}",
+            precio, cliente.ClienteId, nombreCompleto);
 
         return (true, "Membresía renovada exitosamente");
     }

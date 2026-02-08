@@ -158,11 +158,11 @@ public class ClientesController : Controller
     }
 
     [HttpPost("RenovarCliente")]
-    public async Task<IActionResult> RenovarCliente(Guid id, Guid gimnasioId, int dias, decimal precio)
+    public async Task<IActionResult> RenovarCliente(Guid id, Guid gimnasioId, DateTime nuevaFechaFin, decimal precio)
     {
         try
         {
-            var (success, message) = await _clienteService.RenovarClienteAsync(id, gimnasioId, dias, precio);
+            var (success, message) = await _clienteService.RenovarClienteAsync(id, gimnasioId, nuevaFechaFin, precio);
 
             if (!success)
             {

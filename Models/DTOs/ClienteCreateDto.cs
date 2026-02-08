@@ -28,8 +28,9 @@ public class ClienteCreateDto
 
     public bool EsDiario { get; set; }
 
-    [Required]
-    [Range(1, int.MaxValue, ErrorMessage = "Los días deben ser mayor a 0")]
+    public DateTime? FechaInicio { get; set; }
+    public DateTime? FechaFin { get; set; }
+
     public int Dias { get; set; }
 
     [Required]

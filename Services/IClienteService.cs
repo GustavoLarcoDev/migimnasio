@@ -11,7 +11,7 @@ public interface IClienteService
     Task<(bool success, string message)> CrearClienteAsync(ClienteCreateDto model);
     Task<(bool success, string message)> EditarClienteAsync(ClienteCreateDto model);
     Task<(bool success, string message)> EliminarClienteAsync(Guid id, Guid gimnasioId);
-    Task<(bool success, string message)> RenovarClienteAsync(Guid id, Guid gimnasioId, int dias, decimal precio);
+    Task<(bool success, string message)> RenovarClienteAsync(Guid id, Guid gimnasioId, DateTime nuevaFechaFin, decimal precio);
     Task<byte[]> ExportClientesExcelAsync(Guid gimnasioId);
     Task<object> ImportarClientesExcelAsync(Guid gimnasioId, Stream fileStream);
     Task<object> GetClientesDiariosAsync(Guid gimnasioId);
