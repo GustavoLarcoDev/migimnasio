@@ -24,62 +24,54 @@ ViewData["Title"] = "Gestión de Gimnasios";
 
     <!-- Stats Cards -->
     <div class="row g-4 mb-5">
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm bg-light-primary">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <span class="text-muted fw-semibold d-block fs-7">Total Gimnasios</span>
-                            <span class="text-dark fw-bolder fs-2" id="totalGimnasios">0</span>
-                        </div>
-                        <div class="bg-primary rounded-3 p-3">
-                            <i class="bi bi-building text-white fs-2"></i>
-                        </div>
+        <div class="col-md-3 col-6">
+            <div class="mg-stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="stat-label">Total Gimnasios</div>
+                        <div class="stat-value" id="totalGimnasios">0</div>
+                    </div>
+                    <div class="stat-icon bg-light-primary">
+                        <i class="bi bi-building text-primary"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm bg-light-success">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <span class="text-muted fw-semibold d-block fs-7">Gimnasios Activos</span>
-                            <span class="text-dark fw-bolder fs-2" id="gimnaiosActivos">0</span>
-                        </div>
-                        <div class="bg-success rounded-3 p-3">
-                            <i class="bi bi-check-circle text-white fs-2"></i>
-                        </div>
+        <div class="col-md-3 col-6">
+            <div class="mg-stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="stat-label">Gimnasios Activos</div>
+                        <div class="stat-value" id="gimnaiosActivos">0</div>
+                    </div>
+                    <div class="stat-icon bg-light-success">
+                        <i class="bi bi-check-circle text-success"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm bg-light-warning">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <span class="text-muted fw-semibold d-block fs-7">En Prueba</span>
-                            <span class="text-dark fw-bolder fs-2" id="gimnasiosPrueba">0</span>
-                        </div>
-                        <div class="bg-warning rounded-3 p-3">
-                            <i class="bi bi-clock-history text-white fs-2"></i>
-                        </div>
+        <div class="col-md-3 col-6">
+            <div class="mg-stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="stat-label">En Prueba</div>
+                        <div class="stat-value" id="gimnasiosPrueba">0</div>
+                    </div>
+                    <div class="stat-icon bg-light-warning">
+                        <i class="bi bi-clock-history text-warning"></i>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card border-0 shadow-sm bg-light-info">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <span class="text-muted fw-semibold d-block fs-7">Total Clientes</span>
-                            <span class="text-dark fw-bolder fs-2" id="totalClientes">0</span>
-                        </div>
-                        <div class="bg-info rounded-3 p-3">
-                            <i class="bi bi-people text-white fs-2"></i>
-                        </div>
+        <div class="col-md-3 col-6">
+            <div class="mg-stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <div class="stat-label">Total Clientes</div>
+                        <div class="stat-value" id="totalClientes">0</div>
+                    </div>
+                    <div class="stat-icon bg-light-info">
+                        <i class="bi bi-people text-info"></i>
                     </div>
                 </div>
             </div>
@@ -87,11 +79,11 @@ ViewData["Title"] = "Gestión de Gimnasios";
     </div>
 
     <!-- Tabla -->
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white border-0 pt-5 pb-3">
-            <h3 class="card-title fw-bold text-dark">Listado de Gimnasios</h3>
+    <div class="mg-card">
+        <div class="card-header">
+            <h3 class="card-title fw-bold text-dark mb-0">Listado de Gimnasios</h3>
         </div>
-        <div class="card-body pt-0">
+        <div class="card-body">
             <table id="gimnasiosTable" class="table table-row-bordered table-row-gray-100 align-middle gs-0 gy-3">
                 <thead>
                 <tr class="fw-bold text-muted">
@@ -115,7 +107,7 @@ ViewData["Title"] = "Gestión de Gimnasios";
 
 <!-- Modal Editar Gimnasio -->
 <div class="modal fade" id="editarGimnasioModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down">
         <div class="modal-content">
             <div class="modal-header bg-light">
                 <h3 class="modal-title fw-bolder">
@@ -201,7 +193,7 @@ ViewData["Title"] = "Gestión de Gimnasios";
 
 <!-- Modal Confirmar Eliminación -->
 <div class="modal fade" id="eliminarGimnasioModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title fw-bolder">
@@ -505,62 +497,11 @@ ViewData["Title"] = "Gestión de Gimnasios";
 </script>
 
 <style>
-    .bg-light-primary { background-color: rgba(13, 110, 253, 0.1); }
-    .bg-light-success { background-color: rgba(25, 135, 84, 0.1); }
-    .bg-light-warning { background-color: rgba(255, 193, 7, 0.1); }
-    .bg-light-info { background-color: rgba(13, 202, 240, 0.1); }
-    .bg-light-danger { background-color: rgba(220, 53, 69, 0.1); }
-
-    .badge-light-primary { background-color: rgba(13, 110, 253, 0.1); color: #0d6efd; }
-    .badge-light-success { background-color: rgba(25, 135, 84, 0.1); color: #198754; }
-    .badge-light-warning { background-color: rgba(255, 193, 7, 0.1); color: #ffc107; }
-    .badge-light-info { background-color: rgba(13, 202, 240, 0.1); color: #0dcaf0; }
-    .badge-light-danger { background-color: rgba(220, 53, 69, 0.1); color: #dc3545; }
-
-    .required:after {
-        content: " *";
-        color: #dc3545;
-    }
-
-    .symbol {
-        display: inline-block;
-        flex-shrink: 0;
-        position: relative;
-        border-radius: 0.475rem;
-    }
-
-    .symbol-label {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        height: 100%;
-    }
-
-    .symbol-45px .symbol-label {
-        width: 45px;
-        height: 45px;
-    }
-
-    .fs-7 { font-size: 0.85rem; }
-
+    /* All utility classes (.bg-light-*, .badge-light-*, .symbol, .btn-icon, etc.)
+       are now defined in metronic-style.css */
     .btn-sm {
         padding: 0.5rem 1rem;
         font-size: 0.875rem;
-    }
-
-    .btn-icon {
-        width: 35px;
-        height: 35px;
-        padding: 0;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .form-check-custom .form-check-input {
-        width: 2.75rem;
-        height: 1.5rem;
     }
 </style>
 }

@@ -9,6 +9,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Gimnasio.Controllers
 {
+    [Microsoft.AspNetCore.Mvc.NonController]
     public class GimnasiosController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -1391,6 +1392,38 @@ namespace Gimnasio.Controllers
                  await _context.SaveChangesAsync();
 
                  return Ok(new { success = true, message = "Log eliminado exitosamente" });
+             }
+             catch (Exception ex)
+             {
+                 return StatusCode(500, new { success = false, message = ex.Message });
+             }
+         }
+
+         // POST: Gimnasios/EliminarTodosLogs
+         [Microsoft.AspNetCore.Authorization.Authorize]
+         [HttpPost]
+         public async Task<IActionResult> EliminarTodosLogs(Guid gimnasioId)
+         {
+             try
+             {
+                 // Verificar autorización
+                 var gimnasioIdClaim = User.Claims.FirstOrDefault(c => c.Type == "GimnasioId");
+                 if (gimnasioIdClaim == null || gimnasioId.ToString() != gimnasioIdClaim.Value)
+                 {
+                     return Forbid();
+                 }
+
+                 var logs = await _context.Logs.Where(l => l.GimnasioId == gimnasioId).ToListAsync();
+                 
+                 if (!logs.Any())
+                 {
+                     return Ok(new { success = true, message = "No hay logs para eliminar" });
+                 }
+
+                 _context.Logs.RemoveRange(logs);
+                 await _context.SaveChangesAsync();
+
+                 return Ok(new { success = true, message = $"Se eliminaron {logs.Count} logs exitosamente" });
              }
              catch (Exception ex)
              {

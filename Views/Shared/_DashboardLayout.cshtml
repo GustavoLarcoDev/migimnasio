@@ -1,0 +1,191 @@
+@{
+    var gimnasioId = ViewData["GimnasioId"]?.ToString() ?? "";
+    var gimnasioNombre = ViewData["GimnasioNombre"]?.ToString() ?? "Mi Gimnasio";
+    var duenoNombre = ViewData["DuenoNombre"]?.ToString() ?? "";
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Mi Negocio</title>
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
+
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.6/css/dataTables.dataTables.css" />
+
+    <!-- Toastr CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/css/toastr.css" rel="stylesheet" />
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Metronic Style -->
+    <link rel="stylesheet" href="~/css/metronic-style.css" />
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="mg-dashboard">
+
+    <!-- Sidebar Overlay (mobile) -->
+    <div class="mg-sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="mg-sidebar" id="sidebar">
+        <div class="mg-sidebar-brand">
+            <i class="bi bi-shop"></i>
+            <h4>Mi Negocio</h4>
+        </div>
+
+        <nav class="mg-sidebar-menu">
+            <a href="#clientesTab" class="nav-link active" data-mg-tab="clientesTab">
+                <i class="bi bi-people-fill"></i>
+                <span>Clientes</span>
+            </a>
+            <a href="#logsTab" class="nav-link" data-mg-tab="logsTab">
+                <i class="bi bi-journal-text"></i>
+                <span>Logs</span>
+            </a>
+            <a href="#ventasTab" class="nav-link" data-mg-tab="ventasTab">
+                <i class="bi bi-graph-up"></i>
+                <span>Ventas</span>
+            </a>
+            <a href="#notificacionesTab" class="nav-link" data-mg-tab="notificacionesTab">
+                <i class="bi bi-bell-fill"></i>
+                <span>Notificaciones</span>
+                <span class="badge bg-danger ms-auto d-none" id="sidebarNotifBadge">0</span>
+            </a>
+        </nav>
+
+        <div class="mg-sidebar-footer">
+            <a href="@Url.Action("Logout", "Auth")" class="nav-link">
+                <i class="bi bi-box-arrow-left"></i>
+                <span>Cerrar Sesión</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Topbar -->
+    <header class="mg-topbar">
+        <div class="mg-topbar-left">
+            <button class="mg-hamburger" id="sidebarToggle" type="button">
+                <i class="bi bi-list"></i>
+            </button>
+            <div>
+                <h5 class="mb-0 fw-bold">@gimnasioNombre</h5>
+                @if (!string.IsNullOrEmpty(duenoNombre))
+                {
+                    <small class="text-muted">@duenoNombre</small>
+                }
+            </div>
+        </div>
+        <div class="mg-topbar-right">
+            <!-- Notification Bell -->
+            <div class="dropdown">
+                <button class="mg-bell" id="bellBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside">
+                    <i class="bi bi-bell fs-5"></i>
+                    <span class="badge d-none" id="topbarNotifBadge">0</span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end mg-notification-dropdown" id="notifDropdown">
+                    <div class="mg-notification-header">
+                        <h6 class="fw-bold mb-0">Notificaciones</h6>
+                        <button class="btn btn-sm btn-light-primary" id="btnMarcarTodasLeidas">Marcar leídas</button>
+                    </div>
+                    <div id="notifDropdownBody">
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-bell-slash fs-2 d-block mb-2"></i>
+                            Sin notificaciones
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User -->
+            <div class="d-none d-md-flex align-items-center ms-2">
+                <div class="bg-light-primary rounded-circle d-flex align-items-center justify-content-center" style="width:38px;height:38px;">
+                    <i class="bi bi-person-fill text-primary"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="mg-content">
+        @RenderBody()
+    </main>
+
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/js/toastr.js"></script>
+    <script src="https://cdn.datatables.net/2.3.6/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/plug-ins/2.3.6/i18n/es-ES.json"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <!-- Sidebar Navigation Logic -->
+    <script>
+    (function() {
+        // Sidebar toggle (mobile)
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const toggle = document.getElementById('sidebarToggle');
+
+        function openSidebar() {
+            sidebar.classList.add('show');
+            overlay.classList.add('show');
+        }
+        function closeSidebar() {
+            sidebar.classList.remove('show');
+            overlay.classList.remove('show');
+        }
+
+        if (toggle) toggle.addEventListener('click', openSidebar);
+        if (overlay) overlay.addEventListener('click', closeSidebar);
+
+        // Sidebar tab navigation
+        const sidebarLinks = document.querySelectorAll('[data-mg-tab]');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('data-mg-tab');
+
+                // Update sidebar active state
+                sidebarLinks.forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+
+                // Show/hide tab panes
+                tabPanes.forEach(pane => {
+                    if (pane.id === targetId) {
+                        pane.classList.add('show', 'active');
+                    } else {
+                        pane.classList.remove('show', 'active');
+                    }
+                });
+
+                // Trigger tab-specific loading
+                const event = new CustomEvent('mg-tab-shown', { detail: { tab: targetId } });
+                document.dispatchEvent(event);
+
+                // Close sidebar on mobile
+                closeSidebar();
+            });
+        });
+    })();
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
