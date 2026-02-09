@@ -195,4 +195,13 @@ public class LogService : ILogService
         workbook.SaveAs(stream);
         return stream.ToArray();
     }
+
+    public async Task<DateTime?> GetOldestLogDateAsync(Guid gimnasioId)
+    {
+        var oldest = await _context.Logs
+            .Where(l => l.GimnasioId == gimnasioId)
+            .OrderBy(l => l.Fecha)
+            .FirstOrDefaultAsync();
+        return oldest?.Fecha;
+    }
 }

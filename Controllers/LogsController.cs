@@ -75,35 +75,17 @@ public class LogsController : Controller
         }
     }
 
-    [HttpPost("EditarLog")]
-    public async Task<IActionResult> EditarLog(Guid id, Guid gimnasioId, string message, decimal monto)
+    [HttpGet("GetOldestLogDate")]
+    public async Task<IActionResult> GetOldestLogDate(Guid gimnasioId)
     {
         try
         {
-            var (success, msg) = await _logService.EditarLogAsync(id, gimnasioId, message, monto);
+            var gymId = _authService.GetGimnasioId(User);
+            if (!gymId.HasValue || gimnasioId != gymId.Value)
+                return Forbid();
 
-            if (!success)
-                return NotFound(new { success = false, message = msg });
-
-            return Ok(new { success = true, message = msg });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { success = false, message = ex.Message });
-        }
-    }
-
-    [HttpPost("EliminarLog")]
-    public async Task<IActionResult> EliminarLog(Guid id, Guid gimnasioId)
-    {
-        try
-        {
-            var (success, message) = await _logService.EliminarLogAsync(id, gimnasioId);
-
-            if (!success)
-                return NotFound(new { success = false, message });
-
-            return Ok(new { success = true, message });
+            var oldest = await _logService.GetOldestLogDateAsync(gimnasioId);
+            return Ok(new { fecha = oldest });
         }
         catch (Exception ex)
         {

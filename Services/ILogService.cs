@@ -10,4 +10,5 @@ public interface ILogService
     Task<(bool success, string message)> EliminarLogAsync(Guid id, Guid gimnasioId);
     Task<(bool success, string message)> EliminarTodosLogsAsync(Guid gimnasioId);
     Task<byte[]> ExportLogsExcelAsync(Guid gimnasioId);
+    Task<DateTime?> GetOldestLogDateAsync(Guid gimnasioId);
 }

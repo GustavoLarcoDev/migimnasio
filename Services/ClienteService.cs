@@ -29,13 +29,18 @@ public class ClienteService : IClienteService
         var clientesNuevosHoy = clientes.Count(c => c.FechaDeCreacion.Date == DateTime.Now.Date);
         var clientesNuevosMes = clientes.Count(c => c.FechaDeCreacion.Month == DateTime.Now.Month && c.FechaDeCreacion.Year == DateTime.Now.Year);
 
-        var ingresosMes = clientes
-            .Where(c => c.FechaDeActualizacion.Month == DateTime.Now.Month && c.FechaDeActualizacion.Year == DateTime.Now.Year)
-            .Sum(c => c.Precio);
+        // Ingresos desde Logs (fuente inmutable). Eliminar un cliente no afecta los ingresos.
+        var logs = await _context.Logs
+            .Where(l => l.GimnasioId == gimnasioId && l.Monto > 0)
+            .ToListAsync();
 
-        var ingresosHoy = clientes
-            .Where(c => c.FechaDeActualizacion.Date == DateTime.Now.Date)
-            .Sum(c => c.Precio);
+        var ingresosMes = logs
+            .Where(l => l.Fecha.Month == DateTime.Now.Month && l.Fecha.Year == DateTime.Now.Year)
+            .Sum(l => l.Monto);
+
+        var ingresosHoy = logs
+            .Where(l => l.Fecha.Date == DateTime.Now.Date)
+            .Sum(l => l.Monto);
 
         var proximosVencer = clientes
             .Where(c => c.FechaQueTermina.Date >= DateTime.Now.Date && c.FechaQueTermina.Date <= DateTime.Now.AddDays(5).Date)
@@ -272,11 +277,12 @@ public class ClienteService : IClienteService
         worksheet.Cell(1, 4).Value = "Teléfono";
         worksheet.Cell(1, 5).Value = "Fecha Inicio";
         worksheet.Cell(1, 6).Value = "Fecha Vencimiento";
-        worksheet.Cell(1, 7).Value = "Estado";
-        worksheet.Cell(1, 8).Value = "Tipo";
-        worksheet.Cell(1, 9).Value = "Último Precio";
+        worksheet.Cell(1, 7).Value = "Días";
+        worksheet.Cell(1, 8).Value = "Precio";
+        worksheet.Cell(1, 9).Value = "Tipo";
+        worksheet.Cell(1, 10).Value = "Estado";
 
-        var headerRange = worksheet.Range(1, 1, 1, 9);
+        var headerRange = worksheet.Range(1, 1, 1, 10);
         headerRange.Style.Font.Bold = true;
         headerRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#3b82f6");
         headerRange.Style.Font.FontColor = XLColor.White;
@@ -288,12 +294,15 @@ public class ClienteService : IClienteService
             worksheet.Cell(row, 2).Value = cliente.Apellido;
             worksheet.Cell(row, 3).Value = cliente.Email;
             worksheet.Cell(row, 4).Value = cliente.Telefono;
-            worksheet.Cell(row, 5).Value = cliente.FechaDeCreacion.ToString("dd/MM/yyyy");
-            worksheet.Cell(row, 6).Value = cliente.FechaQueTermina.ToString("dd/MM/yyyy");
+            worksheet.Cell(row, 5).Value = cliente.FechaDeCreacion;
+            worksheet.Cell(row, 5).Style.DateFormat.Format = "dd/MM/yyyy";
+            worksheet.Cell(row, 6).Value = cliente.FechaQueTermina;
+            worksheet.Cell(row, 6).Style.DateFormat.Format = "dd/MM/yyyy";
+            worksheet.Cell(row, 7).Value = cliente.Dias;
+            worksheet.Cell(row, 8).Value = cliente.Precio;
+            worksheet.Cell(row, 9).Value = cliente.EsDiario ? "Diario" : "Regular";
             bool activo = cliente.FechaQueTermina.Date >= DateTime.Now.Date;
-            worksheet.Cell(row, 7).Value = activo ? "Activo" : "Vencido";
-            worksheet.Cell(row, 8).Value = cliente.EsDiario ? "Diario" : "Regular";
-            worksheet.Cell(row, 9).Value = cliente.Precio;
+            worksheet.Cell(row, 10).Value = activo ? "Activo" : "Vencido";
             row++;
         }
 
@@ -316,50 +325,158 @@ public class ClienteService : IClienteService
 
         using var workbook = new XLWorkbook(memStream);
         var worksheet = workbook.Worksheet(1);
-        var rows = worksheet.RangeUsed()?.RowsUsed().Skip(1);
+        var rangeUsed = worksheet.RangeUsed();
 
-        if (rows == null)
+        if (rangeUsed == null)
             return new { success = false, message = "El archivo está vacío" };
+
+        // --- Detectar columnas por headers (fila 1) ---
+        var headerRow = rangeUsed.Row(1);
+        var colMap = new Dictionary<string, int>();
+        for (int col = 1; col <= rangeUsed.ColumnCount(); col++)
+        {
+            var header = headerRow.Cell(col).GetString()?.Trim().ToLowerInvariant() ?? "";
+            // Quitar tildes para matching flexible
+            header = header.Replace("á", "a").Replace("é", "e").Replace("í", "i").Replace("ó", "o").Replace("ú", "u");
+
+            if (header.Contains("nombre") && !header.Contains("apellido") && !header.Contains("cliente") && !colMap.ContainsKey("nombre"))
+                colMap["nombre"] = col;
+            else if (header.Contains("apellido"))
+                colMap["apellido"] = col;
+            else if (header.Contains("nombre") && header.Contains("cliente") || header == "cliente")
+                colMap["nombre_completo"] = col;
+            else if (header.Contains("email") || header.Contains("correo"))
+                colMap["email"] = col;
+            else if (header.Contains("telefono") || header.Contains("tel") || header.Contains("celular") || header.Contains("whatsapp"))
+                colMap["telefono"] = col;
+            else if (header.Contains("direccion") || header.Contains("address"))
+                colMap["direccion"] = col;
+            else if (header.Contains("inicio") || header.Contains("creacion"))
+                colMap["fecha_inicio"] = col;
+            else if (header.Contains("vencimiento") || header.Contains("fecha fin") || header.Contains("fin") || header.Contains("termina"))
+                colMap["fecha_fin"] = col;
+            else if (header.Contains("dia") && !header.Contains("diario"))
+                colMap["dias"] = col;
+            else if (header.Contains("precio") || header.Contains("monto") || header.Contains("costo"))
+                colMap["precio"] = col;
+            else if (header == "tipo")
+                colMap["tipo"] = col;
+        }
+
+        // Fallback: si no detecta headers, asumir formato por posición
+        if (!colMap.ContainsKey("nombre") && !colMap.ContainsKey("nombre_completo"))
+        {
+            colMap["nombre"] = 1;
+            colMap["apellido"] = 2;
+            if (rangeUsed.ColumnCount() >= 3) colMap["email"] = 3;
+            if (rangeUsed.ColumnCount() >= 4) colMap["telefono"] = 4;
+            if (rangeUsed.ColumnCount() >= 5) colMap["fecha_inicio"] = 5;
+            if (rangeUsed.ColumnCount() >= 6) colMap["fecha_fin"] = 6;
+            if (rangeUsed.ColumnCount() >= 7) colMap["dias"] = 7;
+            if (rangeUsed.ColumnCount() >= 8) colMap["precio"] = 8;
+        }
 
         var clientesExistentes = await _context.Clientes
             .Where(c => c.GimnasioId == gimnasioId)
             .Select(c => new { c.Nombre, c.Apellido })
             .ToListAsync();
 
+        var rows = rangeUsed.RowsUsed().Skip(1); // Skip header
         int rowNumber = 2;
+
         foreach (var row in rows)
         {
             try
             {
-                var nombre = row.Cell(1).GetValue<string>()?.Trim();
-                var apellido = row.Cell(2).GetValue<string>()?.Trim();
-
-                if (string.IsNullOrWhiteSpace(nombre) || string.IsNullOrWhiteSpace(apellido))
+                // --- Nombre y Apellido ---
+                string nombre, apellido;
+                if (colMap.ContainsKey("nombre_completo"))
                 {
-                    errores.Add($"Fila {rowNumber}: Nombre y Apellido son obligatorios");
+                    var fullName = GetCellString(row.Cell(colMap["nombre_completo"]));
+                    if (string.IsNullOrWhiteSpace(fullName))
+                    {
+                        errores.Add($"Fila {rowNumber}: Nombre es obligatorio");
+                        rowNumber++;
+                        continue;
+                    }
+                    var parts = fullName.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+                    nombre = parts[0];
+                    apellido = parts.Length > 1 ? parts[1] : "-";
+                }
+                else
+                {
+                    nombre = colMap.ContainsKey("nombre") ? GetCellString(row.Cell(colMap["nombre"])) : "";
+                    apellido = colMap.ContainsKey("apellido") ? GetCellString(row.Cell(colMap["apellido"])) : "-";
+                }
+
+                if (string.IsNullOrWhiteSpace(nombre))
+                {
+                    errores.Add($"Fila {rowNumber}: Nombre es obligatorio");
                     rowNumber++;
                     continue;
                 }
+                if (string.IsNullOrWhiteSpace(apellido)) apellido = "-";
 
-                var existeDuplicado = clientesExistentes.Any(c =>
-                    c.Nombre == nombre && c.Apellido == apellido);
-
-                if (existeDuplicado)
+                // Duplicados
+                if (clientesExistentes.Any(c => c.Nombre == nombre && c.Apellido == apellido))
                 {
                     clientesOmitidos.Add($"{nombre} {apellido}");
                     rowNumber++;
                     continue;
                 }
 
-                var email = row.Cell(3).GetValue<string>()?.Trim();
-                var telefono = row.Cell(4).GetValue<string>()?.Trim();
-                var direccion = row.Cell(5).GetValue<string>()?.Trim();
+                // --- Campos opcionales ---
+                var email = colMap.ContainsKey("email") ? GetCellString(row.Cell(colMap["email"])) : "";
+                var telefono = colMap.ContainsKey("telefono") ? GetCellString(row.Cell(colMap["telefono"])) : "";
+                var direccion = colMap.ContainsKey("direccion") ? GetCellString(row.Cell(colMap["direccion"])) : "";
 
+                // --- Fechas ---
+                DateTime fechaInicio = DateTime.Now;
+                DateTime? fechaFin = null;
                 int dias = 30;
+
+                if (colMap.ContainsKey("fecha_inicio"))
+                    fechaInicio = TryParseExcelDate(row.Cell(colMap["fecha_inicio"])) ?? DateTime.Now;
+
+                if (colMap.ContainsKey("fecha_fin"))
+                    fechaFin = TryParseExcelDate(row.Cell(colMap["fecha_fin"]));
+
+                if (colMap.ContainsKey("dias"))
+                {
+                    try { dias = (int)row.Cell(colMap["dias"]).GetDouble(); } catch { dias = 30; }
+                }
+
+                // Calcular fechas: FechaFin tiene prioridad sobre Días
+                if (fechaFin.HasValue && fechaFin.Value > fechaInicio)
+                {
+                    dias = (fechaFin.Value - fechaInicio).Days;
+                }
+                else if (dias > 0)
+                {
+                    fechaFin = fechaInicio.AddDays(dias);
+                }
+                else
+                {
+                    dias = 30;
+                    fechaFin = fechaInicio.AddDays(30);
+                }
+
+                // --- Precio ---
                 decimal precio = 0;
-                try { dias = row.Cell(6).GetValue<int>(); } catch { }
-                try { precio = row.Cell(7).GetValue<decimal>(); } catch { }
-                if (dias <= 0) dias = 30;
+                if (colMap.ContainsKey("precio"))
+                {
+                    try { precio = (decimal)row.Cell(colMap["precio"]).GetDouble(); } catch { precio = 0; }
+                }
+                if (precio < 0) precio = 0;
+
+                // --- Tipo ---
+                bool esDiario = false;
+                if (colMap.ContainsKey("tipo"))
+                {
+                    var tipo = GetCellString(row.Cell(colMap["tipo"]));
+                    esDiario = tipo.Equals("diario", StringComparison.OrdinalIgnoreCase) ||
+                               tipo.Equals("si", StringComparison.OrdinalIgnoreCase);
+                }
 
                 var cliente = new Cliente
                 {
@@ -368,14 +485,14 @@ public class ClienteService : IClienteService
                     Nombre = nombre,
                     Apellido = apellido,
                     Email = email,
-                    Telefono = telefono ?? "",
+                    Telefono = telefono,
                     Direccion = direccion,
                     Dias = dias,
                     Precio = precio,
-                    EsDiario = false,
-                    FechaDeCreacion = DateTime.Now,
+                    EsDiario = esDiario,
+                    FechaDeCreacion = fechaInicio,
                     FechaDeActualizacion = DateTime.Now,
-                    FechaQueTermina = DateTime.Now.AddDays(dias)
+                    FechaQueTermina = fechaFin.Value
                 };
 
                 _context.Clientes.Add(cliente);
@@ -402,6 +519,65 @@ public class ClienteService : IClienteService
             detalleOmitidos = clientesOmitidos,
             detalleErrores = errores
         };
+    }
+
+    /// <summary>
+    /// Intenta parsear una celda de Excel como fecha. Maneja: DateTime nativo, número serial OLE, y strings con múltiples formatos.
+    /// </summary>
+    private static DateTime? TryParseExcelDate(IXLCell cell)
+    {
+        if (cell.IsEmpty()) return null;
+
+        // 1. DateTime nativo de Excel
+        try
+        {
+            if (cell.DataType == XLDataType.DateTime)
+                return cell.GetDateTime();
+        }
+        catch { }
+
+        // 2. Número serial de Excel (OLE Automation Date)
+        try
+        {
+            if (cell.DataType == XLDataType.Number)
+            {
+                var num = cell.GetDouble();
+                if (num > 1 && num < 100000)
+                    return DateTime.FromOADate(num);
+            }
+        }
+        catch { }
+
+        // 3. String con varios formatos
+        var str = cell.GetString()?.Trim();
+        if (string.IsNullOrWhiteSpace(str)) return null;
+
+        string[] formats = {
+            "dd/MM/yyyy", "d/M/yyyy", "dd-MM-yyyy", "d-M-yyyy",
+            "yyyy-MM-dd", "yyyy/MM/dd",
+            "MM/dd/yyyy", "M/d/yyyy",
+            "dd/MM/yyyy HH:mm", "yyyy-MM-dd HH:mm:ss"
+        };
+
+        if (DateTime.TryParseExact(str, formats,
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None, out var parsed))
+            return parsed;
+
+        if (DateTime.TryParse(str, out var fallback))
+            return fallback;
+
+        return null;
+    }
+
+    /// <summary>
+    /// Lee el contenido de una celda como string limpio, manejando tipos numéricos y vacíos.
+    /// </summary>
+    private static string GetCellString(IXLCell cell)
+    {
+        if (cell.IsEmpty()) return "";
+        try { return cell.GetString()?.Trim() ?? ""; }
+        catch { return cell.Value.ToString()?.Trim() ?? ""; }
     }
 
     public async Task<object> GetClientesDiariosAsync(Guid gimnasioId)

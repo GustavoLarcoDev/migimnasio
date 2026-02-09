@@ -26,8 +26,10 @@ public class AuthService : IAuthService
         if (email == _adminSettings.Email && password == _adminSettings.Password)
             return (true, "Admin", null, null);
 
-        // Check gimnasio
-        var gimnasio = await _context.Gimnasios.FirstOrDefaultAsync(g => g.Email == email);
+        // Check gimnasio by email or phone
+        var gimnasio = email.Contains('@')
+            ? await _context.Gimnasios.FirstOrDefaultAsync(g => g.Email == email)
+            : await _context.Gimnasios.FirstOrDefaultAsync(g => g.Telefono == email);
         if (gimnasio == null)
             return (false, null, null, "Credenciales inválidas");
 

@@ -556,6 +556,39 @@ body {
     }
 }
 
+/* ---- SweetAlert2 Metronic Theme ---- */
+.mg-swal-popup {
+    font-family: var(--mg-font-family) !important;
+    border-radius: var(--mg-border-radius) !important;
+    padding: 2rem !important;
+}
+
+.mg-swal-popup .swal2-title {
+    font-weight: 700 !important;
+    color: var(--mg-dark) !important;
+    font-size: 1.25rem !important;
+}
+
+.mg-swal-popup .swal2-html-container {
+    color: var(--mg-gray-600) !important;
+    font-size: 0.925rem !important;
+}
+
+.mg-swal-confirm {
+    border-radius: 0.5rem !important;
+    font-weight: 600 !important;
+    padding: 0.6rem 1.5rem !important;
+    font-size: 0.9rem !important;
+}
+
+.mg-swal-cancel {
+    border-radius: 0.5rem !important;
+    font-weight: 600 !important;
+    padding: 0.6rem 1.5rem !important;
+    font-size: 0.9rem !important;
+    color: var(--mg-gray-700) !important;
+}
+
 /* ---- Form Check Custom (Radio Cards) ---- */
 .form-check-custom .form-check-input {
     width: 2.75rem;

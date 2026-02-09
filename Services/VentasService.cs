@@ -5,9 +5,9 @@ namespace Gimnasio.Services;
 
 /// <summary>
 /// Servicio de ventas y estadísticas financieras.
-/// Calcula ingresos, gastos y ganancias a partir de dos fuentes de datos:
-/// - Tabla Clientes: cada cliente registrado aporta su Precio como ingreso
-/// - Tabla Logs: registros manuales donde Monto > 0 = ingreso, Monto < 0 = gasto
+/// Todos los ingresos y gastos se calculan SOLO desde la tabla Logs (fuente inmutable).
+/// Eliminar un cliente no afecta los registros financieros.
+/// La tabla Clientes solo se usa para métricas de membresías y conteo de clientes.
 /// </summary>
 public class VentasService : IVentasService
 {
@@ -59,27 +59,14 @@ public class VentasService : IVentasService
             .Count(c => c.EsDiario && c.FechaDeCreacion.Date == hoy);
 
         // --- Ingresos por periodo ---
-        // Ingresos = precios de clientes nuevos + logs con monto positivo
+        // Ingresos vienen SOLO de Logs (fuente inmutable de verdad financiera).
+        // Cada creación, renovación y registro manual ya genera un log con el monto.
+        // Así, eliminar un cliente no afecta los ingresos registrados.
 
-        // Ingresos del día
-        var ingresosClientesHoy = clientes.Where(c => c.FechaDeCreacion.Date == hoy).Sum(c => c.Precio);
-        var ingresosLogsHoy = logs.Where(l => l.Fecha.Date == hoy && l.Monto > 0).Sum(l => l.Monto);
-        var ingresosDia = ingresosClientesHoy + ingresosLogsHoy;
-
-        // Ingresos de la semana (lunes a hoy)
-        var ingresosClientesSemana = clientes.Where(c => c.FechaDeCreacion.Date >= inicioSemana).Sum(c => c.Precio);
-        var ingresosLogsSemana = logs.Where(l => l.Fecha.Date >= inicioSemana && l.Monto > 0).Sum(l => l.Monto);
-        var ingresosSemana = ingresosClientesSemana + ingresosLogsSemana;
-
-        // Ingresos del mes (día 1 del mes a hoy)
-        var ingresosClientesMes = clientes.Where(c => c.FechaDeCreacion >= inicioMes).Sum(c => c.Precio);
-        var ingresosLogsMes = logs.Where(l => l.Fecha >= inicioMes && l.Monto > 0).Sum(l => l.Monto);
-        var ingresosMes = ingresosClientesMes + ingresosLogsMes;
-
-        // Ingresos del año (1 de enero a hoy)
-        var ingresosClientesAnio = clientes.Where(c => c.FechaDeCreacion >= inicioAnio).Sum(c => c.Precio);
-        var ingresosLogsAnio = logs.Where(l => l.Fecha >= inicioAnio && l.Monto > 0).Sum(l => l.Monto);
-        var ingresosAnio = ingresosClientesAnio + ingresosLogsAnio;
+        var ingresosDia = logs.Where(l => l.Fecha.Date == hoy && l.Monto > 0).Sum(l => l.Monto);
+        var ingresosSemana = logs.Where(l => l.Fecha.Date >= inicioSemana && l.Monto > 0).Sum(l => l.Monto);
+        var ingresosMes = logs.Where(l => l.Fecha >= inicioMes && l.Monto > 0).Sum(l => l.Monto);
+        var ingresosAnio = logs.Where(l => l.Fecha >= inicioAnio && l.Monto > 0).Sum(l => l.Monto);
 
         // --- Gastos por periodo ---
         // Gastos = logs con monto negativo (se usa Math.Abs para mostrar como positivo)
@@ -130,11 +117,8 @@ public class VentasService : IVentasService
         var hoy = DateTime.Now.Date;
         var ahora = DateTime.Now;
 
-        // Cargar datos completos del gimnasio a memoria para procesamiento local
-        var clientes = await _context.Clientes
-            .Where(c => c.GimnasioId == gimnasioId)
-            .ToListAsync();
-
+        // Ingresos y gastos vienen SOLO de Logs (fuente inmutable).
+        // Eliminar un cliente no afecta los registros financieros.
         var logs = await _context.Logs
             .Where(l => l.GimnasioId == gimnasioId)
             .ToListAsync();
@@ -145,82 +129,41 @@ public class VentasService : IVentasService
 
         switch (periodo.ToLower())
         {
-            // Periodo "dia": muestra las últimas 24 horas en bloques de 3 horas
-            // Produce 8 puntos de datos con etiquetas como "6am", "9am", "12pm", etc.
             case "dia":
                 for (int i = 7; i >= 0; i--)
                 {
-                    // Calcular el inicio y fin de cada bloque de 3 horas
                     var bloqueInicio = ahora.AddHours(-i * 3);
                     var bloqueFin = bloqueInicio.AddHours(3);
                     labels.Add(bloqueInicio.ToString("hh tt"));
 
-                    // Sumar ingresos del bloque: clientes creados + logs positivos
-                    var ingBloque = clientes
-                        .Where(c => c.FechaDeCreacion >= bloqueInicio && c.FechaDeCreacion < bloqueFin)
-                        .Sum(c => c.Precio)
-                        + logs.Where(l => l.Fecha >= bloqueInicio && l.Fecha < bloqueFin && l.Monto > 0)
-                            .Sum(l => l.Monto);
-
-                    // Sumar gastos del bloque: logs negativos
-                    var gasBloque = logs
-                        .Where(l => l.Fecha >= bloqueInicio && l.Fecha < bloqueFin && l.Monto < 0)
-                        .Sum(l => Math.Abs(l.Monto));
-
-                    ingresos.Add(ingBloque);
-                    gastos.Add(gasBloque);
+                    ingresos.Add(logs.Where(l => l.Fecha >= bloqueInicio && l.Fecha < bloqueFin && l.Monto > 0).Sum(l => l.Monto));
+                    gastos.Add(logs.Where(l => l.Fecha >= bloqueInicio && l.Fecha < bloqueFin && l.Monto < 0).Sum(l => Math.Abs(l.Monto)));
                 }
                 break;
 
-            // Periodo "semana": muestra los últimos 7 días con etiqueta dd/MM
             case "semana":
                 for (int i = 6; i >= 0; i--)
                 {
                     var fecha = hoy.AddDays(-i);
                     labels.Add(fecha.ToString("dd/MM"));
 
-                    // Ingresos del día: clientes actualizados ese día + logs positivos
-                    var ingresoDia = clientes
-                        .Where(c => c.FechaDeActualizacion.Date == fecha)
-                        .Sum(c => c.Precio)
-                        + logs.Where(l => l.Fecha.Date == fecha && l.Monto > 0)
-                            .Sum(l => l.Monto);
-
-                    // Gastos del día: valor absoluto de logs negativos
-                    var gastoDia = logs
-                        .Where(l => l.Fecha.Date == fecha && l.Monto < 0)
-                        .Sum(l => Math.Abs(l.Monto));
-
-                    ingresos.Add(ingresoDia);
-                    gastos.Add(gastoDia);
+                    ingresos.Add(logs.Where(l => l.Fecha.Date == fecha && l.Monto > 0).Sum(l => l.Monto));
+                    gastos.Add(logs.Where(l => l.Fecha.Date == fecha && l.Monto < 0).Sum(l => Math.Abs(l.Monto)));
                 }
                 break;
 
-            // Periodo "mes": muestra las últimas 4 semanas con etiqueta "Sem 1", "Sem 2", etc.
             case "mes":
                 for (int i = 3; i >= 0; i--)
                 {
-                    // Calcular el rango de cada semana (lunes a domingo)
                     var inicioSemana = hoy.AddDays(-7 * i - (int)hoy.DayOfWeek);
                     var finSemana = inicioSemana.AddDays(6);
                     labels.Add($"Sem {4 - i}");
 
-                    var ingresoSemana = clientes
-                        .Where(c => c.FechaDeActualizacion.Date >= inicioSemana && c.FechaDeActualizacion.Date <= finSemana)
-                        .Sum(c => c.Precio)
-                        + logs.Where(l => l.Fecha.Date >= inicioSemana && l.Fecha.Date <= finSemana && l.Monto > 0)
-                            .Sum(l => l.Monto);
-
-                    var gastoSemana = logs
-                        .Where(l => l.Fecha.Date >= inicioSemana && l.Fecha.Date <= finSemana && l.Monto < 0)
-                        .Sum(l => Math.Abs(l.Monto));
-
-                    ingresos.Add(ingresoSemana);
-                    gastos.Add(gastoSemana);
+                    ingresos.Add(logs.Where(l => l.Fecha.Date >= inicioSemana && l.Fecha.Date <= finSemana && l.Monto > 0).Sum(l => l.Monto));
+                    gastos.Add(logs.Where(l => l.Fecha.Date >= inicioSemana && l.Fecha.Date <= finSemana && l.Monto < 0).Sum(l => Math.Abs(l.Monto)));
                 }
                 break;
 
-            // Periodo "anio": muestra los últimos 12 meses con etiqueta abreviada del mes
             case "anio":
                 for (int i = 11; i >= 0; i--)
                 {
@@ -229,18 +172,8 @@ public class VentasService : IVentasService
                     var finMes = inicioMes.AddMonths(1).AddDays(-1);
                     labels.Add(fecha.ToString("MMM"));
 
-                    var ingresoMes = clientes
-                        .Where(c => c.FechaDeActualizacion.Date >= inicioMes && c.FechaDeActualizacion.Date <= finMes)
-                        .Sum(c => c.Precio)
-                        + logs.Where(l => l.Fecha.Date >= inicioMes && l.Fecha.Date <= finMes && l.Monto > 0)
-                            .Sum(l => l.Monto);
-
-                    var gastoMes = logs
-                        .Where(l => l.Fecha.Date >= inicioMes && l.Fecha.Date <= finMes && l.Monto < 0)
-                        .Sum(l => Math.Abs(l.Monto));
-
-                    ingresos.Add(ingresoMes);
-                    gastos.Add(gastoMes);
+                    ingresos.Add(logs.Where(l => l.Fecha.Date >= inicioMes && l.Fecha.Date <= finMes && l.Monto > 0).Sum(l => l.Monto));
+                    gastos.Add(logs.Where(l => l.Fecha.Date >= inicioMes && l.Fecha.Date <= finMes && l.Monto < 0).Sum(l => Math.Abs(l.Monto)));
                 }
                 break;
         }
