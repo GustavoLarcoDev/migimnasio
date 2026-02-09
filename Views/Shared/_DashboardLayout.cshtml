@@ -36,7 +36,21 @@
 
     @await RenderSectionAsync("Styles", required: false)
 </head>
-<body class="mg-dashboard">
+<body class="mg-dashboard @(User.Claims.Any(c => c.Type == "AdminImpersonating" && c.Value == "true") ? "is-impersonating" : "")">
+
+    @if (User.Claims.Any(c => c.Type == "AdminImpersonating" && c.Value == "true"))
+    {
+        <div class="mg-impersonation-banner">
+            <i class="bi bi-eye-fill me-2"></i>
+            Estás viendo como: <strong>@gimnasioNombre</strong>
+            <form method="post" action="/Gimnasios/StopImpersonation" style="display:inline;">
+                <button type="submit" class="btn btn-dark btn-sm ms-3 fw-bold">
+                    <i class="bi bi-box-arrow-left me-1"></i>
+                    Volver al Admin
+                </button>
+            </form>
+        </div>
+    }
 
     <!-- Sidebar Overlay (mobile) -->
     <div class="mg-sidebar-overlay" id="sidebarOverlay"></div>
@@ -69,10 +83,22 @@
         </nav>
 
         <div class="mg-sidebar-footer">
-            <a href="@Url.Action("Logout", "Auth")" class="nav-link">
-                <i class="bi bi-box-arrow-left"></i>
-                <span>Cerrar Sesión</span>
-            </a>
+            @if (User.Claims.Any(c => c.Type == "AdminImpersonating" && c.Value == "true"))
+            {
+                <form method="post" action="/Gimnasios/StopImpersonation" class="w-100">
+                    <button type="submit" class="nav-link w-100 text-start border-0 bg-transparent">
+                        <i class="bi bi-arrow-return-left"></i>
+                        <span>Volver al Admin</span>
+                    </button>
+                </form>
+            }
+            else
+            {
+                <a href="@Url.Action("Logout", "Auth")" class="nav-link">
+                    <i class="bi bi-box-arrow-left"></i>
+                    <span>Cerrar Sesión</span>
+                </a>
+            }
         </div>
     </aside>
 

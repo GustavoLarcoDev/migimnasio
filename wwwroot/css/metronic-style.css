@@ -556,6 +556,29 @@ body {
     }
 }
 
+/* ---- Impersonation Banner ---- */
+.mg-impersonation-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1060;
+    background: linear-gradient(135deg, #FFC700 0%, #ff9800 100%);
+    color: #000;
+    padding: 0.5rem 1rem;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.is-impersonating .mg-sidebar { top: 42px; }
+.is-impersonating .mg-topbar { top: 42px; }
+.is-impersonating .mg-content { padding-top: calc(var(--mg-topbar-height) + 42px); }
+@media (max-width: 991.98px) {
+    .is-impersonating .mg-sidebar { top: 42px; }
+    .is-impersonating .mg-content { padding-top: calc(var(--mg-topbar-height) + 42px); }
+}
+
 /* ---- SweetAlert2 Metronic Theme ---- */
 .mg-swal-popup {
     font-family: var(--mg-font-family) !important;

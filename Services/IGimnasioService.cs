@@ -11,4 +11,5 @@ public interface IGimnasioService
     Task<(bool success, string message)> EliminarGimnasioAsync(Guid id);
     Task<(bool success, string message, bool? isActive, bool? esPrueba)> CambiarEstadoAsync(Guid id);
     Task<byte[]> ExportExcelAsync();
+    Task<Gym> GetGimnasioForImpersonationAsync(Guid id);
 }

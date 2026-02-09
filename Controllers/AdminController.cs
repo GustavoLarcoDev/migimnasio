@@ -1,7 +1,10 @@
 using Gimnasio.Models;
 using Gimnasio.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Gimnasio.Controllers;
 
@@ -180,6 +183,77 @@ public class AdminController : Controller
             return File(content,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 $"Gimnasios_{DateTime.Now:yyyyMMdd}.xlsx");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPost("Impersonate/{id}")]
+    public async Task<IActionResult> Impersonate(Guid id)
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var gimnasio = await _gimnasioService.GetGimnasioForImpersonationAsync(id);
+            if (gimnasio == null)
+                return NotFound(new { success = false, message = "Gimnasio no encontrado" });
+
+            var adminEmail = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, gimnasio.GimnasioNombre),
+                new Claim(ClaimTypes.Email, gimnasio.Email ?? ""),
+                new Claim("GimnasioId", gimnasio.GimnasioId.ToString()),
+                new Claim(ClaimTypes.Role, "Gimnasio"),
+                new Claim("AdminImpersonating", "true"),
+                new Claim("AdminEmail", adminEmail ?? "")
+            };
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(identity),
+                new AuthenticationProperties { IsPersistent = true });
+
+            return RedirectToAction("Dashboard", "Clientes", new { id = gimnasio.GimnasioId });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
+    [HttpPost("StopImpersonation")]
+    [AllowAnonymous]
+    public async Task<IActionResult> StopImpersonation()
+    {
+        try
+        {
+            var adminEmail = User.Claims.FirstOrDefault(c => c.Type == "AdminEmail")?.Value;
+            var isImpersonating = User.Claims.Any(c => c.Type == "AdminImpersonating" && c.Value == "true");
+
+            if (!isImpersonating || string.IsNullOrEmpty(adminEmail))
+                return RedirectToAction("Login", "Auth");
+
+            var adminClaims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, "Administrador"),
+                new Claim(ClaimTypes.Email, adminEmail),
+                new Claim(ClaimTypes.Role, "Admin")
+            };
+
+            var identity = new ClaimsIdentity(adminClaims, CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(identity),
+                new AuthenticationProperties { IsPersistent = true });
+
+            return RedirectToAction("Index", "Admin");
         }
         catch (Exception ex)
         {

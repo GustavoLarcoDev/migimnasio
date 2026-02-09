@@ -172,6 +172,11 @@ public class GimnasioService : IGimnasioService
         return (true, $"Gimnasio cambiado a modo {tipoActual} exitosamente", gimnasio.IsActive, gimnasio.EsPrueba);
     }
 
+    public async Task<Gym> GetGimnasioForImpersonationAsync(Guid id)
+    {
+        return await _context.Gimnasios.FindAsync(id);
+    }
+
     public async Task<byte[]> ExportExcelAsync()
     {
         var gimnasios = await _context.Gimnasios

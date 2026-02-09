@@ -69,8 +69,17 @@ public class AuthService : IAuthService
         if (!user.Identity.IsAuthenticated)
             return false;
 
+        // Not admin while impersonating a gym
+        if (IsImpersonating(user))
+            return false;
+
         var emailClaim = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email);
         return emailClaim != null && emailClaim.Value == _adminSettings.Email;
+    }
+
+    public bool IsImpersonating(ClaimsPrincipal user)
+    {
+        return user.Claims.Any(c => c.Type == "AdminImpersonating" && c.Value == "true");
     }
 
     public Guid? GetGimnasioId(ClaimsPrincipal user)
