@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Gimnasio.Controllers;
 
-[Route("Gimnasios")]
+[Route("Negocios")]
 [Authorize]
 public class ClientesController : Controller
 {
@@ -27,18 +27,18 @@ public class ClientesController : Controller
     {
         try
         {
-            var gimnasioId = _authService.GetGimnasioId(User);
-            if (!gimnasioId.HasValue || gimnasioId.Value != id)
+            var negocioId = _authService.GetNegocioId(User);
+            if (!negocioId.HasValue || negocioId.Value != id)
                 return Forbid();
 
-            var gimnasio = await _context.Gimnasios
+            var negocio = await _context.Negocios
                 .Include(g => g.Clientes)
-                .FirstOrDefaultAsync(g => g.GimnasioId == id);
+                .FirstOrDefaultAsync(g => g.NegocioId == id);
 
-            if (gimnasio == null)
+            if (negocio == null)
                 return NotFound();
 
-            return View("~/Views/Gimnasios/Dashboard.cshtml", gimnasio);
+            return View("~/Views/Negocios/Dashboard.cshtml", negocio);
         }
         catch (Exception ex)
         {
@@ -47,11 +47,11 @@ public class ClientesController : Controller
     }
 
     [HttpGet("GetDashboardStats")]
-    public async Task<IActionResult> GetDashboardStats(Guid gimnasioId)
+    public async Task<IActionResult> GetDashboardStats(Guid negocioId)
     {
         try
         {
-            var stats = await _clienteService.GetDashboardStatsAsync(gimnasioId);
+            var stats = await _clienteService.GetDashboardStatsAsync(negocioId);
             return Ok(stats);
         }
         catch (Exception ex)
@@ -61,11 +61,11 @@ public class ClientesController : Controller
     }
 
     [HttpGet("GetClientes")]
-    public async Task<IActionResult> GetClientes(Guid gimnasioId)
+    public async Task<IActionResult> GetClientes(Guid negocioId)
     {
         try
         {
-            var clientes = await _clienteService.GetClientesAsync(gimnasioId);
+            var clientes = await _clienteService.GetClientesAsync(negocioId);
             return Ok(clientes);
         }
         catch (Exception ex)
@@ -75,11 +75,11 @@ public class ClientesController : Controller
     }
 
     [HttpGet("GetCliente")]
-    public async Task<IActionResult> GetCliente(Guid id, Guid gimnasioId)
+    public async Task<IActionResult> GetCliente(Guid id, Guid negocioId)
     {
         try
         {
-            var cliente = await _clienteService.GetClienteAsync(id, gimnasioId);
+            var cliente = await _clienteService.GetClienteAsync(id, negocioId);
             if (cliente == null)
                 return NotFound(new { success = false, message = "Cliente no encontrado" });
 
@@ -96,8 +96,8 @@ public class ClientesController : Controller
     {
         try
         {
-            var gimnasioId = _authService.GetGimnasioId(User);
-            if (!gimnasioId.HasValue || model.GimnasioId != gimnasioId.Value)
+            var negocioId = _authService.GetNegocioId(User);
+            if (!negocioId.HasValue || model.NegocioId != negocioId.Value)
                 return Forbid();
 
             var (success, message) = await _clienteService.CrearClienteAsync(model);
@@ -118,8 +118,8 @@ public class ClientesController : Controller
     {
         try
         {
-            var gimnasioId = _authService.GetGimnasioId(User);
-            if (!gimnasioId.HasValue || model.GimnasioId != gimnasioId.Value)
+            var negocioId = _authService.GetNegocioId(User);
+            if (!negocioId.HasValue || model.NegocioId != negocioId.Value)
                 return Forbid();
 
             var (success, message) = await _clienteService.EditarClienteAsync(model);
@@ -140,11 +140,11 @@ public class ClientesController : Controller
     }
 
     [HttpPost("EliminarCliente")]
-    public async Task<IActionResult> EliminarCliente(Guid id, Guid gimnasioId)
+    public async Task<IActionResult> EliminarCliente(Guid id, Guid negocioId)
     {
         try
         {
-            var (success, message) = await _clienteService.EliminarClienteAsync(id, gimnasioId);
+            var (success, message) = await _clienteService.EliminarClienteAsync(id, negocioId);
 
             if (!success)
                 return NotFound(new { success = false, message });
@@ -158,11 +158,11 @@ public class ClientesController : Controller
     }
 
     [HttpPost("RenovarCliente")]
-    public async Task<IActionResult> RenovarCliente(Guid id, Guid gimnasioId, DateTime nuevaFechaFin, decimal precio)
+    public async Task<IActionResult> RenovarCliente(Guid id, Guid negocioId, DateTime nuevaFechaFin, decimal precio)
     {
         try
         {
-            var (success, message) = await _clienteService.RenovarClienteAsync(id, gimnasioId, nuevaFechaFin, precio);
+            var (success, message) = await _clienteService.RenovarClienteAsync(id, negocioId, nuevaFechaFin, precio);
 
             if (!success)
             {
@@ -180,11 +180,11 @@ public class ClientesController : Controller
     }
 
     [HttpGet("ExportClientesExcel")]
-    public async Task<IActionResult> ExportClientesExcel(Guid gimnasioId)
+    public async Task<IActionResult> ExportClientesExcel(Guid negocioId)
     {
         try
         {
-            var content = await _clienteService.ExportClientesExcelAsync(gimnasioId);
+            var content = await _clienteService.ExportClientesExcelAsync(negocioId);
             return File(content,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 $"Clientes_{DateTime.Now:yyyyMMdd}.xlsx");
@@ -196,12 +196,12 @@ public class ClientesController : Controller
     }
 
     [HttpPost("ImportarClientesExcel")]
-    public async Task<IActionResult> ImportarClientesExcel(Guid gimnasioId, IFormFile file)
+    public async Task<IActionResult> ImportarClientesExcel(Guid negocioId, IFormFile file)
     {
         try
         {
-            var gymId = _authService.GetGimnasioId(User);
-            if (!gymId.HasValue || gimnasioId != gymId.Value)
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
                 return Forbid();
 
             if (file == null || file.Length == 0)
@@ -212,7 +212,7 @@ public class ClientesController : Controller
                 return BadRequest(new { success = false, message = "El archivo debe ser un Excel (.xlsx o .xls)" });
 
             using var stream = file.OpenReadStream();
-            var result = await _clienteService.ImportarClientesExcelAsync(gimnasioId, stream);
+            var result = await _clienteService.ImportarClientesExcelAsync(negocioId, stream);
             return Ok(result);
         }
         catch (Exception ex)
@@ -222,11 +222,11 @@ public class ClientesController : Controller
     }
 
     [HttpGet("GetClientesDiarios")]
-    public async Task<IActionResult> GetClientesDiarios(Guid gimnasioId)
+    public async Task<IActionResult> GetClientesDiarios(Guid negocioId)
     {
         try
         {
-            var clientes = await _clienteService.GetClientesDiariosAsync(gimnasioId);
+            var clientes = await _clienteService.GetClientesDiariosAsync(negocioId);
             return Ok(clientes);
         }
         catch (Exception ex)

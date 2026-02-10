@@ -8,7 +8,7 @@ public class Cliente
     public Guid ClienteId { get; set; }
     
     [Required]
-    public Guid GimnasioId { get; set; }
+    public Guid NegocioId { get; set; }
 
     [Required]
     [StringLength(100)]
@@ -42,7 +42,7 @@ public class ClienteCreateModel
     public Guid ClienteId { get; set; }
     
     [Required]
-    public Guid GimnasioId { get; set; }
+    public Guid NegocioId { get; set; }
 
     [Required]
     [StringLength(100)]

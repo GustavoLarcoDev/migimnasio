@@ -8,16 +8,16 @@ using System.Security.Claims;
 
 namespace Gimnasio.Controllers;
 
-[Route("Gimnasios")]
+[Route("Negocios")]
 [Authorize]
 public class AdminController : Controller
 {
-    private readonly IGimnasioService _gimnasioService;
+    private readonly INegocioService _negocioService;
     private readonly IAuthService _authService;
 
-    public AdminController(IGimnasioService gimnasioService, IAuthService authService)
+    public AdminController(INegocioService negocioService, IAuthService authService)
     {
-        _gimnasioService = gimnasioService;
+        _negocioService = negocioService;
         _authService = authService;
     }
 
@@ -30,19 +30,19 @@ public class AdminController : Controller
             TempData["Error"] = "No tiene permisos para acceder a esta página";
             return RedirectToAction("Login", "Auth");
         }
-        return View("~/Views/Gimnasios/Index.cshtml");
+        return View("~/Views/Negocios/Index.cshtml");
     }
 
-    [HttpGet("GetGimnasios")]
-    public async Task<IActionResult> GetGimnasios()
+    [HttpGet("GetNegocios")]
+    public async Task<IActionResult> GetNegocios()
     {
         try
         {
             if (!_authService.IsAdmin(User))
                 return Forbid();
 
-            var gimnasios = await _gimnasioService.GetAllGimnasiosAsync();
-            return Ok(gimnasios);
+            var negocios = await _negocioService.GetAllNegociosAsync();
+            return Ok(negocios);
         }
         catch (Exception ex)
         {
@@ -50,19 +50,19 @@ public class AdminController : Controller
         }
     }
 
-    [HttpGet("GetGimnasio/{id}")]
-    public async Task<IActionResult> GetGimnasio(Guid id)
+    [HttpGet("GetNegocio/{id}")]
+    public async Task<IActionResult> GetNegocio(Guid id)
     {
         try
         {
             if (!_authService.IsAdmin(User))
                 return Forbid();
 
-            var gimnasio = await _gimnasioService.GetGimnasioAsync(id);
-            if (gimnasio == null)
-                return NotFound(new { success = false, message = "Gimnasio no encontrado" });
+            var negocio = await _negocioService.GetNegocioAsync(id);
+            if (negocio == null)
+                return NotFound(new { success = false, message = "Negocio no encontrado" });
 
-            return Ok(gimnasio);
+            return Ok(negocio);
         }
         catch (Exception ex)
         {
@@ -78,20 +78,20 @@ public class AdminController : Controller
             TempData["Error"] = "No tiene permisos para acceder a esta página";
             return RedirectToAction("Login", "Auth");
         }
-        return View("~/Views/Gimnasios/Create.cshtml");
+        return View("~/Views/Negocios/Create.cshtml");
     }
 
     [HttpPost("Create")]
-    public async Task<IActionResult> Create(string NombreGimnasio, string duenoGimnasio, string telefono, string EmailGimnasio,
-        string passwordGimnasio, bool isActive, bool esPrueba)
+    public async Task<IActionResult> Create(string NombreNegocio, string duenoNegocio, string telefono, string EmailNegocio,
+        string passwordNegocio, bool isActive, bool esPrueba)
     {
         try
         {
             if (!_authService.IsAdmin(User))
                 return Forbid();
 
-            var (success, message) = await _gimnasioService.CreateGimnasioAsync(
-                NombreGimnasio, duenoGimnasio, telefono, EmailGimnasio, passwordGimnasio, isActive, esPrueba);
+            var (success, message) = await _negocioService.CreateNegocioAsync(
+                NombreNegocio, duenoNegocio, telefono, EmailNegocio, passwordNegocio, isActive, esPrueba);
 
             if (!success)
                 return BadRequest(message);
@@ -105,14 +105,14 @@ public class AdminController : Controller
     }
 
     [HttpPost("Editar")]
-    public async Task<IActionResult> Editar([FromForm] Gym gimnasio)
+    public async Task<IActionResult> Editar([FromForm] Gym negocio)
     {
         try
         {
             if (!_authService.IsAdmin(User))
                 return Forbid();
 
-            var (success, message) = await _gimnasioService.EditarGimnasioAsync(gimnasio);
+            var (success, message) = await _negocioService.EditarNegocioAsync(negocio);
 
             if (!success)
                 return BadRequest(new { success = false, message });
@@ -133,7 +133,7 @@ public class AdminController : Controller
             if (!_authService.IsAdmin(User))
                 return Forbid();
 
-            var (success, message) = await _gimnasioService.EliminarGimnasioAsync(id);
+            var (success, message) = await _negocioService.EliminarNegocioAsync(id);
 
             if (!success)
             {
@@ -158,7 +158,7 @@ public class AdminController : Controller
             if (!_authService.IsAdmin(User))
                 return Forbid();
 
-            var (success, message, isActive, esPrueba) = await _gimnasioService.CambiarEstadoAsync(id);
+            var (success, message, isActive, esPrueba) = await _negocioService.CambiarEstadoAsync(id);
 
             if (!success)
                 return NotFound(new { success = false, message });
@@ -179,10 +179,10 @@ public class AdminController : Controller
             if (!_authService.IsAdmin(User))
                 return Forbid();
 
-            var content = await _gimnasioService.ExportExcelAsync();
+            var content = await _negocioService.ExportExcelAsync();
             return File(content,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                $"Gimnasios_{DateTime.Now:yyyyMMdd}.xlsx");
+                $"Negocios_{DateTime.Now:yyyyMMdd}.xlsx");
         }
         catch (Exception ex)
         {
@@ -198,18 +198,18 @@ public class AdminController : Controller
             if (!_authService.IsAdmin(User))
                 return Forbid();
 
-            var gimnasio = await _gimnasioService.GetGimnasioForImpersonationAsync(id);
-            if (gimnasio == null)
-                return NotFound(new { success = false, message = "Gimnasio no encontrado" });
+            var negocio = await _negocioService.GetNegocioForImpersonationAsync(id);
+            if (negocio == null)
+                return NotFound(new { success = false, message = "Negocio no encontrado" });
 
             var adminEmail = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, gimnasio.GimnasioNombre),
-                new Claim(ClaimTypes.Email, gimnasio.Email ?? ""),
-                new Claim("GimnasioId", gimnasio.GimnasioId.ToString()),
-                new Claim(ClaimTypes.Role, "Gimnasio"),
+                new Claim(ClaimTypes.Name, negocio.NegocioNombre),
+                new Claim(ClaimTypes.Email, negocio.Email ?? ""),
+                new Claim("NegocioId", negocio.NegocioId.ToString()),
+                new Claim(ClaimTypes.Role, "Negocio"),
                 new Claim("AdminImpersonating", "true"),
                 new Claim("AdminEmail", adminEmail ?? "")
             };
@@ -220,7 +220,7 @@ public class AdminController : Controller
                 new ClaimsPrincipal(identity),
                 new AuthenticationProperties { IsPersistent = true });
 
-            return RedirectToAction("Dashboard", "Clientes", new { id = gimnasio.GimnasioId });
+            return RedirectToAction("Dashboard", "Clientes", new { id = negocio.NegocioId });
         }
         catch (Exception ex)
         {

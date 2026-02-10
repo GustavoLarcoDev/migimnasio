@@ -13,10 +13,10 @@ public class NotificationService : INotificationService
         _context = context;
     }
 
-    public async Task<object> GetNotificacionesAsync(Guid gimnasioId)
+    public async Task<object> GetNotificacionesAsync(Guid negocioId)
     {
         return await _context.Notificaciones
-            .Where(n => n.GimnasioId == gimnasioId)
+            .Where(n => n.NegocioId == negocioId)
             .OrderByDescending(n => n.FechaCreacion)
             .Select(n => new
             {
@@ -32,16 +32,16 @@ public class NotificationService : INotificationService
             .ToListAsync();
     }
 
-    public async Task<int> GetNotificacionesCountAsync(Guid gimnasioId)
+    public async Task<int> GetNotificacionesCountAsync(Guid negocioId)
     {
         return await _context.Notificaciones
-            .CountAsync(n => n.GimnasioId == gimnasioId && !n.Leida);
+            .CountAsync(n => n.NegocioId == negocioId && !n.Leida);
     }
 
-    public async Task<(bool success, string message)> MarcarLeidaAsync(Guid id, Guid gimnasioId)
+    public async Task<(bool success, string message)> MarcarLeidaAsync(Guid id, Guid negocioId)
     {
         var notificacion = await _context.Notificaciones
-            .FirstOrDefaultAsync(n => n.Id == id && n.GimnasioId == gimnasioId);
+            .FirstOrDefaultAsync(n => n.Id == id && n.NegocioId == negocioId);
 
         if (notificacion == null)
             return (false, "Notificación no encontrada");
@@ -53,10 +53,10 @@ public class NotificationService : INotificationService
         return (true, "Notificación marcada como leída");
     }
 
-    public async Task<(bool success, string message)> MarcarTodasLeidasAsync(Guid gimnasioId)
+    public async Task<(bool success, string message)> MarcarTodasLeidasAsync(Guid negocioId)
     {
         var notificaciones = await _context.Notificaciones
-            .Where(n => n.GimnasioId == gimnasioId && !n.Leida)
+            .Where(n => n.NegocioId == negocioId && !n.Leida)
             .ToListAsync();
 
         foreach (var n in notificaciones)
@@ -67,13 +67,13 @@ public class NotificationService : INotificationService
         return (true, $"{notificaciones.Count} notificaciones marcadas como leídas");
     }
 
-    public async Task<(bool success, string message, int count)> GenerarNotificacionesAsync(Guid gimnasioId)
+    public async Task<(bool success, string message, int count)> GenerarNotificacionesAsync(Guid negocioId)
     {
         var hoy = DateTime.Now.Date;
         var en3Dias = hoy.AddDays(3);
 
         var clientesProximos = await _context.Clientes
-            .Where(c => c.GimnasioId == gimnasioId
+            .Where(c => c.NegocioId == negocioId
                 && c.FechaQueTermina.Date >= hoy
                 && c.FechaQueTermina.Date <= en3Dias)
             .ToListAsync();
@@ -83,7 +83,7 @@ public class NotificationService : INotificationService
         {
             // Check if notification already exists for this client today
             var existe = await _context.Notificaciones
-                .AnyAsync(n => n.GimnasioId == gimnasioId
+                .AnyAsync(n => n.NegocioId == negocioId
                     && n.ClienteId == cliente.ClienteId
                     && n.FechaCreacion.Date == hoy);
 
@@ -95,7 +95,7 @@ public class NotificationService : INotificationService
             var notificacion = new Notificacion
             {
                 Id = Guid.NewGuid(),
-                GimnasioId = gimnasioId,
+                NegocioId = negocioId,
                 Mensaje = diasRestantes == 0
                     ? $"La membresía de {nombreCompleto} vence HOY"
                     : $"La membresía de {nombreCompleto} vence en {diasRestantes} día(s)",

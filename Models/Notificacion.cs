@@ -8,7 +8,7 @@ public class Notificacion
     public Guid Id { get; set; }
 
     [Required]
-    public Guid GimnasioId { get; set; }
+    public Guid NegocioId { get; set; }
 
     [Required]
     [MaxLength(500)]

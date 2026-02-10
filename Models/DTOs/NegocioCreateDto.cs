@@ -2,13 +2,13 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Gimnasio.Models.DTOs;
 
-public class GimnasioCreateDto
+public class NegocioCreateDto
 {
     [Required]
-    public string NombreGimnasio { get; set; }
+    public string NombreNegocio { get; set; }
 
     [Required]
-    public string DuenoGimnasio { get; set; }
+    public string DuenoNegocio { get; set; }
 
     [Required]
     [Phone]
@@ -16,10 +16,10 @@ public class GimnasioCreateDto
 
     [Required]
     [EmailAddress]
-    public string EmailGimnasio { get; set; }
+    public string EmailNegocio { get; set; }
 
     [Required]
-    public string PasswordGimnasio { get; set; }
+    public string PasswordNegocio { get; set; }
 
     public bool IsActive { get; set; }
     public bool EsPrueba { get; set; }

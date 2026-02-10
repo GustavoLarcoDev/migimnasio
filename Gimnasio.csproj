@@ -20,10 +20,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <AdditionalFiles Include="Views\Gimnasios\Index.cshtml" />
-    </ItemGroup>
-
-    <ItemGroup>
       <_ContentIncludedByDefault Remove="Views\Clientes\Index.cshtml" />
     </ItemGroup>
 

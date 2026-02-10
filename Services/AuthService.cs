@@ -17,7 +17,7 @@ public class AuthService : IAuthService
         _adminSettings = adminSettings.Value;
     }
 
-    public async Task<(bool success, string role, Gym gimnasio, string error)> LoginAsync(string email, string password)
+    public async Task<(bool success, string role, Gym negocio, string error)> LoginAsync(string email, string password)
     {
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             return (false, null, null, "Email y contraseña son obligatorios");
@@ -26,31 +26,31 @@ public class AuthService : IAuthService
         if (email == _adminSettings.Email && password == _adminSettings.Password)
             return (true, "Admin", null, null);
 
-        // Check gimnasio by email or phone
-        var gimnasio = email.Contains('@')
-            ? await _context.Gimnasios.FirstOrDefaultAsync(g => g.Email == email)
-            : await _context.Gimnasios.FirstOrDefaultAsync(g => g.Telefono == email);
-        if (gimnasio == null)
+        // Check negocio by email or phone
+        var negocio = email.Contains('@')
+            ? await _context.Negocios.FirstOrDefaultAsync(g => g.Email == email)
+            : await _context.Negocios.FirstOrDefaultAsync(g => g.Telefono == email);
+        if (negocio == null)
             return (false, null, null, "Credenciales inválidas");
 
         // Try BCrypt first, then plaintext with lazy migration
         bool passwordValid = false;
 
-        if (gimnasio.Password.StartsWith("$2"))
+        if (negocio.Password.StartsWith("$2"))
         {
             // Already hashed with BCrypt
-            passwordValid = VerifyPassword(password, gimnasio.Password);
+            passwordValid = VerifyPassword(password, negocio.Password);
         }
         else
         {
             // Plaintext comparison + lazy migration
-            if (gimnasio.Password == password)
+            if (negocio.Password == password)
             {
                 passwordValid = true;
                 // Migrate to BCrypt hash
-                gimnasio.Password = HashPassword(password);
-                gimnasio.FechaDeActualizacion = DateTime.Now;
-                _context.Update(gimnasio);
+                negocio.Password = HashPassword(password);
+                negocio.FechaDeActualizacion = DateTime.Now;
+                _context.Update(negocio);
                 await _context.SaveChangesAsync();
             }
         }
@@ -58,10 +58,10 @@ public class AuthService : IAuthService
         if (!passwordValid)
             return (false, null, null, "Credenciales inválidas");
 
-        if (!gimnasio.IsActive && !gimnasio.EsPrueba)
+        if (!negocio.IsActive && !negocio.EsPrueba)
             return (false, null, null, "Su cuenta no está activa. Contacte al administrador.");
 
-        return (true, "Gimnasio", gimnasio, null);
+        return (true, "Negocio", negocio, null);
     }
 
     public bool IsAdmin(ClaimsPrincipal user)
@@ -69,7 +69,7 @@ public class AuthService : IAuthService
         if (!user.Identity.IsAuthenticated)
             return false;
 
-        // Not admin while impersonating a gym
+        // Not admin while impersonating
         if (IsImpersonating(user))
             return false;
 
@@ -82,9 +82,9 @@ public class AuthService : IAuthService
         return user.Claims.Any(c => c.Type == "AdminImpersonating" && c.Value == "true");
     }
 
-    public Guid? GetGimnasioId(ClaimsPrincipal user)
+    public Guid? GetNegocioId(ClaimsPrincipal user)
     {
-        var claim = user.Claims.FirstOrDefault(c => c.Type == "GimnasioId");
+        var claim = user.Claims.FirstOrDefault(c => c.Type == "NegocioId");
         if (claim != null && Guid.TryParse(claim.Value, out var id))
             return id;
         return null;

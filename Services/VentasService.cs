@@ -19,13 +19,13 @@ public class VentasService : IVentasService
     }
 
     /// <summary>
-    /// Obtiene estadísticas de ventas completas para un gimnasio.
+    /// Obtiene estadísticas de ventas completas para un negocio.
     /// Calcula ingresos, gastos y ganancias agrupados por día, semana, mes y año.
     /// También calcula membresías de 30+ días creadas en el mes y clientes diarios de hoy.
     /// </summary>
-    /// <param name="gimnasioId">ID único del gimnasio para filtrar datos</param>
-    /// <returns>Objeto anónimo con todas las métricas financieras del gimnasio</returns>
-    public async Task<object> GetVentasStatsAsync(Guid gimnasioId)
+    /// <param name="negocioId">ID único del negocio para filtrar datos</param>
+    /// <returns>Objeto anónimo con todas las métricas financieras del negocio</returns>
+    public async Task<object> GetVentasStatsAsync(Guid negocioId)
     {
         // Definir los límites de cada periodo de tiempo
         var hoy = DateTime.Now.Date;
@@ -37,14 +37,14 @@ public class VentasService : IVentasService
         // Si hoy es domingo, retroceder una semana completa para que lunes sea el inicio
         var inicioSemana = hoy.AddDays(-(((int)hoy.DayOfWeek + 6) % 7));
 
-        // Cargar todos los clientes y logs del gimnasio a memoria
+        // Cargar todos los clientes y logs del negocio a memoria
         // para realizar cálculos en memoria (evita múltiples queries a la DB)
         var clientes = await _context.Clientes
-            .Where(c => c.GimnasioId == gimnasioId)
+            .Where(c => c.NegocioId == negocioId)
             .ToListAsync();
 
         var logs = await _context.Logs
-            .Where(l => l.GimnasioId == gimnasioId)
+            .Where(l => l.NegocioId == negocioId)
             .ToListAsync();
 
         // --- Métricas especiales ---
@@ -109,10 +109,10 @@ public class VentasService : IVentasService
     /// - "mes": últimas 4 semanas (4 puntos)
     /// - "anio": últimos 12 meses (12 puntos)
     /// </summary>
-    /// <param name="gimnasioId">ID único del gimnasio</param>
+    /// <param name="negocioId">ID único del negocio</param>
     /// <param name="periodo">Periodo de agrupación: "dia", "semana", "mes" o "anio"</param>
     /// <returns>Objeto con labels (eje X), ingresos (serie 1) y gastos (serie 2)</returns>
-    public async Task<object> GetChartDataAsync(Guid gimnasioId, string periodo)
+    public async Task<object> GetChartDataAsync(Guid negocioId, string periodo)
     {
         var hoy = DateTime.Now.Date;
         var ahora = DateTime.Now;
@@ -120,7 +120,7 @@ public class VentasService : IVentasService
         // Ingresos y gastos vienen SOLO de Logs (fuente inmutable).
         // Eliminar un cliente no afecta los registros financieros.
         var logs = await _context.Logs
-            .Where(l => l.GimnasioId == gimnasioId)
+            .Where(l => l.NegocioId == negocioId)
             .ToListAsync();
 
         var labels = new List<string>();
@@ -181,13 +181,13 @@ public class VentasService : IVentasService
         return new { labels, ingresos, gastos };
     }
 
-    public async Task<object> GetClientesChartDataAsync(Guid gimnasioId, string periodo)
+    public async Task<object> GetClientesChartDataAsync(Guid negocioId, string periodo)
     {
         var hoy = DateTime.Now.Date;
         var ahora = DateTime.Now;
 
         var clientes = await _context.Clientes
-            .Where(c => c.GimnasioId == gimnasioId)
+            .Where(c => c.NegocioId == negocioId)
             .ToListAsync();
 
         var labels = new List<string>();

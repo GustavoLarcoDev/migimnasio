@@ -19,7 +19,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Register Services
 builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IGimnasioService, GimnasioService>();
+builder.Services.AddScoped<INegocioService, NegocioService>();
 builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddScoped<IClienteService, ClienteService>();
 builder.Services.AddScoped<IVentasService, VentasService>();
@@ -31,8 +31,8 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {
-        options.LoginPath = "/Gimnasios/Login";
-        options.Cookie.Name = "GimnasioAuthCookie";
+        options.LoginPath = "/Negocios/Login";
+        options.Cookie.Name = "NegocioAuthCookie";
     });
 
 var app = builder.Build();

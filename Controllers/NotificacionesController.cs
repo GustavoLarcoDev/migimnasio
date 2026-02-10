@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Gimnasio.Controllers;
 
-[Route("Gimnasios")]
+[Route("Negocios")]
 [Authorize]
 public class NotificacionesController : Controller
 {
@@ -18,15 +18,15 @@ public class NotificacionesController : Controller
     }
 
     [HttpGet("GetNotificaciones")]
-    public async Task<IActionResult> GetNotificaciones(Guid gimnasioId)
+    public async Task<IActionResult> GetNotificaciones(Guid negocioId)
     {
         try
         {
-            var gimnasioIdClaim = _authService.GetGimnasioId(User);
-            if (!gimnasioIdClaim.HasValue || gimnasioId != gimnasioIdClaim.Value)
+            var negocioIdClaim = _authService.GetNegocioId(User);
+            if (!negocioIdClaim.HasValue || negocioId != negocioIdClaim.Value)
                 return Forbid();
 
-            var notificaciones = await _notificationService.GetNotificacionesAsync(gimnasioId);
+            var notificaciones = await _notificationService.GetNotificacionesAsync(negocioId);
             return Ok(notificaciones);
         }
         catch (Exception ex)
@@ -36,11 +36,11 @@ public class NotificacionesController : Controller
     }
 
     [HttpGet("GetNotificacionesCount")]
-    public async Task<IActionResult> GetNotificacionesCount(Guid gimnasioId)
+    public async Task<IActionResult> GetNotificacionesCount(Guid negocioId)
     {
         try
         {
-            var count = await _notificationService.GetNotificacionesCountAsync(gimnasioId);
+            var count = await _notificationService.GetNotificacionesCountAsync(negocioId);
             return Ok(new { count });
         }
         catch (Exception ex)
@@ -50,11 +50,11 @@ public class NotificacionesController : Controller
     }
 
     [HttpPost("MarcarNotificacionLeida")]
-    public async Task<IActionResult> MarcarLeida(Guid id, Guid gimnasioId)
+    public async Task<IActionResult> MarcarLeida(Guid id, Guid negocioId)
     {
         try
         {
-            var (success, message) = await _notificationService.MarcarLeidaAsync(id, gimnasioId);
+            var (success, message) = await _notificationService.MarcarLeidaAsync(id, negocioId);
             if (!success)
                 return NotFound(new { success = false, message });
 
@@ -67,11 +67,11 @@ public class NotificacionesController : Controller
     }
 
     [HttpPost("MarcarTodasNotificacionesLeidas")]
-    public async Task<IActionResult> MarcarTodasLeidas(Guid gimnasioId)
+    public async Task<IActionResult> MarcarTodasLeidas(Guid negocioId)
     {
         try
         {
-            var (success, message) = await _notificationService.MarcarTodasLeidasAsync(gimnasioId);
+            var (success, message) = await _notificationService.MarcarTodasLeidasAsync(negocioId);
             return Ok(new { success = true, message });
         }
         catch (Exception ex)
@@ -81,15 +81,15 @@ public class NotificacionesController : Controller
     }
 
     [HttpPost("GenerarNotificaciones")]
-    public async Task<IActionResult> GenerarNotificaciones(Guid gimnasioId)
+    public async Task<IActionResult> GenerarNotificaciones(Guid negocioId)
     {
         try
         {
-            var gimnasioIdClaim = _authService.GetGimnasioId(User);
-            if (!gimnasioIdClaim.HasValue || gimnasioId != gimnasioIdClaim.Value)
+            var negocioIdClaim = _authService.GetNegocioId(User);
+            if (!negocioIdClaim.HasValue || negocioId != negocioIdClaim.Value)
                 return Forbid();
 
-            var (success, message, count) = await _notificationService.GenerarNotificacionesAsync(gimnasioId);
+            var (success, message, count) = await _notificationService.GenerarNotificacionesAsync(negocioId);
             return Ok(new { success = true, message, count });
         }
         catch (Exception ex)

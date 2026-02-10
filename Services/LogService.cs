@@ -14,14 +14,14 @@ public class LogService : ILogService
         _context = context;
     }
 
-    public async Task CreateLogAsync(Guid gimnasioId, string tipo, string message, decimal monto = 0, Guid? clienteId = null, string nombreCliente = null)
+    public async Task CreateLogAsync(Guid negocioId, string tipo, string message, decimal monto = 0, Guid? clienteId = null, string nombreCliente = null)
     {
         try
         {
             var log = new Logs
             {
                 Id = Guid.NewGuid(),
-                GimnasioId = gimnasioId,
+                NegocioId = negocioId,
                 Message = message,
                 Monto = monto,
                 Tipo = tipo,
@@ -39,10 +39,10 @@ public class LogService : ILogService
         }
     }
 
-    public async Task<object> GetLogsAsync(Guid gimnasioId)
+    public async Task<object> GetLogsAsync(Guid negocioId)
     {
         return await _context.Logs
-            .Where(l => l.GimnasioId == gimnasioId)
+            .Where(l => l.NegocioId == negocioId)
             .OrderByDescending(l => l.Fecha)
             .Select(l => new
             {
@@ -57,13 +57,13 @@ public class LogService : ILogService
             .ToListAsync();
     }
 
-    public async Task<object> GetLogAsync(Guid id, Guid gimnasioId)
+    public async Task<object> GetLogAsync(Guid id, Guid negocioId)
     {
         return await _context.Logs
-            .FirstOrDefaultAsync(l => l.Id == id && l.GimnasioId == gimnasioId);
+            .FirstOrDefaultAsync(l => l.Id == id && l.NegocioId == negocioId);
     }
 
-    public async Task<(bool success, string message)> CrearLogManualAsync(Guid gimnasioId, string message, decimal monto)
+    public async Task<(bool success, string message)> CrearLogManualAsync(Guid negocioId, string message, decimal monto)
     {
         if (string.IsNullOrWhiteSpace(message))
             return (false, "La descripción es obligatoria");
@@ -71,7 +71,7 @@ public class LogService : ILogService
         var log = new Logs
         {
             Id = Guid.NewGuid(),
-            GimnasioId = gimnasioId,
+            NegocioId = negocioId,
             Message = message,
             Monto = monto,
             Tipo = monto >= 0 ? "ingreso" : "gasto",
@@ -84,10 +84,10 @@ public class LogService : ILogService
         return (true, "Log registrado exitosamente");
     }
 
-    public async Task<(bool success, string message)> EditarLogAsync(Guid id, Guid gimnasioId, string message, decimal monto)
+    public async Task<(bool success, string message)> EditarLogAsync(Guid id, Guid negocioId, string message, decimal monto)
     {
         var log = await _context.Logs
-            .FirstOrDefaultAsync(l => l.Id == id && l.GimnasioId == gimnasioId);
+            .FirstOrDefaultAsync(l => l.Id == id && l.NegocioId == negocioId);
 
         if (log == null)
             return (false, "Log no encontrado");
@@ -102,10 +102,10 @@ public class LogService : ILogService
         return (true, "Log actualizado exitosamente");
     }
 
-    public async Task<(bool success, string message)> EliminarLogAsync(Guid id, Guid gimnasioId)
+    public async Task<(bool success, string message)> EliminarLogAsync(Guid id, Guid negocioId)
     {
         var log = await _context.Logs
-            .FirstOrDefaultAsync(l => l.Id == id && l.GimnasioId == gimnasioId);
+            .FirstOrDefaultAsync(l => l.Id == id && l.NegocioId == negocioId);
 
         if (log == null)
             return (false, "Log no encontrado");
@@ -116,9 +116,9 @@ public class LogService : ILogService
         return (true, "Log eliminado exitosamente");
     }
 
-    public async Task<(bool success, string message)> EliminarTodosLogsAsync(Guid gimnasioId)
+    public async Task<(bool success, string message)> EliminarTodosLogsAsync(Guid negocioId)
     {
-        var logs = await _context.Logs.Where(l => l.GimnasioId == gimnasioId).ToListAsync();
+        var logs = await _context.Logs.Where(l => l.NegocioId == negocioId).ToListAsync();
 
         if (!logs.Any())
             return (true, "No hay logs para eliminar");
@@ -129,10 +129,10 @@ public class LogService : ILogService
         return (true, $"Se eliminaron {logs.Count} logs exitosamente");
     }
 
-    public async Task<byte[]> ExportLogsExcelAsync(Guid gimnasioId)
+    public async Task<byte[]> ExportLogsExcelAsync(Guid negocioId)
     {
         var logs = await _context.Logs
-            .Where(l => l.GimnasioId == gimnasioId)
+            .Where(l => l.NegocioId == negocioId)
             .OrderByDescending(l => l.Fecha)
             .ToListAsync();
 
@@ -196,10 +196,10 @@ public class LogService : ILogService
         return stream.ToArray();
     }
 
-    public async Task<DateTime?> GetOldestLogDateAsync(Guid gimnasioId)
+    public async Task<DateTime?> GetOldestLogDateAsync(Guid negocioId)
     {
         var oldest = await _context.Logs
-            .Where(l => l.GimnasioId == gimnasioId)
+            .Where(l => l.NegocioId == negocioId)
             .OrderBy(l => l.Fecha)
             .FirstOrDefaultAsync();
         return oldest?.Fecha;

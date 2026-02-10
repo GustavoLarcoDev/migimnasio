@@ -6,7 +6,7 @@ using System.Security.Claims;
 
 namespace Gimnasio.Controllers;
 
-[Route("Gimnasios")]
+[Route("Negocios")]
 public class AuthController : Controller
 {
     private readonly IAuthService _authService;
@@ -24,22 +24,22 @@ public class AuthController : Controller
             if (_authService.IsAdmin(User))
                 return RedirectToAction("Index", "Admin");
 
-            var gimnasioId = _authService.GetGimnasioId(User);
-            if (gimnasioId.HasValue)
-                return RedirectToAction("Dashboard", "Clientes", new { id = gimnasioId.Value });
+            var negocioId = _authService.GetNegocioId(User);
+            if (negocioId.HasValue)
+                return RedirectToAction("Dashboard", "Clientes", new { id = negocioId.Value });
         }
-        return View("~/Views/Gimnasios/Login.cshtml");
+        return View("~/Views/Negocios/Login.cshtml");
     }
 
     [HttpPost("Login")]
     public async Task<IActionResult> Login(string email, string password)
     {
-        var (success, role, gimnasio, error) = await _authService.LoginAsync(email, password);
+        var (success, role, negocio, error) = await _authService.LoginAsync(email, password);
 
         if (!success)
         {
             ViewBag.Error = error;
-            return View("~/Views/Gimnasios/Login.cshtml");
+            return View("~/Views/Negocios/Login.cshtml");
         }
 
         if (role == "Admin")
@@ -60,13 +60,13 @@ public class AuthController : Controller
             return RedirectToAction("Index", "Admin");
         }
 
-        // Gimnasio login
+        // Negocio login
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Name, gimnasio.GimnasioNombre),
-            new Claim(ClaimTypes.Email, gimnasio.Email),
-            new Claim("GimnasioId", gimnasio.GimnasioId.ToString()),
-            new Claim(ClaimTypes.Role, "Gimnasio")
+            new Claim(ClaimTypes.Name, negocio.NegocioNombre),
+            new Claim(ClaimTypes.Email, negocio.Email),
+            new Claim("NegocioId", negocio.NegocioId.ToString()),
+            new Claim(ClaimTypes.Role, "Negocio")
         };
 
         var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
@@ -75,7 +75,7 @@ public class AuthController : Controller
             new ClaimsPrincipal(claimsIdentity),
             new AuthenticationProperties { IsPersistent = true });
 
-        return RedirectToAction("Dashboard", "Clientes", new { id = gimnasio.GimnasioId });
+        return RedirectToAction("Dashboard", "Clientes", new { id = negocio.NegocioId });
     }
 
     [HttpGet("Logout")]

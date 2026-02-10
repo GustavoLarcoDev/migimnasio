@@ -7,7 +7,7 @@ public class ClienteCreateDto
     public Guid ClienteId { get; set; }
 
     [Required]
-    public Guid GimnasioId { get; set; }
+    public Guid NegocioId { get; set; }
 
     [Required]
     [StringLength(100)]

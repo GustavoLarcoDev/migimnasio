@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Gimnasio.Controllers;
 
-[Route("Gimnasios")]
+[Route("Negocios")]
 [Authorize]
 public class VentasController : Controller
 {
@@ -16,11 +16,11 @@ public class VentasController : Controller
     }
 
     [HttpGet("GetVentasStats")]
-    public async Task<IActionResult> GetVentasStats(Guid gimnasioId)
+    public async Task<IActionResult> GetVentasStats(Guid negocioId)
     {
         try
         {
-            var stats = await _ventasService.GetVentasStatsAsync(gimnasioId);
+            var stats = await _ventasService.GetVentasStatsAsync(negocioId);
             return Ok(stats);
         }
         catch (Exception ex)
@@ -30,11 +30,11 @@ public class VentasController : Controller
     }
 
     [HttpGet("GetChartData")]
-    public async Task<IActionResult> GetChartData(Guid gimnasioId, string periodo = "semana")
+    public async Task<IActionResult> GetChartData(Guid negocioId, string periodo = "semana")
     {
         try
         {
-            var data = await _ventasService.GetChartDataAsync(gimnasioId, periodo);
+            var data = await _ventasService.GetChartDataAsync(negocioId, periodo);
             return Ok(data);
         }
         catch (Exception ex)
@@ -44,11 +44,11 @@ public class VentasController : Controller
     }
 
     [HttpGet("GetClientesChartData")]
-    public async Task<IActionResult> GetClientesChartData(Guid gimnasioId, string periodo = "semana")
+    public async Task<IActionResult> GetClientesChartData(Guid negocioId, string periodo = "semana")
     {
         try
         {
-            var data = await _ventasService.GetClientesChartDataAsync(gimnasioId, periodo);
+            var data = await _ventasService.GetClientesChartDataAsync(negocioId, periodo);
             return Ok(data);
         }
         catch (Exception ex)

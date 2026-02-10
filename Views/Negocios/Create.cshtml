@@ -1,16 +1,16 @@
 @{
-    ViewData["Title"] = "Crear Gimnasio";
+    ViewData["Title"] = "Crear Negocio";
 }
 
 <div class="container-fluid px-5 mb-5 pb-5">
-    
+
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-5">
         <div>
-            <h1 class="fw-bolder text-dark mb-2">Nuevo Gimnasio</h1>
-            <p class="text-muted mb-0">Registra un nuevo gimnasio en el sistema</p>
+            <h1 class="fw-bolder text-dark mb-2">Nuevo Negocio</h1>
+            <p class="text-muted mb-0">Registra un nuevo negocio en el sistema</p>
         </div>
-        <a href="/Gimnasios" class="btn btn-light btn-sm">
+        <a href="/Negocios" class="btn btn-light btn-sm">
             <i class="bi bi-arrow-left me-2"></i>
             Volver al listado
         </a>
@@ -21,23 +21,23 @@
         <div class="card-header">
             <h3 class="card-title fw-bold text-dark mb-0">
                 <i class="bi bi-building text-primary me-2"></i>
-                Información del Gimnasio
+                Información del Negocio
             </h3>
         </div>
         <div class="card-body">
-            <form id="createGimnasioForm" action="/Gimnasios/Create" method="post">
+            <form id="createNegocioForm" action="/Negocios/Create" method="post">
                 <div class="row">
                     <!-- Columna Izquierda -->
                     <div class="col-lg-6">
                         <div class="mb-4">
-                            <label class="form-label fw-semibold required">Nombre del Gimnasio</label>
-                            <input type="text" class="form-control form-control-lg" name="NombreGimnasio" id="nombreGimnasio" placeholder="Ej: Fitness Plus" required />
-                            <div class="form-text">El nombre comercial del gimnasio</div>
+                            <label class="form-label fw-semibold required">Nombre del Negocio</label>
+                            <input type="text" class="form-control form-control-lg" name="NombreNegocio" id="nombreNegocio" placeholder="Ej: Fitness Plus" required />
+                            <div class="form-text">El nombre comercial del negocio</div>
                         </div>
 
                         <div class="mb-4">
                             <label class="form-label fw-semibold required">Nombre del Dueño</label>
-                            <input type="text" class="form-control form-control-lg" name="duenoGimnasio" id="duenoGimnasio" placeholder="Ej: Juan Pérez" required />
+                            <input type="text" class="form-control form-control-lg" name="duenoNegocio" id="duenoNegocio" placeholder="Ej: Juan Pérez" required />
                             <div class="form-text">Nombre completo del propietario</div>
                         </div>
 
@@ -52,14 +52,14 @@
                     <div class="col-lg-6">
                         <div class="mb-4">
                             <label class="form-label fw-semibold required">Email</label>
-                            <input type="email" class="form-control form-control-lg" name="EmailGimnasio" id="emailGimnasio" placeholder="Ej: contacto@gimnasio.com" required />
+                            <input type="email" class="form-control form-control-lg" name="EmailNegocio" id="emailNegocio" placeholder="Ej: contacto@negocio.com" required />
                             <div class="form-text">Correo electrónico para acceso al sistema</div>
                         </div>
 
                         <div class="mb-4">
                             <label class="form-label fw-semibold required">Contraseña</label>
                             <div class="input-group">
-                                <input type="password" class="form-control form-control-lg" name="passwordGimnasio" id="passwordGimnasio" placeholder="Mínimo 6 caracteres" required />
+                                <input type="password" class="form-control form-control-lg" name="passwordNegocio" id="passwordNegocio" placeholder="Mínimo 6 caracteres" required />
                                 <button class="btn btn-outline-secondary" type="button" id="togglePassword">
                                     <i class="bi bi-eye" id="togglePasswordIcon"></i>
                                 </button>
@@ -69,23 +69,23 @@
 
                         <div class="row">
                             <div class="col-12 mb-4">
-                                <label class="form-label fw-semibold required">Tipo de Gimnasio</label>
+                                <label class="form-label fw-semibold required">Tipo de Negocio</label>
                                 <div class="d-flex gap-4 mt-2">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="tipoGimnasio" 
+                                        <input class="form-check-input" type="radio" name="tipoNegocio"
                                                id="tipoPago" value="pago" checked />
                                         <label class="form-check-label fw-semibold" for="tipoPago">
                                             <i class="bi bi-credit-card text-primary me-2"></i>
-                                            Gimnasio de Pago (Activo)
+                                            Negocio de Pago (Activo)
                                         </label>
-                                        <div class="form-text">El gimnasio realizará pagos regulares</div>
+                                        <div class="form-text">El negocio realizará pagos regulares</div>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="tipoGimnasio" 
+                                        <input class="form-check-input" type="radio" name="tipoNegocio"
                                                id="tipoPrueba" value="prueba" />
                                         <label class="form-check-label fw-semibold" for="tipoPrueba">
                                             <i class="bi bi-clock-history text-warning me-2"></i>
-                                            Gimnasio de Prueba
+                                            Negocio de Prueba
                                         </label>
                                         <div class="form-text">Período de prueba sin costo</div>
                                     </div>
@@ -97,13 +97,13 @@
 
                 <!-- Botones de acción -->
                 <div class="d-flex justify-content-end gap-3 mt-5 pt-5 border-top">
-                    <a href="/Gimnasios" class="btn btn-light btn-lg">
+                    <a href="/Negocios" class="btn btn-light btn-lg">
                         <i class="bi bi-x-circle me-2"></i>
                         Cancelar
                     </a>
-                    <button type="submit" class="btn btn-primary btn-lg" id="btnCrearGimnasio">
+                    <button type="submit" class="btn btn-primary btn-lg" id="btnCrearNegocio">
                         <i class="bi bi-check-circle me-2"></i>
-                        Crear Gimnasio
+                        Crear Negocio
                     </button>
                 </div>
             </form>
@@ -118,9 +118,9 @@
 $(document).ready(function () {
     // Toggle password visibility
     $('#togglePassword').click(function () {
-        const passwordInput = $('#passwordGimnasio');
+        const passwordInput = $('#passwordNegocio');
         const icon = $('#togglePasswordIcon');
-        
+
         if (passwordInput.attr('type') === 'password') {
             passwordInput.attr('type', 'text');
             icon.removeClass('bi-eye').addClass('bi-eye-slash');
@@ -131,43 +131,43 @@ $(document).ready(function () {
     });
 
     // Form submission with AJAX
-    $('#createGimnasioForm').on('submit', function(e) {
+    $('#createNegocioForm').on('submit', function(e) {
         e.preventDefault();
-        
-        const btn = $('#btnCrearGimnasio');
+
+        const btn = $('#btnCrearNegocio');
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Creando...');
-        
+
         // Obtener el tipo seleccionado
-        const tipoGimnasio = $('input[name="tipoGimnasio"]:checked').val();
-        
+        const tipoNegocio = $('input[name="tipoNegocio"]:checked').val();
+
         // Crear FormData con los valores correctos
         const formData = {
-            NombreGimnasio: $('#nombreGimnasio').val(),
-            duenoGimnasio: $('#duenoGimnasio').val(),
+            NombreNegocio: $('#nombreNegocio').val(),
+            duenoNegocio: $('#duenoNegocio').val(),
             telefono: $('#telefono').val(),
-            EmailGimnasio: $('#emailGimnasio').val(),
-            passwordGimnasio: $('#passwordGimnasio').val(),
-            isActive: tipoGimnasio === 'pago',
-            esPrueba: tipoGimnasio === 'prueba'
+            EmailNegocio: $('#emailNegocio').val(),
+            passwordNegocio: $('#passwordNegocio').val(),
+            isActive: tipoNegocio === 'pago',
+            esPrueba: tipoNegocio === 'prueba'
         };
-        
+
         $.ajax({
-            url: '/Gimnasios/Create',
+            url: '/Negocios/Create',
             type: 'POST',
             data: formData,
             success: function(response) {
-                toastr.success('Gimnasio creado exitosamente');
+                toastr.success('Negocio creado exitosamente');
                 setTimeout(function() {
-                    window.location.href = '/Gimnasios';
+                    window.location.href = '/Negocios';
                 }, 1000);
             },
             error: function(xhr) {
-                let message = 'Error al crear el gimnasio';
+                let message = 'Error al crear el negocio';
                 if (xhr.responseText) {
                     message = xhr.responseText;
                 }
                 toastr.error(message);
-                btn.prop('disabled', false).html('<i class="bi bi-check-circle me-2"></i>Crear Gimnasio');
+                btn.prop('disabled', false).html('<i class="bi bi-check-circle me-2"></i>Crear Negocio');
             }
         });
     });

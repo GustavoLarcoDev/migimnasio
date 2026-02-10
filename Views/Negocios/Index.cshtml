@@ -1,5 +1,5 @@
 @{
-ViewData["Title"] = "Gestión de Gimnasios";
+ViewData["Title"] = "Gestión de Negocios";
 }
 
 <div class="container-fluid px-5 mb-5 pb-5">
@@ -7,17 +7,17 @@ ViewData["Title"] = "Gestión de Gimnasios";
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-5">
         <div>
-            <h1 class="fw-bolder text-dark mb-2">Gimnasios</h1>
-            <p class="text-muted mb-0">Gestiona todos los gimnasios registrados en el sistema</p>
+            <h1 class="fw-bolder text-dark mb-2">Negocios</h1>
+            <p class="text-muted mb-0">Gestiona todos los negocios registrados en el sistema</p>
         </div>
         <div class="d-flex gap-2">
             <button id="btnExportExcel" class="btn btn-success btn-sm">
                 <i class="bi bi-file-earmark-excel me-2"></i>
                 Exportar Excel
             </button>
-            <a href="/Gimnasios/Crear" class="btn btn-primary btn-sm">
+            <a href="/Negocios/Crear" class="btn btn-primary btn-sm">
                 <i class="bi bi-plus-circle me-2"></i>
-                Nuevo Gimnasio
+                Nuevo Negocio
             </a>
         </div>
     </div>
@@ -28,8 +28,8 @@ ViewData["Title"] = "Gestión de Gimnasios";
             <div class="mg-stat-card">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <div class="stat-label">Total Gimnasios</div>
-                        <div class="stat-value" id="totalGimnasios">0</div>
+                        <div class="stat-label">Total Negocios</div>
+                        <div class="stat-value" id="totalNegocios">0</div>
                     </div>
                     <div class="stat-icon bg-light-primary">
                         <i class="bi bi-building text-primary"></i>
@@ -41,8 +41,8 @@ ViewData["Title"] = "Gestión de Gimnasios";
             <div class="mg-stat-card">
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
-                        <div class="stat-label">Gimnasios Activos</div>
-                        <div class="stat-value" id="gimnaiosActivos">0</div>
+                        <div class="stat-label">Negocios Activos</div>
+                        <div class="stat-value" id="negociosActivos">0</div>
                     </div>
                     <div class="stat-icon bg-light-success">
                         <i class="bi bi-check-circle text-success"></i>
@@ -55,7 +55,7 @@ ViewData["Title"] = "Gestión de Gimnasios";
                 <div class="d-flex align-items-center">
                     <div class="flex-grow-1">
                         <div class="stat-label">En Prueba</div>
-                        <div class="stat-value" id="gimnasiosPrueba">0</div>
+                        <div class="stat-value" id="negociosPrueba">0</div>
                     </div>
                     <div class="stat-icon bg-light-warning">
                         <i class="bi bi-clock-history text-warning"></i>
@@ -81,13 +81,13 @@ ViewData["Title"] = "Gestión de Gimnasios";
     <!-- Tabla -->
     <div class="mg-card">
         <div class="card-header">
-            <h3 class="card-title fw-bold text-dark mb-0">Listado de Gimnasios</h3>
+            <h3 class="card-title fw-bold text-dark mb-0">Listado de Negocios</h3>
         </div>
         <div class="card-body">
-            <table id="gimnasiosTable" class="table table-row-bordered table-row-gray-100 align-middle gs-0 gy-3">
+            <table id="negociosTable" class="table table-row-bordered table-row-gray-100 align-middle gs-0 gy-3">
                 <thead>
                 <tr class="fw-bold text-muted">
-                    <th class="min-w-150px">Gimnasio</th>
+                    <th class="min-w-150px">Negocio</th>
                     <th class="min-w-140px">Dueño</th>
                     <th class="min-w-120px">Contacto</th>
                     <th class="min-w-100px">Clientes</th>
@@ -105,31 +105,31 @@ ViewData["Title"] = "Gestión de Gimnasios";
 
 </div>
 
-<!-- Modal Editar Gimnasio -->
-<div class="modal fade" id="editarGimnasioModal" tabindex="-1">
+<!-- Modal Editar Negocio -->
+<div class="modal fade" id="editarNegocioModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down">
         <div class="modal-content">
             <div class="modal-header bg-light">
                 <h3 class="modal-title fw-bolder">
                     <i class="bi bi-pencil-square text-primary me-2"></i>
-                    Editar Gimnasio
+                    Editar Negocio
                 </h3>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
             <div class="modal-body">
-                <form id="editarGimnasioForm">
-                    <input type="hidden" id="editGimnasioId" name="GimnasioId" />
+                <form id="editarNegocioForm">
+                    <input type="hidden" id="editNegocioId" name="NegocioId" />
 
                     <div class="row">
                         <div class="col-md-6 mb-4">
-                            <label class="form-label fw-semibold required">Nombre del Gimnasio</label>
-                            <input type="text" class="form-control form-control-lg" name="GimnasioNombre" id="editGimnasioNombre" required />
+                            <label class="form-label fw-semibold required">Nombre del Negocio</label>
+                            <input type="text" class="form-control form-control-lg" name="NegocioNombre" id="editNegocioNombre" required />
                         </div>
 
                         <div class="col-md-6 mb-4">
                             <label class="form-label fw-semibold required">Nombre del Dueño</label>
-                            <input type="text" class="form-control form-control-lg" name="DuenoGimnasio" id="editDuenoGimnasio" required />
+                            <input type="text" class="form-control form-control-lg" name="DuenoNegocio" id="editDuenoNegocio" required />
                         </div>
                     </div>
 
@@ -153,10 +153,10 @@ ViewData["Title"] = "Gestión de Gimnasios";
 
                     <!-- Reemplazar los dos checkboxes en el modal por esto: -->
                     <div class="mb-4">
-                        <label class="form-label fw-semibold required">Tipo de Gimnasio</label>
+                        <label class="form-label fw-semibold required">Tipo de Negocio</label>
                         <div class="d-flex gap-3 mt-2">
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="tipoGimnasioEdit"
+                                <input class="form-check-input" type="radio" name="tipoNegocioEdit"
                                        id="editTipoPago" value="pago" />
                                 <label class="form-check-label" for="editTipoPago">
                                     <i class="bi bi-credit-card text-primary me-1"></i>
@@ -164,7 +164,7 @@ ViewData["Title"] = "Gestión de Gimnasios";
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="tipoGimnasioEdit"
+                                <input class="form-check-input" type="radio" name="tipoNegocioEdit"
                                        id="editTipoPrueba" value="prueba" />
                                 <label class="form-check-label" for="editTipoPrueba">
                                     <i class="bi bi-clock-history text-warning me-1"></i>
@@ -192,7 +192,7 @@ ViewData["Title"] = "Gestión de Gimnasios";
 </div>
 
 <!-- Modal Confirmar Eliminación -->
-<div class="modal fade" id="eliminarGimnasioModal" tabindex="-1">
+<div class="modal fade" id="eliminarNegocioModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
@@ -206,10 +206,10 @@ ViewData["Title"] = "Gestión de Gimnasios";
                 <i class="bi bi-trash text-danger" style="font-size: 4rem;"></i>
                 <h4 class="mt-3">¿Estás seguro?</h4>
                 <p class="text-muted mb-0">
-                    Vas a eliminar el gimnasio <strong id="deleteGimnasioNombre"></strong>
+                    Vas a eliminar el negocio <strong id="deleteNegocioNombre"></strong>
                 </p>
                 <p class="text-danger fw-semibold">Esta acción no se puede deshacer.</p>
-                <input type="hidden" id="deleteGimnasioId" />
+                <input type="hidden" id="deleteNegocioId" />
             </div>
             <div class="modal-footer justify-content-center">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">
@@ -226,16 +226,16 @@ ViewData["Title"] = "Gestión de Gimnasios";
 
 @section Scripts {
 <script>
-    let tablaGimnasios;
+    let tablaNegocios;
 
     $(document).ready(function () {
         cargarTabla();
     });
 
     function cargarTabla() {
-        tablaGimnasios = $('#gimnasiosTable').DataTable({
+        tablaNegocios = $('#negociosTable').DataTable({
             ajax: {
-                url: '/Gimnasios/GetGimnasios',
+                url: '/Negocios/GetNegocios',
                 type: 'GET',
                 dataSrc: function(data) {
                     actualizarEstadisticas(data);
@@ -244,7 +244,7 @@ ViewData["Title"] = "Gestión de Gimnasios";
             },
             columns: [
                 {
-                    data: 'gimnasioNombre',
+                    data: 'negocioNombre',
                     render: function(data, type, row) {
                         return `
                                 <div class="d-flex align-items-center">
@@ -254,16 +254,16 @@ ViewData["Title"] = "Gestión de Gimnasios";
                                         </div>
                                     </div>
                                     <div class="d-flex justify-content-start flex-column">
-                                        <a href="#" onclick="impersonarGimnasio('${row.gimnasioId}'); return false;"
-                                           class="text-dark fw-bold fs-6 text-hover-primary" title="Ver como este gimnasio">${data}</a>
-                                        <span class="text-muted fw-semibold d-block fs-7">ID: ${row.gimnasioId.substring(0, 8)}</span>
+                                        <a href="#" onclick="impersonarNegocio('${row.negocioId}'); return false;"
+                                           class="text-dark fw-bold fs-6 text-hover-primary" title="Ver como este negocio">${data}</a>
+                                        <span class="text-muted fw-semibold d-block fs-7">ID: ${row.negocioId.substring(0, 8)}</span>
                                     </div>
                                 </div>
                             `;
                     }
                 },
                 {
-                    data: 'duenoGimnasio',
+                    data: 'duenoNegocio',
                     render: function(data) {
                         return `<span class="text-dark fw-semibold">${data || 'N/A'}</span>`;
                     }
@@ -327,7 +327,7 @@ ViewData["Title"] = "Gestión de Gimnasios";
                         // WhatsApp button
                         const cleanPhone = (row.telefono || '').replace(/[\s\-\+\(\)]/g, '');
                         const waMessage = encodeURIComponent(
-                            `Hola ${row.duenoGimnasio || ''}, mi nombre es Gustavo Larco el dueño de MiNegocio.com y quería saber cómo iba todo, si había algún feedback o algo que mencionar.`
+                            `Hola ${row.duenoNegocio || ''}, mi nombre es Gustavo Larco el dueño de MiNegocio.com y quería saber cómo iba todo, si había algún feedback o algo que mencionar.`
                         );
                         const whatsappBtn = cleanPhone
                             ? `<a href="https://wa.me/${cleanPhone}?text=${waMessage}" target="_blank" rel="noopener"
@@ -337,15 +337,15 @@ ViewData["Title"] = "Gestión de Gimnasios";
                             : '';
 
                         // Impersonate button
-                        const impersonateBtn = `<button class="btn btn-icon btn-bg-light btn-sm me-1" onclick="impersonarGimnasio('${row.gimnasioId}')" title="Ver como gimnasio">
+                        const impersonateBtn = `<button class="btn btn-icon btn-bg-light btn-sm me-1" onclick="impersonarNegocio('${row.negocioId}')" title="Ver como negocio">
                             <i class="bi bi-eye text-primary fs-5"></i>
                         </button>`;
 
                         const estadoBtn = row.isActive
-                            ? `<button class="btn btn-icon btn-bg-light btn-sm me-1" onclick="cambiarEstado('${row.gimnasioId}')" title="Desactivar">
+                            ? `<button class="btn btn-icon btn-bg-light btn-sm me-1" onclick="cambiarEstado('${row.negocioId}')" title="Desactivar">
                                      <i class="bi bi-toggle-on text-success fs-4"></i>
                                    </button>`
-                            : `<button class="btn btn-icon btn-bg-light btn-sm me-1" onclick="cambiarEstado('${row.gimnasioId}')" title="Activar">
+                            : `<button class="btn btn-icon btn-bg-light btn-sm me-1" onclick="cambiarEstado('${row.negocioId}')" title="Activar">
                                      <i class="bi bi-toggle-off text-danger fs-4"></i>
                                    </button>`;
 
@@ -354,10 +354,10 @@ ViewData["Title"] = "Gestión de Gimnasios";
                                     ${whatsappBtn}
                                     ${impersonateBtn}
                                     ${estadoBtn}
-                                    <button class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1" onclick="editarGimnasio('${row.gimnasioId}')" title="Editar">
+                                    <button class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1" onclick="editarNegocio('${row.negocioId}')" title="Editar">
                                         <i class="bi bi-pencil fs-5"></i>
                                     </button>
-                                    <button class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm" onclick="confirmarEliminar('${row.gimnasioId}', '${row.gimnasioNombre}')" title="Eliminar">
+                                    <button class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm" onclick="confirmarEliminar('${row.negocioId}', '${row.negocioNombre}')" title="Eliminar">
                                         <i class="bi bi-trash fs-5"></i>
                                     </button>
                                 </div>
@@ -377,21 +377,21 @@ ViewData["Title"] = "Gestión de Gimnasios";
         const prueba = data.filter(g => g.esPrueba).length;
         const totalClientesSum = data.reduce((sum, g) => sum + g.totalClientes, 0);
 
-        $('#totalGimnasios').text(total);
-        $('#gimnaiosActivos').text(activos);
-        $('#gimnasiosPrueba').text(prueba);
+        $('#totalNegocios').text(total);
+        $('#negociosActivos').text(activos);
+        $('#negociosPrueba').text(prueba);
         $('#totalClientes').text(totalClientesSum);
     }
 
-    // Editar Gimnasio
-    function editarGimnasio(id) {
+    // Editar Negocio
+    function editarNegocio(id) {
         $.ajax({
-            url: '/Gimnasios/GetGimnasio/' + id,
+            url: '/Negocios/GetNegocio/' + id,
             type: 'GET',
             success: function (data) {
-                $('#editGimnasioId').val(data.gimnasioId);
-                $('#editGimnasioNombre').val(data.gimnasioNombre);
-                $('#editDuenoGimnasio').val(data.duenoGimnasio);
+                $('#editNegocioId').val(data.negocioId);
+                $('#editNegocioNombre').val(data.negocioNombre);
+                $('#editDuenoNegocio').val(data.duenoNegocio);
                 $('#editEmail').val(data.email);
                 $('#editTelefono').val(data.telefono);
                 $('#editPassword').val('');
@@ -403,45 +403,45 @@ ViewData["Title"] = "Gestión de Gimnasios";
                     $('#editTipoPrueba').prop('checked', true);
                 }
 
-                $('#editarGimnasioModal').modal('show');
+                $('#editarNegocioModal').modal('show');
             },
             error: function () {
-                toastr.error('Error al cargar los datos del gimnasio');
+                toastr.error('Error al cargar los datos del negocio');
             }
         });
     }
 
     // Guardar Edición - SOLO UNA VEZ
     $('#btnGuardarEdicion').click(function () {
-        if (!$('#editarGimnasioForm')[0].checkValidity()) {
-            $('#editarGimnasioForm')[0].reportValidity();
+        if (!$('#editarNegocioForm')[0].checkValidity()) {
+            $('#editarNegocioForm')[0].reportValidity();
             return;
         }
 
         const btn = $(this);
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...');
 
-        const tipoGimnasio = $('input[name="tipoGimnasioEdit"]:checked').val();
+        const tipoNegocio = $('input[name="tipoNegocioEdit"]:checked').val();
 
         const formData = {
-            GimnasioId: $('#editGimnasioId').val(),
-            GimnasioNombre: $('#editGimnasioNombre').val(),
-            DuenoGimnasio: $('#editDuenoGimnasio').val(),
+            NegocioId: $('#editNegocioId').val(),
+            NegocioNombre: $('#editNegocioNombre').val(),
+            DuenoNegocio: $('#editDuenoNegocio').val(),
             Email: $('#editEmail').val(),
             Telefono: $('#editTelefono').val(),
             Password: $('#editPassword').val(),
-            IsActive: tipoGimnasio === 'pago',
-            EsPrueba: tipoGimnasio === 'prueba'
+            IsActive: tipoNegocio === 'pago',
+            EsPrueba: tipoNegocio === 'prueba'
         };
 
         $.ajax({
-            url: '/Gimnasios/Editar',
+            url: '/Negocios/Editar',
             type: 'POST',
             data: formData,
             success: function (response) {
                 if (response.success) {
-                    $('#editarGimnasioModal').modal('hide');
-                    tablaGimnasios.ajax.reload(null, false);
+                    $('#editarNegocioModal').modal('hide');
+                    tablaNegocios.ajax.reload(null, false);
                     toastr.success(response.message);
                 } else {
                     toastr.error(response.message);
@@ -450,7 +450,7 @@ ViewData["Title"] = "Gestión de Gimnasios";
             },
             error: function (xhr) {
                 const response = xhr.responseJSON;
-                toastr.error(response?.message || 'Error al guardar el gimnasio');
+                toastr.error(response?.message || 'Error al guardar el negocio');
                 btn.prop('disabled', false).html('<i class="bi bi-save me-2"></i>Guardar Cambios');
             }
         });
@@ -458,26 +458,26 @@ ViewData["Title"] = "Gestión de Gimnasios";
 
     // Confirmar Eliminar (abrir modal)
     function confirmarEliminar(id, nombre) {
-        $('#deleteGimnasioId').val(id);
-        $('#deleteGimnasioNombre').text(nombre);
-        $('#eliminarGimnasioModal').modal('show');
+        $('#deleteNegocioId').val(id);
+        $('#deleteNegocioNombre').text(nombre);
+        $('#eliminarNegocioModal').modal('show');
     }
 
     // Ejecutar Eliminación
     $('#btnConfirmarEliminar').click(function() {
-        const id = $('#deleteGimnasioId').val();
+        const id = $('#deleteNegocioId').val();
         const btn = $(this);
 
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Eliminando...');
 
         $.ajax({
-            url: '/Gimnasios/Eliminar',
+            url: '/Negocios/Eliminar',
             type: 'POST',
             data: { id: id },
             success: function (response) {
                 if (response.success) {
-                    $('#eliminarGimnasioModal').modal('hide');
-                    tablaGimnasios.ajax.reload(null, false);
+                    $('#eliminarNegocioModal').modal('hide');
+                    tablaNegocios.ajax.reload(null, false);
                     toastr.success(response.message);
                 } else {
                     toastr.error(response.message);
@@ -486,7 +486,7 @@ ViewData["Title"] = "Gestión de Gimnasios";
             },
             error: function (xhr) {
                 const response = xhr.responseJSON;
-                toastr.error(response?.message || 'Error al eliminar el gimnasio');
+                toastr.error(response?.message || 'Error al eliminar el negocio');
                 btn.prop('disabled', false).html('<i class="bi bi-trash me-2"></i>Sí, Eliminar');
             }
         });
@@ -495,12 +495,12 @@ ViewData["Title"] = "Gestión de Gimnasios";
     // Cambiar Estado
     function cambiarEstado(id) {
         $.ajax({
-            url: '/Gimnasios/CambiarEstado',
+            url: '/Negocios/CambiarEstado',
             type: 'POST',
             data: { id: id },
             success: function (response) {
                 if (response.success) {
-                    tablaGimnasios.ajax.reload(null, false);
+                    tablaNegocios.ajax.reload(null, false);
                     toastr.success(response.message);
                 }
             },
@@ -512,14 +512,14 @@ ViewData["Title"] = "Gestión de Gimnasios";
 
     // Exportar Excel
     $('#btnExportExcel').click(function () {
-        window.location.href = '/Gimnasios/ExportExcel';
+        window.location.href = '/Negocios/ExportExcel';
     });
 
-    // Impersonar Gimnasio
-    function impersonarGimnasio(id) {
+    // Impersonar Negocio
+    function impersonarNegocio(id) {
         Swal.fire({
-            title: '¿Impersonar gimnasio?',
-            text: 'Vas a ver el dashboard como si fueras este gimnasio.',
+            title: '¿Impersonar negocio?',
+            text: 'Vas a ver el dashboard como si fueras este negocio.',
             icon: 'question',
             showCancelButton: true,
             confirmButtonColor: '#3E97FF',
@@ -531,7 +531,7 @@ ViewData["Title"] = "Gestión de Gimnasios";
             if (result.isConfirmed) {
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = `/Gimnasios/Impersonate/${id}`;
+                form.action = `/Negocios/Impersonate/${id}`;
                 document.body.appendChild(form);
                 form.submit();
             }

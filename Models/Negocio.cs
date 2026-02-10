@@ -7,12 +7,12 @@ namespace Gimnasio.Models;
 public class Gym
 {
     [Key]
-    public Guid GimnasioId { get; set; }
+    public Guid NegocioId { get; set; }
 
     [Required]
-    public string GimnasioNombre { get; set; }
+    public string NegocioNombre { get; set; }
 
-    public string DuenoGimnasio { get; set; }
+    public string DuenoNegocio { get; set; }
 
     [Phone]
     public string Telefono { get; set; }

@@ -5,7 +5,7 @@ namespace Gimnasio.Models.DTOs;
 public class LogCreateDto
 {
     [Required]
-    public Guid GimnasioId { get; set; }
+    public Guid NegocioId { get; set; }
 
     [Required]
     [MaxLength(300)]

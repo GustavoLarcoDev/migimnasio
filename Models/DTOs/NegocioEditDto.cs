@@ -2,16 +2,16 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Gimnasio.Models.DTOs;
 
-public class GimnasioEditDto
+public class NegocioEditDto
 {
     [Required]
-    public Guid GimnasioId { get; set; }
+    public Guid NegocioId { get; set; }
 
     [Required]
-    public string GimnasioNombre { get; set; }
+    public string NegocioNombre { get; set; }
 
     [Required]
-    public string DuenoGimnasio { get; set; }
+    public string DuenoNegocio { get; set; }
 
     [Required]
     [Phone]

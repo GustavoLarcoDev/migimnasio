@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Gimnasio.Controllers;
 
-[Route("Gimnasios")]
+[Route("Negocios")]
 [Authorize]
 public class LogsController : Controller
 {
@@ -23,11 +23,11 @@ public class LogsController : Controller
     {
         try
         {
-            var gimnasioId = _authService.GetGimnasioId(User);
-            if (!gimnasioId.HasValue || model.GimnasioId != gimnasioId.Value)
+            var negocioId = _authService.GetNegocioId(User);
+            if (!negocioId.HasValue || model.NegocioId != negocioId.Value)
                 return Forbid();
 
-            var (success, message) = await _logService.CrearLogManualAsync(model.GimnasioId, model.Message, model.Monto);
+            var (success, message) = await _logService.CrearLogManualAsync(model.NegocioId, model.Message, model.Monto);
 
             if (!success)
                 return BadRequest(new { success = false, message });
@@ -41,15 +41,15 @@ public class LogsController : Controller
     }
 
     [HttpGet("GetLogs")]
-    public async Task<IActionResult> GetLogs(Guid gimnasioId)
+    public async Task<IActionResult> GetLogs(Guid negocioId)
     {
         try
         {
-            var gymId = _authService.GetGimnasioId(User);
-            if (!gymId.HasValue || gimnasioId != gymId.Value)
+            var gymId = _authService.GetNegocioId(User);
+            if (!gymId.HasValue || negocioId != gymId.Value)
                 return Forbid();
 
-            var logs = await _logService.GetLogsAsync(gimnasioId);
+            var logs = await _logService.GetLogsAsync(negocioId);
             return Ok(logs);
         }
         catch (Exception ex)
@@ -59,11 +59,11 @@ public class LogsController : Controller
     }
 
     [HttpGet("GetLog")]
-    public async Task<IActionResult> GetLog(Guid id, Guid gimnasioId)
+    public async Task<IActionResult> GetLog(Guid id, Guid negocioId)
     {
         try
         {
-            var log = await _logService.GetLogAsync(id, gimnasioId);
+            var log = await _logService.GetLogAsync(id, negocioId);
             if (log == null)
                 return NotFound(new { success = false, message = "Log no encontrado" });
 
@@ -76,15 +76,15 @@ public class LogsController : Controller
     }
 
     [HttpGet("GetOldestLogDate")]
-    public async Task<IActionResult> GetOldestLogDate(Guid gimnasioId)
+    public async Task<IActionResult> GetOldestLogDate(Guid negocioId)
     {
         try
         {
-            var gymId = _authService.GetGimnasioId(User);
-            if (!gymId.HasValue || gimnasioId != gymId.Value)
+            var gymId = _authService.GetNegocioId(User);
+            if (!gymId.HasValue || negocioId != gymId.Value)
                 return Forbid();
 
-            var oldest = await _logService.GetOldestLogDateAsync(gimnasioId);
+            var oldest = await _logService.GetOldestLogDateAsync(negocioId);
             return Ok(new { fecha = oldest });
         }
         catch (Exception ex)
@@ -94,15 +94,15 @@ public class LogsController : Controller
     }
 
     [HttpPost("EliminarTodosLogs")]
-    public async Task<IActionResult> EliminarTodosLogs(Guid gimnasioId)
+    public async Task<IActionResult> EliminarTodosLogs(Guid negocioId)
     {
         try
         {
-            var gymId = _authService.GetGimnasioId(User);
-            if (!gymId.HasValue || gimnasioId != gymId.Value)
+            var gymId = _authService.GetNegocioId(User);
+            if (!gymId.HasValue || negocioId != gymId.Value)
                 return Forbid();
 
-            var (success, message) = await _logService.EliminarTodosLogsAsync(gimnasioId);
+            var (success, message) = await _logService.EliminarTodosLogsAsync(negocioId);
             return Ok(new { success = true, message });
         }
         catch (Exception ex)
@@ -112,15 +112,15 @@ public class LogsController : Controller
     }
 
     [HttpGet("ExportLogsExcel")]
-    public async Task<IActionResult> ExportLogsExcel(Guid gimnasioId)
+    public async Task<IActionResult> ExportLogsExcel(Guid negocioId)
     {
         try
         {
-            var gymId = _authService.GetGimnasioId(User);
-            if (!gymId.HasValue || gimnasioId != gymId.Value)
+            var gymId = _authService.GetNegocioId(User);
+            if (!gymId.HasValue || negocioId != gymId.Value)
                 return Forbid();
 
-            var content = await _logService.ExportLogsExcelAsync(gimnasioId);
+            var content = await _logService.ExportLogsExcelAsync(negocioId);
             return File(content,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 $"Logs_{DateTime.Now:yyyyMMdd}.xlsx");

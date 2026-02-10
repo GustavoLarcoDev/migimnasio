@@ -17,10 +17,10 @@ public class ClienteService : IClienteService
         _logService = logService;
     }
 
-    public async Task<object> GetDashboardStatsAsync(Guid gimnasioId)
+    public async Task<object> GetDashboardStatsAsync(Guid negocioId)
     {
         var clientes = await _context.Clientes
-            .Where(c => c.GimnasioId == gimnasioId)
+            .Where(c => c.NegocioId == negocioId)
             .ToListAsync();
 
         var totalClientes = clientes.Count;
@@ -31,7 +31,7 @@ public class ClienteService : IClienteService
 
         // Ingresos desde Logs (fuente inmutable). Eliminar un cliente no afecta los ingresos.
         var logs = await _context.Logs
-            .Where(l => l.GimnasioId == gimnasioId && l.Monto > 0)
+            .Where(l => l.NegocioId == negocioId && l.Monto > 0)
             .ToListAsync();
 
         var ingresosMes = logs
@@ -69,10 +69,10 @@ public class ClienteService : IClienteService
         };
     }
 
-    public async Task<object> GetClientesAsync(Guid gimnasioId)
+    public async Task<object> GetClientesAsync(Guid negocioId)
     {
         return await _context.Clientes
-            .Where(c => c.GimnasioId == gimnasioId)
+            .Where(c => c.NegocioId == negocioId)
             .OrderByDescending(c => c.FechaQueTermina)
             .Select(c => new
             {
@@ -93,10 +93,10 @@ public class ClienteService : IClienteService
             .ToListAsync();
     }
 
-    public async Task<Cliente> GetClienteAsync(Guid id, Guid gimnasioId)
+    public async Task<Cliente> GetClienteAsync(Guid id, Guid negocioId)
     {
         return await _context.Clientes
-            .FirstOrDefaultAsync(c => c.ClienteId == id && c.GimnasioId == gimnasioId);
+            .FirstOrDefaultAsync(c => c.ClienteId == id && c.NegocioId == negocioId);
     }
 
     public async Task<(bool success, string message)> CrearClienteAsync(ClienteCreateDto model)
@@ -133,7 +133,7 @@ public class ClienteService : IClienteService
         var cliente = new Cliente
         {
             ClienteId = Guid.NewGuid(),
-            GimnasioId = model.GimnasioId,
+            NegocioId = model.NegocioId,
             Nombre = model.Nombre,
             Apellido = model.Apellido,
             Email = model.Email,
@@ -151,7 +151,7 @@ public class ClienteService : IClienteService
         await _context.SaveChangesAsync();
 
         var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
-        await _logService.CreateLogAsync(model.GimnasioId, "cliente_creado",
+        await _logService.CreateLogAsync(model.NegocioId, "cliente_creado",
             $"Nuevo cliente creado: {nombreCompleto}", model.Precio, cliente.ClienteId, nombreCompleto);
 
         return (true, "Cliente creado exitosamente");
@@ -160,7 +160,7 @@ public class ClienteService : IClienteService
     public async Task<(bool success, string message)> EditarClienteAsync(ClienteCreateDto model)
     {
         var cliente = await _context.Clientes
-            .FirstOrDefaultAsync(c => c.ClienteId == model.ClienteId && c.GimnasioId == model.GimnasioId);
+            .FirstOrDefaultAsync(c => c.ClienteId == model.ClienteId && c.NegocioId == model.NegocioId);
 
         if (cliente == null)
             return (false, "Cliente no encontrado");
@@ -209,16 +209,16 @@ public class ClienteService : IClienteService
         await _context.SaveChangesAsync();
 
         var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
-        await _logService.CreateLogAsync(model.GimnasioId, "cliente_editado",
+        await _logService.CreateLogAsync(model.NegocioId, "cliente_editado",
             $"Cliente editado: {nombreCompleto}", 0, cliente.ClienteId, nombreCompleto);
 
         return (true, "Cliente actualizado exitosamente");
     }
 
-    public async Task<(bool success, string message)> EliminarClienteAsync(Guid id, Guid gimnasioId)
+    public async Task<(bool success, string message)> EliminarClienteAsync(Guid id, Guid negocioId)
     {
         var cliente = await _context.Clientes
-            .FirstOrDefaultAsync(c => c.ClienteId == id && c.GimnasioId == gimnasioId);
+            .FirstOrDefaultAsync(c => c.ClienteId == id && c.NegocioId == negocioId);
 
         if (cliente == null)
             return (false, "Cliente no encontrado");
@@ -228,16 +228,16 @@ public class ClienteService : IClienteService
         _context.Clientes.Remove(cliente);
         await _context.SaveChangesAsync();
 
-        await _logService.CreateLogAsync(gimnasioId, "cliente_eliminado",
+        await _logService.CreateLogAsync(negocioId, "cliente_eliminado",
             $"Cliente eliminado: {nombreCompleto}", 0, cliente.ClienteId, nombreCompleto);
 
         return (true, "Cliente eliminado exitosamente");
     }
 
-    public async Task<(bool success, string message)> RenovarClienteAsync(Guid id, Guid gimnasioId, DateTime nuevaFechaFin, decimal precio)
+    public async Task<(bool success, string message)> RenovarClienteAsync(Guid id, Guid negocioId, DateTime nuevaFechaFin, decimal precio)
     {
         var cliente = await _context.Clientes
-            .FirstOrDefaultAsync(c => c.ClienteId == id && c.GimnasioId == gimnasioId);
+            .FirstOrDefaultAsync(c => c.ClienteId == id && c.NegocioId == negocioId);
 
         if (cliente == null)
             return (false, "Cliente no encontrado");
@@ -254,17 +254,17 @@ public class ClienteService : IClienteService
         await _context.SaveChangesAsync();
 
         var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
-        await _logService.CreateLogAsync(gimnasioId, "cliente_renovado",
+        await _logService.CreateLogAsync(negocioId, "cliente_renovado",
             $"Cliente {nombreCompleto} ha renovado su suscripción, ahora su suscripción termina en {nuevaFechaFin:dd/MM/yyyy}",
             precio, cliente.ClienteId, nombreCompleto);
 
         return (true, "Membresía renovada exitosamente");
     }
 
-    public async Task<byte[]> ExportClientesExcelAsync(Guid gimnasioId)
+    public async Task<byte[]> ExportClientesExcelAsync(Guid negocioId)
     {
         var clientes = await _context.Clientes
-            .Where(c => c.GimnasioId == gimnasioId)
+            .Where(c => c.NegocioId == negocioId)
             .OrderBy(c => c.Nombre)
             .ToListAsync();
 
@@ -313,7 +313,7 @@ public class ClienteService : IClienteService
         return stream.ToArray();
     }
 
-    public async Task<object> ImportarClientesExcelAsync(Guid gimnasioId, Stream fileStream)
+    public async Task<object> ImportarClientesExcelAsync(Guid negocioId, Stream fileStream)
     {
         var clientesCreados = new List<string>();
         var clientesOmitidos = new List<string>();
@@ -377,7 +377,7 @@ public class ClienteService : IClienteService
         }
 
         var clientesExistentes = await _context.Clientes
-            .Where(c => c.GimnasioId == gimnasioId)
+            .Where(c => c.NegocioId == negocioId)
             .Select(c => new { c.Nombre, c.Apellido })
             .ToListAsync();
 
@@ -481,7 +481,7 @@ public class ClienteService : IClienteService
                 var cliente = new Cliente
                 {
                     ClienteId = Guid.NewGuid(),
-                    GimnasioId = gimnasioId,
+                    NegocioId = negocioId,
                     Nombre = nombre,
                     Apellido = apellido,
                     Email = email,
@@ -580,10 +580,10 @@ public class ClienteService : IClienteService
         catch { return cell.Value.ToString()?.Trim() ?? ""; }
     }
 
-    public async Task<object> GetClientesDiariosAsync(Guid gimnasioId)
+    public async Task<object> GetClientesDiariosAsync(Guid negocioId)
     {
         return await _context.Clientes
-            .Where(c => c.GimnasioId == gimnasioId && c.EsDiario)
+            .Where(c => c.NegocioId == negocioId && c.EsDiario)
             .OrderByDescending(c => c.FechaDeCreacion)
             .Select(c => new
             {
