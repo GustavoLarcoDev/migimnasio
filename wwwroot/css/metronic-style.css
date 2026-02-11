@@ -524,17 +524,519 @@ body {
     z-index: 1035;
 }
 
-/* ---- Touch-friendly ---- */
-@media (max-width: 767.98px) {
-    .btn { min-height: 44px; }
-    .form-control { min-height: 44px; }
-}
-
 /* =============================================
-   Responsive: Mobile First
+   Responsive: Mobile First (iPhone 12+: 390px)
    ============================================= */
 
-/* Mobile: sidebar off-canvas */
+/* --- Mobile (< 576px) --- */
+@media (max-width: 575.98px) {
+    /* Touch-friendly tap targets */
+    .btn { min-height: 44px; }
+    .form-control, .form-select { min-height: 44px; font-size: 16px !important; }
+
+    /* Topbar compact */
+    .mg-topbar {
+        height: 52px;
+        padding: 0 0.75rem;
+    }
+
+    .mg-topbar-left h5 {
+        font-size: 0.95rem;
+    }
+
+    .mg-topbar-left small {
+        font-size: 0.7rem;
+    }
+
+    .mg-topbar-right {
+        gap: 0.375rem;
+    }
+
+    .mg-bell, .mg-theme-btn {
+        width: 36px;
+        height: 36px;
+    }
+
+    .mg-topbar-right .d-md-flex { display: none !important; }
+
+    /* Content padding */
+    .mg-content {
+        padding: 0.75rem;
+        padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* Cards compact */
+    .mg-card .card-body {
+        padding: 0.875rem;
+    }
+
+    .mg-card .card-header {
+        padding: 0.75rem 0.875rem;
+    }
+
+    .mg-card .card-header h5 {
+        font-size: 0.9rem;
+    }
+
+    /* Stat cards compact */
+    .mg-stat-card {
+        padding: 0.75rem;
+    }
+
+    .mg-stat-card .stat-label {
+        font-size: 0.7rem;
+        margin-bottom: 0.2rem;
+    }
+
+    .mg-stat-card .stat-value {
+        font-size: 1.2rem;
+    }
+
+    .mg-stat-card .stat-icon {
+        width: 34px;
+        height: 34px;
+        font-size: 0.95rem;
+        border-radius: 0.5rem;
+    }
+
+    /* Gradient card values */
+    .fs-2x {
+        font-size: 1.3rem;
+    }
+
+    .fs-3 {
+        font-size: 1.1rem !important;
+    }
+
+    /* Buttons compact */
+    .btn {
+        font-size: 0.8125rem;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .btn-lg {
+        font-size: 0.875rem;
+        padding: 0.5rem 0.875rem;
+    }
+
+    .btn-sm {
+        font-size: 0.75rem;
+        padding: 0.35rem 0.5rem;
+        min-height: 36px;
+    }
+
+    .btn-icon {
+        width: 38px;
+        height: 38px;
+        min-height: 38px;
+    }
+
+    /* ---- DataTables Mobile ---- */
+    .dataTables_wrapper {
+        font-size: 0.8125rem;
+    }
+
+    /* Hide length selector */
+    .dataTables_wrapper .dt-length,
+    .dataTables_wrapper .dataTables_length {
+        display: none !important;
+    }
+
+    /* Full-width search */
+    .dataTables_wrapper .dt-search,
+    .dataTables_wrapper .dataTables_filter {
+        width: 100% !important;
+        text-align: left !important;
+        float: none !important;
+        margin-bottom: 0.75rem;
+    }
+
+    .dataTables_wrapper .dt-search input,
+    .dataTables_wrapper .dataTables_filter input {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin-left: 0 !important;
+        min-height: 40px;
+        font-size: 14px !important;
+        border-radius: 0.5rem;
+    }
+
+    .dataTables_wrapper .dt-search label,
+    .dataTables_wrapper .dataTables_filter label {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    /* Compact table cells */
+    .table {
+        font-size: 0.8125rem;
+    }
+
+    .table > :not(caption) > * > * {
+        padding: 0.5rem 0.35rem;
+    }
+
+    .table thead th {
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.025em;
+        white-space: nowrap;
+    }
+
+    /* ---- Hide non-essential columns ---- */
+    /* Clientes: hide Precio(2), Fecha Inicio(3), Vencimiento(4) */
+    #clientesTable th:nth-child(2),
+    #clientesTable td:nth-child(2),
+    #clientesTable th:nth-child(3),
+    #clientesTable td:nth-child(3),
+    #clientesTable th:nth-child(4),
+    #clientesTable td:nth-child(4) {
+        display: none !important;
+    }
+
+    /* Logs: hide Cliente(2) */
+    #logsTable th:nth-child(2),
+    #logsTable td:nth-child(2) {
+        display: none !important;
+    }
+
+    /* Usuarios diarios: hide Fecha(3) */
+    #tablaUsuariosDiarios th:nth-child(3),
+    #tablaUsuariosDiarios td:nth-child(3) {
+        display: none !important;
+    }
+
+    /* Admin negociosTable: hide Dueño(2), Contacto(3), Estado(5), Tipo(6), Fecha(7) */
+    #negociosTable th:nth-child(2),
+    #negociosTable td:nth-child(2),
+    #negociosTable th:nth-child(3),
+    #negociosTable td:nth-child(3),
+    #negociosTable th:nth-child(5),
+    #negociosTable td:nth-child(5),
+    #negociosTable th:nth-child(6),
+    #negociosTable td:nth-child(6),
+    #negociosTable th:nth-child(7),
+    #negociosTable td:nth-child(7) {
+        display: none !important;
+    }
+
+    /* Admin table: compact negocio name cell */
+    #negociosTable .symbol-45px {
+        display: none !important;
+    }
+
+    /* Admin table: stack action buttons */
+    #negociosTable .d-flex.justify-content-end {
+        flex-wrap: wrap;
+        gap: 0.25rem !important;
+        justify-content: flex-start !important;
+    }
+
+    #negociosTable .btn-icon {
+        width: 34px;
+        height: 34px;
+        min-height: 34px;
+    }
+
+    /* Pagination compact + centered */
+    .dataTables_wrapper .dt-paging,
+    .dataTables_wrapper .dataTables_paginate {
+        margin-top: 0.75rem;
+        text-align: center !important;
+        float: none !important;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    .dataTables_wrapper .dt-paging button,
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 0.35rem 0.6rem !important;
+        font-size: 0.8125rem !important;
+        min-width: 36px;
+        min-height: 36px;
+        border-radius: 0.375rem !important;
+    }
+
+    .dataTables_wrapper .dt-info,
+    .dataTables_wrapper .dataTables_info {
+        font-size: 0.75rem;
+        text-align: center !important;
+        float: none !important;
+        padding-top: 0.5rem;
+    }
+
+    /* DT layout rows stack */
+    .dataTables_wrapper .dt-layout-row {
+        flex-direction: column !important;
+        gap: 0.5rem;
+    }
+
+    .dataTables_wrapper .dt-layout-cell {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    /* ---- Resumen tab mobile ---- */
+    #resumenTab > .d-flex:first-child {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    #resumenTab h3 {
+        font-size: 1.15rem;
+    }
+
+    #resumenTab .card-body {
+        padding: 0.75rem;
+    }
+
+    #resumenTab .card-body .opacity-75.small {
+        font-size: 0.7rem;
+    }
+
+    /* Próximos a vencer */
+    #proximosVencerList > div {
+        padding: 0.5rem 0.75rem !important;
+    }
+
+    #proximosVencerList .fw-semibold {
+        font-size: 0.8125rem;
+    }
+
+    /* ---- Clientes tab mobile ---- */
+    #clientesTab > .d-flex.flex-wrap {
+        width: 100%;
+    }
+
+    #clientesTab > .d-flex.flex-wrap .btn {
+        flex: 1;
+        font-size: 0.75rem;
+        padding: 0.5rem 0.375rem;
+        white-space: nowrap;
+    }
+
+    /* ---- Logs form mobile ---- */
+    #logsTab .row.g-3.align-items-end {
+        gap: 0.5rem !important;
+    }
+
+    #logsTab .form-control-lg {
+        font-size: 0.875rem !important;
+        min-height: 44px;
+    }
+
+    /* Logs info bar */
+    #logsTab > .d-flex.flex-wrap {
+        flex-direction: column;
+        gap: 0.5rem !important;
+    }
+
+    #logsTab > .d-flex.flex-wrap .ms-auto {
+        margin-left: 0 !important;
+        width: 100%;
+    }
+
+    #logsTab > .d-flex.flex-wrap .ms-auto .btn {
+        flex: 1;
+    }
+
+    /* ---- Ventas tab mobile ---- */
+    #ventasTab .row.g-3.mb-4 .col-md-4 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    #ventasTab .card-body.text-center i.fs-1 {
+        font-size: 1.5rem !important;
+        margin-bottom: 0.25rem !important;
+    }
+
+    #ventasTab .card-body.text-center h6 {
+        font-size: 0.75rem;
+        margin-bottom: 0.25rem;
+    }
+
+    /* Charts smaller on mobile */
+    #chartBarVentas, #chartClientes, #chartResumen, #chartResumenOverview {
+        min-height: 220px !important;
+    }
+
+    /* ---- Notificaciones mobile ---- */
+    #notificacionesTab > .d-flex {
+        flex-direction: column;
+        gap: 0.75rem !important;
+        align-items: stretch !important;
+    }
+
+    #notificacionesTab > .d-flex h4 {
+        font-size: 1.1rem;
+    }
+
+    #notificacionesTab > .d-flex > .d-flex.gap-2 {
+        width: 100%;
+    }
+
+    #notificacionesTab > .d-flex > .d-flex.gap-2 .btn {
+        flex: 1;
+        font-size: 0.75rem;
+        padding: 0.5rem;
+    }
+
+    /* Notification card compact */
+    #notificacionesList .mg-card {
+        padding: 0.625rem !important;
+    }
+
+    #notificacionesList .stat-icon {
+        width: 32px !important;
+        height: 32px !important;
+        min-width: 32px !important;
+    }
+
+    /* ---- Modals fullscreen on mobile ---- */
+    .modal-dialog {
+        max-width: 100%;
+        margin: 0;
+    }
+
+    .modal-content {
+        border-radius: 0;
+        min-height: 100vh;
+    }
+
+    .modal-header h3 {
+        font-size: 1.1rem;
+    }
+
+    .modal-body .row .col-md-6,
+    .modal-body .row .col-md-4 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+
+    /* SweetAlert mobile */
+    .mg-swal-popup {
+        padding: 1.25rem !important;
+        width: calc(100vw - 2rem) !important;
+        max-width: calc(100vw - 2rem) !important;
+    }
+
+    .mg-swal-popup .swal2-title {
+        font-size: 1.1rem !important;
+    }
+
+    .mg-swal-popup .swal2-html-container {
+        font-size: 0.85rem !important;
+    }
+
+    /* ---- Landing page mobile ---- */
+    .hero-gradient {
+        min-height: auto !important;
+    }
+
+    .hero-gradient .container {
+        padding-top: 4rem !important;
+        padding-bottom: 5rem !important;
+    }
+
+    .hero-gradient .display-2 {
+        font-size: 1.75rem !important;
+    }
+
+    .hero-gradient .fs-4 {
+        font-size: 1rem !important;
+    }
+
+    .hero-gradient .btn-lg {
+        font-size: 0.875rem;
+        padding: 0.625rem 1.25rem;
+    }
+
+    .hero-gradient .fs-2 {
+        font-size: 1.25rem !important;
+    }
+
+    /* Landing sections compact */
+    .py-7 {
+        padding-top: 3rem !important;
+        padding-bottom: 3rem !important;
+    }
+
+    .py-6 {
+        padding-top: 2.5rem !important;
+        padding-bottom: 2.5rem !important;
+    }
+
+    .display-4 {
+        font-size: 1.5rem !important;
+    }
+
+    .display-5 {
+        font-size: 1.35rem !important;
+    }
+
+    .display-6 {
+        font-size: 1.2rem !important;
+    }
+
+    /* Pricing cards mobile: remove scale on popular plan */
+    #planes .card[style*="scale"] {
+        transform: none !important;
+    }
+
+    #planes .card-body {
+        padding: 1.25rem !important;
+    }
+
+    /* Pricing card compact */
+    .display-3 {
+        font-size: 2rem !important;
+    }
+
+    /* Accordion mobile */
+    .accordion-button {
+        font-size: 0.875rem;
+        padding: 0.875rem 1rem;
+    }
+
+    .accordion-body {
+        font-size: 0.8125rem;
+        padding: 0.75rem 1rem;
+    }
+
+    /* Back to top - smaller on mobile */
+    #btnTop {
+        width: 44px !important;
+        height: 44px !important;
+        right: 12px !important;
+        bottom: 12px !important;
+    }
+
+    /* Safe area (notch phones) */
+    .mg-sidebar {
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+
+    /* Import zone compact */
+    #importZone .card-body {
+        padding: 1.5rem 1rem !important;
+    }
+
+    #importZone h5 {
+        font-size: 0.95rem;
+    }
+
+    /* Table responsive - prevent double scroll */
+    .table-responsive {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* --- Tablet & Mobile: sidebar off-canvas --- */
 @media (max-width: 991.98px) {
     .mg-sidebar {
         transform: translateX(-100%);
@@ -560,22 +1062,6 @@ body {
         display: block;
     }
 
-    /* Stats cards full-width on mobile */
-    .mg-stat-card {
-        margin-bottom: 0.75rem;
-    }
-
-    /* Full-screen modals on small screens */
-    .modal-dialog {
-        max-width: 100%;
-        margin: 0;
-    }
-
-    .modal-content {
-        border-radius: 0;
-        min-height: 100vh;
-    }
-
     .mg-notification-dropdown {
         width: 100vw;
         max-width: 100vw;
@@ -588,8 +1074,44 @@ body {
     }
 }
 
-/* Medium screens and up: restore modal */
-@media (min-width: 576px) {
+/* --- Tablet portrait (576px - 767px) --- */
+@media (min-width: 576px) and (max-width: 767.98px) {
+    .btn { min-height: 44px; }
+    .form-control { min-height: 44px; }
+
+    .mg-content {
+        padding: 1rem;
+    }
+
+    .mg-stat-card .stat-value {
+        font-size: 1.5rem;
+    }
+
+    .fs-2x {
+        font-size: 1.5rem;
+    }
+
+    .table {
+        font-size: 0.875rem;
+    }
+
+    /* Hide some columns on tablet portrait */
+    #clientesTable th:nth-child(3),
+    #clientesTable td:nth-child(3) {
+        display: none !important;
+    }
+
+    /* Admin table: hide Contacto(3), Tipo(6), Fecha(7) on tablet */
+    #negociosTable th:nth-child(3),
+    #negociosTable td:nth-child(3),
+    #negociosTable th:nth-child(6),
+    #negociosTable td:nth-child(6),
+    #negociosTable th:nth-child(7),
+    #negociosTable td:nth-child(7) {
+        display: none !important;
+    }
+
+    /* Modals: restore non-fullscreen */
     .modal-dialog {
         max-width: 500px;
         margin: 1.75rem auto;
@@ -605,7 +1127,24 @@ body {
     }
 }
 
-/* Large screens: sidebar always visible */
+/* --- Tablet landscape+ (768px+): restore modal --- */
+@media (min-width: 768px) {
+    .modal-dialog {
+        max-width: 500px;
+        margin: 1.75rem auto;
+    }
+
+    .modal-lg {
+        max-width: 800px;
+    }
+
+    .modal-content {
+        border-radius: var(--mg-border-radius);
+        min-height: auto;
+    }
+}
+
+/* --- Desktop (992px+): sidebar visible --- */
 @media (min-width: 992px) {
     .mg-sidebar {
         transform: translateX(0);
@@ -655,7 +1194,12 @@ body {
     .mg-period-pills .mg-pill {
         flex: 1;
         text-align: center;
-        padding: 0.5rem 0.5rem;
+        padding: 0.5rem 0.25rem;
+        font-size: 0.75rem;
+        min-height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 }
 
