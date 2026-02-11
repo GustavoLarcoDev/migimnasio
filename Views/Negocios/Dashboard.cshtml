@@ -10,8 +10,92 @@
 }
 
 <div class="tab-content" id="dashboardTabsContent">
+    <!-- TAB RESUMEN -->
+    <div class="tab-pane fade show active" id="resumenTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-0" id="resumenSaludo">Buen día</h3>
+                <p class="text-muted mb-0">Resumen de tu negocio</p>
+            </div>
+            <div class="mg-period-pills" id="resumenPeriodPills">
+                <button class="mg-pill active" data-periodo="dia">Hoy</button>
+                <button class="mg-pill" data-periodo="semana">Semana</button>
+                <button class="mg-pill" data-periodo="mes">Mes</button>
+            </div>
+        </div>
+        <div class="row g-3 mb-4">
+            <div class="col-xl-4 col-md-4 col-12">
+                <div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-success) 0%, var(--mg-gradient-success-end) 100%);">
+                    <div class="card-body text-white">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="d-block mb-1 opacity-75 small">Ingresos</span>
+                                <span class="fs-2x fw-bolder" id="resumenIngresos">$0</span>
+                            </div>
+                            <i class="bi bi-arrow-up-circle fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4 col-md-4 col-12">
+                <div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-danger) 0%, var(--mg-gradient-danger-end) 100%);">
+                    <div class="card-body text-white">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="d-block mb-1 opacity-75 small">Gastos</span>
+                                <span class="fs-2x fw-bolder" id="resumenGastos">$0</span>
+                            </div>
+                            <i class="bi bi-arrow-down-circle fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4 col-md-4 col-12">
+                <div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-primary) 0%, var(--mg-gradient-primary-end) 100%);">
+                    <div class="card-body text-white">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="d-block mb-1 opacity-75 small">Ganancia Neta</span>
+                                <span class="fs-2x fw-bolder" id="resumenGanancia">$0</span>
+                            </div>
+                            <i class="bi bi-cash-stack fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row g-3 mb-4">
+            <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Total Clientes</div><div class="stat-value" id="resumenTotalClientes">0</div></div><div class="stat-icon bg-light-primary"><i class="bi bi-people-fill text-primary"></i></div></div></div></div>
+            <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Activos</div><div class="stat-value" id="resumenActivos">0</div></div><div class="stat-icon bg-light-success"><i class="bi bi-check-circle-fill text-success"></i></div></div></div></div>
+            <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Vencidos</div><div class="stat-value" id="resumenVencidos">0</div></div><div class="stat-icon bg-light-danger"><i class="bi bi-x-circle-fill text-danger"></i></div></div></div></div>
+            <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Nuevos Hoy</div><div class="stat-value" id="resumenNuevosHoy">0</div></div><div class="stat-icon bg-light-info"><i class="bi bi-person-plus-fill text-info"></i></div></div></div></div>
+        </div>
+        <div class="row g-3">
+            <div class="col-lg-7">
+                <div class="mg-card">
+                    <div class="card-header border-0"><h5 class="fw-bold mb-0">Ingresos vs Gastos</h5></div>
+                    <div class="card-body"><div id="chartResumenOverview"></div></div>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="mg-card h-100">
+                    <div class="card-header border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold mb-0">Próximos a Vencer</h5>
+                        <span class="badge bg-warning text-dark" id="resumenProximosCount">0</span>
+                    </div>
+                    <div class="card-body p-0" style="max-height: 320px; overflow-y: auto;" id="proximosVencerList">
+                        <div class="text-center py-4 text-muted">
+                            <i class="bi bi-check-circle fs-1 d-block mb-2 text-success"></i>
+                            <p class="mb-0">Sin membresías próximas a vencer</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- TAB CLIENTES -->
-    <div class="tab-pane fade show active" id="clientesTab" role="tabpanel">
+    <div class="tab-pane fade" id="clientesTab" role="tabpanel">
         <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
             <button id="btnCrearCliente" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>Nuevo Cliente</button>
             <button id="btnExportClientesExcel" class="btn btn-success"><i class="bi bi-file-earmark-excel me-2"></i>Exportar</button>
@@ -79,8 +163,8 @@ let tablaClientes, tablaLogs, tablaUsuariosDiarios;
 let modoEdicion = false;
 const swalMG = Swal.mixin({ confirmButtonColor: '#3E97FF', cancelButtonColor: '#E4E6EF', cancelButtonText: 'Cancelar', reverseButtons: true, customClass: { popup: 'mg-swal-popup', confirmButton: 'mg-swal-confirm', cancelButton: 'mg-swal-cancel' } });
 
-$(document).ready(function () { cargarEstadisticas(); cargarTablaClientes(); initLogsTab(); cargarNotificacionesCount(); $.post('/Negocios/GenerarNotificaciones', { negocioId }); });
-document.addEventListener('mg-tab-shown', function(e) { if (e.detail.tab === 'ventasTab') { cargarVentasStats(); cargarCharts(); } else if (e.detail.tab === 'logsTab') { if (!tablaLogs) cargarTablaLogs(); verificarCerrarPeriodo(); } else if (e.detail.tab === 'notificacionesTab') { cargarNotificacionesTab(); } });
+$(document).ready(function () { cargarResumen(); cargarNotificacionesCount(); $.post('/Negocios/GenerarNotificaciones', { negocioId }); });
+document.addEventListener('mg-tab-shown', function(e) { if (e.detail.tab === 'resumenTab') { cargarResumen(); } else if (e.detail.tab === 'clientesTab') { if (!tablaClientes) { cargarTablaClientes(); } cargarEstadisticas(); } else if (e.detail.tab === 'ventasTab') { cargarVentasStats(); cargarCharts(); } else if (e.detail.tab === 'logsTab') { if (!tablaLogs) cargarTablaLogs(); verificarCerrarPeriodo(); } else if (e.detail.tab === 'notificacionesTab') { cargarNotificacionesTab(); } });
 
 function cargarEstadisticas() { $.get('/Negocios/GetDashboardStats', { negocioId }, function(data) { $('#totalClientes').text(data.totalClientes); $('#clientesActivos').text(data.clientesActivos); $('#clientesVencidos').text(data.clientesVencidos); $('#ingresosMes').text('$' + data.ingresosMes.toFixed(2)); }); }
 function cargarTablaClientes() { tablaClientes = $('#clientesTable').DataTable({ ajax: { url: '/Negocios/GetClientes', data: { negocioId }, dataSrc: '' }, columns: [ { data: null, render: (d,t,r) => `<strong>${r.nombreCompleto}</strong><br><small class="text-muted">${r.telefono || '-'}</small>` }, { data: 'precio', render: d => '$' + d.toFixed(2) }, { data: 'fechaDeCreacion', render: d => new Date(d).toLocaleDateString('es-MX') }, { data: 'fechaQueTermina', render: d => new Date(d).toLocaleDateString('es-MX') }, { data: 'diasRestantes', render: d => d < 0 ? '<span class="badge bg-danger">Vencido</span>' : `<span class="badge bg-${d <= 3 ? 'warning' : 'success'}">${d} días</span>` }, { data: null, orderable: false, className: 'text-end', render: (d,t,r) => { let btns = ''; const cleanPhone = r.telefono ? r.telefono.replace(/\D/g, '') : ''; if (cleanPhone.length >= 10) { const waMsg = encodeURIComponent(`Hola ${r.nombreCompleto}, te saludamos de ${negocioNombre}, ¿cómo estás hoy?`); btns += `<a href="https://wa.me/${cleanPhone}?text=${waMsg}" target="_blank" class="btn btn-sm btn-icon btn-light-success me-1" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>`; } const safeName = r.nombreCompleto.replace(/'/g, "\\'"); const safePrecio = r.precio || 0; const safeFechaFin = r.fechaQueTermina ? r.fechaQueTermina.split('T')[0] : ''; const safePhone = cleanPhone; btns += `<button class="btn btn-sm btn-icon btn-light-warning me-1" onclick="abrirModalRenovar('${r.clienteId}','${safeName}', ${safePrecio}, '${safeFechaFin}', '${safePhone}')" title="Renovar"><i class="bi bi-arrow-repeat"></i></button><button class="btn btn-sm btn-icon btn-light-primary me-1" onclick="editarCliente('${r.clienteId}')" title="Editar"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-icon btn-light-danger" onclick="eliminarCliente('${r.clienteId}','${safeName}')" title="Eliminar"><i class="bi bi-trash"></i></button>`; return btns; }} ], order: [[4, 'asc']], responsive: true, language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' } }); }
@@ -108,7 +192,7 @@ $('#importZone').on('drop', function(e) { e.preventDefault(); $(this).removeClas
 function uploadExcel(file) { const formData = new FormData(); formData.append('file', file); formData.append('negocioId', negocioId); $.ajax({ url: '/Negocios/ImportarClientesExcel', type: 'POST', data: formData, processData: false, contentType: false, success: function(r) { let html = `<div class="alert alert-success"><strong>${r.clientesCreados}</strong> clientes creados</div>`; if (r.clientesOmitidos > 0) html += `<div class="alert alert-warning"><strong>${r.clientesOmitidos}</strong> omitidos (duplicados)</div>`; if (r.erroresCount > 0) html += `<div class="alert alert-danger"><strong>${r.erroresCount}</strong> errores</div>`; $('#importResultBody').html(html); $('#importResultModal').modal('show'); tablaClientes.ajax.reload(); cargarEstadisticas(); $('#importZone').addClass('d-none'); }, error: xhr => toastr.error(xhr.responseJSON?.message || 'Error al importar') }); }
 
 function initLogsTab() {}
-function cargarTablaLogs() { if (tablaLogs) { tablaLogs.destroy(); } tablaLogs = $('#logsTable').DataTable({ ajax: { url: '/Negocios/GetLogs', data: { negocioId: negocioId }, dataSrc: '', error: function(xhr, error, code) { console.error('DataTables error:', xhr.responseText); toastr.error('Error al cargar los logs: ' + (xhr.responseJSON?.message || 'Error desconocido')); } }, columns: [ { data: 'message' }, { data: 'nombreCliente', render: d => d || '<span class="text-muted">-</span>' }, { data: 'monto', render: d => `<span class="${d >= 0 ? 'text-success' : 'text-danger'} fw-bold">${d >= 0 ? '+' : ''}$${d.toFixed(2)}</span>` }, { data: 'fecha', render: d => new Date(d).toLocaleString('es-MX') } ], order: [[3, 'desc']], language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' } }); }
+function cargarTablaLogs() { if (tablaLogs) { tablaLogs.destroy(); } tablaLogs = $('#logsTable').DataTable({ ajax: { url: '/Negocios/GetLogs', data: { negocioId: negocioId }, dataSrc: '', error: function(xhr, error, code) { console.error('DataTables error:', xhr.responseText); toastr.error('Error al cargar los logs: ' + (xhr.responseJSON?.message || 'Error desconocido')); } }, columns: [ { data: 'message' }, { data: 'nombreCliente', render: d => d || '<span class="text-muted">-</span>' }, { data: 'monto', render: d => `<span class="${d >= 0 ? 'text-success' : 'text-danger'} fw-bold">${d >= 0 ? '+' : ''}$${d.toFixed(2)}</span>` }, { data: 'fecha', render: function(d, type) { if (type === 'sort' || type === 'type') return d; return new Date(d).toLocaleString('es-MX'); } } ], order: [[3, 'desc']], language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' } }); }
 $('#btnRegistrarLog').click(function() { const message = $('#logDescripcion').val(); const monto = $('#logMonto').val(); if (!message || monto === '') { toastr.error('Complete todos los campos'); return; } $.post('/Negocios/CrearLog', { NegocioId: negocioId, Message: message, Monto: monto }, function(r) { if (r.success) { $('#logDescripcion').val(''); $('#logMonto').val(''); tablaLogs.ajax.reload(); toastr.success(r.message); } }).fail(xhr => toastr.error(xhr.responseJSON?.message || 'Error')); });
 $('#btnExportLogsExcel').click(function() { window.location.href = `/Negocios/ExportLogsExcel?negocioId=${negocioId}`; });
 function verificarCerrarPeriodo() { $.get('/Negocios/GetOldestLogDate', { negocioId }, function(d) { if (d.fecha) { const oldest = new Date(d.fecha); const diasDesde = Math.round((new Date() - oldest) / 86400000); if (diasDesde >= 30) { $('#btnCerrarPeriodo').removeClass('d-none'); } else { $('#btnCerrarPeriodo').addClass('d-none'); } } }); }
@@ -132,5 +216,92 @@ function marcarLeida(id) { $.post('/Negocios/MarcarNotificacionLeida', { id, neg
 $('#bellBtn').on('show.bs.dropdown', function() { cargarNotificacionesDropdown(); });
 $('#btnMarcarTodasLeidas, #btnMarcarTodasLeidasTab').click(function() { $.post('/Negocios/MarcarTodasNotificacionesLeidas', { negocioId }, function(r) { if (r.success) { toastr.success(r.message); cargarNotificacionesCount(); cargarNotificacionesDropdown(); cargarNotificacionesTab(); } }); });
 $('#btnGenerarNotificaciones').click(function() { const btn = $(this); btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Generando...'); $.post('/Negocios/GenerarNotificaciones', { negocioId }, function(r) { if (r.success) { toastr.success(r.message); cargarNotificacionesTab(); cargarNotificacionesCount(); } }).always(() => { btn.prop('disabled', false).html('<i class="bi bi-arrow-repeat me-2"></i>Generar Notificaciones'); }); });
+
+// ===== RESUMEN TAB =====
+let resumenPeriodo = 'dia';
+let resumenStatsData = null;
+let chartOverview = null;
+
+function saludoHora() {
+    const h = new Date().getHours();
+    if (h < 12) return 'Buenos días';
+    if (h < 18) return 'Buenas tardes';
+    return 'Buenas noches';
+}
+
+function cargarResumen() {
+    $('#resumenSaludo').text(saludoHora());
+    $.get('/Negocios/GetVentasStats', { negocioId }, function(d) {
+        resumenStatsData = d;
+        actualizarResumenCards();
+    });
+    $.get('/Negocios/GetDashboardStats', { negocioId }, function(d) {
+        $('#resumenTotalClientes').text(d.totalClientes);
+        $('#resumenActivos').text(d.clientesActivos);
+        $('#resumenVencidos').text(d.clientesVencidos);
+        $('#resumenNuevosHoy').text(d.clientesNuevosHoy);
+        renderProximosVencer(d.proximosVencer);
+    });
+    cargarChartOverview();
+}
+
+function actualizarResumenCards() {
+    if (!resumenStatsData) return;
+    const d = resumenStatsData;
+    const keys = {
+        dia: { i: 'ingresosDia', g: 'gastosDia', n: 'gananciaDia' },
+        semana: { i: 'ingresosSemana', g: 'gastosSemana', n: 'gananciaSemana' },
+        mes: { i: 'ingresosMes', g: 'gastosMes', n: 'gananciaMes' }
+    };
+    const k = keys[resumenPeriodo];
+    $('#resumenIngresos').text('$' + d[k.i].toFixed(2));
+    $('#resumenGastos').text('$' + d[k.g].toFixed(2));
+    $('#resumenGanancia').text('$' + d[k.n].toFixed(2));
+}
+
+function renderProximosVencer(lista) {
+    if (!lista || lista.length === 0) {
+        $('#proximosVencerList').html('<div class="text-center py-4 text-muted"><i class="bi bi-check-circle fs-1 d-block mb-2 text-success"></i><p class="mb-0">Sin membresías próximas a vencer</p></div>');
+        $('#resumenProximosCount').text('0');
+        return;
+    }
+    $('#resumenProximosCount').text(lista.length);
+    let html = '';
+    lista.forEach(function(c) {
+        const badgeClass = c.diasRestantes <= 1 ? 'bg-danger' : c.diasRestantes <= 3 ? 'bg-warning text-dark' : 'bg-info';
+        html += '<div class="d-flex align-items-center gap-3 px-3 py-2 border-bottom">' +
+            '<div class="flex-grow-1"><span class="fw-semibold">' + c.nombreCompleto + '</span><br>' +
+            '<small class="text-muted">' + new Date(c.fechaQueTermina).toLocaleDateString('es-MX') + '</small></div>' +
+            '<span class="badge ' + badgeClass + '">' + c.diasRestantes + 'd</span></div>';
+    });
+    $('#proximosVencerList').html(html);
+}
+
+function cargarChartOverview() {
+    $.get('/Negocios/GetChartData', { negocioId, periodo: resumenPeriodo }, function(d) {
+        if (chartOverview) chartOverview.destroy();
+        chartOverview = new ApexCharts(document.querySelector("#chartResumenOverview"), {
+            series: [{ name: 'Ingresos', data: d.ingresos }, { name: 'Gastos', data: d.gastos }],
+            chart: { type: 'bar', height: 280, toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
+            colors: ['#50CD89', '#F1416C'],
+            xaxis: { categories: d.labels, labels: { style: { colors: '#A1A5B7', fontSize: '11px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+            yaxis: { labels: { style: { colors: '#A1A5B7', fontSize: '11px' }, formatter: function(v) { return '$' + v.toFixed(0); } } },
+            grid: { borderColor: '#EFF2F5', strokeDashArray: 4 },
+            plotOptions: { bar: { borderRadius: 6, columnWidth: '50%' } },
+            dataLabels: { enabled: false },
+            legend: { position: 'top', labels: { colors: '#5E6278' }, fontSize: '12px', fontWeight: 500 },
+            tooltip: { y: { formatter: function(v) { return '$' + v.toFixed(2); } } }
+        });
+        chartOverview.render();
+    });
+}
+
+$('#resumenPeriodPills').on('click', '.mg-pill', function() {
+    $('#resumenPeriodPills .mg-pill').removeClass('active');
+    $(this).addClass('active');
+    resumenPeriodo = $(this).data('periodo');
+    actualizarResumenCards();
+    cargarChartOverview();
+});
 </script>
 }
