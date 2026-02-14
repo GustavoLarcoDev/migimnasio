@@ -1,3 +1,10 @@
+// ═══════════════════════════════════════════════════════════
+// ClienteService.cs — Servicio de gestión de clientes
+// Maneja CRUD de clientes, renovación de membresías,
+// importación/exportación Excel y estadísticas del dashboard.
+// Cada acción genera un log inmutable para tracking financiero.
+// ═══════════════════════════════════════════════════════════
+
 using ClosedXML.Excel;
 using Gimnasio.Data;
 using Gimnasio.Models;
@@ -17,6 +24,14 @@ public class ClienteService : IClienteService
         _logService = logService;
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // ESTADÍSTICAS DEL DASHBOARD
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Calcula todas las métricas del dashboard del negocio:
+    /// clientes activos/vencidos, nuevos hoy/mes, ingresos y próximos a vencer
+    /// </summary>
     public async Task<object> GetDashboardStatsAsync(Guid negocioId)
     {
         var clientes = await _context.Clientes
@@ -42,6 +57,7 @@ public class ClienteService : IClienteService
             .Where(l => l.Fecha.Date == DateTime.Now.Date)
             .Sum(l => l.Monto);
 
+        // Clientes que vencen en los próximos 5 días
         var proximosVencer = clientes
             .Where(c => c.FechaQueTermina.Date >= DateTime.Now.Date && c.FechaQueTermina.Date <= DateTime.Now.AddDays(5).Date)
             .Select(c => new
@@ -69,6 +85,13 @@ public class ClienteService : IClienteService
         };
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // CONSULTAS
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Obtiene todos los clientes con días restantes y estado calculado
+    /// </summary>
     public async Task<object> GetClientesAsync(Guid negocioId)
     {
         return await _context.Clientes
@@ -93,14 +116,48 @@ public class ClienteService : IClienteService
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Obtiene un cliente específico por ID y negocioId
+    /// </summary>
     public async Task<Cliente> GetClienteAsync(Guid id, Guid negocioId)
     {
         return await _context.Clientes
             .FirstOrDefaultAsync(c => c.ClienteId == id && c.NegocioId == negocioId);
     }
 
+    /// <summary>
+    /// Obtiene solo los clientes marcados como "diario"
+    /// </summary>
+    public async Task<object> GetClientesDiariosAsync(Guid negocioId)
+    {
+        return await _context.Clientes
+            .Where(c => c.NegocioId == negocioId && c.EsDiario)
+            .OrderByDescending(c => c.FechaDeCreacion)
+            .Select(c => new
+            {
+                c.ClienteId,
+                c.Nombre,
+                c.Apellido,
+                NombreCompleto = $"{c.Nombre} {c.Apellido}",
+                c.Telefono,
+                c.FechaDeCreacion
+            })
+            .ToListAsync();
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // CREAR CLIENTE
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Crea un nuevo cliente. Calcula la fecha de fin según:
+    /// - FechaFin explícita (prioridad), o
+    /// - FechaInicio + Dias
+    /// Registra un log con el monto pagado.
+    /// </summary>
     public async Task<(bool success, string message)> CrearClienteAsync(ClienteCreateDto model)
     {
+        // Validaciones
         if (string.IsNullOrWhiteSpace(model.Nombre) || string.IsNullOrWhiteSpace(model.Apellido))
             return (false, "Nombre y Apellido son obligatorios");
         if (string.IsNullOrWhiteSpace(model.Telefono))
@@ -112,6 +169,7 @@ public class ClienteService : IClienteService
         DateTime fechaFin;
         int dias;
 
+        // Calcular fecha de fin: FechaFin tiene prioridad sobre Dias
         if (model.FechaFin.HasValue)
         {
             fechaFin = model.FechaFin.Value;
@@ -150,6 +208,7 @@ public class ClienteService : IClienteService
         _context.Clientes.Add(cliente);
         await _context.SaveChangesAsync();
 
+        // Registrar log inmutable con el pago
         var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
         await _logService.CreateLogAsync(model.NegocioId, "cliente_creado",
             $"Nuevo cliente registrado: {nombreCompleto}, {dias} días, ${model.Precio:F2}, vence {fechaFin:dd/MM/yyyy}",
@@ -158,6 +217,14 @@ public class ClienteService : IClienteService
         return (true, "Cliente creado exitosamente");
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // EDITAR CLIENTE
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Edita un cliente existente. Detecta y registra cada cambio individual
+    /// en el log para auditoría detallada.
+    /// </summary>
     public async Task<(bool success, string message)> EditarClienteAsync(ClienteCreateDto model)
     {
         var cliente = await _context.Clientes
@@ -194,7 +261,7 @@ public class ClienteService : IClienteService
         if (dias <= 0)
             return (false, "La fecha de finalización debe ser posterior a la fecha de inicio");
 
-        // Track changes for detailed logging
+        // Detectar cambios individuales para el log de auditoría
         var cambios = new List<string>();
         var nombreAnterior = $"{cliente.Nombre} {cliente.Apellido}";
 
@@ -219,6 +286,7 @@ public class ClienteService : IClienteService
         if (cliente.FechaQueTermina.Date != fechaFin.Date)
             cambios.Add($"fecha fin: {cliente.FechaQueTermina:dd/MM/yyyy} → {fechaFin:dd/MM/yyyy}");
 
+        // Aplicar cambios
         cliente.Nombre = model.Nombre;
         cliente.Apellido = model.Apellido;
         cliente.Email = model.Email;
@@ -242,6 +310,14 @@ public class ClienteService : IClienteService
         return (true, "Cliente actualizado exitosamente");
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // ELIMINAR CLIENTE
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Elimina un cliente y registra la eliminación en los logs.
+    /// Los ingresos previos del cliente permanecen en la tabla Logs.
+    /// </summary>
     public async Task<(bool success, string message)> EliminarClienteAsync(Guid id, Guid negocioId)
     {
         var cliente = await _context.Clientes
@@ -263,6 +339,14 @@ public class ClienteService : IClienteService
         return (true, "Cliente eliminado exitosamente");
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // RENOVAR MEMBRESÍA
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Extiende la fecha de finalización de un cliente y registra el pago.
+    /// La nueva fecha debe ser posterior a la fecha de fin actual.
+    /// </summary>
     public async Task<(bool success, string message)> RenovarClienteAsync(Guid id, Guid negocioId, DateTime nuevaFechaFin, decimal precio)
     {
         var cliente = await _context.Clientes
@@ -290,6 +374,13 @@ public class ClienteService : IClienteService
         return (true, "Membresía renovada exitosamente");
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // EXPORTACIÓN EXCEL
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Genera un archivo Excel con todos los clientes del negocio
+    /// </summary>
     public async Task<byte[]> ExportClientesExcelAsync(Guid negocioId)
     {
         var clientes = await _context.Clientes
@@ -300,6 +391,7 @@ public class ClienteService : IClienteService
         using var workbook = new XLWorkbook();
         var worksheet = workbook.Worksheets.Add("Clientes");
 
+        // Encabezados
         worksheet.Cell(1, 1).Value = "Nombre";
         worksheet.Cell(1, 2).Value = "Apellido";
         worksheet.Cell(1, 3).Value = "Email";
@@ -311,11 +403,13 @@ public class ClienteService : IClienteService
         worksheet.Cell(1, 9).Value = "Tipo";
         worksheet.Cell(1, 10).Value = "Estado";
 
+        // Estilo de encabezados
         var headerRange = worksheet.Range(1, 1, 1, 10);
         headerRange.Style.Font.Bold = true;
         headerRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#3b82f6");
         headerRange.Style.Font.FontColor = XLColor.White;
 
+        // Datos
         int row = 2;
         foreach (var cliente in clientes)
         {
@@ -342,6 +436,18 @@ public class ClienteService : IClienteService
         return stream.ToArray();
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // IMPORTACIÓN EXCEL
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Importa clientes desde un archivo Excel. Características:
+    /// - Detecta columnas automáticamente por nombres de headers
+    /// - Quita tildes para matching flexible de headers
+    /// - Si no detecta headers, usa posiciones por defecto
+    /// - Omite duplicados (mismo nombre + apellido)
+    /// - Retorna resumen: creados, omitidos y errores por fila
+    /// </summary>
     public async Task<object> ImportarClientesExcelAsync(Guid negocioId, Stream fileStream)
     {
         var clientesCreados = new List<string>();
@@ -359,7 +465,7 @@ public class ClienteService : IClienteService
         if (rangeUsed == null)
             return new { success = false, message = "El archivo está vacío" };
 
-        // --- Detectar columnas por headers (fila 1) ---
+        // Detectar columnas por headers (fila 1)
         var headerRow = rangeUsed.Row(1);
         var colMap = new Dictionary<string, int>();
         for (int col = 1; col <= rangeUsed.ColumnCount(); col++)
@@ -405,22 +511,24 @@ public class ClienteService : IClienteService
             if (rangeUsed.ColumnCount() >= 8) colMap["precio"] = 8;
         }
 
+        // Cargar clientes existentes para detectar duplicados
         var clientesExistentes = await _context.Clientes
             .Where(c => c.NegocioId == negocioId)
             .Select(c => new { c.Nombre, c.Apellido })
             .ToListAsync();
 
-        var rows = rangeUsed.RowsUsed().Skip(1); // Skip header
+        var rows = rangeUsed.RowsUsed().Skip(1); // Saltar header
         int rowNumber = 2;
 
         foreach (var row in rows)
         {
             try
             {
-                // --- Nombre y Apellido ---
+                // Nombre y Apellido
                 string nombre, apellido;
                 if (colMap.ContainsKey("nombre_completo"))
                 {
+                    // Si hay columna de nombre completo, separar por espacio
                     var fullName = GetCellString(row.Cell(colMap["nombre_completo"]));
                     if (string.IsNullOrWhiteSpace(fullName))
                     {
@@ -446,7 +554,7 @@ public class ClienteService : IClienteService
                 }
                 if (string.IsNullOrWhiteSpace(apellido)) apellido = "-";
 
-                // Duplicados
+                // Verificar duplicados por nombre + apellido
                 if (clientesExistentes.Any(c => c.Nombre == nombre && c.Apellido == apellido))
                 {
                     clientesOmitidos.Add($"{nombre} {apellido}");
@@ -454,12 +562,12 @@ public class ClienteService : IClienteService
                     continue;
                 }
 
-                // --- Campos opcionales ---
+                // Campos opcionales
                 var email = colMap.ContainsKey("email") ? GetCellString(row.Cell(colMap["email"])) : "";
                 var telefono = colMap.ContainsKey("telefono") ? GetCellString(row.Cell(colMap["telefono"])) : "";
                 var direccion = colMap.ContainsKey("direccion") ? GetCellString(row.Cell(colMap["direccion"])) : "";
 
-                // --- Fechas ---
+                // Fechas
                 DateTime fechaInicio = DateTime.Now;
                 DateTime? fechaFin = null;
                 int dias = 30;
@@ -490,7 +598,7 @@ public class ClienteService : IClienteService
                     fechaFin = fechaInicio.AddDays(30);
                 }
 
-                // --- Precio ---
+                // Precio
                 decimal precio = 0;
                 if (colMap.ContainsKey("precio"))
                 {
@@ -498,7 +606,7 @@ public class ClienteService : IClienteService
                 }
                 if (precio < 0) precio = 0;
 
-                // --- Tipo ---
+                // Tipo (diario o regular)
                 bool esDiario = false;
                 if (colMap.ContainsKey("tipo"))
                 {
@@ -550,8 +658,13 @@ public class ClienteService : IClienteService
         };
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // HELPERS PRIVADOS PARA IMPORTACIÓN EXCEL
+    // ═══════════════════════════════════════════════════════════
+
     /// <summary>
-    /// Intenta parsear una celda de Excel como fecha. Maneja: DateTime nativo, número serial OLE, y strings con múltiples formatos.
+    /// Intenta parsear una celda de Excel como fecha.
+    /// Maneja: DateTime nativo, número serial OLE y strings con múltiples formatos.
     /// </summary>
     private static DateTime? TryParseExcelDate(IXLCell cell)
     {
@@ -600,29 +713,12 @@ public class ClienteService : IClienteService
     }
 
     /// <summary>
-    /// Lee el contenido de una celda como string limpio, manejando tipos numéricos y vacíos.
+    /// Lee el contenido de una celda como string limpio, manejando tipos numéricos y vacíos
     /// </summary>
     private static string GetCellString(IXLCell cell)
     {
         if (cell.IsEmpty()) return "";
         try { return cell.GetString()?.Trim() ?? ""; }
         catch { return cell.Value.ToString()?.Trim() ?? ""; }
-    }
-
-    public async Task<object> GetClientesDiariosAsync(Guid negocioId)
-    {
-        return await _context.Clientes
-            .Where(c => c.NegocioId == negocioId && c.EsDiario)
-            .OrderByDescending(c => c.FechaDeCreacion)
-            .Select(c => new
-            {
-                c.ClienteId,
-                c.Nombre,
-                c.Apellido,
-                NombreCompleto = $"{c.Nombre} {c.Apellido}",
-                c.Telefono,
-                c.FechaDeCreacion
-            })
-            .ToListAsync();
     }
 }

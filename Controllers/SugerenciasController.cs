@@ -1,3 +1,9 @@
+// ═══════════════════════════════════════════════════════════
+// SugerenciasController.cs — Controlador de sugerencias/feedback
+// Los negocios pueden enviar sugerencias al admin.
+// El admin puede ver todas las sugerencias y marcarlas como leídas.
+// ═══════════════════════════════════════════════════════════
+
 using Gimnasio.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,6 +23,14 @@ public class SugerenciasController : Controller
         _authService = authService;
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // ENDPOINTS DE NEGOCIO
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Permite a un negocio enviar una sugerencia al administrador.
+    /// Máximo 1000 caracteres por mensaje.
+    /// </summary>
     [HttpPost("EnviarSugerencia")]
     public async Task<IActionResult> EnviarSugerencia(Guid negocioId, string mensaje)
     {
@@ -40,7 +54,13 @@ public class SugerenciasController : Controller
         }
     }
 
-    // Admin endpoints
+    // ═══════════════════════════════════════════════════════════
+    // ENDPOINTS DE ADMIN
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Muestra la vista de administración de sugerencias (solo admin)
+    /// </summary>
     [HttpGet("Sugerencias")]
     public IActionResult Sugerencias()
     {
@@ -50,6 +70,9 @@ public class SugerenciasController : Controller
         return View("~/Views/Negocios/Sugerencias.cshtml");
     }
 
+    /// <summary>
+    /// Obtiene todas las sugerencias ordenadas por fecha (solo admin)
+    /// </summary>
     [HttpGet("GetSugerencias")]
     public async Task<IActionResult> GetSugerencias()
     {
@@ -67,6 +90,9 @@ public class SugerenciasController : Controller
         }
     }
 
+    /// <summary>
+    /// Marca una sugerencia como leída (solo admin)
+    /// </summary>
     [HttpPost("MarcarSugerenciaLeida")]
     public async Task<IActionResult> MarcarSugerenciaLeida(Guid id)
     {

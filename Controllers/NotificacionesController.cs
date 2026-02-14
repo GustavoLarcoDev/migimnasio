@@ -1,3 +1,9 @@
+// ═══════════════════════════════════════════════════════════
+// NotificacionesController.cs — Controlador de notificaciones
+// Maneja la generación automática de alertas de vencimiento,
+// consulta, conteo y marcado de notificaciones como leídas
+// ═══════════════════════════════════════════════════════════
+
 using Gimnasio.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,6 +23,13 @@ public class NotificacionesController : Controller
         _authService = authService;
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // CONSULTAS
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Obtiene las últimas 50 notificaciones del negocio
+    /// </summary>
     [HttpGet("GetNotificaciones")]
     public async Task<IActionResult> GetNotificaciones(Guid negocioId)
     {
@@ -35,6 +48,9 @@ public class NotificacionesController : Controller
         }
     }
 
+    /// <summary>
+    /// Obtiene el conteo de notificaciones no leídas (para el badge del sidebar)
+    /// </summary>
     [HttpGet("GetNotificacionesCount")]
     public async Task<IActionResult> GetNotificacionesCount(Guid negocioId)
     {
@@ -49,6 +65,13 @@ public class NotificacionesController : Controller
         }
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // ACCIONES
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Marca una notificación individual como leída
+    /// </summary>
     [HttpPost("MarcarNotificacionLeida")]
     public async Task<IActionResult> MarcarLeida(Guid id, Guid negocioId)
     {
@@ -66,6 +89,9 @@ public class NotificacionesController : Controller
         }
     }
 
+    /// <summary>
+    /// Marca todas las notificaciones del negocio como leídas
+    /// </summary>
     [HttpPost("MarcarTodasNotificacionesLeidas")]
     public async Task<IActionResult> MarcarTodasLeidas(Guid negocioId)
     {
@@ -80,6 +106,11 @@ public class NotificacionesController : Controller
         }
     }
 
+    /// <summary>
+    /// Genera notificaciones automáticas para clientes cuya membresía
+    /// vence dentro de los próximos 3 días. Evita duplicados por día.
+    /// Se ejecuta al cargar el dashboard.
+    /// </summary>
     [HttpPost("GenerarNotificaciones")]
     public async Task<IActionResult> GenerarNotificaciones(Guid negocioId)
     {

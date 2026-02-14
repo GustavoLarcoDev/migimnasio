@@ -1,0 +1,241 @@
+@*
+    Layout del panel de administración.
+    Basado en _DashboardLayout.cshtml pero con navegación y contenido específico para el admin.
+    No depende de ningún NegocioId ni ViewData de negocio.
+*@
+<!DOCTYPE html>
+<html lang="es" data-theme="">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Admin</title>
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
+
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.6/css/dataTables.dataTables.css" />
+
+    <!-- Toastr CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/css/toastr.css" rel="stylesheet" />
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Metronic Style -->
+    <link rel="stylesheet" href="~/css/metronic-style.css" />
+
+    <!-- Aplicar tema antes del render para evitar parpadeo -->
+    <script>
+    (function() {
+        var t = localStorage.getItem('mg-theme') || '';
+        if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+    </script>
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="mg-dashboard">
+
+    <!-- Overlay del sidebar (móvil) -->
+    <div class="mg-sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="mg-sidebar" id="sidebar">
+        <div class="mg-sidebar-brand">
+            <i class="bi bi-shop"></i>
+            <h4>Mi Negocio</h4>
+        </div>
+
+        <!-- Navegación del sidebar del admin -->
+        <nav class="mg-sidebar-menu">
+            <a href="#resumenTab" class="nav-link active" data-mg-tab="resumenTab">
+                <i class="bi bi-speedometer2"></i>
+                <span>Resumen</span>
+            </a>
+            <a href="#negociosTab" class="nav-link" data-mg-tab="negociosTab">
+                <i class="bi bi-building"></i>
+                <span>Negocios</span>
+            </a>
+            <a href="#crearTab" class="nav-link" data-mg-tab="crearTab">
+                <i class="bi bi-plus-circle"></i>
+                <span>Crear Negocio</span>
+            </a>
+            <a href="#ventasTab" class="nav-link" data-mg-tab="ventasTab">
+                <i class="bi bi-graph-up"></i>
+                <span>Ventas</span>
+            </a>
+            <a href="#logsTab" class="nav-link" data-mg-tab="logsTab">
+                <i class="bi bi-journal-text"></i>
+                <span>Actividad</span>
+            </a>
+            <a href="#sugerenciasTab" class="nav-link" data-mg-tab="sugerenciasTab">
+                <i class="bi bi-chat-left-text"></i>
+                <span>Sugerencias</span>
+                <span class="badge bg-danger ms-auto d-none" id="sidebarSugerenciasBadge">0</span>
+            </a>
+        </nav>
+
+        <!-- Pie del sidebar: solo cerrar sesión -->
+        <div class="mg-sidebar-footer">
+            <a href="@Url.Action("Logout", "Auth")" class="nav-link">
+                <i class="bi bi-box-arrow-left"></i>
+                <span>Cerrar Sesión</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Barra superior -->
+    <header class="mg-topbar">
+        <div class="mg-topbar-left">
+            <button class="mg-hamburger" id="sidebarToggle" type="button">
+                <i class="bi bi-list"></i>
+            </button>
+            <div>
+                <h5 class="mb-0 fw-bold">Administrador</h5>
+                <small class="text-muted">Panel Admin</small>
+            </div>
+        </div>
+        <div class="mg-topbar-right">
+            <!-- Selector de tema -->
+            <div class="dropdown">
+                <button class="mg-theme-btn" data-bs-toggle="dropdown" data-bs-auto-close="true" title="Cambiar tema">
+                    <i class="bi bi-palette fs-5"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end mg-theme-dropdown">
+                    <button class="mg-theme-option" data-theme-value="">
+                        <span class="theme-swatch" style="background: linear-gradient(135deg, #F5F8FA 50%, #3E97FF 50%);"></span>
+                        <span>Claro</span>
+                        <i class="bi bi-check2 d-none"></i>
+                    </button>
+                    <button class="mg-theme-option" data-theme-value="dark">
+                        <span class="theme-swatch" style="background: linear-gradient(135deg, #1E1E2D 50%, #5BA7FF 50%);"></span>
+                        <span>Oscuro</span>
+                        <i class="bi bi-check2 d-none"></i>
+                    </button>
+                    <button class="mg-theme-option" data-theme-value="ocean">
+                        <span class="theme-swatch" style="background: linear-gradient(135deg, #F0F9FF 50%, #0EA5E9 50%);"></span>
+                        <span>Océano</span>
+                        <i class="bi bi-check2 d-none"></i>
+                    </button>
+                    <button class="mg-theme-option" data-theme-value="sunset">
+                        <span class="theme-swatch" style="background: linear-gradient(135deg, #FFF7ED 50%, #F97316 50%);"></span>
+                        <span>Atardecer</span>
+                        <i class="bi bi-check2 d-none"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Icono de usuario -->
+            <div class="d-none d-md-flex align-items-center ms-2">
+                <div class="bg-light-primary rounded-circle d-flex align-items-center justify-content-center" style="width:38px;height:38px;">
+                    <i class="bi bi-shield-lock-fill text-primary"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido principal -->
+    <main class="mg-content">
+        @RenderBody()
+    </main>
+
+    <!-- Scripts -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/js/toastr.js"></script>
+    <script src="https://cdn.datatables.net/2.3.6/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/plug-ins/2.3.6/i18n/es-ES.json"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <!-- Lógica de navegación del sidebar -->
+    <script>
+    (function() {
+        // Toggle del sidebar (móvil)
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const toggle = document.getElementById('sidebarToggle');
+
+        function openSidebar() {
+            sidebar.classList.add('show');
+            overlay.classList.add('show');
+        }
+        function closeSidebar() {
+            sidebar.classList.remove('show');
+            overlay.classList.remove('show');
+        }
+
+        if (toggle) toggle.addEventListener('click', openSidebar);
+        if (overlay) overlay.addEventListener('click', closeSidebar);
+
+        // Navegación por pestañas del sidebar
+        const sidebarLinks = document.querySelectorAll('[data-mg-tab]');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('data-mg-tab');
+
+                // Actualizar estado activo del sidebar
+                sidebarLinks.forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+
+                // Mostrar/ocultar paneles de pestañas
+                tabPanes.forEach(pane => {
+                    if (pane.id === targetId) {
+                        pane.classList.add('show', 'active');
+                    } else {
+                        pane.classList.remove('show', 'active');
+                    }
+                });
+
+                // Disparar evento de carga específica de pestaña
+                const event = new CustomEvent('mg-tab-shown', { detail: { tab: targetId } });
+                document.dispatchEvent(event);
+
+                // Cerrar sidebar en móvil
+                closeSidebar();
+            });
+        });
+
+        // Selector de tema
+        var currentTheme = localStorage.getItem('mg-theme') || '';
+        function updateThemeUI() {
+            document.querySelectorAll('.mg-theme-option').forEach(function(btn) {
+                var val = btn.getAttribute('data-theme-value');
+                var check = btn.querySelector('.bi-check2');
+                if (val === currentTheme) {
+                    btn.classList.add('active');
+                    if (check) check.classList.remove('d-none');
+                } else {
+                    btn.classList.remove('active');
+                    if (check) check.classList.add('d-none');
+                }
+            });
+        }
+        updateThemeUI();
+
+        document.querySelectorAll('.mg-theme-option').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                currentTheme = this.getAttribute('data-theme-value');
+                document.documentElement.setAttribute('data-theme', currentTheme);
+                localStorage.setItem('mg-theme', currentTheme);
+                updateThemeUI();
+            });
+        });
+    })();
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

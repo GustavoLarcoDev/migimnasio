@@ -1,3 +1,9 @@
+// ═══════════════════════════════════════════════════════════
+// VentasController.cs — Controlador de ventas y estadísticas financieras
+// Provee endpoints AJAX para estadísticas de ingresos/gastos
+// y datos formateados para gráficos ApexCharts
+// ═══════════════════════════════════════════════════════════
+
 using Gimnasio.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -15,6 +21,10 @@ public class VentasController : Controller
         _ventasService = ventasService;
     }
 
+    /// <summary>
+    /// Obtiene estadísticas completas de ventas: ingresos, gastos y ganancias
+    /// agrupados por día, semana, mes y año
+    /// </summary>
     [HttpGet("GetVentasStats")]
     public async Task<IActionResult> GetVentasStats(Guid negocioId)
     {
@@ -29,6 +39,10 @@ public class VentasController : Controller
         }
     }
 
+    /// <summary>
+    /// Obtiene datos para el gráfico de ingresos vs gastos.
+    /// Periodos: "dia" (24h), "semana" (7 días), "mes" (4 semanas), "anio" (12 meses)
+    /// </summary>
     [HttpGet("GetChartData")]
     public async Task<IActionResult> GetChartData(Guid negocioId, string periodo = "semana")
     {
@@ -43,6 +57,9 @@ public class VentasController : Controller
         }
     }
 
+    /// <summary>
+    /// Obtiene datos para el gráfico de clientes nuevos por periodo
+    /// </summary>
     [HttpGet("GetClientesChartData")]
     public async Task<IActionResult> GetClientesChartData(Guid negocioId, string periodo = "semana")
     {

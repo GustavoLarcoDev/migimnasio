@@ -1,3 +1,9 @@
+// ═══════════════════════════════════════════════════════════
+// LogsController.cs — Controlador de registros/logs del negocio
+// Maneja la creación manual de logs (ingresos/gastos),
+// consulta, eliminación y exportación Excel de registros
+// ═══════════════════════════════════════════════════════════
+
 using Gimnasio.Models.DTOs;
 using Gimnasio.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -18,6 +24,14 @@ public class LogsController : Controller
         _authService = authService;
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // CREAR LOG MANUAL
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Crea un registro manual de ingreso o gasto.
+    /// El tipo se asigna automáticamente según el signo del monto.
+    /// </summary>
     [HttpPost("CrearLog")]
     public async Task<IActionResult> CrearLog([FromForm] LogCreateDto model)
     {
@@ -40,6 +54,13 @@ public class LogsController : Controller
         }
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // CONSULTAS
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Obtiene todos los logs del negocio ordenados por fecha descendente
+    /// </summary>
     [HttpGet("GetLogs")]
     public async Task<IActionResult> GetLogs(Guid negocioId)
     {
@@ -58,6 +79,9 @@ public class LogsController : Controller
         }
     }
 
+    /// <summary>
+    /// Obtiene un log individual por su ID
+    /// </summary>
     [HttpGet("GetLog")]
     public async Task<IActionResult> GetLog(Guid id, Guid negocioId)
     {
@@ -75,6 +99,9 @@ public class LogsController : Controller
         }
     }
 
+    /// <summary>
+    /// Obtiene la fecha del log más antiguo del negocio (para filtros de fecha)
+    /// </summary>
     [HttpGet("GetOldestLogDate")]
     public async Task<IActionResult> GetOldestLogDate(Guid negocioId)
     {
@@ -93,6 +120,13 @@ public class LogsController : Controller
         }
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // ELIMINAR
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Elimina todos los logs del negocio (acción irreversible)
+    /// </summary>
     [HttpPost("EliminarTodosLogs")]
     public async Task<IActionResult> EliminarTodosLogs(Guid negocioId)
     {
@@ -111,6 +145,13 @@ public class LogsController : Controller
         }
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // EXPORTACIÓN EXCEL
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Exporta todos los logs a Excel con resumen de ingresos, gastos y balance
+    /// </summary>
     [HttpGet("ExportLogsExcel")]
     public async Task<IActionResult> ExportLogsExcel(Guid negocioId)
     {

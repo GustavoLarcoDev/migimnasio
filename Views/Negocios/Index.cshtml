@@ -1,232 +1,533 @@
 @{
-ViewData["Title"] = "Gestión de Negocios";
+    Layout = "~/Views/Shared/_AdminDashboardLayout.cshtml";
+    ViewData["Title"] = "Panel de Administración";
 }
 
-<div class="container-fluid px-2 px-sm-3 px-md-5 mb-5 pb-5">
+<div class="tab-content" id="adminTabsContent">
 
-    <!-- Header -->
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4 mb-md-5">
-        <div>
-            <h1 class="fw-bolder text-dark mb-1 fs-3 fs-md-1">Negocios</h1>
-            <p class="text-muted mb-0 small">Gestiona todos los negocios registrados</p>
+    <!-- ============================================================== -->
+    <!-- TAB RESUMEN — Visible por defecto                              -->
+    <!-- ============================================================== -->
+    <div class="tab-pane fade show active" id="resumenTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-0" id="resumenSaludo">Buen día</h3>
+                <p class="text-muted mb-0">Resumen general de la plataforma</p>
+            </div>
         </div>
-        <div class="d-flex flex-wrap gap-2">
-            <a href="@Url.Action("Logout", "Auth")" class="btn btn-danger btn-sm">
-                <i class="bi bi-box-arrow-left"></i>
-                <span class="d-none d-sm-inline ms-1">Cerrar Sesión</span>
-            </a>
-            <button id="btnExportExcel" class="btn btn-success btn-sm">
-                <i class="bi bi-file-earmark-excel"></i>
-                <span class="d-none d-sm-inline ms-1">Exportar</span>
+
+        <!-- Tarjeta MRR destacada -->
+        <div class="row g-3 mb-4">
+            <div class="col-xl-4 col-md-6 col-12">
+                <div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-primary) 0%, var(--mg-gradient-primary-end) 100%);">
+                    <div class="card-body text-white">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <span class="d-block mb-1 opacity-75 small">Ingresos Recurrentes (MRR)</span>
+                                <span class="fs-2x fw-bolder" id="resumenMrr">$0.00</span>
+                                <small class="d-block opacity-50 mt-1">Negocios activos de pago</small>
+                            </div>
+                            <i class="bi bi-currency-dollar fs-1 opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-8 col-md-6 col-12">
+                <div class="row g-3">
+                    <div class="col-md-3 col-6">
+                        <div class="mg-stat-card">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="stat-label">Total Negocios</div>
+                                    <div class="stat-value" id="resumenTotalNegocios">0</div>
+                                </div>
+                                <div class="stat-icon bg-light-primary">
+                                    <i class="bi bi-building text-primary"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="mg-stat-card">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="stat-label">Activos</div>
+                                    <div class="stat-value" id="resumenActivos">0</div>
+                                </div>
+                                <div class="stat-icon bg-light-success">
+                                    <i class="bi bi-check-circle text-success"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="mg-stat-card">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="stat-label">En Prueba</div>
+                                    <div class="stat-value" id="resumenPrueba">0</div>
+                                </div>
+                                <div class="stat-icon bg-light-warning">
+                                    <i class="bi bi-clock-history text-warning"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="mg-stat-card">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="stat-label">Total Clientes</div>
+                                    <div class="stat-value" id="resumenTotalClientes">0</div>
+                                </div>
+                                <div class="stat-icon bg-light-info">
+                                    <i class="bi bi-people text-info"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fila de estadísticas de suscripción -->
+        <div class="row g-3 mb-4">
+            <div class="col-xl-4 col-md-4 col-12">
+                <div class="mg-stat-card" style="background: linear-gradient(135deg, #50CD89 0%, #0BB783 100%);">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <div class="stat-label text-white opacity-75">Ingresos Mensuales</div>
+                            <div class="stat-value text-white" id="resumenIngresosMensuales">$0</div>
+                        </div>
+                        <i class="bi bi-arrow-up-circle text-white fs-1 opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4 col-md-4 col-6">
+                <div class="mg-stat-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="stat-label">Por Vencer (7 días)</div>
+                            <div class="stat-value" id="resumenPorVencer">0</div>
+                        </div>
+                        <div class="stat-icon bg-light-danger">
+                            <i class="bi bi-exclamation-triangle text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-4 col-md-4 col-6">
+                <div class="mg-stat-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="stat-label">Expirados</div>
+                            <div class="stat-value" id="resumenExpirados">0</div>
+                        </div>
+                        <div class="stat-icon bg-light-danger">
+                            <i class="bi bi-x-circle text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráfico de ingresos mensuales -->
+        <div class="row g-3">
+            <div class="col-12">
+                <div class="mg-card">
+                    <div class="card-header border-0">
+                        <h5 class="fw-bold mb-0"><i class="bi bi-graph-up text-primary me-2"></i>Ingresos Mensuales</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="resumenRevenueChart" style="height: 300px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB NEGOCIOS — Listado y gestión                               -->
+    <!-- ============================================================== -->
+    <div class="tab-pane fade" id="negociosTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+            <button id="btnExportExcel" class="btn btn-success">
+                <i class="bi bi-file-earmark-excel me-2"></i>Exportar Excel
             </button>
-            <a href="/Negocios/Sugerencias" class="btn btn-outline-warning btn-sm">
-                <i class="bi bi-chat-left-text"></i>
-                <span class="d-none d-sm-inline ms-1">Sugerencias</span>
-            </a>
-            <a href="/Negocios/Crear" class="btn btn-primary btn-sm">
-                <i class="bi bi-plus-circle"></i>
-                <span class="d-none d-sm-inline ms-1">Nuevo</span>
-            </a>
+            <button id="btnIrCrear" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Nuevo Negocio
+            </button>
         </div>
-    </div>
 
-    <!-- Stats Cards -->
-    <div class="row g-4 mb-4">
-        <div class="col-md-3 col-6">
-            <div class="mg-stat-card">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <div class="stat-label">Total Negocios</div>
-                        <div class="stat-value" id="totalNegocios">0</div>
-                    </div>
-                    <div class="stat-icon bg-light-primary">
-                        <i class="bi bi-building text-primary"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="mg-stat-card">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <div class="stat-label">Negocios Activos</div>
-                        <div class="stat-value" id="negociosActivos">0</div>
-                    </div>
-                    <div class="stat-icon bg-light-success">
-                        <i class="bi bi-check-circle text-success"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="mg-stat-card">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <div class="stat-label">En Prueba</div>
-                        <div class="stat-value" id="negociosPrueba">0</div>
-                    </div>
-                    <div class="stat-icon bg-light-warning">
-                        <i class="bi bi-clock-history text-warning"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 col-6">
-            <div class="mg-stat-card">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <div class="stat-label">Total Clientes</div>
-                        <div class="stat-value" id="totalClientes">0</div>
-                    </div>
-                    <div class="stat-icon bg-light-info">
-                        <i class="bi bi-people text-info"></i>
-                    </div>
+        <div class="mg-card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="negociosTable" class="table table-row-bordered table-row-gray-100 align-middle gs-0 gy-3">
+                        <thead>
+                            <tr class="fw-bold text-muted">
+                                <th>Negocio</th>
+                                <th>Dueño</th>
+                                <th>Contacto</th>
+                                <th>Clientes</th>
+                                <th>Estado</th>
+                                <th>Suscripción</th>
+                                <th>Expira</th>
+                                <th class="text-end">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-gray-600 fw-semibold"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Income Stats -->
-    <div class="row g-4 mb-5">
-        <div class="col-md-4 col-6">
-            <div class="mg-stat-card" style="background: linear-gradient(135deg, #50CD89 0%, #0BB783 100%);">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <div class="stat-label text-white opacity-75">Ingresos Mensuales</div>
-                        <div class="stat-value text-white" id="ingresosMensuales">$0</div>
+    <!-- ============================================================== -->
+    <!-- TAB CREAR NEGOCIO — Formulario inline                          -->
+    <!-- ============================================================== -->
+    <div class="tab-pane fade" id="crearTab" role="tabpanel">
+        <div class="row justify-content-center">
+            <div class="col-xl-10 col-lg-12">
+                <div class="mg-card">
+                    <div class="card-header border-0">
+                        <h5 class="fw-bold mb-0">
+                            <i class="bi bi-building text-primary me-2"></i>Nuevo Negocio
+                        </h5>
                     </div>
-                    <i class="bi bi-arrow-up-circle text-white fs-1 opacity-50"></i>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4 col-6">
-            <div class="mg-stat-card">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <div class="stat-label">Por Vencer (7 días)</div>
-                        <div class="stat-value" id="porVencer">0</div>
-                    </div>
-                    <div class="stat-icon bg-light-danger">
-                        <i class="bi bi-exclamation-triangle text-danger"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4 col-6">
-            <div class="mg-stat-card">
-                <div class="d-flex align-items-center">
-                    <div class="flex-grow-1">
-                        <div class="stat-label">Expirados</div>
-                        <div class="stat-value" id="expirados">0</div>
-                    </div>
-                    <div class="stat-icon bg-light-danger">
-                        <i class="bi bi-x-circle text-danger"></i>
+                    <div class="card-body">
+                        <form id="createNegocioForm">
+                            <div class="row">
+                                <!-- Columna Izquierda -->
+                                <div class="col-lg-6">
+                                    <div class="mb-4">
+                                        <label class="form-label fw-semibold required">Nombre del Negocio</label>
+                                        <input type="text" class="form-control form-control-lg" name="NombreNegocio" id="crearNombreNegocio" placeholder="Ej: Fitness Plus" required />
+                                        <div class="form-text">El nombre comercial del negocio</div>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="form-label fw-semibold required">Nombre del Dueño</label>
+                                        <input type="text" class="form-control form-control-lg" name="duenoNegocio" id="crearDuenoNegocio" placeholder="Ej: Juan Pérez" required />
+                                        <div class="form-text">Nombre completo del propietario</div>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="form-label fw-semibold required">Teléfono</label>
+                                        <input type="tel" class="form-control form-control-lg" name="telefono" id="crearTelefono" placeholder="Ej: +1 234 567 8900" required />
+                                        <div class="form-text">Número de contacto principal</div>
+                                    </div>
+                                </div>
+                                <!-- Columna Derecha -->
+                                <div class="col-lg-6">
+                                    <div class="mb-4">
+                                        <label class="form-label fw-semibold required">Email</label>
+                                        <input type="email" class="form-control form-control-lg" name="EmailNegocio" id="crearEmailNegocio" placeholder="Ej: contacto@negocio.com" required />
+                                        <div class="form-text">Correo electrónico para acceso al sistema</div>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="form-label fw-semibold required">Contraseña</label>
+                                        <div class="input-group">
+                                            <input type="password" class="form-control form-control-lg" name="passwordNegocio" id="crearPasswordNegocio" placeholder="Mínimo 6 caracteres" required />
+                                            <button class="btn btn-outline-secondary" type="button" id="crearTogglePassword">
+                                                <i class="bi bi-eye" id="crearTogglePasswordIcon"></i>
+                                            </button>
+                                        </div>
+                                        <div class="form-text">Contraseña para acceder al sistema</div>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="form-label fw-semibold required">Tipo de Negocio</label>
+                                        <div class="d-flex gap-4 mt-2">
+                                            <div class="form-check crear-tipo-check">
+                                                <input class="form-check-input" type="radio" name="tipoNegocio" id="crearTipoPago" value="pago" checked />
+                                                <label class="form-check-label fw-semibold" for="crearTipoPago">
+                                                    <i class="bi bi-credit-card text-primary me-2"></i>Negocio de Pago (Activo)
+                                                </label>
+                                                <div class="form-text">El negocio realizará pagos regulares</div>
+                                            </div>
+                                            <div class="form-check crear-tipo-check">
+                                                <input class="form-check-input" type="radio" name="tipoNegocio" id="crearTipoPrueba" value="prueba" />
+                                                <label class="form-check-label fw-semibold" for="crearTipoPrueba">
+                                                    <i class="bi bi-clock-history text-warning me-2"></i>Negocio de Prueba
+                                                </label>
+                                                <div class="form-text">7 días de prueba gratis, sin costo</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sección de Suscripción -->
+                            <hr class="my-4" />
+                            <h5 class="fw-bold mb-4">
+                                <i class="bi bi-calendar-check text-primary me-2"></i>Datos de Suscripción
+                            </h5>
+                            <div class="row">
+                                <div class="col-md-3 mb-4">
+                                    <label class="form-label fw-semibold">Fecha de Inicio</label>
+                                    <input type="date" class="form-control form-control-lg" name="fechaPago" id="crearFechaPago" />
+                                    <div class="form-text">Inicio de la suscripción</div>
+                                </div>
+                                <div class="col-md-3 mb-4">
+                                    <label class="form-label fw-semibold">Fecha de Expiración</label>
+                                    <input type="date" class="form-control form-control-lg" name="fechaExpiracion" id="crearFechaExpiracion" />
+                                    <div class="form-text">Fecha de expiración</div>
+                                </div>
+                                <div class="col-md-3 mb-4">
+                                    <label class="form-label fw-semibold">Precio Suscripción ($)</label>
+                                    <input type="number" step="0.01" min="0" class="form-control form-control-lg" name="precioSuscripcion" id="crearPrecioSuscripcion" placeholder="0.00" />
+                                    <div class="form-text">Monto mensual a cobrar</div>
+                                </div>
+                                <div class="col-md-3 mb-4">
+                                    <label class="form-label fw-semibold">Días Pagados</label>
+                                    <input type="number" min="1" class="form-control form-control-lg" name="diasPagados" id="crearDiasPagados" placeholder="30" readonly />
+                                    <div class="form-text">Calculado automáticamente</div>
+                                </div>
+                            </div>
+
+                            <!-- Botones -->
+                            <div class="d-flex justify-content-end gap-3 mt-4 pt-4 border-top">
+                                <button type="button" class="btn btn-light btn-lg" id="btnCancelarCrear">
+                                    <i class="bi bi-x-circle me-2"></i>Cancelar
+                                </button>
+                                <button type="submit" class="btn btn-primary btn-lg" id="btnCrearNegocio">
+                                    <i class="bi bi-check-circle me-2"></i>Crear Negocio
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Tabla -->
-    <div class="mg-card">
-        <div class="card-header">
-            <h3 class="card-title fw-bold text-dark mb-0">Listado de Negocios</h3>
+    <!-- ============================================================== -->
+    <!-- TAB VENTAS — Resumen financiero del SaaS                       -->
+    <!-- ============================================================== -->
+    <div class="tab-pane fade" id="ventasTab" role="tabpanel">
+        <!-- Tarjetas de estadísticas financieras -->
+        <div class="row g-3 mb-4">
+            <div class="col-xl-3 col-md-6 col-6">
+                <div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-primary) 0%, var(--mg-gradient-primary-end) 100%);">
+                    <div class="card-body text-white">
+                        <span class="d-block mb-1 opacity-75 small">MRR</span>
+                        <span class="fs-2x fw-bolder" id="ventasMrr">$0.00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 col-6">
+                <div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-success) 0%, var(--mg-gradient-success-end) 100%);">
+                    <div class="card-body text-white">
+                        <span class="d-block mb-1 opacity-75 small">Ingresos Totales</span>
+                        <span class="fs-2x fw-bolder" id="ventasTotalRevenue">$0.00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 col-6">
+                <div class="mg-stat-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="stat-label">Ingreso Promedio</div>
+                            <div class="stat-value" id="ventasArpu">$0</div>
+                        </div>
+                        <div class="stat-icon bg-light-info">
+                            <i class="bi bi-calculator text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 col-6">
+                <div class="mg-stat-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="stat-label">Negocios Pagando</div>
+                            <div class="stat-value" id="ventasPagando">0</div>
+                        </div>
+                        <div class="stat-icon bg-light-success">
+                            <i class="bi bi-credit-card text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="card-body">
-            <div class="table-responsive">
-            <table id="negociosTable" class="table table-row-bordered table-row-gray-100 align-middle gs-0 gy-3">
-                <thead>
-                <tr class="fw-bold text-muted">
-                    <th>Negocio</th>
-                    <th>Dueño</th>
-                    <th>Contacto</th>
-                    <th>Clientes</th>
-                    <th>Estado</th>
-                    <th>Suscripción</th>
-                    <th>Expira</th>
-                    <th class="text-end">Acciones</th>
-                </tr>
-                </thead>
-                <tbody class="text-gray-600 fw-semibold">
-                </tbody>
-            </table>
+
+        <!-- Gráficos -->
+        <div class="row g-3 mb-4">
+            <div class="col-lg-7">
+                <div class="mg-card">
+                    <div class="card-header border-0">
+                        <h5 class="fw-bold mb-0">Ingresos por Mes</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="ventasRevenueChart" style="height: 300px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="mg-card h-100">
+                    <div class="card-header border-0">
+                        <h5 class="fw-bold mb-0">Distribución de Negocios</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="ventasDonutChart" style="height: 300px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de negocios que pagan -->
+        <div class="mg-card">
+            <div class="card-header border-0">
+                <h5 class="fw-bold mb-0"><i class="bi bi-table text-primary me-2"></i>Negocios con Suscripción</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="ventasNegociosTable" class="table table-row-bordered align-middle gs-0 gy-3">
+                        <thead>
+                            <tr class="fw-bold text-muted">
+                                <th>Negocio</th>
+                                <th>Plan</th>
+                                <th>Precio</th>
+                                <th>Fecha Pago</th>
+                                <th>Expira</th>
+                                <th>Días Rest.</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB LOGS — Actividad del administrador                         -->
+    <!-- ============================================================== -->
+    <div class="tab-pane fade" id="logsTab" role="tabpanel">
+        <div class="mg-card">
+            <div class="card-header border-0">
+                <h5 class="fw-bold mb-0">
+                    <i class="bi bi-journal-text text-primary me-2"></i>Registro de Actividad
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="adminLogsTable" class="table table-row-bordered table-row-gray-100 align-middle gs-0 gy-3">
+                        <thead>
+                            <tr class="fw-bold text-muted">
+                                <th>Fecha</th>
+                                <th>Acción</th>
+                                <th>Detalle</th>
+                                <th>Negocio Afectado</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-gray-600 fw-semibold"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB SUGERENCIAS — Feedback de los negocios                     -->
+    <!-- ============================================================== -->
+    <div class="tab-pane fade" id="sugerenciasTab" role="tabpanel">
+        <div class="row g-3 mb-4">
+            <div class="col-md-4 col-6">
+                <div class="mg-stat-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="stat-label">Total Sugerencias</div>
+                            <div class="stat-value" id="totalSugerencias">0</div>
+                        </div>
+                        <div class="stat-icon bg-light-primary">
+                            <i class="bi bi-chat-left-text text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-6">
+                <div class="mg-stat-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="stat-label">Sin Leer</div>
+                            <div class="stat-value" id="sinLeer">0</div>
+                        </div>
+                        <div class="stat-icon bg-light-warning">
+                            <i class="bi bi-envelope text-warning"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="sugerenciasList" class="d-flex flex-column gap-3">
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-chat-left-text fs-1 d-block mb-3"></i>
+                <p>Selecciona esta pestaña para cargar sugerencias</p>
             </div>
         </div>
     </div>
 
 </div>
 
-<!-- Modal Editar Negocio -->
+<!-- ================================================================ -->
+<!-- Modal Editar Negocio                                             -->
+<!-- ================================================================ -->
 <div class="modal fade" id="editarNegocioModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down">
         <div class="modal-content">
             <div class="modal-header bg-light">
                 <h3 class="modal-title fw-bolder">
-                    <i class="bi bi-pencil-square text-primary me-2"></i>
-                    Editar Negocio
+                    <i class="bi bi-pencil-square text-primary me-2"></i>Editar Negocio
                 </h3>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-
             <div class="modal-body">
                 <form id="editarNegocioForm">
                     <input type="hidden" id="editNegocioId" name="NegocioId" />
-
                     <div class="row">
                         <div class="col-md-6 mb-4">
                             <label class="form-label fw-semibold required">Nombre del Negocio</label>
                             <input type="text" class="form-control form-control-lg" name="NegocioNombre" id="editNegocioNombre" required />
                         </div>
-
                         <div class="col-md-6 mb-4">
                             <label class="form-label fw-semibold required">Nombre del Dueño</label>
                             <input type="text" class="form-control form-control-lg" name="DuenoNegocio" id="editDuenoNegocio" required />
                         </div>
                     </div>
-
                     <div class="row">
                         <div class="col-md-6 mb-4">
                             <label class="form-label fw-semibold required">Email</label>
                             <input type="email" class="form-control form-control-lg" name="Email" id="editEmail" required />
                         </div>
-
                         <div class="col-md-6 mb-4">
                             <label class="form-label fw-semibold required">Teléfono</label>
                             <input type="tel" class="form-control form-control-lg" name="Telefono" id="editTelefono" required />
                         </div>
                     </div>
-
                     <div class="mb-4">
                         <label class="form-label fw-semibold">Contraseña</label>
                         <input type="password" class="form-control form-control-lg" name="Password" id="editPassword" />
                         <div class="form-text">Dejar en blanco para mantener la contraseña actual</div>
                     </div>
-
                     <!-- Tipo de Negocio -->
                     <div class="mb-4">
                         <label class="form-label fw-semibold required">Tipo de Negocio</label>
                         <div class="d-flex gap-3 mt-2">
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="tipoNegocioEdit"
-                                       id="editTipoPago" value="pago" />
+                                <input class="form-check-input" type="radio" name="tipoNegocioEdit" id="editTipoPago" value="pago" />
                                 <label class="form-check-label" for="editTipoPago">
-                                    <i class="bi bi-credit-card text-primary me-1"></i>
-                                    De Pago (Activo)
+                                    <i class="bi bi-credit-card text-primary me-1"></i>De Pago (Activo)
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="radio" name="tipoNegocioEdit"
-                                       id="editTipoPrueba" value="prueba" />
+                                <input class="form-check-input" type="radio" name="tipoNegocioEdit" id="editTipoPrueba" value="prueba" />
                                 <label class="form-check-label" for="editTipoPrueba">
-                                    <i class="bi bi-clock-history text-warning me-1"></i>
-                                    De Prueba
+                                    <i class="bi bi-clock-history text-warning me-1"></i>De Prueba
                                 </label>
                             </div>
                         </div>
                     </div>
-
                     <!-- Suscripción -->
-                    <hr class="my-3"/>
+                    <hr class="my-3" />
                     <h6 class="fw-bold mb-3"><i class="bi bi-calendar-check text-primary me-2"></i>Suscripción</h6>
                     <div class="row">
                         <div class="col-md-4 mb-4">
@@ -242,51 +543,12 @@ ViewData["Title"] = "Gestión de Negocios";
                             <input type="date" class="form-control form-control-lg" name="FechaExpiracion" id="editFechaExpiracion" />
                         </div>
                     </div>
-
                 </form>
             </div>
-
             <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">
-                    Cancelar
-                </button>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" id="btnGuardarEdicion" class="btn btn-primary">
-                    <i class="bi bi-save me-2"></i>
-                    Guardar Cambios
-                </button>
-            </div>
-
-        </div>
-    </div>
-</div>
-
-<!-- Modal Confirmar Eliminación -->
-<div class="modal fade" id="eliminarNegocioModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title fw-bolder">
-                    <i class="bi bi-exclamation-triangle me-2"></i>
-                    Confirmar Eliminación
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center py-4">
-                <i class="bi bi-trash text-danger" style="font-size: 4rem;"></i>
-                <h4 class="mt-3">¿Estás seguro?</h4>
-                <p class="text-muted mb-0">
-                    Vas a eliminar el negocio <strong id="deleteNegocioNombre"></strong>
-                </p>
-                <p class="text-danger fw-semibold">Esta acción no se puede deshacer.</p>
-                <input type="hidden" id="deleteNegocioId" />
-            </div>
-            <div class="modal-footer justify-content-center">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">
-                    Cancelar
-                </button>
-                <button type="button" id="btnConfirmarEliminar" class="btn btn-danger">
-                    <i class="bi bi-trash me-2"></i>
-                    Sí, Eliminar
+                    <i class="bi bi-save me-2"></i>Guardar Cambios
                 </button>
             </div>
         </div>
@@ -295,347 +557,862 @@ ViewData["Title"] = "Gestión de Negocios";
 
 @section Scripts {
 <script>
-    let tablaNegocios;
+// ================================================================
+// Variables globales
+// ================================================================
+let tablaNegocios = null;
+let tablaLogs = null;
+let tablaVentasNegocios = null;
+let resumenRevenueChart = null;
+let ventasRevenueChart = null;
+let ventasDonutChart = null;
+let negociosData = null; // Caché de datos de /GetNegocios para la pestaña Ventas
 
-    $(document).ready(function () {
-        cargarTabla();
+// Mixin de SweetAlert2 con estilo consistente
+const swalMG = Swal.mixin({
+    confirmButtonColor: '#3E97FF',
+    cancelButtonColor: '#E4E6EF',
+    cancelButtonText: 'Cancelar',
+    reverseButtons: true
+});
+
+// Función auxiliar para escapar HTML y prevenir XSS
+function escHtml(str) {
+    if (!str) return '';
+    return $('<span>').text(str).html();
+}
+
+// Saludo según hora del día
+function saludoHora() {
+    const h = new Date().getHours();
+    if (h < 12) return 'Buenos días';
+    if (h < 18) return 'Buenas tardes';
+    return 'Buenas noches';
+}
+
+// ================================================================
+// Inicialización
+// ================================================================
+$(document).ready(function () {
+    cargarResumen();
+    cargarSugerenciasBadge();
+    // Inicializar campos de creación
+    actualizarCamposSuscripcion();
+});
+
+// ================================================================
+// Navegación por pestañas con mg-tab-shown
+// ================================================================
+document.addEventListener('mg-tab-shown', function (e) {
+    const tab = e.detail.tab;
+    if (tab === 'resumenTab') {
+        cargarResumen();
+    } else if (tab === 'negociosTab') {
+        if (!tablaNegocios) cargarTablaNegocios();
+        else tablaNegocios.ajax.reload(null, false);
+    } else if (tab === 'crearTab') {
+        // No hay carga especial, el formulario ya está listo
+    } else if (tab === 'ventasTab') {
+        cargarVentasTab();
+    } else if (tab === 'logsTab') {
+        if (!tablaLogs) cargarTablaLogs();
+        else tablaLogs.ajax.reload(null, false);
+    } else if (tab === 'sugerenciasTab') {
+        cargarSugerencias();
+    }
+});
+
+// ================================================================
+// Función auxiliar: navegar a una pestaña programáticamente
+// ================================================================
+function navegarATab(tabId) {
+    const link = document.querySelector('[data-mg-tab="' + tabId + '"]');
+    if (link) link.click();
+}
+
+// ================================================================
+// TAB RESUMEN
+// ================================================================
+function cargarResumen() {
+    $('#resumenSaludo').text(saludoHora());
+
+    // Cargar estadísticas del admin dashboard
+    $.get('/Negocios/GetAdminDashboardStats', function (data) {
+        $('#resumenMrr').text('$' + data.mrr.toFixed(2));
+        $('#resumenTotalNegocios').text(data.totalNegocios);
+        $('#resumenActivos').text(data.activos);
+        $('#resumenPrueba').text(data.prueba);
+        $('#resumenTotalClientes').text(data.totalClientes);
+
+        // Renderizar gráfico de ingresos mensuales
+        renderizarGraficoResumen(data.revenuePorMes);
+    }).fail(function () {
+        toastr.error('Error al cargar estadísticas del dashboard');
     });
 
-    function cargarTabla() {
-        tablaNegocios = $('#negociosTable').DataTable({
-            ajax: {
-                url: '/Negocios/GetNegocios',
-                type: 'GET',
-                dataSrc: function(data) {
-                    actualizarEstadisticas(data);
-                    return data;
-                }
-            },
-            columns: [
-                {
-                    data: 'negocioNombre',
-                    render: function(data, type, row) {
-                        return `
-                                <div class="d-flex align-items-center">
-                                    <div class="symbol symbol-45px me-3">
-                                        <div class="symbol-label bg-light-primary">
-                                            <i class="bi bi-building text-primary fs-3"></i>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex justify-content-start flex-column">
-                                        <a href="#" onclick="impersonarNegocio('${row.negocioId}'); return false;"
-                                           class="text-dark fw-bold fs-6 text-hover-primary" title="Ver como este negocio">${data}</a>
-                                        <span class="text-muted fw-semibold d-block fs-7">ID: ${row.negocioId.substring(0, 8)}</span>
-                                    </div>
-                                </div>
-                            `;
-                    }
-                },
-                {
-                    data: 'duenoNegocio',
-                    render: function(data) {
-                        return `<span class="text-dark fw-semibold">${data || 'N/A'}</span>`;
-                    }
-                },
-                {
-                    data: null,
-                    render: function(data, type, row) {
-                        return `
-                                <div class="d-flex flex-column">
-                                    <span class="text-dark fw-semibold mb-1">
-                                        <i class="bi bi-envelope me-1 text-muted"></i>${row.email}
-                                    </span>
-                                    <span class="text-muted fw-semibold">
-                                        <i class="bi bi-telephone me-1"></i>${row.telefono}
-                                    </span>
-                                </div>
-                            `;
-                    }
-                },
-                {
-                    data: 'totalClientes',
-                    render: function(data) {
-                        return `<span class="badge badge-light-info fs-7 fw-bold">${data} cliente${data !== 1 ? 's' : ''}</span>`;
-                    }
-                },
-                {
-                    data: 'isActive',
-                    render: function(data, type, row) {
-                        if(data) {
-                            return '<span class="badge badge-light-success">Activo</span>';
-                        } else {
-                            return '<span class="badge badge-light-danger">Inactivo</span>';
-                        }
-                    }
-                },
-                {
-                    data: null,
-                    render: function(data, type, row) {
-                        const tipo = row.esPrueba ? '<span class="badge badge-light-warning">Prueba</span>' : '<span class="badge badge-light-primary">Pago</span>';
-                        const dias = row.diasPagados ? `<small class="text-muted d-block">${row.diasPagados} días</small>` : '';
-                        const precio = row.precioSuscripcion > 0 ? `<small class="text-muted d-block">$${row.precioSuscripcion.toFixed(2)}</small>` : '';
-                        return tipo + dias + precio;
-                    }
-                },
-                {
-                    data: 'diasRestantesSuscripcion',
-                    render: function(data, type, row) {
-                        if (!row.fechaExpiracion) return '<span class="text-muted">Sin fecha</span>';
-                        const fecha = new Date(row.fechaExpiracion);
-                        const fechaStr = fecha.toLocaleDateString('es-ES');
-                        if (data === null || data === undefined) return `<span class="text-muted">${fechaStr}</span>`;
-                        if (data < 0) return `<span class="badge bg-danger">Expirado</span><br><small class="text-muted">${fechaStr}</small>`;
-                        if (data <= 3) return `<span class="badge bg-warning text-dark">${data}d</span><br><small class="text-muted">${fechaStr}</small>`;
-                        if (data <= 7) return `<span class="badge bg-info">${data}d</span><br><small class="text-muted">${fechaStr}</small>`;
-                        return `<span class="badge bg-success">${data}d</span><br><small class="text-muted">${fechaStr}</small>`;
-                    }
-                },
-                {
-                    data: null,
-                    orderable: false,
-                    className: 'text-end',
-                    render: function(data, type, row) {
-                        // WhatsApp button
-                        const cleanPhone = (row.telefono || '').replace(/[\s\-\+\(\)]/g, '');
-                        const waMessage = encodeURIComponent(
-                            `Hola ${row.duenoNegocio || ''}, mi nombre es Gustavo Larco el dueño de MiNegocio.com y quería saber cómo iba todo, si había algún feedback o algo que mencionar.`
-                        );
-                        const whatsappBtn = cleanPhone
-                            ? `<a href="https://wa.me/${cleanPhone}?text=${waMessage}" target="_blank" rel="noopener"
-                                  class="btn btn-icon btn-bg-light btn-sm me-1" title="WhatsApp">
-                                  <i class="bi bi-whatsapp text-success fs-5"></i>
-                               </a>`
-                            : '';
-
-                        // Impersonate button
-                        const impersonateBtn = `<button class="btn btn-icon btn-bg-light btn-sm me-1" onclick="impersonarNegocio('${row.negocioId}')" title="Ver como negocio">
-                            <i class="bi bi-eye text-primary fs-5"></i>
-                        </button>`;
-
-                        const estadoBtn = row.isActive
-                            ? `<button class="btn btn-icon btn-bg-light btn-sm me-1" onclick="cambiarEstado('${row.negocioId}')" title="Desactivar">
-                                     <i class="bi bi-toggle-on text-success fs-4"></i>
-                                   </button>`
-                            : `<button class="btn btn-icon btn-bg-light btn-sm me-1" onclick="cambiarEstado('${row.negocioId}')" title="Activar">
-                                     <i class="bi bi-toggle-off text-danger fs-4"></i>
-                                   </button>`;
-
-                        return `
-                                <div class="d-flex justify-content-end gap-1">
-                                    ${whatsappBtn}
-                                    ${impersonateBtn}
-                                    ${estadoBtn}
-                                    <button class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1" onclick="editarNegocio('${row.negocioId}')" title="Editar">
-                                        <i class="bi bi-pencil fs-5"></i>
-                                    </button>
-                                    <button class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm" onclick="confirmarEliminar('${row.negocioId}', '${row.negocioNombre}')" title="Eliminar">
-                                        <i class="bi bi-trash fs-5"></i>
-                                    </button>
-                                </div>
-                            `;
-                    }
-                }
-            ],
-            order: [[0, 'asc']],
-            responsive: true,
-            pageLength: 10
-        });
-    }
-
-    function actualizarEstadisticas(data) {
-        const total = data.length;
-        const activos = data.filter(g => g.isActive).length;
-        const prueba = data.filter(g => g.esPrueba).length;
-        const totalClientesSum = data.reduce((sum, g) => sum + g.totalClientes, 0);
-
-        // Subscription stats
+    // Cargar datos de negocios para calcular estadísticas derivadas
+    $.get('/Negocios/GetNegocios', function (data) {
+        negociosData = data;
         const ingresos = data.filter(g => g.isActive && g.precioSuscripcion > 0).reduce((sum, g) => sum + g.precioSuscripcion, 0);
         const porVencer = data.filter(g => g.diasRestantesSuscripcion !== null && g.diasRestantesSuscripcion >= 0 && g.diasRestantesSuscripcion <= 7).length;
         const expirados = data.filter(g => g.diasRestantesSuscripcion !== null && g.diasRestantesSuscripcion < 0).length;
 
-        $('#totalNegocios').text(total);
-        $('#negociosActivos').text(activos);
-        $('#negociosPrueba').text(prueba);
-        $('#totalClientes').text(totalClientesSum);
-        $('#ingresosMensuales').text('$' + ingresos.toFixed(2));
-        $('#porVencer').text(porVencer);
-        $('#expirados').text(expirados);
-    }
+        $('#resumenIngresosMensuales').text('$' + ingresos.toFixed(2));
+        $('#resumenPorVencer').text(porVencer);
+        $('#resumenExpirados').text(expirados);
+    }).fail(function () {
+        console.warn('Error al cargar negocios para estadísticas de resumen');
+    });
+}
 
-    // Editar Negocio
-    function editarNegocio(id) {
-        $.ajax({
-            url: '/Negocios/GetNegocio/' + id,
-            type: 'GET',
-            success: function (data) {
-                $('#editNegocioId').val(data.negocioId);
-                $('#editNegocioNombre').val(data.negocioNombre);
-                $('#editDuenoNegocio').val(data.duenoNegocio);
-                $('#editEmail').val(data.email);
-                $('#editTelefono').val(data.telefono);
-                $('#editPassword').val('');
+function renderizarGraficoResumen(revenuePorMes) {
+    const categorias = revenuePorMes.map(r => r.mes);
+    const valores = revenuePorMes.map(r => r.total);
 
-                // Seleccionar el radio correcto según la lógica de negocio
-                if (data.isActive) {
-                    $('#editTipoPago').prop('checked', true);
-                } else {
-                    $('#editTipoPrueba').prop('checked', true);
-                }
-
-                // Subscription fields
-                $('#editDiasPagados').val(data.diasPagados || 30);
-                $('#editPrecioSuscripcion').val(data.precioSuscripcion || 0);
-                if (data.fechaExpiracion) {
-                    $('#editFechaExpiracion').val(data.fechaExpiracion.split('T')[0]);
-                } else {
-                    $('#editFechaExpiracion').val('');
-                }
-
-                $('#editarNegocioModal').modal('show');
-            },
-            error: function () {
-                toastr.error('Error al cargar los datos del negocio');
+    if (resumenRevenueChart) resumenRevenueChart.destroy();
+    resumenRevenueChart = new ApexCharts(document.querySelector('#resumenRevenueChart'), {
+        series: [{ name: 'Ingresos', data: valores }],
+        chart: { type: 'bar', height: 300, toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
+        plotOptions: { bar: { borderRadius: 6, columnWidth: '50%' } },
+        dataLabels: { enabled: false },
+        xaxis: {
+            categories: categorias,
+            labels: { style: { colors: '#A1A5B7', fontSize: '11px' } }
+        },
+        yaxis: {
+            labels: {
+                formatter: function (val) { return '$' + val.toFixed(0); },
+                style: { colors: '#A1A5B7', fontSize: '11px' }
             }
-        });
+        },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shade: 'light', type: 'vertical', shadeIntensity: 0.3,
+                opacityFrom: 1, opacityTo: 0.8,
+                colorStops: [
+                    { offset: 0, color: '#3E97FF', opacity: 1 },
+                    { offset: 100, color: '#1B74E4', opacity: 0.8 }
+                ]
+            }
+        },
+        tooltip: { y: { formatter: function (val) { return '$' + val.toFixed(2); } } },
+        grid: { borderColor: '#E4E6EF', strokeDashArray: 4 }
+    });
+    resumenRevenueChart.render();
+}
+
+// ================================================================
+// TAB NEGOCIOS
+// ================================================================
+function cargarTablaNegocios() {
+    tablaNegocios = $('#negociosTable').DataTable({
+        ajax: {
+            url: '/Negocios/GetNegocios',
+            type: 'GET',
+            dataSrc: function (data) {
+                negociosData = data;
+                return data;
+            },
+            error: function (xhr) {
+                console.error('Error al cargar negocios:', xhr.responseText);
+                toastr.error('Error al cargar la lista de negocios');
+            }
+        },
+        columns: [
+            {
+                data: 'negocioNombre',
+                render: function (data, type, row) {
+                    return '<div class="d-flex align-items-center">' +
+                        '<div class="symbol symbol-45px me-3"><div class="symbol-label bg-light-primary"><i class="bi bi-building text-primary fs-3"></i></div></div>' +
+                        '<div class="d-flex justify-content-start flex-column">' +
+                        '<a href="#" onclick="impersonarNegocio(\'' + row.negocioId + '\'); return false;" class="text-dark fw-bold fs-6 text-hover-primary" title="Ver como este negocio">' + escHtml(data) + '</a>' +
+                        '<span class="text-muted fw-semibold d-block fs-7">ID: ' + escHtml(row.negocioId.substring(0, 8)) + '</span>' +
+                        '</div></div>';
+                }
+            },
+            {
+                data: 'duenoNegocio',
+                render: function (data) { return '<span class="text-dark fw-semibold">' + escHtml(data || 'N/A') + '</span>'; }
+            },
+            {
+                data: null,
+                render: function (data, type, row) {
+                    return '<div class="d-flex flex-column">' +
+                        '<span class="text-dark fw-semibold mb-1"><i class="bi bi-envelope me-1 text-muted"></i>' + escHtml(row.email) + '</span>' +
+                        '<span class="text-muted fw-semibold"><i class="bi bi-telephone me-1"></i>' + escHtml(row.telefono) + '</span>' +
+                        '</div>';
+                }
+            },
+            {
+                data: 'totalClientes',
+                render: function (data) { return '<span class="badge badge-light-info fs-7 fw-bold">' + data + ' cliente' + (data !== 1 ? 's' : '') + '</span>'; }
+            },
+            {
+                data: 'isActive',
+                render: function (data) {
+                    return data ? '<span class="badge badge-light-success">Activo</span>' : '<span class="badge badge-light-danger">Inactivo</span>';
+                }
+            },
+            {
+                data: null,
+                render: function (data, type, row) {
+                    const tipo = row.esPrueba ? '<span class="badge badge-light-warning">Prueba</span>' : '<span class="badge badge-light-primary">Pago</span>';
+                    const dias = row.diasPagados ? '<small class="text-muted d-block">' + row.diasPagados + ' días</small>' : '';
+                    const precio = row.precioSuscripcion > 0 ? '<small class="text-muted d-block">$' + row.precioSuscripcion.toFixed(2) + '</small>' : '';
+                    return tipo + dias + precio;
+                }
+            },
+            {
+                data: 'diasRestantesSuscripcion',
+                render: function (data, type, row) {
+                    if (!row.fechaExpiracion) return '<span class="text-muted">Sin fecha</span>';
+                    const fecha = new Date(row.fechaExpiracion);
+                    const fechaStr = fecha.toLocaleDateString('es-ES');
+                    if (data === null || data === undefined) return '<span class="text-muted">' + fechaStr + '</span>';
+                    if (data < 0) return '<span class="badge bg-danger">Expirado</span><br><small class="text-muted">' + fechaStr + '</small>';
+                    if (data <= 3) return '<span class="badge bg-warning text-dark">' + data + 'd</span><br><small class="text-muted">' + fechaStr + '</small>';
+                    if (data <= 7) return '<span class="badge bg-info">' + data + 'd</span><br><small class="text-muted">' + fechaStr + '</small>';
+                    return '<span class="badge bg-success">' + data + 'd</span><br><small class="text-muted">' + fechaStr + '</small>';
+                }
+            },
+            {
+                data: null, orderable: false, className: 'text-end',
+                render: function (data, type, row) {
+                    const cleanPhone = (row.telefono || '').replace(/[\s\-\+\(\)]/g, '');
+                    const waMessage = encodeURIComponent('Hola ' + (row.duenoNegocio || '') + ', mi nombre es Gustavo Larco el dueño de MiNegocio.com y quería saber cómo iba todo, si había algún feedback o algo que mencionar.');
+                    const whatsappBtn = cleanPhone
+                        ? '<a href="https://wa.me/' + escHtml(cleanPhone) + '?text=' + waMessage + '" target="_blank" rel="noopener" class="btn btn-icon btn-bg-light btn-sm me-1" title="WhatsApp"><i class="bi bi-whatsapp text-success fs-5"></i></a>'
+                        : '';
+                    const impersonateBtn = '<button class="btn btn-icon btn-bg-light btn-sm me-1" onclick="impersonarNegocio(\'' + row.negocioId + '\')" title="Ver como negocio"><i class="bi bi-eye text-primary fs-5"></i></button>';
+                    const estadoBtn = row.isActive
+                        ? '<button class="btn btn-icon btn-bg-light btn-sm me-1" onclick="cambiarEstado(\'' + row.negocioId + '\')" title="Desactivar"><i class="bi bi-toggle-on text-success fs-4"></i></button>'
+                        : '<button class="btn btn-icon btn-bg-light btn-sm me-1" onclick="cambiarEstado(\'' + row.negocioId + '\')" title="Activar"><i class="bi bi-toggle-off text-danger fs-4"></i></button>';
+
+                    return '<div class="d-flex justify-content-end gap-1">' +
+                        whatsappBtn + impersonateBtn + estadoBtn +
+                        '<button class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1" onclick="editarNegocio(\'' + row.negocioId + '\')" title="Editar"><i class="bi bi-pencil fs-5"></i></button>' +
+                        '<button class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm" onclick="confirmarEliminar(\'' + row.negocioId + '\', \'' + escHtml(row.negocioNombre).replace(/'/g, "\\'") + '\')" title="Eliminar"><i class="bi bi-trash fs-5"></i></button>' +
+                        '</div>';
+                }
+            }
+        ],
+        order: [[0, 'asc']],
+        responsive: true,
+        pageLength: 10,
+        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }
+    });
+}
+
+// Editar Negocio — abrir modal y cargar datos
+function editarNegocio(id) {
+    $.ajax({
+        url: '/Negocios/GetNegocio/' + id,
+        type: 'GET',
+        success: function (data) {
+            $('#editNegocioId').val(data.negocioId);
+            $('#editNegocioNombre').val(data.negocioNombre);
+            $('#editDuenoNegocio').val(data.duenoNegocio);
+            $('#editEmail').val(data.email);
+            $('#editTelefono').val(data.telefono);
+            $('#editPassword').val('');
+
+            if (data.isActive) {
+                $('#editTipoPago').prop('checked', true);
+            } else {
+                $('#editTipoPrueba').prop('checked', true);
+            }
+
+            $('#editDiasPagados').val(data.diasPagados || 30);
+            $('#editPrecioSuscripcion').val(data.precioSuscripcion || 0);
+            if (data.fechaExpiracion) {
+                $('#editFechaExpiracion').val(data.fechaExpiracion.split('T')[0]);
+            } else {
+                $('#editFechaExpiracion').val('');
+            }
+
+            $('#editarNegocioModal').modal('show');
+        },
+        error: function () {
+            toastr.error('Error al cargar los datos del negocio');
+        }
+    });
+}
+
+// Guardar edición de negocio
+$('#btnGuardarEdicion').click(function () {
+    if (!$('#editarNegocioForm')[0].checkValidity()) {
+        $('#editarNegocioForm')[0].reportValidity();
+        return;
     }
 
-    // Guardar Edición - SOLO UNA VEZ
-    $('#btnGuardarEdicion').click(function () {
-        if (!$('#editarNegocioForm')[0].checkValidity()) {
-            $('#editarNegocioForm')[0].reportValidity();
+    const btn = $(this);
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...');
+
+    const tipoNegocio = $('input[name="tipoNegocioEdit"]:checked').val();
+
+    const formData = {
+        NegocioId: $('#editNegocioId').val(),
+        NegocioNombre: $('#editNegocioNombre').val(),
+        DuenoNegocio: $('#editDuenoNegocio').val(),
+        Email: $('#editEmail').val(),
+        Telefono: $('#editTelefono').val(),
+        Password: $('#editPassword').val(),
+        IsActive: tipoNegocio === 'pago',
+        EsPrueba: tipoNegocio === 'prueba',
+        DiasPagados: $('#editDiasPagados').val() || 30,
+        PrecioSuscripcion: $('#editPrecioSuscripcion').val() || 0,
+        FechaExpiracion: $('#editFechaExpiracion').val() || null
+    };
+
+    $.ajax({
+        url: '/Negocios/Editar',
+        type: 'POST',
+        data: formData,
+        success: function (response) {
+            if (response.success) {
+                $('#editarNegocioModal').modal('hide');
+                if (tablaNegocios) tablaNegocios.ajax.reload(null, false);
+                toastr.success(response.message);
+                if (tablaLogs) tablaLogs.ajax.reload(null, false);
+            } else {
+                toastr.error(response.message);
+            }
+            btn.prop('disabled', false).html('<i class="bi bi-save me-2"></i>Guardar Cambios');
+        },
+        error: function (xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Error al guardar el negocio');
+            btn.prop('disabled', false).html('<i class="bi bi-save me-2"></i>Guardar Cambios');
+        }
+    });
+});
+
+// Confirmar eliminación con SweetAlert2
+function confirmarEliminar(id, nombre) {
+    swalMG.fire({
+        title: '¿Eliminar negocio?',
+        html: 'Vas a eliminar <strong>' + nombre + '</strong>.<br><span class="text-danger">Esta acción no se puede deshacer.</span>',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '/Negocios/Eliminar',
+                type: 'POST',
+                data: { id: id },
+                success: function (response) {
+                    if (response.success) {
+                        if (tablaNegocios) tablaNegocios.ajax.reload(null, false);
+                        swalMG.fire('Eliminado', response.message, 'success');
+                        if (tablaLogs) tablaLogs.ajax.reload(null, false);
+                    } else {
+                        toastr.error(response.message);
+                    }
+                },
+                error: function (xhr) {
+                    toastr.error(xhr.responseJSON?.message || 'Error al eliminar el negocio');
+                }
+            });
+        }
+    });
+}
+
+// Cambiar estado con confirmación
+function cambiarEstado(id) {
+    swalMG.fire({
+        title: '¿Cambiar estado?',
+        text: 'Se alternará entre Pago y Prueba.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, cambiar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '/Negocios/CambiarEstado',
+                type: 'POST',
+                data: { id: id },
+                success: function (response) {
+                    if (response.success) {
+                        if (tablaNegocios) tablaNegocios.ajax.reload(null, false);
+                        toastr.success(response.message);
+                        if (tablaLogs) tablaLogs.ajax.reload(null, false);
+                    }
+                },
+                error: function () {
+                    toastr.error('Error al cambiar el estado');
+                }
+            });
+        }
+    });
+}
+
+// Impersonar negocio
+function impersonarNegocio(id) {
+    swalMG.fire({
+        title: '¿Impersonar negocio?',
+        text: 'Vas a ver el dashboard como si fueras este negocio.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, impersonar'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/Negocios/Impersonate/' + id;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+
+// Exportar Excel
+$('#btnExportExcel').click(function () {
+    var btn = $(this);
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Exportando...');
+    window.location.href = '/Negocios/ExportExcel';
+    setTimeout(function () { btn.prop('disabled', false).html('<i class="bi bi-file-earmark-excel me-2"></i>Exportar Excel'); }, 3000);
+});
+
+// Botón "Nuevo Negocio" en pestaña Negocios => cambiar a pestaña Crear
+$('#btnIrCrear').click(function () {
+    navegarATab('crearTab');
+});
+
+// ================================================================
+// TAB CREAR NEGOCIO
+// ================================================================
+
+// Toggle visibilidad de contraseña
+$('#crearTogglePassword').click(function () {
+    const passwordInput = $('#crearPasswordNegocio');
+    const icon = $('#crearTogglePasswordIcon');
+    if (passwordInput.attr('type') === 'password') {
+        passwordInput.attr('type', 'text');
+        icon.removeClass('bi-eye').addClass('bi-eye-slash');
+    } else {
+        passwordInput.attr('type', 'password');
+        icon.removeClass('bi-eye-slash').addClass('bi-eye');
+    }
+});
+
+// Cambiar tipo de negocio: actualizar campos de suscripción
+$('input[name="tipoNegocio"]').on('change', function () {
+    actualizarCamposSuscripcion();
+});
+
+// Calcular días pagados al cambiar fechas
+$('#crearFechaPago, #crearFechaExpiracion').on('change', function () {
+    calcularDiasPagadosCrear();
+});
+
+// Actualizar campos de suscripción según el tipo seleccionado
+function actualizarCamposSuscripcion() {
+    const tipo = $('input[name="tipoNegocio"]:checked').val();
+    const hoy = new Date().toISOString().split('T')[0];
+
+    if (tipo === 'prueba') {
+        $('#crearFechaPago').val(hoy);
+        const expiracion = new Date();
+        expiracion.setDate(expiracion.getDate() + 7);
+        $('#crearFechaExpiracion').val(expiracion.toISOString().split('T')[0]);
+        $('#crearDiasPagados').val(7);
+        $('#crearPrecioSuscripcion').val('0.00');
+        $('#crearPrecioSuscripcion').prop('readonly', true);
+        $('#crearFechaPago').prop('readonly', true);
+        $('#crearFechaExpiracion').prop('readonly', true);
+    } else {
+        $('#crearFechaPago').val(hoy);
+        const expiracion = new Date();
+        expiracion.setDate(expiracion.getDate() + 30);
+        $('#crearFechaExpiracion').val(expiracion.toISOString().split('T')[0]);
+        $('#crearDiasPagados').val(30);
+        $('#crearPrecioSuscripcion').val('');
+        $('#crearPrecioSuscripcion').prop('readonly', false);
+        $('#crearFechaPago').prop('readonly', false);
+        $('#crearFechaExpiracion').prop('readonly', false);
+    }
+}
+
+function calcularDiasPagadosCrear() {
+    const inicio = $('#crearFechaPago').val();
+    const fin = $('#crearFechaExpiracion').val();
+    if (inicio && fin) {
+        const diff = Math.ceil((new Date(fin) - new Date(inicio)) / (1000 * 60 * 60 * 24));
+        $('#crearDiasPagados').val(diff > 0 ? diff : 0);
+    }
+}
+
+// Envío del formulario de creación con AJAX
+$('#createNegocioForm').on('submit', function (e) {
+    e.preventDefault();
+
+    const tipoNegocio = $('input[name="tipoNegocio"]:checked').val();
+    const nombre = $('#crearNombreNegocio').val();
+    const tipoTexto = tipoNegocio === 'pago' ? 'Pago (Activo)' : 'Prueba (7 días gratis)';
+
+    swalMG.fire({
+        title: '¿Crear negocio?',
+        html: 'Se creará <strong>' + escHtml(nombre) + '</strong> como <strong>' + tipoTexto + '</strong>.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, crear'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            ejecutarCreacion();
+        }
+    });
+});
+
+function ejecutarCreacion() {
+    const btn = $('#btnCrearNegocio');
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Creando...');
+
+    const tipoNegocio = $('input[name="tipoNegocio"]:checked').val();
+
+    const formData = {
+        NombreNegocio: $('#crearNombreNegocio').val(),
+        duenoNegocio: $('#crearDuenoNegocio').val(),
+        telefono: $('#crearTelefono').val(),
+        EmailNegocio: $('#crearEmailNegocio').val(),
+        passwordNegocio: $('#crearPasswordNegocio').val(),
+        isActive: tipoNegocio === 'pago',
+        esPrueba: tipoNegocio === 'prueba',
+        fechaPago: $('#crearFechaPago').val() || null,
+        fechaExpiracion: $('#crearFechaExpiracion').val() || null,
+        precioSuscripcion: $('#crearPrecioSuscripcion').val() || null,
+        diasPagados: $('#crearDiasPagados').val() || null
+    };
+
+    $.ajax({
+        url: '/Negocios/Create',
+        type: 'POST',
+        data: formData,
+        success: function (response) {
+            swalMG.fire({
+                title: 'Negocio creado',
+                text: 'El negocio se ha creado exitosamente.',
+                icon: 'success',
+                showCancelButton: false,
+                confirmButtonText: 'Ver Negocios'
+            }).then(() => {
+                // Limpiar formulario
+                $('#createNegocioForm')[0].reset();
+                actualizarCamposSuscripcion();
+                // Cambiar a pestaña de negocios y recargar tabla
+                navegarATab('negociosTab');
+            });
+            btn.prop('disabled', false).html('<i class="bi bi-check-circle me-2"></i>Crear Negocio');
+        },
+        error: function (xhr) {
+            let message = 'Error al crear el negocio';
+            if (xhr.responseText) message = xhr.responseText;
+            swalMG.fire('Error', message, 'error');
+            btn.prop('disabled', false).html('<i class="bi bi-check-circle me-2"></i>Crear Negocio');
+        }
+    });
+}
+
+// Botón cancelar en creación => volver a negocios
+$('#btnCancelarCrear').click(function () {
+    navegarATab('negociosTab');
+});
+
+// ================================================================
+// TAB VENTAS
+// ================================================================
+function cargarVentasTab() {
+    // Cargar estadísticas del admin
+    $.get('/Negocios/GetAdminDashboardStats', function (stats) {
+        $('#ventasMrr').text('$' + stats.mrr.toFixed(2));
+
+        // Renderizar gráfico de ingresos en ventas
+        renderizarGraficoVentas(stats.revenuePorMes);
+
+        // Datos de distribución para donut
+        renderizarDonutVentas(stats.activos, stats.prueba, stats.totalNegocios);
+    }).fail(function () {
+        toastr.error('Error al cargar estadísticas de ventas');
+    });
+
+    // Cargar datos de negocios para la tabla y estadísticas derivadas
+    $.get('/Negocios/GetNegocios', function (data) {
+        negociosData = data;
+
+        // Total Revenue (todos los pagos históricos con precio > 0)
+        const totalRevenue = data.filter(g => g.precioSuscripcion > 0).reduce((sum, g) => sum + g.precioSuscripcion, 0);
+        $('#ventasTotalRevenue').text('$' + totalRevenue.toFixed(2));
+
+        // Negocios que están pagando (activos con precio > 0)
+        const pagando = data.filter(g => g.isActive && !g.esPrueba && g.precioSuscripcion > 0);
+        $('#ventasPagando').text(pagando.length);
+
+        // ARPU (Average Revenue Per User/Business)
+        const arpu = pagando.length > 0 ? totalRevenue / pagando.length : 0;
+        $('#ventasArpu').text('$' + arpu.toFixed(2));
+
+        // Cargar tabla de negocios con suscripción
+        cargarTablaVentasNegocios(data);
+    }).fail(function () {
+        toastr.error('Error al cargar datos de negocios para ventas');
+    });
+}
+
+function renderizarGraficoVentas(revenuePorMes) {
+    const categorias = revenuePorMes.map(r => r.mes);
+    const valores = revenuePorMes.map(r => r.total);
+
+    if (ventasRevenueChart) ventasRevenueChart.destroy();
+    ventasRevenueChart = new ApexCharts(document.querySelector('#ventasRevenueChart'), {
+        series: [{ name: 'Ingresos', data: valores }],
+        chart: { type: 'bar', height: 300, toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
+        plotOptions: { bar: { borderRadius: 6, columnWidth: '50%' } },
+        dataLabels: { enabled: false },
+        colors: ['#50CD89'],
+        xaxis: {
+            categories: categorias,
+            labels: { style: { colors: '#A1A5B7', fontSize: '11px' } },
+            axisBorder: { show: false }, axisTicks: { show: false }
+        },
+        yaxis: {
+            labels: {
+                formatter: function (val) { return '$' + val.toFixed(0); },
+                style: { colors: '#A1A5B7', fontSize: '11px' }
+            }
+        },
+        grid: { borderColor: '#EFF2F5', strokeDashArray: 4 },
+        tooltip: { y: { formatter: function (val) { return '$' + val.toFixed(2); } } }
+    });
+    ventasRevenueChart.render();
+}
+
+function renderizarDonutVentas(activos, prueba, total) {
+    const inactivos = total - activos - prueba;
+    const el = document.querySelector('#ventasDonutChart');
+
+    if (total === 0) {
+        el.innerHTML = '<div class="text-center py-5 text-muted"><i class="bi bi-pie-chart fs-1 d-block mb-3 opacity-50"></i><p class="mb-0">Sin datos todavía</p></div>';
+        return;
+    }
+
+    if (ventasDonutChart) ventasDonutChart.destroy();
+    el.innerHTML = '';
+
+    ventasDonutChart = new ApexCharts(el, {
+        series: [activos, prueba, inactivos > 0 ? inactivos : 0],
+        chart: { type: 'donut', height: 300, fontFamily: 'Inter, sans-serif' },
+        labels: ['De Pago', 'En Prueba', 'Inactivos'],
+        colors: ['#50CD89', '#FFC700', '#F1416C'],
+        plotOptions: {
+            pie: {
+                donut: {
+                    size: '70%',
+                    labels: {
+                        show: true,
+                        name: { show: true, fontSize: '14px', fontWeight: 600, color: '#A1A5B7', offsetY: -10 },
+                        value: { show: true, fontSize: '22px', fontWeight: 700, offsetY: 4 },
+                        total: { show: true, showAlways: true, label: 'Total', fontSize: '13px', fontWeight: 500, color: '#A1A5B7' }
+                    }
+                }
+            }
+        },
+        dataLabels: { enabled: true, formatter: function (val) { return val.toFixed(1) + '%'; } },
+        legend: { position: 'bottom', labels: { colors: '#5E6278' }, fontSize: '13px', fontWeight: 500, markers: { width: 12, height: 12, radius: 6 } },
+        stroke: { show: true, width: 3, colors: ['#fff'] },
+        responsive: [{ breakpoint: 576, options: { chart: { height: 260 } } }]
+    });
+    ventasDonutChart.render();
+}
+
+function cargarTablaVentasNegocios(data) {
+    // Filtrar solo negocios con suscripción (precio > 0 o con fecha de expiración)
+    const negociosSuscripcion = data.filter(g => g.precioSuscripcion > 0 || g.fechaExpiracion);
+
+    if (tablaVentasNegocios) {
+        tablaVentasNegocios.destroy();
+        $('#ventasNegociosTable tbody').empty();
+    }
+
+    tablaVentasNegocios = $('#ventasNegociosTable').DataTable({
+        data: negociosSuscripcion,
+        columns: [
+            {
+                data: 'negocioNombre',
+                render: function (data) { return '<strong>' + escHtml(data) + '</strong>'; }
+            },
+            {
+                data: 'esPrueba',
+                render: function (data) {
+                    return data ? '<span class="badge badge-light-warning">Prueba</span>' : '<span class="badge badge-light-primary">Pago</span>';
+                }
+            },
+            {
+                data: 'precioSuscripcion',
+                render: function (data) { return '$' + (data || 0).toFixed(2); }
+            },
+            {
+                data: 'fechaPago',
+                render: function (data) { return data ? new Date(data).toLocaleDateString('es-ES') : '-'; }
+            },
+            {
+                data: 'fechaExpiracion',
+                render: function (data) { return data ? new Date(data).toLocaleDateString('es-ES') : '-'; }
+            },
+            {
+                data: 'diasRestantesSuscripcion',
+                render: function (data) {
+                    if (data === null || data === undefined) return '<span class="text-muted">-</span>';
+                    if (data < 0) return '<span class="badge bg-danger">Expirado</span>';
+                    if (data <= 3) return '<span class="badge bg-warning text-dark">' + data + ' días</span>';
+                    if (data <= 7) return '<span class="badge bg-info">' + data + ' días</span>';
+                    return '<span class="badge bg-success">' + data + ' días</span>';
+                }
+            }
+        ],
+        order: [[5, 'asc']],
+        responsive: true,
+        pageLength: 10,
+        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }
+    });
+}
+
+// ================================================================
+// TAB LOGS
+// ================================================================
+function cargarTablaLogs() {
+    tablaLogs = $('#adminLogsTable').DataTable({
+        ajax: {
+            url: '/Negocios/GetAdminLogs',
+            type: 'GET',
+            dataSrc: '',
+            error: function (xhr) {
+                console.error('Error al cargar logs:', xhr.responseText);
+                toastr.error('Error al cargar registro de actividad');
+            }
+        },
+        columns: [
+            {
+                data: 'fecha',
+                render: function (data, type) {
+                    if (!data) return '-';
+                    if (type === 'sort' || type === 'type') return data;
+                    const fecha = new Date(data);
+                    return fecha.toLocaleDateString('es-ES') + ' ' + fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+                }
+            },
+            {
+                data: 'accion',
+                render: function (data) {
+                    const estilos = {
+                        'Crear': { icono: 'bi-plus-circle', color: 'success' },
+                        'Editar': { icono: 'bi-pencil-square', color: 'primary' },
+                        'Eliminar': { icono: 'bi-trash', color: 'danger' },
+                        'CambiarEstado': { icono: 'bi-toggle-on', color: 'warning' },
+                        'Impersonar': { icono: 'bi-eye', color: 'info' }
+                    };
+                    const estilo = estilos[data] || { icono: 'bi-circle', color: 'secondary' };
+                    return '<span class="badge badge-light-' + estilo.color + '"><i class="bi ' + estilo.icono + ' me-1"></i>' + escHtml(data) + '</span>';
+                }
+            },
+            {
+                data: 'detalle',
+                render: function (data) { return '<span class="text-dark fw-semibold">' + escHtml(data || '-') + '</span>'; }
+            },
+            {
+                data: 'negocioAfectado',
+                render: function (data) {
+                    return data ? '<span class="badge badge-light-primary">' + escHtml(data) + '</span>' : '<span class="text-muted">-</span>';
+                }
+            }
+        ],
+        order: [[0, 'desc']],
+        responsive: true,
+        pageLength: 15,
+        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }
+    });
+}
+
+// ================================================================
+// TAB SUGERENCIAS
+// ================================================================
+function cargarSugerencias() {
+    $.get('/Negocios/GetSugerencias', function (data) {
+        $('#totalSugerencias').text(data.length);
+        const sinLeer = data.filter(s => !s.leida).length;
+        $('#sinLeer').text(sinLeer);
+
+        // Actualizar badge del sidebar
+        if (sinLeer > 0) {
+            $('#sidebarSugerenciasBadge').text(sinLeer).removeClass('d-none');
+        } else {
+            $('#sidebarSugerenciasBadge').addClass('d-none');
+        }
+
+        if (data.length === 0) {
+            $('#sugerenciasList').html('<div class="text-center py-5 text-muted"><i class="bi bi-chat-left-text fs-1 d-block mb-3"></i><p>No hay sugerencias todavía.</p></div>');
             return;
         }
 
-        const btn = $(this);
-        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...');
-
-        const tipoNegocio = $('input[name="tipoNegocioEdit"]:checked').val();
-
-        const formData = {
-            NegocioId: $('#editNegocioId').val(),
-            NegocioNombre: $('#editNegocioNombre').val(),
-            DuenoNegocio: $('#editDuenoNegocio').val(),
-            Email: $('#editEmail').val(),
-            Telefono: $('#editTelefono').val(),
-            Password: $('#editPassword').val(),
-            IsActive: tipoNegocio === 'pago',
-            EsPrueba: tipoNegocio === 'prueba',
-            DiasPagados: $('#editDiasPagados').val() || 30,
-            PrecioSuscripcion: $('#editPrecioSuscripcion').val() || 0,
-            FechaExpiracion: $('#editFechaExpiracion').val() || null
-        };
-
-        $.ajax({
-            url: '/Negocios/Editar',
-            type: 'POST',
-            data: formData,
-            success: function (response) {
-                if (response.success) {
-                    $('#editarNegocioModal').modal('hide');
-                    tablaNegocios.ajax.reload(null, false);
-                    toastr.success(response.message);
-                } else {
-                    toastr.error(response.message);
-                }
-                btn.prop('disabled', false).html('<i class="bi bi-save me-2"></i>Guardar Cambios');
-            },
-            error: function (xhr) {
-                const response = xhr.responseJSON;
-                toastr.error(response?.message || 'Error al guardar el negocio');
-                btn.prop('disabled', false).html('<i class="bi bi-save me-2"></i>Guardar Cambios');
-            }
+        let html = '';
+        data.forEach(function (s) {
+            const fecha = new Date(s.fechaCreacion).toLocaleString('es-MX');
+            const unreadClass = s.leida ? '' : 'border-start border-3 border-primary';
+            const btnLeida = !s.leida
+                ? '<button class="btn btn-sm btn-light-primary" onclick="marcarSugerenciaLeida(\'' + s.id + '\')"><i class="bi bi-check me-1"></i>Leída</button>'
+                : '<span class="badge bg-light text-muted">Leída</span>';
+            html += '<div class="mg-card ' + unreadClass + '">' +
+                '<div class="card-body">' +
+                '<div class="d-flex justify-content-between align-items-start mb-2">' +
+                '<div><h6 class="fw-bold mb-0"><i class="bi bi-building me-1 text-primary"></i>' + escHtml(s.negocioNombre) + '</h6>' +
+                '<small class="text-muted">' + fecha + '</small></div>' +
+                btnLeida + '</div>' +
+                '<p class="mb-0 mt-2">' + escHtml(s.mensaje) + '</p>' +
+                '</div></div>';
         });
+        $('#sugerenciasList').html(html);
+    }).fail(function () {
+        $('#sugerenciasList').html('<div class="text-center py-5 text-muted"><i class="bi bi-exclamation-triangle fs-1 d-block mb-3 text-warning"></i><p>Error al cargar sugerencias</p></div>');
     });
+}
 
-    // Confirmar Eliminar (abrir modal)
-    function confirmarEliminar(id, nombre) {
-        $('#deleteNegocioId').val(id);
-        $('#deleteNegocioNombre').text(nombre);
-        $('#eliminarNegocioModal').modal('show');
-    }
-
-    // Ejecutar Eliminación
-    $('#btnConfirmarEliminar').click(function() {
-        const id = $('#deleteNegocioId').val();
-        const btn = $(this);
-
-        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Eliminando...');
-
-        $.ajax({
-            url: '/Negocios/Eliminar',
-            type: 'POST',
-            data: { id: id },
-            success: function (response) {
-                if (response.success) {
-                    $('#eliminarNegocioModal').modal('hide');
-                    tablaNegocios.ajax.reload(null, false);
-                    toastr.success(response.message);
-                } else {
-                    toastr.error(response.message);
-                }
-                btn.prop('disabled', false).html('<i class="bi bi-trash me-2"></i>Sí, Eliminar');
-            },
-            error: function (xhr) {
-                const response = xhr.responseJSON;
-                toastr.error(response?.message || 'Error al eliminar el negocio');
-                btn.prop('disabled', false).html('<i class="bi bi-trash me-2"></i>Sí, Eliminar');
-            }
-        });
+function marcarSugerenciaLeida(id) {
+    $.post('/Negocios/MarcarSugerenciaLeida', { id: id }, function (r) {
+        if (r.success) cargarSugerencias();
+    }).fail(function () {
+        toastr.error('Error al marcar sugerencia como leída');
     });
+}
 
-    // Cambiar Estado
-    function cambiarEstado(id) {
-        $.ajax({
-            url: '/Negocios/CambiarEstado',
-            type: 'POST',
-            data: { id: id },
-            success: function (response) {
-                if (response.success) {
-                    tablaNegocios.ajax.reload(null, false);
-                    toastr.success(response.message);
-                }
-            },
-            error: function () {
-                toastr.error('Error al cambiar el estado');
-            }
-        });
-    }
-
-    // Exportar Excel
-    $('#btnExportExcel').click(function () {
-        window.location.href = '/Negocios/ExportExcel';
+// Cargar badge de sugerencias sin leer en el sidebar al iniciar
+function cargarSugerenciasBadge() {
+    $.get('/Negocios/GetSugerencias', function (data) {
+        const sinLeer = data.filter(s => !s.leida).length;
+        if (sinLeer > 0) {
+            $('#sidebarSugerenciasBadge').text(sinLeer).removeClass('d-none');
+        } else {
+            $('#sidebarSugerenciasBadge').addClass('d-none');
+        }
+    }).fail(function () {
+        console.warn('No se pudo cargar conteo de sugerencias');
     });
-
-    // Impersonar Negocio
-    function impersonarNegocio(id) {
-        Swal.fire({
-            title: '¿Impersonar negocio?',
-            text: 'Vas a ver el dashboard como si fueras este negocio.',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#3E97FF',
-            cancelButtonColor: '#E4E6EF',
-            confirmButtonText: 'Sí, impersonar',
-            cancelButtonText: 'Cancelar',
-            reverseButtons: true
-        }).then((result) => {
-            if (result.isConfirmed) {
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = `/Negocios/Impersonate/${id}`;
-                document.body.appendChild(form);
-                form.submit();
-            }
-        });
-    }
+}
 </script>
 
 <style>
-    /* All utility classes (.bg-light-*, .badge-light-*, .symbol, .btn-icon, etc.)
-       are now defined in metronic-style.css */
-    .btn-sm {
-        padding: 0.5rem 1rem;
-        font-size: 0.875rem;
-    }
+/* Estilos del formulario de creación */
+.crear-tipo-check {
+    padding: 1rem;
+    border: 2px solid var(--mg-gray-300, #E4E6EF);
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+}
+.crear-tipo-check:has(input:checked) {
+    border-color: var(--mg-primary, #3E97FF);
+    background-color: var(--mg-primary-light, rgba(62, 151, 255, 0.1));
+}
+.crear-tipo-check .form-check-input:checked {
+    background-color: var(--mg-primary, #3E97FF);
+    border-color: var(--mg-primary, #3E97FF);
+}
 </style>
 }

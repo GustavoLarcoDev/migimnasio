@@ -1,3 +1,10 @@
+// ═══════════════════════════════════════════════════════════
+// NotificationService.cs — Servicio de notificaciones automáticas
+// Genera alertas cuando la membresía de un cliente está próxima
+// a vencer (3 días). Evita duplicados por día.
+// Se ejecuta al cargar el dashboard del negocio.
+// ═══════════════════════════════════════════════════════════
+
 using Gimnasio.Data;
 using Gimnasio.Models;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +20,13 @@ public class NotificationService : INotificationService
         _context = context;
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // CONSULTAS
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Obtiene las últimas 50 notificaciones ordenadas por fecha descendente
+    /// </summary>
     public async Task<object> GetNotificacionesAsync(Guid negocioId)
     {
         return await _context.Notificaciones
@@ -32,12 +46,22 @@ public class NotificationService : INotificationService
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Cuenta las notificaciones no leídas para mostrar en el badge
+    /// </summary>
     public async Task<int> GetNotificacionesCountAsync(Guid negocioId)
     {
         return await _context.Notificaciones
             .CountAsync(n => n.NegocioId == negocioId && !n.Leida);
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // MARCAR COMO LEÍDA
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Marca una notificación individual como leída
+    /// </summary>
     public async Task<(bool success, string message)> MarcarLeidaAsync(Guid id, Guid negocioId)
     {
         var notificacion = await _context.Notificaciones
@@ -53,6 +77,9 @@ public class NotificationService : INotificationService
         return (true, "Notificación marcada como leída");
     }
 
+    /// <summary>
+    /// Marca todas las notificaciones no leídas como leídas
+    /// </summary>
     public async Task<(bool success, string message)> MarcarTodasLeidasAsync(Guid negocioId)
     {
         var notificaciones = await _context.Notificaciones
@@ -67,11 +94,21 @@ public class NotificationService : INotificationService
         return (true, $"{notificaciones.Count} notificaciones marcadas como leídas");
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // GENERACIÓN AUTOMÁTICA
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Genera notificaciones para membresías que vencen en los próximos 3 días.
+    /// Verifica si ya existe una notificación para cada cliente en el día actual
+    /// para evitar duplicados.
+    /// </summary>
     public async Task<(bool success, string message, int count)> GenerarNotificacionesAsync(Guid negocioId)
     {
         var hoy = DateTime.Now.Date;
         var en3Dias = hoy.AddDays(3);
 
+        // Buscar clientes cuya membresía vence entre hoy y dentro de 3 días
         var clientesProximos = await _context.Clientes
             .Where(c => c.NegocioId == negocioId
                 && c.FechaQueTermina.Date >= hoy
@@ -81,7 +118,7 @@ public class NotificationService : INotificationService
         int count = 0;
         foreach (var cliente in clientesProximos)
         {
-            // Check if notification already exists for this client today
+            // Verificar si ya existe una notificación para este cliente hoy
             var existe = await _context.Notificaciones
                 .AnyAsync(n => n.NegocioId == negocioId
                     && n.ClienteId == cliente.ClienteId

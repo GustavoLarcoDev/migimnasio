@@ -48,6 +48,11 @@ CodeCoverage/
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
 
+# Credenciales y configuración sensible
+appsettings.json
+appsettings.Development.json
+appsettings.Production.json
+
 # NUnit
 *.VisualState.xml
 TestResult.xml

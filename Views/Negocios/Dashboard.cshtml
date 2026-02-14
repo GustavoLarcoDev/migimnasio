@@ -9,6 +9,25 @@
     var negocioId = Model.NegocioId;
 }
 
+@if (Model.EsPrueba)
+{
+    <div class="alert border-0 d-flex align-items-center gap-3 mb-4 shadow-sm" id="trialBanner"
+         style="background: linear-gradient(135deg, #FFF8DD 0%, #FFF3CD 100%); border-left: 4px solid #FFC700 !important;">
+        <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+             style="width: 42px; height: 42px; background: rgba(255, 199, 0, 0.2);">
+            <i class="bi bi-hourglass-split text-warning fs-5"></i>
+        </div>
+        <div class="flex-grow-1">
+            <strong class="text-dark">Periodo de prueba</strong>
+            <span class="d-block d-sm-inline text-muted ms-sm-1" id="trialDaysText">Cargando...</span>
+        </div>
+        <a href="https://wa.me/593997143142?text=Hola%2C%20quiero%20activar%20mi%20plan%20de%20pago%20en%20Mi%20Negocio" target="_blank" rel="noopener"
+           class="btn btn-warning btn-sm fw-bold flex-shrink-0">
+            <i class="bi bi-whatsapp me-1"></i>Activar Plan
+        </a>
+    </div>
+}
+
 <div class="tab-content" id="dashboardTabsContent">
     <!-- TAB RESUMEN -->
     <div class="tab-pane fade show active" id="resumenTab" role="tabpanel">
@@ -189,15 +208,35 @@ let tablaClientes, tablaLogs, tablaUsuariosDiarios;
 let modoEdicion = false;
 const swalMG = Swal.mixin({ confirmButtonColor: '#3E97FF', cancelButtonColor: '#E4E6EF', cancelButtonText: 'Cancelar', reverseButtons: true, customClass: { popup: 'mg-swal-popup', confirmButton: 'mg-swal-confirm', cancelButton: 'mg-swal-cancel' } });
 
+// Función auxiliar para escapar HTML y prevenir XSS
+function escHtml(str) {
+    if (!str) return '';
+    return $('<span>').text(str).html();
+}
+
 $(document).ready(function () {
     cargarResumen();
     cargarNotificacionesCount();
-    $.post('/Negocios/GenerarNotificaciones', { negocioId });
+    $.post('/Negocios/GenerarNotificaciones', { negocioId }).fail(function() {
+        console.warn('No se pudieron generar notificaciones automáticas');
+    });
     verificarSuscripcion();
 });
 
 function verificarSuscripcion() {
     $.get('/Negocios/GetSuscripcionStatus', { negocioId }, function(d) {
+        // Update trial banner if exists
+        var trialText = document.getElementById('trialDaysText');
+        if (trialText && d.diasRestantes !== null) {
+            if (d.diasRestantes <= 0) {
+                trialText.innerHTML = '<span class="badge bg-danger">Expirado</span>';
+            } else if (d.diasRestantes === 1) {
+                trialText.innerHTML = '- Te queda <strong class="text-danger">1 día</strong>';
+            } else {
+                trialText.innerHTML = '- Te quedan <strong>' + d.diasRestantes + ' días</strong>';
+            }
+        }
+
         if (d.diasRestantes !== null && d.diasRestantes <= 5 && d.diasRestantes >= 0) {
             swalMG.fire({
                 title: 'Tu suscripción está por vencer',
@@ -213,62 +252,501 @@ function verificarSuscripcion() {
                 }
             });
         }
+    }).fail(function(xhr) {
+        console.warn('Error al verificar suscripción:', xhr.responseText);
     });
 }
 document.addEventListener('mg-tab-shown', function(e) { if (e.detail.tab === 'resumenTab') { cargarResumen(); } else if (e.detail.tab === 'clientesTab') { if (!tablaClientes) { cargarTablaClientes(); } cargarEstadisticas(); } else if (e.detail.tab === 'ventasTab') { cargarVentasStats(); cargarCharts(); } else if (e.detail.tab === 'logsTab') { if (!tablaLogs) cargarTablaLogs(); verificarCerrarPeriodo(); } else if (e.detail.tab === 'notificacionesTab') { cargarNotificacionesTab(); } });
 
-function cargarEstadisticas() { $.get('/Negocios/GetDashboardStats', { negocioId }, function(data) { $('#totalClientes').text(data.totalClientes); $('#clientesActivos').text(data.clientesActivos); $('#clientesVencidos').text(data.clientesVencidos); $('#ingresosMes').text('$' + data.ingresosMes.toFixed(2)); }); }
-function cargarTablaClientes() { tablaClientes = $('#clientesTable').DataTable({ ajax: { url: '/Negocios/GetClientes', data: { negocioId }, dataSrc: '' }, columns: [ { data: null, render: (d,t,r) => `<strong>${r.nombreCompleto}</strong><br><small class="text-muted">${r.telefono || '-'}</small>` }, { data: 'precio', render: d => '$' + d.toFixed(2) }, { data: 'fechaDeCreacion', render: d => new Date(d).toLocaleDateString('es-MX') }, { data: 'fechaQueTermina', render: d => new Date(d).toLocaleDateString('es-MX') }, { data: 'diasRestantes', render: d => d < 0 ? '<span class="badge bg-danger">Vencido</span>' : `<span class="badge bg-${d <= 3 ? 'warning' : 'success'}">${d} días</span>` }, { data: null, orderable: false, className: 'text-end', render: (d,t,r) => { let btns = ''; const cleanPhone = r.telefono ? r.telefono.replace(/\D/g, '') : ''; if (cleanPhone.length >= 10) { const waMsg = encodeURIComponent(`Hola ${r.nombreCompleto}, te saludamos de ${negocioNombre}, ¿cómo estás hoy?`); btns += `<a href="https://wa.me/${cleanPhone}?text=${waMsg}" target="_blank" class="btn btn-sm btn-icon btn-light-success me-1" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>`; } const safeName = r.nombreCompleto.replace(/'/g, "\\'"); const safePrecio = r.precio || 0; const safeFechaFin = r.fechaQueTermina ? r.fechaQueTermina.split('T')[0] : ''; const safePhone = cleanPhone; btns += `<button class="btn btn-sm btn-icon btn-light-warning me-1" onclick="abrirModalRenovar('${r.clienteId}','${safeName}', ${safePrecio}, '${safeFechaFin}', '${safePhone}')" title="Renovar"><i class="bi bi-arrow-repeat"></i></button><button class="btn btn-sm btn-icon btn-light-primary me-1" onclick="editarCliente('${r.clienteId}')" title="Editar"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-icon btn-light-danger" onclick="eliminarCliente('${r.clienteId}','${safeName}')" title="Eliminar"><i class="bi bi-trash"></i></button>`; return btns; }} ], order: [[4, 'asc']], responsive: true, language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' } }); }
+// Cargar estadísticas de la pestaña Clientes
+function cargarEstadisticas() {
+    $.get('/Negocios/GetDashboardStats', { negocioId }, function(data) {
+        $('#totalClientes').text(data.totalClientes);
+        $('#clientesActivos').text(data.clientesActivos);
+        $('#clientesVencidos').text(data.clientesVencidos);
+        $('#ingresosMes').text('$' + data.ingresosMes.toFixed(2));
+    }).fail(function(xhr) {
+        console.error('Error al cargar estadísticas:', xhr.responseText);
+        toastr.error('Error al cargar estadísticas del negocio');
+    });
+}
+// Cargar tabla de clientes con protección XSS y manejo de errores
+function cargarTablaClientes() {
+    tablaClientes = $('#clientesTable').DataTable({
+        ajax: {
+            url: '/Negocios/GetClientes', data: { negocioId }, dataSrc: '',
+            error: function(xhr) {
+                console.error('Error al cargar clientes:', xhr.responseText);
+                toastr.error('Error al cargar la lista de clientes');
+            }
+        },
+        columns: [
+            { data: null, render: function(d, t, r) {
+                return '<strong>' + escHtml(r.nombreCompleto) + '</strong><br><small class="text-muted">' + escHtml(r.telefono || '-') + '</small>';
+            }},
+            { data: 'precio', render: function(d) { return '$' + (d || 0).toFixed(2); } },
+            { data: 'fechaDeCreacion', render: function(d) { return d ? new Date(d).toLocaleDateString('es-MX') : '-'; } },
+            { data: 'fechaQueTermina', render: function(d) { return d ? new Date(d).toLocaleDateString('es-MX') : '-'; } },
+            { data: 'diasRestantes', render: function(d) {
+                if (d < 0) return '<span class="badge bg-danger">Vencido</span>';
+                var badgeCls = d <= 3 ? 'warning' : 'success';
+                return '<span class="badge bg-' + badgeCls + '">' + d + ' días</span>';
+            }},
+            { data: null, orderable: false, className: 'text-end', render: function(d, t, r) {
+                var btns = '';
+                var cleanPhone = r.telefono ? r.telefono.replace(/\D/g, '') : '';
+                if (cleanPhone.length >= 10) {
+                    var waMsg = encodeURIComponent('Hola ' + (r.nombreCompleto || '') + ', te saludamos de ' + (negocioNombre || '') + ', ¿cómo estás hoy?');
+                    btns += '<a href="https://wa.me/' + escHtml(cleanPhone) + '?text=' + waMsg + '" target="_blank" rel="noopener" class="btn btn-sm btn-icon btn-light-success me-1" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>';
+                }
+                // Escapar datos para prevenir inyección en atributos onclick
+                var safeId = escHtml(r.clienteId);
+                var safeName = escHtml(r.nombreCompleto).replace(/'/g, "\\'");
+                var safePrecio = parseFloat(r.precio) || 0;
+                var safeFechaFin = r.fechaQueTermina ? r.fechaQueTermina.split('T')[0] : '';
+                var safePhone = escHtml(cleanPhone);
+                btns += '<button class="btn btn-sm btn-icon btn-light-warning me-1" onclick="abrirModalRenovar(\'' + safeId + '\',\'' + safeName + '\', ' + safePrecio + ', \'' + safeFechaFin + '\', \'' + safePhone + '\')" title="Renovar"><i class="bi bi-arrow-repeat"></i></button>';
+                btns += '<button class="btn btn-sm btn-icon btn-light-primary me-1" onclick="editarCliente(\'' + safeId + '\')" title="Editar"><i class="bi bi-pencil"></i></button>';
+                btns += '<button class="btn btn-sm btn-icon btn-light-danger" onclick="eliminarCliente(\'' + safeId + '\',\'' + safeName + '\')" title="Eliminar"><i class="bi bi-trash"></i></button>';
+                return btns;
+            }}
+        ],
+        order: [[4, 'asc']], responsive: true,
+        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }
+    });
+}
 
 function toDateInput(d) { return d.toISOString().split('T')[0]; }
 function calcDias() { const inicio = $('#fechaInicio').val(); const fin = $('#fechaFin').val(); if (inicio && fin) { const dias = Math.round((new Date(fin) - new Date(inicio)) / 86400000); $('#dias').val(dias > 0 ? dias : ''); } }
 $('#fechaInicio, #fechaFin').on('change', calcDias);
 $('#dias').on('change', function() { const inicio = $('#fechaInicio').val(); const dias = parseInt($(this).val()); if (inicio && dias > 0) { const fin = new Date(inicio); fin.setDate(fin.getDate() + dias); $('#fechaFin').val(toDateInput(fin)); } });
 $('#btnCrearCliente').click(function() { modoEdicion = false; $('#modalTitle').text('Nuevo Cliente'); $('#clienteForm')[0].reset(); $('#clienteId').val(''); $('#fechaInicio').val(toDateInput(new Date())); $('#clienteModal').modal('show'); });
-$('#btnGuardarCliente').click(function() { if (!$('#clienteForm')[0].checkValidity()) { $('#clienteForm')[0].reportValidity(); return; } const url = modoEdicion ? '/Negocios/EditarCliente' : '/Negocios/CrearCliente'; $.post(url, $('#clienteForm').serialize(), function(r) { if (r.success) { $('#clienteModal').modal('hide'); tablaClientes.ajax.reload(); cargarEstadisticas(); if (tablaLogs) tablaLogs.ajax.reload(); toastr.success(r.message); } }).fail(xhr => toastr.error(xhr.responseJSON?.message || 'Error')); });
-function editarCliente(id) { $.get('/Negocios/GetCliente', { id, negocioId }, function(d) { modoEdicion = true; $('#modalTitle').text('Editar Cliente'); $('#clienteId').val(d.clienteId); $('#nombre').val(d.nombre); $('#apellido').val(d.apellido); $('#email').val(d.email); $('#telefono').val(d.telefono); $('#direccion').val(d.direccion); $('#fechaInicio').val(toDateInput(new Date(d.fechaDeCreacion))); $('#fechaFin').val(toDateInput(new Date(d.fechaQueTermina))); calcDias(); $('#precio').val(d.precio); $('#esDiario').prop('checked', d.esDiario); $('#clienteModal').modal('show'); }); }
+// Guardar cliente con estado de carga y validación
+$('#btnGuardarCliente').click(function() {
+    if (!$('#clienteForm')[0].checkValidity()) { $('#clienteForm')[0].reportValidity(); return; }
+    var url = modoEdicion ? '/Negocios/EditarCliente' : '/Negocios/CrearCliente';
+    var btn = $(this);
+    var originalHtml = btn.html();
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...');
+    $.post(url, $('#clienteForm').serialize(), function(r) {
+        if (r.success) {
+            $('#clienteModal').modal('hide');
+            if (tablaClientes) tablaClientes.ajax.reload();
+            cargarEstadisticas();
+            if (tablaLogs) tablaLogs.ajax.reload();
+            toastr.success(r.message);
+        } else {
+            toastr.error(r.message || 'Error al guardar');
+        }
+    }).fail(function(xhr) {
+        toastr.error(xhr.responseJSON?.message || 'Error al guardar cliente');
+    }).always(function() {
+        btn.prop('disabled', false).html(originalHtml);
+    });
+});
+// Editar cliente con manejo de errores
+function editarCliente(id) {
+    $.get('/Negocios/GetCliente', { id: id, negocioId: negocioId }, function(d) {
+        modoEdicion = true;
+        $('#modalTitle').text('Editar Cliente');
+        $('#clienteId').val(d.clienteId);
+        $('#nombre').val(d.nombre);
+        $('#apellido').val(d.apellido);
+        $('#email').val(d.email);
+        $('#telefono').val(d.telefono);
+        $('#direccion').val(d.direccion);
+        $('#fechaInicio').val(toDateInput(new Date(d.fechaDeCreacion)));
+        $('#fechaFin').val(toDateInput(new Date(d.fechaQueTermina)));
+        calcDias();
+        $('#precio').val(d.precio);
+        $('#esDiario').prop('checked', d.esDiario);
+        $('#clienteModal').modal('show');
+    }).fail(function(xhr) {
+        toastr.error(xhr.responseJSON?.message || 'Error al cargar datos del cliente');
+    });
+}
 function eliminarCliente(id, nombre) { swalMG.fire({ title: '¿Estás seguro?', text: `Se eliminará al cliente "${nombre}". Esta acción no se puede deshacer.`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#F1416C', cancelButtonColor: '#3E97FF', confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar' }).then((result) => { if (result.isConfirmed) { $.post('/Negocios/EliminarCliente', { id, negocioId }, function(r) { if (r.success) { tablaClientes.ajax.reload(); cargarEstadisticas(); if (tablaLogs) tablaLogs.ajax.reload(); swalMG.fire('¡Eliminado!', r.message, 'success'); } else { swalMG.fire('Error', r.message || 'No se pudo eliminar', 'error'); } }).fail(xhr => swalMG.fire('Error', xhr.responseJSON?.message || 'Ocurrió un error', 'error')); } }); }
 
 let renovarFechaFinActual = ''; let renovarClienteTelefono = ''; let renovarClienteNombreStr = '';
 function abrirModalRenovar(id, nombre, precio, fechaQueTermina, telefono) { $('#renovarClienteId').val(id); $('#renovarClienteNombre').text(nombre); renovarFechaFinActual = fechaQueTermina; renovarClienteTelefono = telefono || ''; renovarClienteNombreStr = nombre; $('#renovarFechaActual').val(new Date(fechaQueTermina).toLocaleDateString('es-MX')); const minDate = new Date(fechaQueTermina); minDate.setDate(minDate.getDate() + 1); $('#renovarNuevaFechaFin').attr('min', toDateInput(minDate)); const defaultFin = new Date(fechaQueTermina); defaultFin.setDate(defaultFin.getDate() + 30); $('#renovarNuevaFechaFin').val(toDateInput(defaultFin)); $('#renovarDiasInfo').text('30'); $('#renovarPrecio').val(precio || ''); $('#renovarModal').modal('show'); }
 $('#renovarNuevaFechaFin').on('change', function() { if (renovarFechaFinActual && $(this).val()) { const dias = Math.round((new Date($(this).val()) - new Date(renovarFechaFinActual)) / 86400000); $('#renovarDiasInfo').text(dias > 0 ? dias : 0); } });
 $('#btnConfirmarRenovar').click(function() { const id = $('#renovarClienteId').val(); const nuevaFechaFin = $('#renovarNuevaFechaFin').val(); const precio = $('#renovarPrecio').val(); if (!nuevaFechaFin || !precio) { toastr.error('Complete todos los campos'); return; } const btn = $(this); const originalText = btn.html(); btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...'); $.post('/Negocios/RenovarCliente', { id, negocioId, nuevaFechaFin, precio }, function(r) { if (r.success) { $('#renovarModal').modal('hide'); tablaClientes.ajax.reload(); cargarEstadisticas(); if (tablaLogs) tablaLogs.ajax.reload(); const fechaFormateada = new Date(nuevaFechaFin).toLocaleDateString('es-MX'); if (renovarClienteTelefono && renovarClienteTelefono.length >= 10) { const waMsg = encodeURIComponent(`Hola ${renovarClienteNombreStr}, te informamos que tu membresía en ${negocioNombre} ha sido renovada. Ahora tu suscripción termina el ${fechaFormateada}. ¡Gracias!`); swalMG.fire({ title: '¡Renovado!', text: r.message, icon: 'success', confirmButtonText: 'Enviar WhatsApp', confirmButtonColor: '#25D366', showCancelButton: true, cancelButtonText: 'Cerrar' }).then((result) => { if (result.isConfirmed) window.open(`https://wa.me/${renovarClienteTelefono}?text=${waMsg}`, '_blank'); }); } else { swalMG.fire('¡Renovado!', r.message, 'success'); } } }).fail(xhr => { swalMG.fire('Error', xhr.responseJSON?.message || 'Error al renovar', 'error'); }).always(() => { btn.prop('disabled', false).html(originalText); }); });
-$('#btnExportClientesExcel').click(() => window.location.href = '/Negocios/ExportClientesExcel?negocioId=' + negocioId);
+// Exportar clientes a Excel con estado de carga
+$('#btnExportClientesExcel').click(function() {
+    var btn = $(this);
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Exportando...');
+    window.location.href = '/Negocios/ExportClientesExcel?negocioId=' + negocioId;
+    setTimeout(function() { btn.prop('disabled', false).html('<i class="bi bi-file-earmark-excel me-2"></i>Exportar'); }, 3000);
+});
 $('#btnImportarExcel').click(() => $('#importZone').toggleClass('d-none'));
 $('#importZone').on('click', () => $('#excelFileInput').click());
 $('#excelFileInput').on('change', function() { if (this.files.length) uploadExcel(this.files[0]); });
 $('#importZone').on('dragover', e => { e.preventDefault(); $(e.currentTarget).addClass('border-primary'); });
 $('#importZone').on('dragleave', e => $(e.currentTarget).removeClass('border-primary'));
 $('#importZone').on('drop', function(e) { e.preventDefault(); $(this).removeClass('border-primary'); if (e.originalEvent.dataTransfer.files.length) uploadExcel(e.originalEvent.dataTransfer.files[0]); });
-function uploadExcel(file) { const formData = new FormData(); formData.append('file', file); formData.append('negocioId', negocioId); $.ajax({ url: '/Negocios/ImportarClientesExcel', type: 'POST', data: formData, processData: false, contentType: false, success: function(r) { let html = `<div class="alert alert-success"><strong>${r.clientesCreados}</strong> clientes creados</div>`; if (r.clientesOmitidos > 0) html += `<div class="alert alert-warning"><strong>${r.clientesOmitidos}</strong> omitidos (duplicados)</div>`; if (r.erroresCount > 0) html += `<div class="alert alert-danger"><strong>${r.erroresCount}</strong> errores</div>`; $('#importResultBody').html(html); $('#importResultModal').modal('show'); tablaClientes.ajax.reload(); cargarEstadisticas(); $('#importZone').addClass('d-none'); }, error: xhr => toastr.error(xhr.responseJSON?.message || 'Error al importar') }); }
+// Subir archivo Excel con validación y manejo de errores
+function uploadExcel(file) {
+    // Validar tipo de archivo
+    var ext = file.name.split('.').pop().toLowerCase();
+    if (ext !== 'xlsx' && ext !== 'xls') {
+        toastr.error('Solo se permiten archivos Excel (.xlsx, .xls)');
+        return;
+    }
+    var formData = new FormData();
+    formData.append('file', file);
+    formData.append('negocioId', negocioId);
+    // Mostrar estado de carga en la zona de importación
+    $('#importZone .card-body').html('<div class="text-center py-5"><span class="spinner-border text-primary mb-3"></span><p class="mb-0">Importando clientes...</p></div>');
+    $.ajax({
+        url: '/Negocios/ImportarClientesExcel', type: 'POST', data: formData, processData: false, contentType: false,
+        success: function(r) {
+            var html = '<div class="alert alert-success"><strong>' + (r.clientesCreados || 0) + '</strong> clientes creados</div>';
+            if (r.clientesOmitidos > 0) html += '<div class="alert alert-warning"><strong>' + r.clientesOmitidos + '</strong> omitidos (duplicados)</div>';
+            if (r.erroresCount > 0) html += '<div class="alert alert-danger"><strong>' + r.erroresCount + '</strong> errores</div>';
+            $('#importResultBody').html(html);
+            $('#importResultModal').modal('show');
+            if (tablaClientes) tablaClientes.ajax.reload();
+            cargarEstadisticas();
+            $('#importZone').addClass('d-none');
+            // Restaurar contenido de la zona de importación
+            $('#importZone .card-body').html('<i class="bi bi-cloud-upload fs-1 text-primary mb-3 d-block"></i><h5>Arrastra tu archivo Excel aquí</h5><p class="text-muted">O haz clic para seleccionar (solo Nombre y Apellido son obligatorios)</p><input type="file" id="excelFileInput" accept=".xlsx,.xls" class="d-none">');
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Error al importar archivo');
+            // Restaurar zona de importación
+            $('#importZone .card-body').html('<i class="bi bi-cloud-upload fs-1 text-primary mb-3 d-block"></i><h5>Arrastra tu archivo Excel aquí</h5><p class="text-muted">O haz clic para seleccionar (solo Nombre y Apellido son obligatorios)</p><input type="file" id="excelFileInput" accept=".xlsx,.xls" class="d-none">');
+        }
+    });
+}
 
 function initLogsTab() {}
 const tipoLogBadges = { 'ingreso': 'bg-success', 'gasto': 'bg-danger', 'cliente_creado': 'bg-primary', 'cliente_editado': 'bg-warning text-dark', 'cliente_renovado': 'bg-info', 'cliente_eliminado': 'bg-danger', 'sesion_inicio': 'bg-secondary', 'sesion_cierre': 'bg-dark', 'manual': 'bg-light text-dark' };
 const tipoLogLabels = { 'ingreso': 'Ingreso', 'gasto': 'Gasto', 'cliente_creado': 'Cliente Nuevo', 'cliente_editado': 'Edición', 'cliente_renovado': 'Renovación', 'cliente_eliminado': 'Eliminación', 'sesion_inicio': 'Inicio Sesión', 'sesion_cierre': 'Cierre Sesión', 'manual': 'Manual' };
 function cargarTablaLogs() { if (tablaLogs) { tablaLogs.destroy(); } tablaLogs = $('#logsTable').DataTable({ ajax: { url: '/Negocios/GetLogs', data: { negocioId: negocioId }, dataSrc: '', error: function(xhr, error, code) { console.error('DataTables error:', xhr.responseText); toastr.error('Error al cargar los logs: ' + (xhr.responseJSON?.message || 'Error desconocido')); } }, columns: [ { data: 'message' }, { data: 'tipo', render: function(d) { const badge = tipoLogBadges[d] || 'bg-secondary'; const label = tipoLogLabels[d] || d; return `<span class="badge ${badge}">${label}</span>`; } }, { data: 'nombreCliente', render: d => d || '<span class="text-muted">-</span>' }, { data: 'monto', render: d => d === 0 ? '<span class="text-muted">-</span>' : `<span class="${d >= 0 ? 'text-success' : 'text-danger'} fw-bold">${d >= 0 ? '+' : ''}$${d.toFixed(2)}</span>` }, { data: 'fecha', render: function(d, type) { if (type === 'sort' || type === 'type') return d; return new Date(d).toLocaleString('es-MX'); } } ], order: [[4, 'desc']], language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' } }); }
-$('#btnRegistrarLog').click(function() { const message = $('#logDescripcion').val(); const monto = $('#logMonto').val(); if (!message || monto === '') { toastr.error('Complete todos los campos'); return; } $.post('/Negocios/CrearLog', { NegocioId: negocioId, Message: message, Monto: monto }, function(r) { if (r.success) { $('#logDescripcion').val(''); $('#logMonto').val(''); tablaLogs.ajax.reload(); toastr.success(r.message); } }).fail(xhr => toastr.error(xhr.responseJSON?.message || 'Error')); });
-$('#btnExportLogsExcel').click(function() { window.location.href = `/Negocios/ExportLogsExcel?negocioId=${negocioId}`; });
-function verificarCerrarPeriodo() { $.get('/Negocios/GetOldestLogDate', { negocioId }, function(d) { if (d.fecha) { const oldest = new Date(d.fecha); const diasDesde = Math.round((new Date() - oldest) / 86400000); if (diasDesde >= 30) { $('#btnCerrarPeriodo').removeClass('d-none'); } else { $('#btnCerrarPeriodo').addClass('d-none'); } } }); }
+// Registrar movimiento con estado de carga
+$('#btnRegistrarLog').click(function() {
+    var message = $('#logDescripcion').val();
+    var monto = $('#logMonto').val();
+    if (!message || monto === '') { toastr.error('Complete todos los campos'); return; }
+    var btn = $(this);
+    var originalHtml = btn.html();
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Registrando...');
+    $.post('/Negocios/CrearLog', { NegocioId: negocioId, Message: message, Monto: monto }, function(r) {
+        if (r.success) {
+            $('#logDescripcion').val('');
+            $('#logMonto').val('');
+            if (tablaLogs) tablaLogs.ajax.reload();
+            toastr.success(r.message);
+        } else {
+            toastr.error(r.message || 'Error al registrar');
+        }
+    }).fail(function(xhr) {
+        toastr.error(xhr.responseJSON?.message || 'Error al registrar movimiento');
+    }).always(function() {
+        btn.prop('disabled', false).html(originalHtml);
+    });
+});
+// Exportar logs a Excel con estado de carga
+$('#btnExportLogsExcel').click(function() {
+    var btn = $(this);
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Exportando...');
+    window.location.href = '/Negocios/ExportLogsExcel?negocioId=' + negocioId;
+    setTimeout(function() { btn.prop('disabled', false).html('<i class="bi bi-file-earmark-excel me-2"></i>Exportar'); }, 3000);
+});
+// Verificar si se puede cerrar periodo con manejo de errores
+function verificarCerrarPeriodo() {
+    $.get('/Negocios/GetOldestLogDate', { negocioId: negocioId }, function(d) {
+        if (d.fecha) {
+            var oldest = new Date(d.fecha);
+            var diasDesde = Math.round((new Date() - oldest) / 86400000);
+            if (diasDesde >= 30) { $('#btnCerrarPeriodo').removeClass('d-none'); }
+            else { $('#btnCerrarPeriodo').addClass('d-none'); }
+        }
+    }).fail(function() {
+        console.warn('No se pudo verificar la fecha del periodo');
+    });
+}
 $('#btnCerrarPeriodo').click(function() { swalMG.fire({ title: 'Cerrar Periodo', html: 'Se descargará el Excel de respaldo y luego se eliminarán todos los registros.<br><br><strong>Esta acción no se puede deshacer.</strong>', icon: 'warning', showCancelButton: true, confirmButtonColor: '#F1416C', cancelButtonColor: '#E4E6EF', confirmButtonText: 'Descargar y Cerrar', cancelButtonText: 'Cancelar', reverseButtons: true }).then((result) => { if (result.isConfirmed) { window.location.href = `/Negocios/ExportLogsExcel?negocioId=${negocioId}`; setTimeout(() => { $.post('/Negocios/EliminarTodosLogs', { negocioId }, function(r) { if (r.success) { tablaLogs.ajax.reload(); $('#btnCerrarPeriodo').addClass('d-none'); swalMG.fire('Periodo Cerrado', r.message, 'success'); } }).fail(xhr => swalMG.fire('Error', xhr.responseJSON?.message || 'Ocurrió un error', 'error')); }, 1500); } }); });
 
 let chartBarVentas = null, chartClientes = null, chartResumen = null; let ventasPeriodoActual = 'dia'; let ventasStatsData = null;
 const periodoLabels = { dia: { ingresos: 'Ingresos del Día', gastos: 'Gastos del Día', ganancia: 'Ganancia Neta del Día', resumen: 'Resumen del Día' }, semana: { ingresos: 'Ingresos de la Semana', gastos: 'Gastos de la Semana', ganancia: 'Ganancia Neta de la Semana', resumen: 'Resumen de la Semana' }, mes: { ingresos: 'Ingresos del Mes', gastos: 'Gastos del Mes', ganancia: 'Ganancia Neta del Mes', resumen: 'Resumen del Mes' } };
 const periodoKeys = { dia: { ingresos: 'ingresosDia', gastos: 'gastosDia', ganancia: 'gananciaDia' }, semana: { ingresos: 'ingresosSemana', gastos: 'gastosSemana', ganancia: 'gananciaSemana' }, mes: { ingresos: 'ingresosMes', gastos: 'gastosMes', ganancia: 'gananciaMes' } };
-function cargarVentasStats() { $.get('/Negocios/GetVentasStats', { negocioId }, function(d) { ventasStatsData = d; actualizarStatCards(); $('#ventasMembresias').text('$' + d.membresias30Dias.toFixed(2)); $('#ventasClientesDiarios').text(d.clientesDiariosHoy); $('#ventasGananciaMes').text('$' + d.gananciaMes.toFixed(2)); }); }
+// Cargar estadísticas de ventas con manejo de errores
+function cargarVentasStats() {
+    $.get('/Negocios/GetVentasStats', { negocioId: negocioId }, function(d) {
+        ventasStatsData = d;
+        actualizarStatCards();
+        $('#ventasMembresias').text('$' + (d.membresias30Dias || 0).toFixed(2));
+        $('#ventasClientesDiarios').text(d.clientesDiariosHoy || 0);
+        $('#ventasGananciaMes').text('$' + (d.gananciaMes || 0).toFixed(2));
+    }).fail(function(xhr) {
+        console.error('Error al cargar estadísticas de ventas:', xhr.responseText);
+        toastr.error('Error al cargar estadísticas de ventas');
+    });
+}
 function actualizarStatCards() { if (!ventasStatsData) return; const d = ventasStatsData; const keys = periodoKeys[ventasPeriodoActual]; const labels = periodoLabels[ventasPeriodoActual]; $('#ventasIngresosLabel').text(labels.ingresos); $('#ventasGastosLabel').text(labels.gastos); $('#ventasGananciaLabel').text(labels.ganancia); $('#ventasIngresos').text('$' + d[keys.ingresos].toFixed(2)); $('#ventasGastos').text('$' + d[keys.gastos].toFixed(2)); $('#ventasGanancia').text('$' + d[keys.ganancia].toFixed(2)); $('#chartResumenTitle').text(labels.resumen); }
 const chartFont = { fontFamily: 'Inter, sans-serif' };
-function cargarCharts() { const isMobile = window.innerWidth < 576; const chartH = isMobile ? 220 : 320; const periodo = ventasPeriodoActual; $.get('/Negocios/GetChartData', { negocioId, periodo }, function(d) { if (chartBarVentas) chartBarVentas.destroy(); chartBarVentas = new ApexCharts(document.querySelector("#chartBarVentas"), { series: [{ name: 'Ingresos', data: d.ingresos }, { name: 'Gastos', data: d.gastos }], chart: { type: 'bar', height: chartH, toolbar: { show: false }, fontFamily: chartFont.fontFamily }, colors: ['#50CD89', '#F1416C'], xaxis: { categories: d.labels, labels: { style: { colors: '#A1A5B7', fontSize: '12px' } }, axisBorder: { show: false }, axisTicks: { show: false } }, yaxis: { labels: { style: { colors: '#A1A5B7', fontSize: '12px' }, formatter: v => '$' + v.toFixed(0) } }, grid: { borderColor: '#EFF2F5', strokeDashArray: 4 }, plotOptions: { bar: { borderRadius: 6, columnWidth: '50%' } }, dataLabels: { enabled: false }, legend: { position: 'top', labels: { colors: '#5E6278' }, fontSize: '13px', fontWeight: 500 }, tooltip: { y: { formatter: v => '$' + v.toFixed(2) } } }); chartBarVentas.render(); const totalIngresos = d.ingresos.reduce((a, b) => a + b, 0); const totalGastos = d.gastos.reduce((a, b) => a + b, 0); if (chartResumen) chartResumen.destroy(); chartResumen = new ApexCharts(document.querySelector("#chartResumen"), { series: [totalIngresos || 1, totalGastos || 0], chart: { type: 'pie', height: chartH, fontFamily: chartFont.fontFamily }, labels: ['Ingresos', 'Gastos'], colors: ['#50CD89', '#F1416C'], legend: { position: 'bottom', labels: { colors: '#5E6278' }, fontSize: '13px', fontWeight: 500 }, dataLabels: { enabled: true, formatter: function(val, opts) { return '$' + opts.w.globals.series[opts.seriesIndex].toFixed(2); }, style: { fontSize: '13px', fontWeight: 600 } }, tooltip: { y: { formatter: v => '$' + v.toFixed(2) } } }); chartResumen.render(); }); $.get('/Negocios/GetClientesChartData', { negocioId, periodo }, function(d) { if (chartClientes) chartClientes.destroy(); chartClientes = new ApexCharts(document.querySelector("#chartClientes"), { series: [{ name: 'Nuevos Clientes', data: d.nuevosClientes }], chart: { type: 'area', height: chartH, toolbar: { show: false }, fontFamily: chartFont.fontFamily, sparkline: { enabled: false } }, colors: ['#3E97FF'], xaxis: { categories: d.labels, labels: { style: { colors: '#A1A5B7', fontSize: '12px' } }, axisBorder: { show: false }, axisTicks: { show: false } }, yaxis: { labels: { style: { colors: '#A1A5B7', fontSize: '12px' } } }, grid: { borderColor: '#EFF2F5', strokeDashArray: 4 }, fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.05 } }, dataLabels: { enabled: false }, stroke: { curve: 'smooth', width: 3 }, tooltip: { y: { formatter: v => v + ' clientes' } } }); chartClientes.render(); }); if (tablaUsuariosDiarios) { tablaUsuariosDiarios.destroy(); } tablaUsuariosDiarios = $('#tablaUsuariosDiarios').DataTable({ ajax: { url: '/Negocios/GetClientesDiarios', data: { negocioId }, dataSrc: '' }, columns: [ { data: 'nombreCompleto' }, { data: 'telefono', render: d => d || '<span class="text-muted">No registrado</span>' }, { data: 'fechaDeCreacion', render: d => new Date(d).toLocaleDateString('es-MX') } ], pageLength: 5, lengthChange: false, searching: false, info: false }); }
+// Función principal para cargar todos los gráficos de la pestaña Ventas
+function cargarCharts() {
+    const isMobile = window.innerWidth < 576;
+    const chartH = isMobile ? 220 : 320;
+    const periodo = ventasPeriodoActual;
+
+    // Gráfico de barras: Ingresos vs Gastos
+    $.get('/Negocios/GetChartData', { negocioId, periodo }, function(d) {
+        if (chartBarVentas) chartBarVentas.destroy();
+        chartBarVentas = new ApexCharts(document.querySelector("#chartBarVentas"), {
+            series: [{ name: 'Ingresos', data: d.ingresos }, { name: 'Gastos', data: d.gastos }],
+            chart: { type: 'bar', height: chartH, toolbar: { show: false }, fontFamily: chartFont.fontFamily },
+            colors: ['#50CD89', '#F1416C'],
+            xaxis: { categories: d.labels, labels: { style: { colors: '#A1A5B7', fontSize: '12px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+            yaxis: { labels: { style: { colors: '#A1A5B7', fontSize: '12px' }, formatter: function(v) { return '$' + v.toFixed(0); } } },
+            grid: { borderColor: '#EFF2F5', strokeDashArray: 4 },
+            plotOptions: { bar: { borderRadius: 6, columnWidth: '50%' } },
+            dataLabels: { enabled: false },
+            legend: { position: 'top', labels: { colors: '#5E6278' }, fontSize: '13px', fontWeight: 500 },
+            tooltip: { y: { formatter: function(v) { return '$' + v.toFixed(2); } } }
+        });
+        chartBarVentas.render();
+
+        // Gráfico donut: Resumen de Ingresos vs Gastos con ganancia neta central
+        const totalIngresos = d.ingresos.reduce(function(a, b) { return a + b; }, 0);
+        const totalGastos = d.gastos.reduce(function(a, b) { return a + b; }, 0);
+        if (chartResumen) chartResumen.destroy();
+
+        const chartResumenEl = document.querySelector("#chartResumen");
+
+        // Estado vacío cuando no hay datos
+        if (totalIngresos === 0 && totalGastos === 0) {
+            chartResumenEl.innerHTML = '<div class="text-center py-5">' +
+                '<i class="bi bi-pie-chart fs-1 d-block mb-3 text-muted opacity-50"></i>' +
+                '<p class="text-muted mb-1 fw-semibold">Sin datos para este periodo</p>' +
+                '<small class="text-muted">Registra ingresos o gastos para ver el resumen</small></div>';
+            chartResumen = null;
+        } else {
+            chartResumenEl.innerHTML = '';
+            const gananciaNet = totalIngresos - totalGastos;
+            const gananciaTexto = (gananciaNet >= 0 ? '+' : '') + '$' + gananciaNet.toFixed(2);
+
+            chartResumen = new ApexCharts(chartResumenEl, {
+                series: [totalIngresos, totalGastos],
+                chart: {
+                    type: 'donut',
+                    height: chartH + 30,
+                    fontFamily: chartFont.fontFamily,
+                    animations: { enabled: true, easing: 'easeinout', speed: 800, animateGradually: { enabled: true, delay: 150 } },
+                    dropShadow: { enabled: true, top: 2, left: 0, blur: 6, color: '#000', opacity: 0.08 }
+                },
+                labels: ['Ingresos', 'Gastos'],
+                colors: ['#50CD89', '#F1416C'],
+                // Configuración del donut con ganancia neta en el centro
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '72%',
+                            labels: {
+                                show: true,
+                                name: { show: true, fontSize: '14px', fontWeight: 600, color: '#A1A5B7', offsetY: -10 },
+                                value: {
+                                    show: true, fontSize: '22px', fontWeight: 700,
+                                    color: gananciaNet >= 0 ? '#50CD89' : '#F1416C',
+                                    offsetY: 4,
+                                    formatter: function() { return gananciaTexto; }
+                                },
+                                total: {
+                                    show: true, showAlways: true, label: 'Ganancia Neta',
+                                    fontSize: '13px', fontWeight: 500, color: '#A1A5B7',
+                                    formatter: function() { return gananciaTexto; }
+                                }
+                            }
+                        },
+                        expandOnClick: true
+                    }
+                },
+                // Etiquetas mostrando porcentaje Y monto
+                dataLabels: {
+                    enabled: true,
+                    formatter: function(val, opts) {
+                        var monto = opts.w.globals.series[opts.seriesIndex];
+                        return val.toFixed(1) + '%\n$' + monto.toFixed(2);
+                    },
+                    style: { fontSize: '12px', fontWeight: 600, colors: ['#fff'] },
+                    dropShadow: { enabled: true, top: 1, left: 0, blur: 2, opacity: 0.3 }
+                },
+                legend: { position: 'bottom', labels: { colors: '#5E6278' }, fontSize: '13px', fontWeight: 500, markers: { width: 12, height: 12, radius: 6 } },
+                tooltip: {
+                    y: {
+                        formatter: function(v) {
+                            var total = totalIngresos + totalGastos;
+                            return '$' + v.toFixed(2) + ' (' + (total > 0 ? ((v / total) * 100).toFixed(1) : 0) + '%)';
+                        }
+                    }
+                },
+                stroke: { show: true, width: 3, colors: ['#fff'] },
+                // Degradados para colores más profesionales
+                fill: {
+                    type: 'gradient',
+                    gradient: { shade: 'dark', type: 'vertical', shadeIntensity: 0.15, gradientToColors: ['#7AE8A5', '#FF7B9C'], inverseColors: false, opacityFrom: 1, opacityTo: 0.9, stops: [0, 100] }
+                },
+                // Animación hover
+                states: {
+                    hover: { filter: { type: 'darken', value: 0.15 } },
+                    active: { filter: { type: 'darken', value: 0.25 } }
+                },
+                // Responsive para móviles
+                responsive: [{
+                    breakpoint: 576,
+                    options: {
+                        chart: { height: 260 },
+                        plotOptions: { pie: { donut: { labels: { value: { fontSize: '18px' } } } } },
+                        dataLabels: { style: { fontSize: '10px' } }
+                    }
+                }]
+            });
+            chartResumen.render();
+        }
+    }).fail(function(xhr) {
+        console.error('Error al cargar datos del gráfico de barras:', xhr.responseText);
+        toastr.error('Error al cargar gráficos de ventas');
+    });
+
+    // Gráfico de área: Nuevos Clientes
+    $.get('/Negocios/GetClientesChartData', { negocioId, periodo }, function(d) {
+        if (chartClientes) chartClientes.destroy();
+        chartClientes = new ApexCharts(document.querySelector("#chartClientes"), {
+            series: [{ name: 'Nuevos Clientes', data: d.nuevosClientes }],
+            chart: { type: 'area', height: chartH, toolbar: { show: false }, fontFamily: chartFont.fontFamily, sparkline: { enabled: false } },
+            colors: ['#3E97FF'],
+            xaxis: { categories: d.labels, labels: { style: { colors: '#A1A5B7', fontSize: '12px' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+            yaxis: { labels: { style: { colors: '#A1A5B7', fontSize: '12px' } } },
+            grid: { borderColor: '#EFF2F5', strokeDashArray: 4 },
+            fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.45, opacityTo: 0.05 } },
+            dataLabels: { enabled: false },
+            stroke: { curve: 'smooth', width: 3 },
+            tooltip: { y: { formatter: function(v) { return v + ' clientes'; } } }
+        });
+        chartClientes.render();
+    }).fail(function(xhr) {
+        console.error('Error al cargar datos del gráfico de clientes:', xhr.responseText);
+        toastr.error('Error al cargar gráfico de clientes');
+    });
+
+    // Tabla de usuarios diarios
+    if (tablaUsuariosDiarios) { tablaUsuariosDiarios.destroy(); }
+    tablaUsuariosDiarios = $('#tablaUsuariosDiarios').DataTable({
+        ajax: {
+            url: '/Negocios/GetClientesDiarios', data: { negocioId }, dataSrc: '',
+            error: function(xhr) { console.error('Error al cargar usuarios diarios:', xhr.responseText); toastr.error('Error al cargar usuarios diarios'); }
+        },
+        columns: [
+            { data: 'nombreCompleto', render: function(d) { return $('<span>').text(d || '-').html(); } },
+            { data: 'telefono', render: function(d) { return d ? $('<span>').text(d).html() : '<span class="text-muted">No registrado</span>'; } },
+            { data: 'fechaDeCreacion', render: function(d) { return new Date(d).toLocaleDateString('es-MX'); } }
+        ],
+        pageLength: 5, lengthChange: false, searching: false, info: false,
+        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }
+    });
+}
 $('#ventasPeriodPills').on('click', '.mg-pill', function() { $('#ventasPeriodPills .mg-pill').removeClass('active'); $(this).addClass('active'); ventasPeriodoActual = $(this).data('periodo'); actualizarStatCards(); cargarCharts(); });
-$('#btnRefrescarVentas').click(function() { cargarVentasStats(); cargarCharts(); });
+// Refrescar ventas con estado de carga
+$('#btnRefrescarVentas').click(function() {
+    var btn = $(this);
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Cargando...');
+    cargarVentasStats();
+    cargarCharts();
+    // Rehabilitar botón después de un breve retraso para que las llamadas AJAX se completen
+    setTimeout(function() { btn.prop('disabled', false).html('<i class="bi bi-arrow-clockwise me-2"></i>Refrescar'); }, 2000);
+});
 $('#btnEnviarMensajesMasivos').off().click(function() { toastr.info('Usa el botón de WhatsApp en cada cliente para enviar mensajes individuales.'); });
 
-function cargarNotificacionesCount() { $.get('/Negocios/GetNotificacionesCount', { negocioId }, function(d) { const count = d.count; if (count > 0) { $('#topbarNotifBadge').text(count).removeClass('d-none'); $('#sidebarNotifBadge').text(count).removeClass('d-none'); } else { $('#topbarNotifBadge').addClass('d-none'); $('#sidebarNotifBadge').addClass('d-none'); } }); }
-function cargarNotificacionesDropdown() { $.get('/Negocios/GetNotificaciones', { negocioId }, function(data) { let html = ''; if (data.length === 0) { html = '<div class="text-center py-4 text-muted"><i class="bi bi-bell-slash fs-2 d-block mb-2"></i>Sin notificaciones</div>'; } else { data.slice(0, 10).forEach(n => { html += `<div class="mg-notification-item ${n.leida ? '' : 'unread'}" data-id="${n.id}"><div class="d-flex align-items-start gap-2"><i class="bi bi-clock-fill ${n.leida ? 'text-muted' : 'text-warning'} mt-1"></i><div><p class="mb-1 small ${n.leida ? 'text-muted' : 'fw-semibold'}">${n.mensaje}</p><small class="text-muted">${new Date(n.fechaCreacion).toLocaleString('es-MX')}</small></div></div></div>`; }); } $('#notifDropdownBody').html(html); }); }
-function cargarNotificacionesTab() { $.get('/Negocios/GetNotificaciones', { negocioId }, function(data) { let html = ''; if (data.length === 0) { html = '<div class="text-center py-5 text-muted"><i class="bi bi-bell-slash fs-1 d-block mb-3"></i><p>No hay notificaciones.</p></div>'; } else { data.forEach(n => { html += `<div class="mg-card p-3 ${n.leida ? '' : 'border-start border-3 border-primary'}"><div class="d-flex align-items-start gap-3"><div class="stat-icon ${n.leida ? 'bg-light' : 'bg-light-warning'}" style="min-width:40px;"><i class="bi bi-clock-fill ${n.leida ? 'text-muted' : 'text-warning'}"></i></div><div class="flex-grow-1"><p class="mb-1 ${n.leida ? 'text-muted' : 'fw-semibold'}">${n.mensaje}</p><small class="text-muted">${new Date(n.fechaCreacion).toLocaleString('es-MX')}</small></div>${!n.leida ? `<button class="btn btn-sm btn-light-primary" onclick="marcarLeida('${n.id}')"><i class="bi bi-check"></i></button>` : ''}</div></div>`; }); } $('#notificacionesList').html(html); }); }
-function marcarLeida(id) { $.post('/Negocios/MarcarNotificacionLeida', { id, negocioId }, function(r) { if (r.success) { cargarNotificacionesTab(); cargarNotificacionesCount(); } }); }
+// Cargar conteo de notificaciones con manejo de errores
+function cargarNotificacionesCount() {
+    $.get('/Negocios/GetNotificacionesCount', { negocioId: negocioId }, function(d) {
+        var count = d.count || 0;
+        if (count > 0) {
+            $('#topbarNotifBadge').text(count).removeClass('d-none');
+            $('#sidebarNotifBadge').text(count).removeClass('d-none');
+        } else {
+            $('#topbarNotifBadge').addClass('d-none');
+            $('#sidebarNotifBadge').addClass('d-none');
+        }
+    }).fail(function() {
+        console.warn('No se pudo cargar conteo de notificaciones');
+    });
+}
+// Cargar dropdown de notificaciones con protección XSS
+function cargarNotificacionesDropdown() {
+    $.get('/Negocios/GetNotificaciones', { negocioId: negocioId }, function(data) {
+        var html = '';
+        if (!data || data.length === 0) {
+            html = '<div class="text-center py-4 text-muted"><i class="bi bi-bell-slash fs-2 d-block mb-2"></i>Sin notificaciones</div>';
+        } else {
+            data.slice(0, 10).forEach(function(n) {
+                var readClass = n.leida ? '' : 'unread';
+                var iconClass = n.leida ? 'text-muted' : 'text-warning';
+                var textClass = n.leida ? 'text-muted' : 'fw-semibold';
+                html += '<div class="mg-notification-item ' + readClass + '" data-id="' + escHtml(n.id) + '">' +
+                    '<div class="d-flex align-items-start gap-2"><i class="bi bi-clock-fill ' + iconClass + ' mt-1"></i>' +
+                    '<div><p class="mb-1 small ' + textClass + '">' + escHtml(n.mensaje) + '</p>' +
+                    '<small class="text-muted">' + new Date(n.fechaCreacion).toLocaleString('es-MX') + '</small></div></div></div>';
+            });
+        }
+        $('#notifDropdownBody').html(html);
+    }).fail(function() {
+        $('#notifDropdownBody').html('<div class="text-center py-4 text-muted">Error al cargar notificaciones</div>');
+    });
+}
+// Cargar pestaña de notificaciones con protección XSS
+function cargarNotificacionesTab() {
+    $.get('/Negocios/GetNotificaciones', { negocioId: negocioId }, function(data) {
+        var html = '';
+        if (!data || data.length === 0) {
+            html = '<div class="text-center py-5 text-muted"><i class="bi bi-bell-slash fs-1 d-block mb-3"></i><p>No hay notificaciones.</p></div>';
+        } else {
+            data.forEach(function(n) {
+                var borderClass = n.leida ? '' : 'border-start border-3 border-primary';
+                var iconBg = n.leida ? 'bg-light' : 'bg-light-warning';
+                var iconColor = n.leida ? 'text-muted' : 'text-warning';
+                var textClass = n.leida ? 'text-muted' : 'fw-semibold';
+                var btnLeida = !n.leida ? '<button class="btn btn-sm btn-light-primary" onclick="marcarLeida(\'' + escHtml(n.id) + '\')"><i class="bi bi-check"></i></button>' : '';
+                html += '<div class="mg-card p-3 ' + borderClass + '">' +
+                    '<div class="d-flex align-items-start gap-3">' +
+                    '<div class="stat-icon ' + iconBg + '" style="min-width:40px;"><i class="bi bi-clock-fill ' + iconColor + '"></i></div>' +
+                    '<div class="flex-grow-1"><p class="mb-1 ' + textClass + '">' + escHtml(n.mensaje) + '</p>' +
+                    '<small class="text-muted">' + new Date(n.fechaCreacion).toLocaleString('es-MX') + '</small></div>' +
+                    btnLeida + '</div></div>';
+            });
+        }
+        $('#notificacionesList').html(html);
+    }).fail(function() {
+        $('#notificacionesList').html('<div class="text-center py-5 text-muted"><i class="bi bi-exclamation-triangle fs-1 d-block mb-3 text-warning"></i><p>Error al cargar notificaciones</p></div>');
+    });
+}
+// Marcar notificación como leída
+function marcarLeida(id) {
+    $.post('/Negocios/MarcarNotificacionLeida', { id: id, negocioId: negocioId }, function(r) {
+        if (r.success) { cargarNotificacionesTab(); cargarNotificacionesCount(); }
+    }).fail(function() { toastr.error('Error al marcar notificación como leída'); });
+}
 $('#bellBtn').on('show.bs.dropdown', function() { cargarNotificacionesDropdown(); });
-$('#btnMarcarTodasLeidas, #btnMarcarTodasLeidasTab').click(function() { $.post('/Negocios/MarcarTodasNotificacionesLeidas', { negocioId }, function(r) { if (r.success) { toastr.success(r.message); cargarNotificacionesCount(); cargarNotificacionesDropdown(); cargarNotificacionesTab(); } }); });
-$('#btnGenerarNotificaciones').click(function() { const btn = $(this); btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Generando...'); $.post('/Negocios/GenerarNotificaciones', { negocioId }, function(r) { if (r.success) { toastr.success(r.message); cargarNotificacionesTab(); cargarNotificacionesCount(); } }).always(() => { btn.prop('disabled', false).html('<i class="bi bi-arrow-repeat me-2"></i>Generar Notificaciones'); }); });
+// Marcar todas las notificaciones como leídas
+$('#btnMarcarTodasLeidas, #btnMarcarTodasLeidasTab').click(function() {
+    $.post('/Negocios/MarcarTodasNotificacionesLeidas', { negocioId: negocioId }, function(r) {
+        if (r.success) { toastr.success(r.message); cargarNotificacionesCount(); cargarNotificacionesDropdown(); cargarNotificacionesTab(); }
+    }).fail(function() { toastr.error('Error al marcar notificaciones como leídas'); });
+});
+// Generar notificaciones con estado de carga y manejo de errores
+$('#btnGenerarNotificaciones').click(function() {
+    var btn = $(this);
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Generando...');
+    $.post('/Negocios/GenerarNotificaciones', { negocioId: negocioId }, function(r) {
+        if (r.success) { toastr.success(r.message); cargarNotificacionesTab(); cargarNotificacionesCount(); }
+    }).fail(function(xhr) {
+        toastr.error(xhr.responseJSON?.message || 'Error al generar notificaciones');
+    }).always(function() {
+        btn.prop('disabled', false).html('<i class="bi bi-arrow-repeat me-2"></i>Generar Notificaciones');
+    });
+});
 
 // ===== RESUMEN TAB =====
 let resumenPeriodo = 'dia';
@@ -282,18 +760,24 @@ function saludoHora() {
     return 'Buenas noches';
 }
 
+// Cargar pestaña de resumen con manejo de errores
 function cargarResumen() {
     $('#resumenSaludo').text(saludoHora());
-    $.get('/Negocios/GetVentasStats', { negocioId }, function(d) {
+    $.get('/Negocios/GetVentasStats', { negocioId: negocioId }, function(d) {
         resumenStatsData = d;
         actualizarResumenCards();
+    }).fail(function(xhr) {
+        console.error('Error al cargar stats de resumen:', xhr.responseText);
     });
-    $.get('/Negocios/GetDashboardStats', { negocioId }, function(d) {
-        $('#resumenTotalClientes').text(d.totalClientes);
-        $('#resumenActivos').text(d.clientesActivos);
-        $('#resumenVencidos').text(d.clientesVencidos);
-        $('#resumenNuevosHoy').text(d.clientesNuevosHoy);
+    $.get('/Negocios/GetDashboardStats', { negocioId: negocioId }, function(d) {
+        $('#resumenTotalClientes').text(d.totalClientes || 0);
+        $('#resumenActivos').text(d.clientesActivos || 0);
+        $('#resumenVencidos').text(d.clientesVencidos || 0);
+        $('#resumenNuevosHoy').text(d.clientesNuevosHoy || 0);
         renderProximosVencer(d.proximosVencer);
+    }).fail(function(xhr) {
+        console.error('Error al cargar dashboard stats:', xhr.responseText);
+        toastr.error('Error al cargar datos del resumen');
     });
     cargarChartOverview();
 }
@@ -312,6 +796,7 @@ function actualizarResumenCards() {
     $('#resumenGanancia').text('$' + d[k.n].toFixed(2));
 }
 
+// Renderizar lista de próximos a vencer con protección XSS
 function renderProximosVencer(lista) {
     if (!lista || lista.length === 0) {
         $('#proximosVencerList').html('<div class="text-center py-4 text-muted"><i class="bi bi-check-circle fs-1 d-block mb-2 text-success"></i><p class="mb-0">Sin membresías próximas a vencer</p></div>');
@@ -319,21 +804,32 @@ function renderProximosVencer(lista) {
         return;
     }
     $('#resumenProximosCount').text(lista.length);
-    let html = '';
+    var html = '';
     lista.forEach(function(c) {
-        const badgeClass = c.diasRestantes <= 1 ? 'bg-danger' : c.diasRestantes <= 3 ? 'bg-warning text-dark' : 'bg-info';
+        var badgeClass = c.diasRestantes <= 1 ? 'bg-danger' : c.diasRestantes <= 3 ? 'bg-warning text-dark' : 'bg-info';
         html += '<div class="d-flex align-items-center gap-3 px-3 py-2 border-bottom">' +
-            '<div class="flex-grow-1"><span class="fw-semibold">' + c.nombreCompleto + '</span><br>' +
+            '<div class="flex-grow-1"><span class="fw-semibold">' + escHtml(c.nombreCompleto) + '</span><br>' +
             '<small class="text-muted">' + new Date(c.fechaQueTermina).toLocaleDateString('es-MX') + '</small></div>' +
             '<span class="badge ' + badgeClass + '">' + c.diasRestantes + 'd</span></div>';
     });
     $('#proximosVencerList').html(html);
 }
 
+// Cargar gráfico de resumen general con manejo de errores
 function cargarChartOverview() {
-    $.get('/Negocios/GetChartData', { negocioId, periodo: resumenPeriodo }, function(d) {
+    $.get('/Negocios/GetChartData', { negocioId: negocioId, periodo: resumenPeriodo }, function(d) {
         if (chartOverview) chartOverview.destroy();
-        chartOverview = new ApexCharts(document.querySelector("#chartResumenOverview"), {
+        var chartEl = document.querySelector("#chartResumenOverview");
+        // Estado vacío si no hay datos
+        var totalI = d.ingresos.reduce(function(a, b) { return a + b; }, 0);
+        var totalG = d.gastos.reduce(function(a, b) { return a + b; }, 0);
+        if (totalI === 0 && totalG === 0) {
+            chartEl.innerHTML = '<div class="text-center py-4 text-muted"><i class="bi bi-bar-chart fs-1 d-block mb-2 opacity-50"></i><p class="mb-0">Sin movimientos en este periodo</p></div>';
+            chartOverview = null;
+            return;
+        }
+        chartEl.innerHTML = '';
+        chartOverview = new ApexCharts(chartEl, {
             series: [{ name: 'Ingresos', data: d.ingresos }, { name: 'Gastos', data: d.gastos }],
             chart: { type: 'bar', height: window.innerWidth < 576 ? 220 : 280, toolbar: { show: false }, fontFamily: 'Inter, sans-serif' },
             colors: ['#50CD89', '#F1416C'],
@@ -346,6 +842,10 @@ function cargarChartOverview() {
             tooltip: { y: { formatter: function(v) { return '$' + v.toFixed(2); } } }
         });
         chartOverview.render();
+    }).fail(function(xhr) {
+        console.error('Error al cargar gráfico overview:', xhr.responseText);
+        var chartEl = document.querySelector("#chartResumenOverview");
+        if (chartEl) chartEl.innerHTML = '<div class="text-center py-4 text-muted"><i class="bi bi-exclamation-triangle fs-1 d-block mb-2 text-warning"></i><p class="mb-0">Error al cargar gráfico</p></div>';
     });
 }
 

@@ -1,3 +1,9 @@
+// ═══════════════════════════════════════════════════════════
+// SugerenciaService.cs — Servicio de sugerencias/feedback
+// Permite a los negocios enviar sugerencias al administrador.
+// El admin puede ver y marcar como leídas las sugerencias.
+// ═══════════════════════════════════════════════════════════
+
 using Gimnasio.Data;
 using Gimnasio.Models;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +19,14 @@ public class SugerenciaService : ISugerenciaService
         _context = context;
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // CREAR SUGERENCIA
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Crea una nueva sugerencia. Valida que no esté vacía
+    /// y que no exceda 1000 caracteres.
+    /// </summary>
     public async Task<(bool success, string message)> CrearSugerenciaAsync(Guid negocioId, string negocioNombre, string mensaje)
     {
         if (string.IsNullOrWhiteSpace(mensaje))
@@ -36,6 +50,13 @@ public class SugerenciaService : ISugerenciaService
         return (true, "Sugerencia enviada exitosamente. Gracias por tu feedback.");
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // CONSULTAS (ADMIN)
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Obtiene todas las sugerencias ordenadas por fecha descendente
+    /// </summary>
     public async Task<object> GetSugerenciasAsync()
     {
         return await _context.Sugerencias
@@ -52,6 +73,9 @@ public class SugerenciaService : ISugerenciaService
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Marca una sugerencia como leída
+    /// </summary>
     public async Task<(bool success, string message)> MarcarLeidaAsync(Guid id)
     {
         var sugerencia = await _context.Sugerencias.FindAsync(id);

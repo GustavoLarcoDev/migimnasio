@@ -1,0 +1,16 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "DefaultConnection": "Server=localhost,1433;Database=GimnasioDb;User Id=sa;Password=TU_PASSWORD_AQUI;TrustServerCertificate=True;Encrypt=False"
+  },
+  "AdminSettings": {
+    "Email": "tu-email@ejemplo.com",
+    "Password": "TU_PASSWORD_ADMIN_AQUI"
+  }
+}

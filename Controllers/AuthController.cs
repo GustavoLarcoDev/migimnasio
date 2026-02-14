@@ -1,3 +1,9 @@
+// ═══════════════════════════════════════════════════════════
+// AuthController.cs — Controlador de autenticación
+// Maneja login/logout usando Cookie Authentication.
+// Soporta dos roles: Admin y Negocio.
+// ═══════════════════════════════════════════════════════════
+
 using Gimnasio.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -18,6 +24,14 @@ public class AuthController : Controller
         _logService = logService;
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // LOGIN
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Muestra la vista de login. Si el usuario ya está autenticado,
+    /// redirige al panel admin o al dashboard del negocio según su rol.
+    /// </summary>
     [HttpGet("Login")]
     public IActionResult Login()
     {
@@ -33,6 +47,12 @@ public class AuthController : Controller
         return View("~/Views/Negocios/Login.cshtml");
     }
 
+    /// <summary>
+    /// Procesa el formulario de login. Valida credenciales contra:
+    /// 1. AdminSettings (admin del sistema)
+    /// 2. Tabla Negocios (por email o teléfono)
+    /// Si la suscripción expiró, muestra mensaje especial (EXPIRED).
+    /// </summary>
     [HttpPost("Login")]
     public async Task<IActionResult> Login(string email, string password)
     {
@@ -51,6 +71,7 @@ public class AuthController : Controller
             return View("~/Views/Negocios/Login.cshtml");
         }
 
+        // Login como Admin
         if (role == "Admin")
         {
             var adminClaims = new List<Claim>
@@ -69,7 +90,7 @@ public class AuthController : Controller
             return RedirectToAction("Index", "Admin");
         }
 
-        // Negocio login
+        // Login como Negocio
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.Name, negocio.NegocioNombre),
@@ -84,17 +105,27 @@ public class AuthController : Controller
             new ClaimsPrincipal(claimsIdentity),
             new AuthenticationProperties { IsPersistent = true });
 
+        // Registrar inicio de sesión en los logs del negocio
         await _logService.CreateLogAsync(negocio.NegocioId, "sesion_inicio",
             $"{negocio.DuenoNegocio} inició sesión en {negocio.NegocioNombre}");
 
         return RedirectToAction("Dashboard", "Clientes", new { id = negocio.NegocioId });
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // LOGOUT
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Cierra la sesión del usuario. Si es un negocio, registra
+    /// el cierre de sesión en los logs antes de cerrar.
+    /// </summary>
     [HttpGet("Logout")]
     public async Task<IActionResult> Logout()
     {
         var negocioId = _authService.GetNegocioId(User);
         var userName = User.Identity?.Name ?? "Usuario";
+
         if (negocioId.HasValue)
         {
             await _logService.CreateLogAsync(negocioId.Value, "sesion_cierre",

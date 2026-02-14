@@ -1,14 +1,15 @@
+// ═══════════════════════════════════════════════════════════
+// VentasService.cs — Servicio de ventas y estadísticas financieras
+// Calcula ingresos, gastos y ganancias SOLO desde la tabla Logs
+// (fuente inmutable). Eliminar un cliente no afecta los registros.
+// La tabla Clientes solo se usa para métricas de membresías.
+// ═══════════════════════════════════════════════════════════
+
 using Gimnasio.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Gimnasio.Services;
 
-/// <summary>
-/// Servicio de ventas y estadísticas financieras.
-/// Todos los ingresos y gastos se calculan SOLO desde la tabla Logs (fuente inmutable).
-/// Eliminar un cliente no afecta los registros financieros.
-/// La tabla Clientes solo se usa para métricas de membresías y conteo de clientes.
-/// </summary>
 public class VentasService : IVentasService
 {
     private readonly ApplicationDbContext _context;
@@ -18,13 +19,16 @@ public class VentasService : IVentasService
         _context = context;
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // ESTADÍSTICAS DE VENTAS
+    // ═══════════════════════════════════════════════════════════
+
     /// <summary>
-    /// Obtiene estadísticas de ventas completas para un negocio.
-    /// Calcula ingresos, gastos y ganancias agrupados por día, semana, mes y año.
-    /// También calcula membresías de 30+ días creadas en el mes y clientes diarios de hoy.
+    /// Calcula todas las métricas financieras del negocio:
+    /// - Ingresos, gastos y ganancias por día, semana, mes y año
+    /// - Membresías de 30+ días creadas este mes
+    /// - Clientes diarios de hoy
     /// </summary>
-    /// <param name="negocioId">ID único del negocio para filtrar datos</param>
-    /// <returns>Objeto anónimo con todas las métricas financieras del negocio</returns>
     public async Task<object> GetVentasStatsAsync(Guid negocioId)
     {
         // Definir los límites de cada periodo de tiempo
@@ -33,12 +37,9 @@ public class VentasService : IVentasService
         var inicioAnio = new DateTime(hoy.Year, 1, 1);
 
         // Calcular inicio de la semana actual (lunes)
-        // DayOfWeek.Sunday = 0, Monday = 1, etc.
-        // Si hoy es domingo, retroceder una semana completa para que lunes sea el inicio
         var inicioSemana = hoy.AddDays(-(((int)hoy.DayOfWeek + 6) % 7));
 
-        // Cargar todos los clientes y logs del negocio a memoria
-        // para realizar cálculos en memoria (evita múltiples queries a la DB)
+        // Cargar datos a memoria para evitar múltiples queries a la DB
         var clientes = await _context.Clientes
             .Where(c => c.NegocioId == negocioId)
             .ToListAsync();
@@ -47,36 +48,28 @@ public class VentasService : IVentasService
             .Where(l => l.NegocioId == negocioId)
             .ToListAsync();
 
-        // --- Métricas especiales ---
-
-        // Membresías de 30+ días: suma de precios de clientes con membresía >= 30 días creados este mes
+        // Membresías de 30+ días: suma de precios de membresías largas creadas este mes
         var membresias30Dias = clientes
             .Where(c => c.Dias >= 30 && c.FechaDeCreacion >= inicioMes)
             .Sum(c => c.Precio);
 
-        // Clientes diarios: cuenta de clientes marcados como "diario" creados hoy
+        // Clientes diarios de hoy
         var clientesDiariosHoy = clientes
             .Count(c => c.EsDiario && c.FechaDeCreacion.Date == hoy);
 
-        // --- Ingresos por periodo ---
-        // Ingresos vienen SOLO de Logs (fuente inmutable de verdad financiera).
-        // Cada creación, renovación y registro manual ya genera un log con el monto.
-        // Así, eliminar un cliente no afecta los ingresos registrados.
-
+        // Ingresos por periodo (monto > 0 en Logs)
         var ingresosDia = logs.Where(l => l.Fecha.Date == hoy && l.Monto > 0).Sum(l => l.Monto);
         var ingresosSemana = logs.Where(l => l.Fecha.Date >= inicioSemana && l.Monto > 0).Sum(l => l.Monto);
         var ingresosMes = logs.Where(l => l.Fecha >= inicioMes && l.Monto > 0).Sum(l => l.Monto);
         var ingresosAnio = logs.Where(l => l.Fecha >= inicioAnio && l.Monto > 0).Sum(l => l.Monto);
 
-        // --- Gastos por periodo ---
-        // Gastos = logs con monto negativo (se usa Math.Abs para mostrar como positivo)
-
+        // Gastos por periodo (monto < 0 en Logs, se muestra como positivo)
         var gastosDia = logs.Where(l => l.Fecha.Date == hoy && l.Monto < 0).Sum(l => Math.Abs(l.Monto));
         var gastosSemana = logs.Where(l => l.Fecha.Date >= inicioSemana && l.Monto < 0).Sum(l => Math.Abs(l.Monto));
         var gastosMes = logs.Where(l => l.Fecha >= inicioMes && l.Monto < 0).Sum(l => Math.Abs(l.Monto));
         var gastosAnio = logs.Where(l => l.Fecha >= inicioAnio && l.Monto < 0).Sum(l => Math.Abs(l.Monto));
 
-        // --- Ganancias netas = ingresos - gastos ---
+        // Ganancias netas = ingresos - gastos
         var gananciaDia = ingresosDia - gastosDia;
         var gananciaSemana = ingresosSemana - gastosSemana;
         var gananciaMes = ingresosMes - gastosMes;
@@ -101,24 +94,23 @@ public class VentasService : IVentasService
         };
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // DATOS PARA GRÁFICOS DE VENTAS
+    // ═══════════════════════════════════════════════════════════
+
     /// <summary>
-    /// Genera datos formateados para gráficos ApexCharts según el periodo solicitado.
+    /// Genera arrays de labels, ingresos y gastos listos para ApexCharts.
     /// Cada periodo produce diferentes agrupaciones:
-    /// - "dia": últimas 24 horas en bloques de 3 horas (8 puntos)
-    /// - "semana": últimos 7 días individuales (7 puntos)
-    /// - "mes": últimas 4 semanas (4 puntos)
-    /// - "anio": últimos 12 meses (12 puntos)
+    /// - "dia": 8 bloques de 3 horas
+    /// - "semana": 7 días individuales
+    /// - "mes": 4 semanas
+    /// - "anio": 12 meses
     /// </summary>
-    /// <param name="negocioId">ID único del negocio</param>
-    /// <param name="periodo">Periodo de agrupación: "dia", "semana", "mes" o "anio"</param>
-    /// <returns>Objeto con labels (eje X), ingresos (serie 1) y gastos (serie 2)</returns>
     public async Task<object> GetChartDataAsync(Guid negocioId, string periodo)
     {
         var hoy = DateTime.Now.Date;
         var ahora = DateTime.Now;
 
-        // Ingresos y gastos vienen SOLO de Logs (fuente inmutable).
-        // Eliminar un cliente no afecta los registros financieros.
         var logs = await _context.Logs
             .Where(l => l.NegocioId == negocioId)
             .ToListAsync();
@@ -130,6 +122,7 @@ public class VentasService : IVentasService
         switch (periodo.ToLower())
         {
             case "dia":
+                // Últimas 24 horas en bloques de 3 horas (8 puntos)
                 for (int i = 7; i >= 0; i--)
                 {
                     var bloqueInicio = ahora.AddHours(-i * 3);
@@ -142,6 +135,7 @@ public class VentasService : IVentasService
                 break;
 
             case "semana":
+                // Últimos 7 días individuales
                 for (int i = 6; i >= 0; i--)
                 {
                     var fecha = hoy.AddDays(-i);
@@ -153,6 +147,7 @@ public class VentasService : IVentasService
                 break;
 
             case "mes":
+                // Últimas 4 semanas
                 for (int i = 3; i >= 0; i--)
                 {
                     var inicioSemana = hoy.AddDays(-7 * i - (int)hoy.DayOfWeek);
@@ -165,6 +160,7 @@ public class VentasService : IVentasService
                 break;
 
             case "anio":
+                // Últimos 12 meses
                 for (int i = 11; i >= 0; i--)
                 {
                     var fecha = hoy.AddMonths(-i);
@@ -181,6 +177,13 @@ public class VentasService : IVentasService
         return new { labels, ingresos, gastos };
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // DATOS PARA GRÁFICO DE CLIENTES NUEVOS
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Genera arrays de labels y nuevosClientes agrupados por periodo
+    /// </summary>
     public async Task<object> GetClientesChartDataAsync(Guid negocioId, string periodo)
     {
         var hoy = DateTime.Now.Date;

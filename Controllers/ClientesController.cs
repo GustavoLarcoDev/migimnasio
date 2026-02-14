@@ -1,3 +1,9 @@
+// ═══════════════════════════════════════════════════════════
+// ClientesController.cs — Controlador de gestión de clientes
+// Maneja CRUD de clientes, renovación de membresías,
+// importación/exportación Excel y estadísticas del dashboard
+// ═══════════════════════════════════════════════════════════
+
 using Gimnasio.Models.DTOs;
 using Gimnasio.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -22,6 +28,15 @@ public class ClientesController : Controller
         _context = context;
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // VISTA PRINCIPAL
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Muestra el dashboard principal del negocio con todas las pestañas:
+    /// clientes, logs, ventas y notificaciones.
+    /// Valida que el usuario autenticado sea dueño de este negocio.
+    /// </summary>
     [HttpGet("{id}/Dashboard")]
     public async Task<IActionResult> Dashboard(Guid id)
     {
@@ -46,6 +61,14 @@ public class ClientesController : Controller
         }
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // ENDPOINTS DE CONSULTA (GET)
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Obtiene estadísticas del dashboard: clientes activos/vencidos,
+    /// ingresos del mes/hoy y clientes próximos a vencer (5 días)
+    /// </summary>
     [HttpGet("GetDashboardStats")]
     public async Task<IActionResult> GetDashboardStats(Guid negocioId)
     {
@@ -60,6 +83,9 @@ public class ClientesController : Controller
         }
     }
 
+    /// <summary>
+    /// Obtiene la lista completa de clientes del negocio con días restantes y estado
+    /// </summary>
     [HttpGet("GetClientes")]
     public async Task<IActionResult> GetClientes(Guid negocioId)
     {
@@ -74,6 +100,9 @@ public class ClientesController : Controller
         }
     }
 
+    /// <summary>
+    /// Obtiene los datos de un cliente específico para edición
+    /// </summary>
     [HttpGet("GetCliente")]
     public async Task<IActionResult> GetCliente(Guid id, Guid negocioId)
     {
@@ -91,6 +120,67 @@ public class ClientesController : Controller
         }
     }
 
+    /// <summary>
+    /// Obtiene el estado de suscripción del negocio: días restantes,
+    /// fecha de expiración y precio
+    /// </summary>
+    [HttpGet("GetSuscripcionStatus")]
+    public async Task<IActionResult> GetSuscripcionStatus(Guid negocioId)
+    {
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+
+            var negocio = await _context.Negocios.FindAsync(negocioId);
+            if (negocio == null)
+                return NotFound();
+
+            // Calcular días restantes de suscripción
+            int? diasRestantes = negocio.FechaExpiracion.HasValue
+                ? (int)(negocio.FechaExpiracion.Value.Date - DateTime.Now.Date).TotalDays
+                : null;
+
+            return Ok(new
+            {
+                diasRestantes,
+                fechaExpiracion = negocio.FechaExpiracion,
+                diasPagados = negocio.DiasPagados,
+                precioSuscripcion = negocio.PrecioSuscripcion
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// Obtiene solo los clientes marcados como "diario" (pago por día)
+    /// </summary>
+    [HttpGet("GetClientesDiarios")]
+    public async Task<IActionResult> GetClientesDiarios(Guid negocioId)
+    {
+        try
+        {
+            var clientes = await _clienteService.GetClientesDiariosAsync(negocioId);
+            return Ok(clientes);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // CRUD DE CLIENTES (POST)
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Crea un nuevo cliente. Valida propiedad del negocio.
+    /// Registra automáticamente un log con el monto pagado.
+    /// </summary>
     [HttpPost("CrearCliente")]
     public async Task<IActionResult> CrearCliente([FromForm] ClienteCreateDto model)
     {
@@ -113,6 +203,9 @@ public class ClientesController : Controller
         }
     }
 
+    /// <summary>
+    /// Edita un cliente existente. Registra los cambios detallados en el log.
+    /// </summary>
     [HttpPost("EditarCliente")]
     public async Task<IActionResult> EditarCliente([FromForm] ClienteCreateDto model)
     {
@@ -139,6 +232,9 @@ public class ClientesController : Controller
         }
     }
 
+    /// <summary>
+    /// Elimina un cliente y registra la acción en los logs
+    /// </summary>
     [HttpPost("EliminarCliente")]
     public async Task<IActionResult> EliminarCliente(Guid id, Guid negocioId)
     {
@@ -157,6 +253,10 @@ public class ClientesController : Controller
         }
     }
 
+    /// <summary>
+    /// Renueva la membresía de un cliente extendiendo su fecha de finalización.
+    /// Registra un log con el nuevo pago.
+    /// </summary>
     [HttpPost("RenovarCliente")]
     public async Task<IActionResult> RenovarCliente(Guid id, Guid negocioId, DateTime nuevaFechaFin, decimal precio)
     {
@@ -179,6 +279,13 @@ public class ClientesController : Controller
         }
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // IMPORTACIÓN / EXPORTACIÓN EXCEL
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Exporta todos los clientes del negocio a un archivo Excel (.xlsx)
+    /// </summary>
     [HttpGet("ExportClientesExcel")]
     public async Task<IActionResult> ExportClientesExcel(Guid negocioId)
     {
@@ -195,6 +302,10 @@ public class ClientesController : Controller
         }
     }
 
+    /// <summary>
+    /// Importa clientes desde un archivo Excel (.xlsx / .xls).
+    /// Detecta columnas automáticamente por headers y omite duplicados.
+    /// </summary>
     [HttpPost("ImportarClientesExcel")]
     public async Task<IActionResult> ImportarClientesExcel(Guid negocioId, IFormFile file)
     {
@@ -207,6 +318,7 @@ public class ClientesController : Controller
             if (file == null || file.Length == 0)
                 return BadRequest(new { success = false, message = "No se ha proporcionado ningún archivo" });
 
+            // Validar extensión del archivo
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (extension != ".xlsx" && extension != ".xls")
                 return BadRequest(new { success = false, message = "El archivo debe ser un Excel (.xlsx o .xls)" });
@@ -214,51 +326,6 @@ public class ClientesController : Controller
             using var stream = file.OpenReadStream();
             var result = await _clienteService.ImportarClientesExcelAsync(negocioId, stream);
             return Ok(result);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { success = false, message = ex.Message });
-        }
-    }
-
-    [HttpGet("GetSuscripcionStatus")]
-    public async Task<IActionResult> GetSuscripcionStatus(Guid negocioId)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value)
-                return Forbid();
-
-            var negocio = await _context.Negocios.FindAsync(negocioId);
-            if (negocio == null)
-                return NotFound();
-
-            int? diasRestantes = negocio.FechaExpiracion.HasValue
-                ? (int)(negocio.FechaExpiracion.Value.Date - DateTime.Now.Date).TotalDays
-                : null;
-
-            return Ok(new
-            {
-                diasRestantes,
-                fechaExpiracion = negocio.FechaExpiracion,
-                diasPagados = negocio.DiasPagados,
-                precioSuscripcion = negocio.PrecioSuscripcion
-            });
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, new { success = false, message = ex.Message });
-        }
-    }
-
-    [HttpGet("GetClientesDiarios")]
-    public async Task<IActionResult> GetClientesDiarios(Guid negocioId)
-    {
-        try
-        {
-            var clientes = await _clienteService.GetClientesDiariosAsync(negocioId);
-            return Ok(clientes);
         }
         catch (Exception ex)
         {
