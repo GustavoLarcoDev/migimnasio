@@ -51,6 +51,8 @@ public class NegocioService : INegocioService
                 DiasRestantesSuscripcion = g.FechaExpiracion.HasValue
                     ? (int)(g.FechaExpiracion.Value.Date - now.Date).TotalDays
                     : (int?)null,
+                // Indica si la suscripción aún no ha comenzado (fecha de inicio en el futuro)
+                PorEmpezar = g.FechaPago.HasValue && g.FechaPago.Value.Date > now.Date,
                 TotalClientes = _context.Clientes.Count(c => c.NegocioId == g.NegocioId)
             })
             .OrderByDescending(g => g.FechaCreacion)
@@ -271,7 +273,11 @@ public class NegocioService : INegocioService
         var totalNegocios = negocios.Count;
         var activos = negocios.Count(n => n.IsActive);
         var prueba = negocios.Count(n => n.EsPrueba);
-        var totalClientes = await _context.Clientes.CountAsync();
+        // Contar solo clientes que pertenecen a negocios existentes
+        var negocioIds = negocios.Select(n => n.NegocioId).ToHashSet();
+        var totalClientes = await _context.Clientes
+            .Where(c => negocioIds.Contains(c.NegocioId))
+            .CountAsync();
 
         // MRR: suma de PrecioSuscripcion de negocios activos que pagan
         var mrr = negocios
@@ -390,7 +396,8 @@ public class NegocioService : INegocioService
                 fechaExpiracion = n.FechaExpiracion,
                 diasRestantes = n.FechaExpiracion.HasValue
                     ? (int)(n.FechaExpiracion.Value.Date - now.Date).TotalDays
-                    : (int?)null
+                    : (int?)null,
+                porEmpezar = n.FechaPago.HasValue && n.FechaPago.Value.Date > now.Date
             })
             .ToList();
 

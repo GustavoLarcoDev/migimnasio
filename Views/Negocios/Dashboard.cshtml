@@ -158,6 +158,104 @@
         </div>
     </div>
 
+    <!-- TAB INVENTARIO -->
+    <div class="tab-pane fade" id="inventarioTab" role="tabpanel">
+        <!-- Botones de accion -->
+        <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+            <button id="btnCrearProducto" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Nuevo Producto
+            </button>
+            <button id="btnExportInventarioExcel" class="btn btn-success">
+                <i class="bi bi-file-earmark-excel me-2"></i>Exportar
+            </button>
+            <button id="btnToggleMovimientos" class="btn btn-outline-primary">
+                <i class="bi bi-clock-history me-2"></i>Historial
+            </button>
+        </div>
+
+        <!-- Stats -->
+        <div class="row g-3 mb-4">
+            <div class="col-xl-3 col-md-6 col-6">
+                <div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Total Productos</div><div class="stat-value" id="invTotalProductos">0</div></div><div class="stat-icon bg-light-primary"><i class="bi bi-box-seam text-primary"></i></div></div></div>
+            </div>
+            <div class="col-xl-3 col-md-6 col-6">
+                <div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Stock Bajo</div><div class="stat-value text-warning" id="invStockBajo">0</div></div><div class="stat-icon bg-light-warning"><i class="bi bi-exclamation-triangle-fill text-warning"></i></div></div></div>
+            </div>
+            <div class="col-xl-3 col-md-6 col-6">
+                <div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Ventas Hoy</div><div class="stat-value" id="invVentasHoy">0</div></div><div class="stat-icon bg-light-success"><i class="bi bi-cart-check-fill text-success"></i></div></div></div>
+            </div>
+            <div class="col-xl-3 col-md-6 col-6">
+                <div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Ingresos Hoy</div><div class="stat-value text-success" id="invIngresosHoy">$0</div></div><div class="stat-icon bg-light-info"><i class="bi bi-currency-dollar text-info"></i></div></div></div>
+            </div>
+        </div>
+
+        <!-- Grid de Product Cards -->
+        <div class="row g-3 mb-4" id="productosGrid"></div>
+
+        <!-- Historial de Movimientos (colapsable) -->
+        <div id="movimientosSection" class="d-none">
+            <h5 class="fw-bold mb-3"><i class="bi bi-clock-history me-2"></i>Historial de Movimientos</h5>
+            <div class="mg-card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="movimientosTable" class="table table-row-bordered align-middle gs-0 gy-3">
+                            <thead><tr class="fw-bold text-muted"><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Cant.</th><th>Total</th><th>Stock</th><th>Nota</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Crear/Editar Producto -->
+    <div class="modal fade" id="productoModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h3 class="modal-title fw-bolder" id="productoModalTitle">Nuevo Producto</h3>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="productoForm">
+                        <input type="hidden" id="prodId" name="ProductoId" />
+                        <input type="hidden" name="NegocioId" value="@Model.NegocioId" />
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label class="form-label fw-semibold required">Nombre del Producto</label>
+                                <input type="text" class="form-control" name="Nombre" id="prodNombre" placeholder="Ej: Botella de Agua" required />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold required">Precio de Venta ($)</label>
+                                <input type="number" step="0.01" min="0.01" class="form-control" name="PrecioVenta" id="prodPrecioVenta" placeholder="1.00" required />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold required">Costo de Compra ($)</label>
+                                <input type="number" step="0.01" min="0.01" class="form-control" name="CostoCompra" id="prodCostoCompra" placeholder="0.50" required />
+                                <div class="form-text" id="prodMargenText"></div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold required">Stock Inicial</label>
+                                <input type="number" min="0" class="form-control" name="Stock" id="prodStock" placeholder="50" required />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Stock Mínimo (alerta)</label>
+                                <input type="number" min="0" class="form-control" name="StockMinimo" id="prodStockMinimo" value="5" />
+                                <div class="form-text">Se alerta cuando el stock baje de este número</div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="btnGuardarProducto" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i>Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- TAB SUGERENCIAS -->
     <div class="tab-pane fade" id="sugerenciasTab" role="tabpanel">
         <div class="row justify-content-center">
@@ -232,7 +330,7 @@
 <script>
 const negocioId = '@negocioId';
 const negocioNombre = '@ViewData["NegocioNombre"]';
-let tablaClientes, tablaLogs, tablaUsuariosDiarios;
+let tablaClientes, tablaLogs, tablaUsuariosDiarios, tablaMovimientos;
 let modoEdicion = false;
 const swalMG = Swal.mixin({ confirmButtonColor: '#3E97FF', cancelButtonColor: '#E4E6EF', cancelButtonText: 'Cancelar', reverseButtons: true, customClass: { popup: 'mg-swal-popup', confirmButton: 'mg-swal-confirm', cancelButton: 'mg-swal-cancel' } });
 
@@ -256,7 +354,10 @@ function verificarSuscripcion() {
         // Update trial banner if exists
         var trialText = document.getElementById('trialDaysText');
         if (trialText && d.diasRestantes !== null) {
-            if (d.diasRestantes <= 0) {
+            if (d.porEmpezar) {
+                const inicioStr = new Date(d.fechaPago).toLocaleDateString('es-ES');
+                trialText.innerHTML = '- <span class="badge bg-secondary">Por empezar</span> <small>Inicia: ' + inicioStr + '</small>';
+            } else if (d.diasRestantes <= 0) {
                 trialText.innerHTML = '<span class="badge bg-danger">Expirado</span>';
             } else if (d.diasRestantes === 1) {
                 trialText.innerHTML = '- Te queda <strong class="text-danger">1 día</strong>';
@@ -265,6 +366,7 @@ function verificarSuscripcion() {
             }
         }
 
+        if (d.porEmpezar) return;
         if (d.diasRestantes !== null && d.diasRestantes <= 5 && d.diasRestantes >= 0) {
             swalMG.fire({
                 title: 'Tu suscripción está por vencer',
@@ -284,7 +386,7 @@ function verificarSuscripcion() {
         console.warn('Error al verificar suscripción:', xhr.responseText);
     });
 }
-document.addEventListener('mg-tab-shown', function(e) { if (e.detail.tab === 'resumenTab') { cargarResumen(); } else if (e.detail.tab === 'clientesTab') { if (!tablaClientes) { cargarTablaClientes(); } cargarEstadisticas(); } else if (e.detail.tab === 'ventasTab') { cargarVentasStats(); cargarCharts(); } else if (e.detail.tab === 'logsTab') { if (!tablaLogs) cargarTablaLogs(); verificarCerrarPeriodo(); } else if (e.detail.tab === 'notificacionesTab') { cargarNotificacionesTab(); } });
+document.addEventListener('mg-tab-shown', function(e) { if (e.detail.tab === 'resumenTab') { cargarResumen(); } else if (e.detail.tab === 'clientesTab') { if (!tablaClientes) { cargarTablaClientes(); } cargarEstadisticas(); } else if (e.detail.tab === 'ventasTab') { cargarVentasStats(); cargarCharts(); } else if (e.detail.tab === 'logsTab') { if (!tablaLogs) cargarTablaLogs(); verificarCerrarPeriodo(); } else if (e.detail.tab === 'notificacionesTab') { cargarNotificacionesTab(); } else if (e.detail.tab === 'inventarioTab') { cargarProductosGrid(); cargarInventarioStats(); } });
 
 // Cargar estadísticas de la pestaña Clientes
 function cargarEstadisticas() {
@@ -448,8 +550,8 @@ function uploadExcel(file) {
 }
 
 function initLogsTab() {}
-const tipoLogBadges = { 'ingreso': 'bg-success', 'gasto': 'bg-danger', 'cliente_creado': 'bg-primary', 'cliente_editado': 'bg-warning text-dark', 'cliente_renovado': 'bg-info', 'cliente_eliminado': 'bg-danger', 'sesion_inicio': 'bg-secondary', 'sesion_cierre': 'bg-dark', 'manual': 'bg-light text-dark' };
-const tipoLogLabels = { 'ingreso': 'Ingreso', 'gasto': 'Gasto', 'cliente_creado': 'Cliente Nuevo', 'cliente_editado': 'Edición', 'cliente_renovado': 'Renovación', 'cliente_eliminado': 'Eliminación', 'sesion_inicio': 'Inicio Sesión', 'sesion_cierre': 'Cierre Sesión', 'manual': 'Manual' };
+const tipoLogBadges = { 'ingreso': 'bg-success', 'gasto': 'bg-danger', 'cliente_creado': 'bg-primary', 'cliente_editado': 'bg-warning text-dark', 'cliente_renovado': 'bg-info', 'cliente_eliminado': 'bg-danger', 'sesion_inicio': 'bg-secondary', 'sesion_cierre': 'bg-dark', 'manual': 'bg-light text-dark', 'venta_inventario': 'bg-success', 'devolucion_inventario': 'bg-warning text-dark', 'restock_inventario': 'bg-info', 'ajuste_inventario': 'bg-secondary', 'producto_creado': 'bg-primary', 'producto_editado': 'bg-warning text-dark', 'producto_eliminado': 'bg-danger' };
+const tipoLogLabels = { 'ingreso': 'Ingreso', 'gasto': 'Gasto', 'cliente_creado': 'Cliente Nuevo', 'cliente_editado': 'Edición', 'cliente_renovado': 'Renovación', 'cliente_eliminado': 'Eliminación', 'sesion_inicio': 'Inicio Sesión', 'sesion_cierre': 'Cierre Sesión', 'manual': 'Manual', 'venta_inventario': 'Venta Inv.', 'devolucion_inventario': 'Dev. Inv.', 'restock_inventario': 'Restock', 'ajuste_inventario': 'Ajuste Inv.', 'producto_creado': 'Producto', 'producto_editado': 'Edit. Prod.', 'producto_eliminado': 'Elim. Prod.' };
 function cargarTablaLogs() { if (tablaLogs) { tablaLogs.destroy(); } tablaLogs = $('#logsTable').DataTable({ ajax: { url: '/Negocios/GetLogs', data: { negocioId: negocioId }, dataSrc: '', error: function(xhr, error, code) { console.error('DataTables error:', xhr.responseText); toastr.error('Error al cargar los logs: ' + (xhr.responseJSON?.message || 'Error desconocido')); } }, columns: [ { data: 'message' }, { data: 'tipo', render: function(d) { const badge = tipoLogBadges[d] || 'bg-secondary'; const label = tipoLogLabels[d] || d; return `<span class="badge ${badge}">${label}</span>`; } }, { data: 'nombreCliente', render: d => d || '<span class="text-muted">-</span>' }, { data: 'monto', render: d => d === 0 ? '<span class="text-muted">-</span>' : `<span class="${d >= 0 ? 'text-success' : 'text-danger'} fw-bold">${d >= 0 ? '+' : ''}$${d.toFixed(2)}</span>` }, { data: 'fecha', render: function(d, type) { if (type === 'sort' || type === 'type') return d; return new Date(d).toLocaleString('es-MX'); } } ], order: [[4, 'desc']], language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' } }); }
 // Registrar movimiento con estado de carga
 $('#btnRegistrarLog').click(function() {
@@ -997,5 +1099,317 @@ $('#btnEnviarSugerencia').click(function() {
         btn.prop('disabled', false).html('<i class="bi bi-send me-2"></i>Enviar Sugerencia');
     });
 });
+
+// ═══════════════════════════════════════════════════════════
+// INVENTARIO — Product Cards con flechas arriba/abajo
+// ═══════════════════════════════════════════════════════════
+
+var modoEdicionProducto = false;
+var productosCache = [];
+
+function cargarInventarioStats() {
+    $.get('/Negocios/GetInventarioStats', { negocioId }, function(d) {
+        $('#invTotalProductos').text(d.totalProductos);
+        $('#invStockBajo').text(d.stockBajo);
+        $('#invVentasHoy').text(d.ventasHoyUnidades);
+        $('#invIngresosHoy').text('$' + d.ingresosHoy.toFixed(2));
+    });
+}
+
+const tipoMovBadges = { 'venta': 'bg-success', 'devolucion': 'bg-warning text-dark', 'restock': 'bg-info', 'ajuste': 'bg-danger' };
+const tipoMovLabels = { 'venta': 'Venta', 'devolucion': 'Devolución', 'restock': 'Restock', 'ajuste': 'Ajuste' };
+
+// Renderiza los productos como tarjetas con flechas
+function cargarProductosGrid() {
+    $.get('/Negocios/GetProductos', { negocioId }, function(productos) {
+        productosCache = productos;
+        var grid = $('#productosGrid');
+        grid.empty();
+
+        if (!productos.length) {
+            grid.html('<div class="col-12 text-center py-5 text-muted"><i class="bi bi-box-seam fs-1 d-block mb-3 opacity-50"></i><p class="fs-5">No hay productos en el inventario</p><p>Haz clic en <strong>"Nuevo Producto"</strong> para agregar el primero</p></div>');
+            return;
+        }
+
+        productos.forEach(function(p) {
+            var stockClass = p.stockBajo ? 'text-danger' : 'text-success';
+            var stockBg = p.stockBajo ? 'bg-danger' : 'bg-success';
+            var card = '<div class="col-xl-2 col-lg-3 col-md-4 col-6">' +
+                '<div class="inv-card" data-id="' + p.productoId + '">' +
+                    '<div class="inv-card-actions">' +
+                        '<button class="inv-card-action-btn" onclick="editarProducto(\'' + p.productoId + '\')" title="Editar"><i class="bi bi-pencil"></i></button>' +
+                        '<button class="inv-card-action-btn inv-card-action-delete" onclick="eliminarProducto(\'' + p.productoId + '\',\'' + escHtml(p.nombre) + '\')" title="Eliminar"><i class="bi bi-trash"></i></button>' +
+                    '</div>' +
+                    '<div class="inv-card-name">' + escHtml(p.nombre) + '</div>' +
+                    '<div class="inv-card-price">$' + p.precioVenta.toFixed(2) + '</div>' +
+                    '<div class="inv-card-stock-row">' +
+                        '<button class="inv-arrow inv-arrow-up" onclick="accionSubir(\'' + p.productoId + '\',\'' + escHtml(p.nombre) + '\',' + p.precioVenta + ',' + p.stock + ')" title="Devolver o actualizar"><i class="bi bi-caret-up-fill"></i></button>' +
+                        '<span class="inv-card-stock ' + stockClass + '" id="stock-' + p.productoId + '">' + p.stock + '</span>' +
+                        '<button class="inv-arrow inv-arrow-down' + (p.stock <= 0 ? ' disabled' : '') + '" onclick="venderRapido(\'' + p.productoId + '\',' + p.stock + ')" title="Vender 1 unidad"><i class="bi bi-caret-down-fill"></i></button>' +
+                    '</div>' +
+                    (p.stockBajo ? '<small class="inv-card-alert"><i class="bi bi-exclamation-triangle-fill me-1"></i>Stock bajo</small>' : '') +
+                '</div>' +
+            '</div>';
+            grid.append(card);
+        });
+    }).fail(function() {
+        toastr.error('Error al cargar productos');
+    });
+}
+
+// Flecha abajo = venta instantanea de 1 unidad
+function venderRapido(productoId, stockActual) {
+    if (stockActual <= 0) { toastr.warning('No hay stock disponible'); return; }
+
+    // Animacion visual inmediata
+    var stockEl = $('#stock-' + productoId);
+    var cardEl = stockEl.closest('.inv-card');
+    cardEl.addClass('inv-card-selling');
+    stockEl.text(parseInt(stockEl.text()) - 1);
+
+    $.post('/Negocios/VenderProducto', { productoId, negocioId, cantidad: 1 }, function(r) {
+        if (r.success) {
+            toastr.success(r.message);
+            cargarInventarioStats();
+            if (tablaMovimientos) tablaMovimientos.ajax.reload();
+            if (tablaLogs) tablaLogs.ajax.reload();
+            // Recargar grid para actualizar estado correcto
+            setTimeout(function() { cargarProductosGrid(); }, 300);
+        } else {
+            toastr.error(r.message);
+            cargarProductosGrid();
+        }
+    }).fail(function(xhr) {
+        toastr.error(xhr.responseJSON?.message || 'Error al vender');
+        cargarProductosGrid();
+    }).always(function() {
+        setTimeout(function() { cardEl.removeClass('inv-card-selling'); }, 300);
+    });
+}
+
+// Flecha arriba = SweetAlert con 2 opciones
+function accionSubir(productoId, nombre, precio, stockActual) {
+    swalMG.fire({
+        title: escHtml(nombre),
+        html: '<p class="text-muted mb-0">Stock actual: <strong>' + stockActual + '</strong> | Precio: <strong>$' + precio.toFixed(2) + '</strong></p>',
+        icon: 'question',
+        showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonText: '<i class="bi bi-arrow-return-left me-1"></i>Devolver Producto',
+        denyButtonText: '<i class="bi bi-pencil-square me-1"></i>Actualizar Inventario',
+        confirmButtonColor: '#FFC700',
+        denyButtonColor: '#3E97FF',
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            // DEVOLVER — pedir razon y devolver dinero
+            swalMG.fire({
+                title: 'Devolver: ' + escHtml(nombre),
+                html: '<div class="text-start">' +
+                    '<div class="mb-3"><label class="form-label fw-semibold">Cantidad a devolver</label>' +
+                    '<input type="number" id="swalDevCant" class="form-control" value="1" min="1"></div>' +
+                    '<div class="mb-3"><label class="form-label fw-semibold">Razón de la devolución</label>' +
+                    '<textarea id="swalDevNota" class="form-control" rows="2" placeholder="Ej: Cliente cambió de opinión"></textarea></div>' +
+                    '<p class="text-warning small"><i class="bi bi-info-circle me-1"></i>Se reembolsará el dinero al cliente</p></div>',
+                showCancelButton: true,
+                confirmButtonText: '<i class="bi bi-check-lg me-1"></i>Confirmar Devolución',
+                confirmButtonColor: '#FFC700',
+                preConfirm: function() {
+                    var cant = parseInt(document.getElementById('swalDevCant').value);
+                    var nota = document.getElementById('swalDevNota').value.trim();
+                    if (!cant || cant <= 0) { Swal.showValidationMessage('Cantidad inválida'); return false; }
+                    if (!nota) { Swal.showValidationMessage('La razón es obligatoria'); return false; }
+                    return { cantidad: cant, nota: nota };
+                }
+            }).then(function(res) {
+                if (res.isConfirmed) {
+                    $.post('/Negocios/DevolverProducto', { productoId, negocioId, cantidad: res.value.cantidad, nota: res.value.nota }, function(r) {
+                        if (r.success) {
+                            toastr.success(r.message);
+                            cargarProductosGrid();
+                            cargarInventarioStats();
+                            if (tablaMovimientos) tablaMovimientos.ajax.reload();
+                            if (tablaLogs) tablaLogs.ajax.reload();
+                        } else {
+                            toastr.error(r.message);
+                        }
+                    }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al devolver'); });
+                }
+            });
+        } else if (result.isDenied) {
+            // ACTUALIZAR INVENTARIO — solo cambiar cantidad
+            swalMG.fire({
+                title: 'Actualizar: ' + escHtml(nombre),
+                html: '<div class="text-start">' +
+                    '<p class="text-muted">Stock en sistema: <strong>' + stockActual + '</strong></p>' +
+                    '<div class="mb-3"><label class="form-label fw-semibold">Stock real (contado)</label>' +
+                    '<input type="number" id="swalAjusteStock" class="form-control" min="0" placeholder="¿Cuántos tienes realmente?"></div>' +
+                    '<div class="mb-3"><label class="form-label fw-semibold">Nota</label>' +
+                    '<textarea id="swalAjusteNota" class="form-control" rows="2" placeholder="Ej: Reabastecimiento, conteo físico"></textarea></div>' +
+                    '<div id="swalAjusteDiff"></div></div>',
+                showCancelButton: true,
+                confirmButtonText: '<i class="bi bi-check-lg me-1"></i>Actualizar Stock',
+                didOpen: function() {
+                    var input = document.getElementById('swalAjusteStock');
+                    input.addEventListener('input', function() {
+                        var real = parseInt(this.value);
+                        var diffDiv = document.getElementById('swalAjusteDiff');
+                        if (isNaN(real)) { diffDiv.innerHTML = ''; return; }
+                        var diff = real - stockActual;
+                        if (diff === 0) {
+                            diffDiv.innerHTML = '<div class="p-2 rounded bg-light text-center"><span class="text-muted fw-bold">Sin cambio</span></div>';
+                        } else if (diff > 0) {
+                            diffDiv.innerHTML = '<div class="p-2 rounded text-center" style="background:#E8FFF3"><span class="text-success fw-bold">+' + diff + ' unidades</span></div>';
+                        } else {
+                            diffDiv.innerHTML = '<div class="p-2 rounded text-center" style="background:#FFF5F8"><span class="text-danger fw-bold">' + diff + ' unidades (posible pérdida)</span></div>';
+                        }
+                    });
+                },
+                preConfirm: function() {
+                    var stockReal = parseInt(document.getElementById('swalAjusteStock').value);
+                    var nota = document.getElementById('swalAjusteNota').value.trim();
+                    if (isNaN(stockReal) || stockReal < 0) { Swal.showValidationMessage('Ingrese un stock válido'); return false; }
+                    if (!nota) { Swal.showValidationMessage('La nota es obligatoria'); return false; }
+                    if (stockReal === stockActual) { Swal.showValidationMessage('El stock es igual, no hay cambio'); return false; }
+                    return { stockReal: stockReal, nota: nota };
+                }
+            }).then(function(res) {
+                if (res.isConfirmed) {
+                    $.post('/Negocios/AjustarStock', { productoId, negocioId, stockReal: res.value.stockReal, nota: res.value.nota }, function(r) {
+                        if (r.success) {
+                            toastr.success(r.message);
+                            cargarProductosGrid();
+                            cargarInventarioStats();
+                            if (tablaMovimientos) tablaMovimientos.ajax.reload();
+                            if (tablaLogs) tablaLogs.ajax.reload();
+                        } else {
+                            toastr.error(r.message);
+                        }
+                    }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al ajustar'); });
+                }
+            });
+        }
+    });
+}
+
+// ── Movimientos DataTable ──
+function cargarTablaMovimientos() {
+    if (tablaMovimientos) tablaMovimientos.destroy();
+    tablaMovimientos = $('#movimientosTable').DataTable({
+        ajax: { url: '/Negocios/GetMovimientos', data: { negocioId }, dataSrc: '' },
+        columns: [
+            { data: 'fecha', render: function(d, type) { if (type === 'sort') return d; return new Date(d).toLocaleString('es-MX'); } },
+            { data: 'nombreProducto', render: d => escHtml(d) },
+            { data: 'tipo', render: function(d) { return '<span class="badge ' + (tipoMovBadges[d] || 'bg-secondary') + '">' + (tipoMovLabels[d] || d) + '</span>'; } },
+            { data: 'cantidad' },
+            { data: 'total', render: d => '$' + d.toFixed(2) },
+            { data: null, render: function(d, t, r) { return r.stockAnterior + ' → ' + r.stockNuevo; } },
+            { data: 'nota', render: d => d ? '<small>' + escHtml(d) + '</small>' : '<span class="text-muted">-</span>' }
+        ],
+        order: [[0, 'desc']],
+        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }
+    });
+}
+
+// Toggle historial
+$('#btnToggleMovimientos').click(function() {
+    var section = $('#movimientosSection');
+    if (section.hasClass('d-none')) {
+        section.removeClass('d-none');
+        $(this).html('<i class="bi bi-clock-history me-2"></i>Ocultar Historial').removeClass('btn-outline-primary').addClass('btn-primary');
+        if (!tablaMovimientos) cargarTablaMovimientos();
+        else tablaMovimientos.ajax.reload();
+    } else {
+        section.addClass('d-none');
+        $(this).html('<i class="bi bi-clock-history me-2"></i>Historial').removeClass('btn-primary').addClass('btn-outline-primary');
+    }
+});
+
+// Exportar Excel
+$('#btnExportInventarioExcel').click(function() {
+    window.location.href = '/Negocios/ExportInventarioExcel?negocioId=' + negocioId;
+});
+
+// ── Crear/Editar Producto ──
+$('#btnCrearProducto').click(function() {
+    modoEdicionProducto = false;
+    $('#productoModalTitle').text('Nuevo Producto');
+    $('#productoForm')[0].reset();
+    $('#prodId').val('');
+    $('#prodStockMinimo').val(5);
+    $('#prodStock').prop('readonly', false);
+    $('#prodMargenText').text('');
+    $('#productoModal').modal('show');
+});
+
+$('#prodPrecioVenta, #prodCostoCompra').on('input', function() {
+    var venta = parseFloat($('#prodPrecioVenta').val()) || 0;
+    var costo = parseFloat($('#prodCostoCompra').val()) || 0;
+    if (venta > 0 && costo > 0) {
+        var margen = venta - costo;
+        $('#prodMargenText').html('Margen por unidad: <strong class="' + (margen > 0 ? 'text-success' : 'text-danger') + '">$' + margen.toFixed(2) + '</strong>');
+    } else {
+        $('#prodMargenText').text('');
+    }
+});
+
+function editarProducto(id) {
+    $.get('/Negocios/GetProducto', { id, negocioId }, function(data) {
+        modoEdicionProducto = true;
+        $('#productoModalTitle').text('Editar Producto');
+        $('#prodId').val(data.productoId);
+        $('#prodNombre').val(data.nombre);
+        $('#prodPrecioVenta').val(data.precioVenta);
+        $('#prodCostoCompra').val(data.costoCompra);
+        $('#prodStock').val(data.stock).prop('readonly', true);
+        $('#prodStockMinimo').val(data.stockMinimo);
+        $('#prodPrecioVenta').trigger('input');
+        $('#productoModal').modal('show');
+    }).fail(() => toastr.error('Error al cargar producto'));
+}
+
+$('#btnGuardarProducto').click(function() {
+    if (!$('#productoForm')[0].checkValidity()) { $('#productoForm')[0].reportValidity(); return; }
+    var url = modoEdicionProducto ? '/Negocios/EditarProducto' : '/Negocios/CrearProducto';
+    var btn = $(this);
+    var originalHtml = btn.html();
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...');
+
+    $.post(url, $('#productoForm').serialize(), function(r) {
+        if (r.success) {
+            $('#productoModal').modal('hide');
+            cargarProductosGrid();
+            cargarInventarioStats();
+            if (tablaLogs) tablaLogs.ajax.reload();
+            toastr.success(r.message);
+        } else {
+            toastr.error(r.message || 'Error al guardar');
+        }
+    }).fail(xhr => toastr.error(xhr.responseJSON?.message || 'Error al guardar producto'))
+      .always(() => btn.prop('disabled', false).html(originalHtml));
+});
+
+function eliminarProducto(id, nombre) {
+    swalMG.fire({
+        title: '¿Eliminar producto?',
+        text: 'Se eliminará "' + nombre + '" del inventario.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#F1416C',
+        confirmButtonText: 'Sí, eliminar'
+    }).then(result => {
+        if (result.isConfirmed) {
+            $.post('/Negocios/EliminarProducto', { id, negocioId }, function(r) {
+                if (r.success) {
+                    cargarProductosGrid();
+                    cargarInventarioStats();
+                    if (tablaLogs) tablaLogs.ajax.reload();
+                    swalMG.fire('Eliminado', r.message, 'success');
+                } else {
+                    swalMG.fire('Error', r.message, 'error');
+                }
+            }).fail(xhr => swalMG.fire('Error', xhr.responseJSON?.message || 'Error', 'error'));
+        }
+    });
+}
 </script>
 }

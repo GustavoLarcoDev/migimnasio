@@ -36,4 +36,10 @@ public class ApplicationDbContext : DbContext
 
     /// <summary>Tabla de logs de acciones administrativas</summary>
     public DbSet<AdminLog> AdminLogs { get; set; }
+
+    /// <summary>Tabla de productos en inventario</summary>
+    public DbSet<Producto> Productos { get; set; }
+
+    /// <summary>Tabla de movimientos de inventario (audit trail inmutable)</summary>
+    public DbSet<MovimientoInventario> MovimientosInventario { get; set; }
 }

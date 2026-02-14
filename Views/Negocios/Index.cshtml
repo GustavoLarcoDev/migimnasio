@@ -654,8 +654,8 @@ function cargarResumen() {
     $.get('/Negocios/GetNegocios', function (data) {
         negociosData = data;
         const ingresos = data.filter(g => g.isActive && g.precioSuscripcion > 0).reduce((sum, g) => sum + g.precioSuscripcion, 0);
-        const porVencer = data.filter(g => g.diasRestantesSuscripcion !== null && g.diasRestantesSuscripcion >= 0 && g.diasRestantesSuscripcion <= 7).length;
-        const expirados = data.filter(g => g.diasRestantesSuscripcion !== null && g.diasRestantesSuscripcion < 0).length;
+        const porVencer = data.filter(g => g.diasRestantesSuscripcion !== null && g.diasRestantesSuscripcion >= 0 && g.diasRestantesSuscripcion <= 7 && !g.porEmpezar).length;
+        const expirados = data.filter(g => g.diasRestantesSuscripcion !== null && g.diasRestantesSuscripcion < 0 && !g.porEmpezar).length;
 
         $('#resumenIngresosMensuales').text('$' + ingresos.toFixed(2));
         $('#resumenPorVencer').text(porVencer);
@@ -770,6 +770,10 @@ function cargarTablaNegocios() {
                     const fecha = new Date(row.fechaExpiracion);
                     const fechaStr = fecha.toLocaleDateString('es-ES');
                     if (data === null || data === undefined) return '<span class="text-muted">' + fechaStr + '</span>';
+                    if (row.porEmpezar) {
+                        const inicioStr = new Date(row.fechaPago).toLocaleDateString('es-ES');
+                        return '<span class="badge bg-secondary">Por empezar</span><br><small class="text-muted">Inicia: ' + inicioStr + '</small>';
+                    }
                     if (data < 0) return '<span class="badge bg-danger">Expirado</span><br><small class="text-muted">' + fechaStr + '</small>';
                     if (data <= 3) return '<span class="badge bg-warning text-dark">' + data + 'd</span><br><small class="text-muted">' + fechaStr + '</small>';
                     if (data <= 7) return '<span class="badge bg-info">' + data + 'd</span><br><small class="text-muted">' + fechaStr + '</small>';
@@ -1259,9 +1263,10 @@ function cargarTablaVentasNegocios(data) {
                 render: function (data) { return data ? new Date(data).toLocaleDateString('es-ES') : '-'; }
             },
             {
-                data: 'diasRestantesSuscripcion',
-                render: function (data) {
+                data: 'diasRestantes',
+                render: function (data, type, row) {
                     if (data === null || data === undefined) return '<span class="text-muted">-</span>';
+                    if (row.porEmpezar) return '<span class="badge bg-secondary">Por empezar</span>';
                     if (data < 0) return '<span class="badge bg-danger">Expirado</span>';
                     if (data <= 3) return '<span class="badge bg-warning text-dark">' + data + ' días</span>';
                     if (data <= 7) return '<span class="badge bg-info">' + data + ' días</span>';

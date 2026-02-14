@@ -138,16 +138,20 @@ public class ClientesController : Controller
                 return NotFound();
 
             // Calcular días restantes de suscripción
+            var now = DateTime.Now;
             int? diasRestantes = negocio.FechaExpiracion.HasValue
-                ? (int)(negocio.FechaExpiracion.Value.Date - DateTime.Now.Date).TotalDays
+                ? (int)(negocio.FechaExpiracion.Value.Date - now.Date).TotalDays
                 : null;
+            bool porEmpezar = negocio.FechaPago.HasValue && negocio.FechaPago.Value.Date > now.Date;
 
             return Ok(new
             {
                 diasRestantes,
                 fechaExpiracion = negocio.FechaExpiracion,
+                fechaPago = negocio.FechaPago,
                 diasPagados = negocio.DiasPagados,
-                precioSuscripcion = negocio.PrecioSuscripcion
+                precioSuscripcion = negocio.PrecioSuscripcion,
+                porEmpezar
             });
         }
         catch (Exception ex)
