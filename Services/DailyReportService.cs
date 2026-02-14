@@ -34,29 +34,29 @@ public class DailyReportService : BackgroundService
     {
         _logger.LogInformation("DailyReportService iniciado");
 
-        while (!stoppingToken.IsCancellationRequested)
+        try
         {
-            // Calcular próxima ejecución: 9:00 PM hora Ecuador (UTC-5)
-            var ecuadorZone = TimeZoneInfo.FindSystemTimeZoneById("America/Guayaquil");
-            var nowEcuador = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ecuadorZone);
-            var nextRun = nowEcuador.Date.AddHours(21); // 9:00 PM hoy
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                var ecuadorZone = TimeZoneInfo.FindSystemTimeZoneById("America/Guayaquil");
+                var nowEcuador = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ecuadorZone);
+                var nextRun = nowEcuador.Date.AddHours(21);
 
-            // Si ya pasó la hora de ejecución, programar para mañana
-            if (nowEcuador >= nextRun)
-                nextRun = nextRun.AddDays(1);
+                if (nowEcuador >= nextRun)
+                    nextRun = nextRun.AddDays(1);
 
-            var nextRunUtc = TimeZoneInfo.ConvertTimeToUtc(nextRun, ecuadorZone);
-            var delay = nextRunUtc - DateTime.UtcNow;
+                var nextRunUtc = TimeZoneInfo.ConvertTimeToUtc(nextRun, ecuadorZone);
+                var delay = nextRunUtc - DateTime.UtcNow;
 
-            _logger.LogInformation(
-                "Resumen diario: próxima ejecución en {Delay} ({NextRun} hora Ecuador)",
-                delay, nextRun);
+                _logger.LogInformation(
+                    "Resumen diario: próxima ejecución en {Delay} ({NextRun} hora Ecuador)",
+                    delay, nextRun);
 
-            await Task.Delay(delay, stoppingToken);
-
-            // Ejecutar el envío de resúmenes
-            await EnviarResumenesDiariosAsync(stoppingToken);
+                await Task.Delay(delay, stoppingToken);
+                await EnviarResumenesDiariosAsync(stoppingToken);
+            }
         }
+        catch (TaskCanceledException) { /* Apagado normal de la aplicación */ }
 
         _logger.LogInformation("DailyReportService detenido");
     }

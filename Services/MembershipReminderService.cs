@@ -37,25 +37,29 @@ public class MembershipReminderService : BackgroundService
     {
         _logger.LogInformation("MembershipReminderService iniciado");
 
-        while (!stoppingToken.IsCancellationRequested)
+        try
         {
-            var ecuadorZone = TimeZoneInfo.FindSystemTimeZoneById("America/Guayaquil");
-            var nowEcuador = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ecuadorZone);
-            var nextRun = nowEcuador.Date.AddHours(8);
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                var ecuadorZone = TimeZoneInfo.FindSystemTimeZoneById("America/Guayaquil");
+                var nowEcuador = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ecuadorZone);
+                var nextRun = nowEcuador.Date.AddHours(8);
 
-            if (nowEcuador >= nextRun)
-                nextRun = nextRun.AddDays(1);
+                if (nowEcuador >= nextRun)
+                    nextRun = nextRun.AddDays(1);
 
-            var nextRunUtc = TimeZoneInfo.ConvertTimeToUtc(nextRun, ecuadorZone);
-            var delay = nextRunUtc - DateTime.UtcNow;
+                var nextRunUtc = TimeZoneInfo.ConvertTimeToUtc(nextRun, ecuadorZone);
+                var delay = nextRunUtc - DateTime.UtcNow;
 
-            _logger.LogInformation(
-                "Recordatorios: próxima ejecución en {Delay} ({NextRun} hora Ecuador)",
-                delay, nextRun);
+                _logger.LogInformation(
+                    "Recordatorios: próxima ejecución en {Delay} ({NextRun} hora Ecuador)",
+                    delay, nextRun);
 
-            await Task.Delay(delay, stoppingToken);
-            await EnviarRecordatoriosAsync(stoppingToken);
+                await Task.Delay(delay, stoppingToken);
+                await EnviarRecordatoriosAsync(stoppingToken);
+            }
         }
+        catch (TaskCanceledException) { /* Apagado normal de la aplicación */ }
 
         _logger.LogInformation("MembershipReminderService detenido");
     }
