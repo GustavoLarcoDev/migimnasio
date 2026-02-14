@@ -28,6 +28,12 @@ public class Gym
     public DateTime FechaCreacion { get; set; } = DateTime.Now;
     public DateTime FechaDeActualizacion { get; set; }
 
+    // Subscription tracking
+    public int DiasPagados { get; set; } = 30;
+    public decimal PrecioSuscripcion { get; set; } = 0;
+    public DateTime? FechaPago { get; set; }
+    public DateTime? FechaExpiracion { get; set; }
+
     // Lista de clientes
     public ICollection<Cliente> Clientes { get; set; } = new List<Cliente>();
 }

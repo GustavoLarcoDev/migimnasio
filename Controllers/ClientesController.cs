@@ -221,6 +221,37 @@ public class ClientesController : Controller
         }
     }
 
+    [HttpGet("GetSuscripcionStatus")]
+    public async Task<IActionResult> GetSuscripcionStatus(Guid negocioId)
+    {
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+
+            var negocio = await _context.Negocios.FindAsync(negocioId);
+            if (negocio == null)
+                return NotFound();
+
+            int? diasRestantes = negocio.FechaExpiracion.HasValue
+                ? (int)(negocio.FechaExpiracion.Value.Date - DateTime.Now.Date).TotalDays
+                : null;
+
+            return Ok(new
+            {
+                diasRestantes,
+                fechaExpiracion = negocio.FechaExpiracion,
+                diasPagados = negocio.DiasPagados,
+                precioSuscripcion = negocio.PrecioSuscripcion
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
     [HttpGet("GetClientesDiarios")]
     public async Task<IActionResult> GetClientesDiarios(Guid negocioId)
     {

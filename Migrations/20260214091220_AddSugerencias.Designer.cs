@@ -4,6 +4,7 @@ using Gimnasio.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Gimnasio.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260214091220_AddSugerencias")]
+    partial class AddSugerencias
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -84,9 +87,6 @@ namespace Gimnasio.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("DiasPagados")
-                        .HasColumnType("int");
-
                     b.Property<string>("DuenoNegocio")
                         .HasColumnType("nvarchar(max)");
 
@@ -102,12 +102,6 @@ namespace Gimnasio.Migrations
                     b.Property<DateTime>("FechaDeActualizacion")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime?>("FechaExpiracion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("FechaPago")
-                        .HasColumnType("datetime2");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -117,9 +111,6 @@ namespace Gimnasio.Migrations
 
                     b.Property<string>("Password")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("PrecioSuscripcion")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Telefono")
                         .HasColumnType("nvarchar(max)");

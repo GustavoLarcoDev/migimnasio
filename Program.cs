@@ -24,6 +24,7 @@ builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddScoped<IClienteService, ClienteService>();
 builder.Services.AddScoped<IVentasService, VentasService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<ISugerenciaService, SugerenciaService>();
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();

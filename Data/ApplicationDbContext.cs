@@ -11,4 +11,5 @@ public class ApplicationDbContext : DbContext
     public DbSet<Gym> Negocios { get; set; }
     public DbSet<Logs> Logs { get; set; }
     public DbSet<Notificacion> Notificaciones { get; set; }
+    public DbSet<Sugerencia> Sugerencias { get; set; }
 }

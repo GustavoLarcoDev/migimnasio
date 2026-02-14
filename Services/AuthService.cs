@@ -61,6 +61,10 @@ public class AuthService : IAuthService
         if (!negocio.IsActive && !negocio.EsPrueba)
             return (false, null, null, "Su cuenta no está activa. Contacte al administrador.");
 
+        // Check subscription expiry
+        if (negocio.FechaExpiracion.HasValue && negocio.FechaExpiracion.Value.Date < DateTime.Now.Date)
+            return (false, null, null, "EXPIRED");
+
         return (true, "Negocio", negocio, null);
     }
 

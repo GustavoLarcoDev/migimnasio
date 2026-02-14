@@ -18,6 +18,7 @@ public class NegocioService : INegocioService
 
     public async Task<object> GetAllNegociosAsync()
     {
+        var now = DateTime.Now;
         return await _context.Negocios
             .Select(g => new
             {
@@ -29,6 +30,13 @@ public class NegocioService : INegocioService
                 g.IsActive,
                 g.EsPrueba,
                 g.FechaCreacion,
+                g.DiasPagados,
+                g.PrecioSuscripcion,
+                g.FechaPago,
+                g.FechaExpiracion,
+                DiasRestantesSuscripcion = g.FechaExpiracion.HasValue
+                    ? (int)(g.FechaExpiracion.Value.Date - now.Date).TotalDays
+                    : (int?)null,
                 TotalClientes = _context.Clientes.Count(c => c.NegocioId == g.NegocioId)
             })
             .OrderByDescending(g => g.FechaCreacion)
@@ -49,7 +57,11 @@ public class NegocioService : INegocioService
             negocio.Email,
             negocio.Password,
             negocio.IsActive,
-            negocio.EsPrueba
+            negocio.EsPrueba,
+            negocio.DiasPagados,
+            negocio.PrecioSuscripcion,
+            negocio.FechaPago,
+            negocio.FechaExpiracion
         };
     }
 
@@ -74,6 +86,7 @@ public class NegocioService : INegocioService
         if (string.IsNullOrWhiteSpace(password))
             return (false, "Password es necesario");
 
+        var now = DateTime.Now;
         var negocio = new Gym
         {
             NegocioId = Guid.NewGuid(),
@@ -84,8 +97,11 @@ public class NegocioService : INegocioService
             Password = _authService.HashPassword(password),
             IsActive = isActive,
             EsPrueba = esPrueba,
-            FechaCreacion = DateTime.Now,
-            FechaDeActualizacion = DateTime.Now,
+            FechaCreacion = now,
+            FechaDeActualizacion = now,
+            DiasPagados = esPrueba ? 7 : 30,
+            FechaPago = now,
+            FechaExpiracion = esPrueba ? now.AddDays(7) : now.AddDays(30),
         };
 
         _context.Negocios.Add(negocio);
@@ -116,6 +132,11 @@ public class NegocioService : INegocioService
         existente.Email = negocio.Email;
         existente.IsActive = negocio.IsActive;
         existente.EsPrueba = negocio.EsPrueba;
+        existente.DiasPagados = negocio.DiasPagados;
+        existente.PrecioSuscripcion = negocio.PrecioSuscripcion;
+        existente.FechaExpiracion = negocio.FechaExpiracion;
+        if (negocio.FechaExpiracion.HasValue && existente.FechaPago == null)
+            existente.FechaPago = DateTime.Now;
         existente.FechaDeActualizacion = DateTime.Now;
 
         if (!string.IsNullOrEmpty(negocio.Password))

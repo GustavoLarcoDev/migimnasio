@@ -10,10 +10,12 @@ namespace Gimnasio.Controllers;
 public class AuthController : Controller
 {
     private readonly IAuthService _authService;
+    private readonly ILogService _logService;
 
-    public AuthController(IAuthService authService)
+    public AuthController(IAuthService authService, ILogService logService)
     {
         _authService = authService;
+        _logService = logService;
     }
 
     [HttpGet("Login")]
@@ -38,7 +40,14 @@ public class AuthController : Controller
 
         if (!success)
         {
-            ViewBag.Error = error;
+            if (error == "EXPIRED")
+            {
+                ViewBag.Expired = true;
+            }
+            else
+            {
+                ViewBag.Error = error;
+            }
             return View("~/Views/Negocios/Login.cshtml");
         }
 
@@ -75,12 +84,23 @@ public class AuthController : Controller
             new ClaimsPrincipal(claimsIdentity),
             new AuthenticationProperties { IsPersistent = true });
 
+        await _logService.CreateLogAsync(negocio.NegocioId, "sesion_inicio",
+            $"{negocio.DuenoNegocio} inició sesión en {negocio.NegocioNombre}");
+
         return RedirectToAction("Dashboard", "Clientes", new { id = negocio.NegocioId });
     }
 
     [HttpGet("Logout")]
     public async Task<IActionResult> Logout()
     {
+        var negocioId = _authService.GetNegocioId(User);
+        var userName = User.Identity?.Name ?? "Usuario";
+        if (negocioId.HasValue)
+        {
+            await _logService.CreateLogAsync(negocioId.Value, "sesion_cierre",
+                $"{userName} cerró sesión");
+        }
+
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         return RedirectToAction("Login");
     }

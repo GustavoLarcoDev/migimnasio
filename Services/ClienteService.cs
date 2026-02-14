@@ -152,7 +152,8 @@ public class ClienteService : IClienteService
 
         var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
         await _logService.CreateLogAsync(model.NegocioId, "cliente_creado",
-            $"Nuevo cliente creado: {nombreCompleto}", model.Precio, cliente.ClienteId, nombreCompleto);
+            $"Nuevo cliente registrado: {nombreCompleto}, {dias} días, ${model.Precio:F2}, vence {fechaFin:dd/MM/yyyy}",
+            model.Precio, cliente.ClienteId, nombreCompleto);
 
         return (true, "Cliente creado exitosamente");
     }
@@ -193,6 +194,31 @@ public class ClienteService : IClienteService
         if (dias <= 0)
             return (false, "La fecha de finalización debe ser posterior a la fecha de inicio");
 
+        // Track changes for detailed logging
+        var cambios = new List<string>();
+        var nombreAnterior = $"{cliente.Nombre} {cliente.Apellido}";
+
+        if (cliente.Nombre != model.Nombre)
+            cambios.Add($"nombre: {cliente.Nombre} → {model.Nombre}");
+        if (cliente.Apellido != model.Apellido)
+            cambios.Add($"apellido: {cliente.Apellido} → {model.Apellido}");
+        if (cliente.Email != model.Email)
+            cambios.Add($"email: {cliente.Email ?? "vacío"} → {model.Email ?? "vacío"}");
+        if (cliente.Telefono != model.Telefono)
+            cambios.Add($"teléfono: {cliente.Telefono} → {model.Telefono}");
+        if (cliente.Direccion != model.Direccion)
+            cambios.Add($"dirección actualizada");
+        if (cliente.Dias != dias)
+            cambios.Add($"días: {cliente.Dias} → {dias}");
+        if (cliente.Precio != model.Precio)
+            cambios.Add($"precio: ${cliente.Precio:F2} → ${model.Precio:F2}");
+        if (cliente.EsDiario != model.EsDiario)
+            cambios.Add($"tipo: {(cliente.EsDiario ? "Diario" : "Regular")} → {(model.EsDiario ? "Diario" : "Regular")}");
+        if (cliente.FechaDeCreacion.Date != fechaInicio.Date)
+            cambios.Add($"fecha inicio: {cliente.FechaDeCreacion:dd/MM/yyyy} → {fechaInicio:dd/MM/yyyy}");
+        if (cliente.FechaQueTermina.Date != fechaFin.Date)
+            cambios.Add($"fecha fin: {cliente.FechaQueTermina:dd/MM/yyyy} → {fechaFin:dd/MM/yyyy}");
+
         cliente.Nombre = model.Nombre;
         cliente.Apellido = model.Apellido;
         cliente.Email = model.Email;
@@ -209,8 +235,9 @@ public class ClienteService : IClienteService
         await _context.SaveChangesAsync();
 
         var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
+        var detalleCambios = cambios.Count > 0 ? string.Join(", ", cambios) : "sin cambios detectados";
         await _logService.CreateLogAsync(model.NegocioId, "cliente_editado",
-            $"Cliente editado: {nombreCompleto}", 0, cliente.ClienteId, nombreCompleto);
+            $"Cliente {nombreAnterior} actualizado: {detalleCambios}", 0, cliente.ClienteId, nombreCompleto);
 
         return (true, "Cliente actualizado exitosamente");
     }
@@ -224,12 +251,14 @@ public class ClienteService : IClienteService
             return (false, "Cliente no encontrado");
 
         var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
+        var diasRestantes = (cliente.FechaQueTermina.Date - DateTime.Now.Date).Days;
+        var estadoCliente = diasRestantes >= 0 ? $"activo, {diasRestantes} días restantes" : "vencido";
 
         _context.Clientes.Remove(cliente);
         await _context.SaveChangesAsync();
 
         await _logService.CreateLogAsync(negocioId, "cliente_eliminado",
-            $"Cliente eliminado: {nombreCompleto}", 0, cliente.ClienteId, nombreCompleto);
+            $"Cliente eliminado: {nombreCompleto} ({estadoCliente}, ${cliente.Precio:F2})", 0, cliente.ClienteId, nombreCompleto);
 
         return (true, "Cliente eliminado exitosamente");
     }
@@ -255,7 +284,7 @@ public class ClienteService : IClienteService
 
         var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
         await _logService.CreateLogAsync(negocioId, "cliente_renovado",
-            $"Cliente {nombreCompleto} ha renovado su suscripción, ahora su suscripción termina en {nuevaFechaFin:dd/MM/yyyy}",
+            $"Cliente {nombreCompleto} renovó: +{diasAgregados} días, ${precio:F2}, nueva fecha fin {nuevaFechaFin:dd/MM/yyyy}",
             precio, cliente.ClienteId, nombreCompleto);
 
         return (true, "Membresía renovada exitosamente");
