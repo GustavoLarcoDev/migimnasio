@@ -280,6 +280,32 @@ public class ClientesController : Controller
     }
 
     // ═══════════════════════════════════════════════════════════
+    // NOTIFICACIÓN MASIVA A CLIENTES DIARIOS
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Marca todos los clientes diarios como EsDiario = false (limpia la lista).
+    /// Se llama después de que el dueño ya envió los mensajes via wa.me links.
+    /// </summary>
+    [HttpPost("LimpiarClientesDiarios")]
+    public async Task<IActionResult> LimpiarClientesDiarios(Guid negocioId)
+    {
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+
+            var limpiados = await _clienteService.LimpiarClientesDiariosAsync(negocioId);
+            return Ok(new { success = true, limpiados });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = ex.Message });
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
     // IMPORTACIÓN / EXPORTACIÓN EXCEL
     // ═══════════════════════════════════════════════════════════
 

@@ -20,6 +20,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<AdminSettings>(
     builder.Configuration.GetSection("AdminSettings"));
 
+// Cargar configuración de WhatsApp Business (Meta Cloud API)
+builder.Services.Configure<WhatsAppSettings>(
+    builder.Configuration.GetSection("WhatsAppSettings"));
+
 // Registrar Entity Framework Core con SQL Server
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
@@ -35,6 +39,13 @@ builder.Services.AddScoped<IClienteService, ClienteService>();
 builder.Services.AddScoped<IVentasService, VentasService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ISugerenciaService, SugerenciaService>();
+builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
+
+// Registrar cliente HTTP para WhatsApp
+builder.Services.AddHttpClient("WhatsApp");
+
+// Registrar servicios de fondo (recordatorios WhatsApp + resumen diario)
+builder.Services.AddBackgroundServices();
 
 // Registrar MVC con vistas
 builder.Services.AddControllersWithViews();

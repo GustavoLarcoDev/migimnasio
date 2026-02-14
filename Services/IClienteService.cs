@@ -61,4 +61,10 @@ public interface IClienteService
     /// Obtiene solo los clientes marcados como "diario" (pago por día)
     /// </summary>
     Task<object> GetClientesDiariosAsync(Guid negocioId);
+
+    /// <summary>
+    /// Marca todos los clientes diarios como EsDiario = false.
+    /// Se llama después de que el dueño envió los mensajes via wa.me.
+    /// </summary>
+    Task<int> LimpiarClientesDiariosAsync(Guid negocioId);
 }

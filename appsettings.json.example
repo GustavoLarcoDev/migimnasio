@@ -12,5 +12,11 @@
   "AdminSettings": {
     "Email": "tu-email@ejemplo.com",
     "Password": "TU_PASSWORD_ADMIN_AQUI"
+  },
+  "WhatsAppSettings": {
+    "PhoneNumberId": "",
+    "AccessToken": "",
+    "ApiVersion": "v21.0",
+    "Enabled": false
   }
 }

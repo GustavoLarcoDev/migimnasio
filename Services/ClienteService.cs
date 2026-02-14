@@ -375,6 +375,38 @@ public class ClienteService : IClienteService
     }
 
     // ═══════════════════════════════════════════════════════════
+    // LIMPIAR CLIENTES DIARIOS
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Marca todos los clientes diarios como EsDiario = false.
+    /// Se llama después de que el dueño envió los mensajes via wa.me links.
+    /// </summary>
+    public async Task<int> LimpiarClientesDiariosAsync(Guid negocioId)
+    {
+        var clientesDiarios = await _context.Clientes
+            .Where(c => c.NegocioId == negocioId && c.EsDiario)
+            .ToListAsync();
+
+        if (clientesDiarios.Count == 0)
+            return 0;
+
+        foreach (var cliente in clientesDiarios)
+        {
+            cliente.EsDiario = false;
+            cliente.FechaDeActualizacion = DateTime.Now;
+        }
+
+        await _context.SaveChangesAsync();
+
+        await _logService.CreateLogAsync(negocioId, "limpiar_diarios",
+            $"Lista de clientes diarios limpiada: {clientesDiarios.Count} cliente(s)",
+            0, null, null);
+
+        return clientesDiarios.Count;
+    }
+
+    // ═══════════════════════════════════════════════════════════
     // EXPORTACIÓN EXCEL
     // ═══════════════════════════════════════════════════════════
 
