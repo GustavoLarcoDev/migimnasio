@@ -43,7 +43,7 @@ namespace Gimnasio.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AdminLogs");
+                    b.ToTable("AdminLogs", (string)null);
                 });
 
             modelBuilder.Entity("Gimnasio.Models.Cliente", b =>
@@ -99,7 +99,7 @@ namespace Gimnasio.Migrations
 
                     b.HasIndex("GymNegocioId");
 
-                    b.ToTable("Clientes");
+                    b.ToTable("Clientes", (string)null);
                 });
 
             modelBuilder.Entity("Gimnasio.Models.Gym", b =>
@@ -153,7 +153,7 @@ namespace Gimnasio.Migrations
 
                     b.HasKey("NegocioId");
 
-                    b.ToTable("Negocios");
+                    b.ToTable("Negocios", (string)null);
                 });
 
             modelBuilder.Entity("Gimnasio.Models.LeadVendedor", b =>
@@ -199,7 +199,7 @@ namespace Gimnasio.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("LeadsVendedor");
+                    b.ToTable("LeadsVendedor", (string)null);
                 });
 
             modelBuilder.Entity("Gimnasio.Models.Logs", b =>
@@ -235,7 +235,7 @@ namespace Gimnasio.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Logs");
+                    b.ToTable("Logs", (string)null);
                 });
 
             modelBuilder.Entity("Gimnasio.Models.MovimientoInventario", b =>
@@ -284,7 +284,7 @@ namespace Gimnasio.Migrations
 
                     b.HasKey("MovimientoId");
 
-                    b.ToTable("MovimientosInventario");
+                    b.ToTable("MovimientosInventario", (string)null);
                 });
 
             modelBuilder.Entity("Gimnasio.Models.Notificacion", b =>
@@ -320,7 +320,7 @@ namespace Gimnasio.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Notificaciones");
+                    b.ToTable("Notificaciones", (string)null);
                 });
 
             modelBuilder.Entity("Gimnasio.Models.Producto", b =>
@@ -365,7 +365,7 @@ namespace Gimnasio.Migrations
 
                     b.HasKey("ProductoId");
 
-                    b.ToTable("Productos");
+                    b.ToTable("Productos", (string)null);
                 });
 
             modelBuilder.Entity("Gimnasio.Models.Sugerencia", b =>
@@ -395,7 +395,7 @@ namespace Gimnasio.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Sugerencias");
+                    b.ToTable("Sugerencias", (string)null);
                 });
 
             modelBuilder.Entity("Gimnasio.Models.Vendedor", b =>
@@ -439,7 +439,7 @@ namespace Gimnasio.Migrations
 
                     b.HasKey("VendedorId");
 
-                    b.ToTable("Vendedores");
+                    b.ToTable("Vendedores", (string)null);
                 });
 
             modelBuilder.Entity("Gimnasio.Models.Cliente", b =>
