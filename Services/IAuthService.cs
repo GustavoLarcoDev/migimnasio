@@ -12,11 +12,11 @@ namespace Gimnasio.Services;
 public interface IAuthService
 {
     /// <summary>
-    /// Valida credenciales contra AdminSettings y la tabla Negocios.
+    /// Valida credenciales contra AdminSettings, Vendedores y Negocios.
     /// Soporta login por email o teléfono.
-    /// Retorna: (éxito, rol ["Admin"|"Negocio"], objeto negocio, mensaje de error)
+    /// Retorna: (éxito, rol, objeto negocio, vendedorId, vendedorNombre, mensaje de error)
     /// </summary>
-    Task<(bool success, string role, Gym negocio, string error)> LoginAsync(string email, string password);
+    Task<(bool success, string role, Gym negocio, Guid? vendedorId, string vendedorNombre, string error)> LoginAsync(string email, string password);
 
     /// <summary>
     /// Verifica si el usuario autenticado es admin (no impersonando)

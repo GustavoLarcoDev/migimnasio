@@ -69,6 +69,13 @@ public class Gym
     public DateTime? FechaExpiracion { get; set; }
 
     // ═══════════════════════════════════════════════════════════
+    // VENDEDOR (quién vendió este negocio)
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>ID del vendedor que registró este negocio (null = admin directo)</summary>
+    public Guid? VendedorId { get; set; }
+
+    // ═══════════════════════════════════════════════════════════
     // RELACIONES
     // ═══════════════════════════════════════════════════════════
 

@@ -6,16 +6,20 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Gimnasio.Models;
+using Gimnasio.Data;
 
+#nullable enable
 namespace Gimnasio.Controllers;
 
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
+    private readonly ApplicationDbContext _context;
 
-    public HomeController(ILogger<HomeController> logger)
+    public HomeController(ILogger<HomeController> logger, ApplicationDbContext context)
     {
         _logger = logger;
+        _context = context;
     }
 
     /// <summary>
@@ -24,6 +28,30 @@ public class HomeController : Controller
     public IActionResult Index()
     {
         return View();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Lead(string Name, string GymName, string Email, string? Phone, string? Message)
+    {
+        if (string.IsNullOrWhiteSpace(Name) || string.IsNullOrWhiteSpace(GymName) || string.IsNullOrWhiteSpace(Email))
+            return BadRequest();
+
+        var lead = new LeadVendedor
+        {
+            Id = Guid.NewGuid(),
+            Nombre = Name.Trim(),
+            NombreNegocio = GymName.Trim(),
+            Email = Email.Trim(),
+            Telefono = Phone?.Trim(),
+            Mensaje = Message?.Trim(),
+            FechaCreacion = DateTime.Now
+        };
+
+        _context.LeadsVendedor.Add(lead);
+        await _context.SaveChangesAsync();
+
+        return Ok();
     }
 
     /// <summary>

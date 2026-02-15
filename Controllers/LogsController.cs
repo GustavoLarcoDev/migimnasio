@@ -87,6 +87,10 @@ public class LogsController : Controller
     {
         try
         {
+            var gymId = _authService.GetNegocioId(User);
+            if (!gymId.HasValue || negocioId != gymId.Value)
+                return Forbid();
+
             var log = await _logService.GetLogAsync(id, negocioId);
             if (log == null)
                 return NotFound(new { success = false, message = "Log no encontrado" });
@@ -137,7 +141,7 @@ public class LogsController : Controller
                 return Forbid();
 
             var (success, message) = await _logService.EliminarTodosLogsAsync(negocioId);
-            return Ok(new { success = true, message });
+            return Ok(new { success, message });
         }
         catch (Exception ex)
         {

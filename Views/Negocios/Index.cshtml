@@ -169,6 +169,7 @@
                                 <th>Dueño</th>
                                 <th>Contacto</th>
                                 <th>Clientes</th>
+                                <th>Vendedor</th>
                                 <th>Estado</th>
                                 <th>Suscripción</th>
                                 <th>Expira</th>
@@ -277,8 +278,8 @@
                                 </div>
                                 <div class="col-md-3 mb-4">
                                     <label class="form-label fw-semibold">Días Pagados</label>
-                                    <input type="number" min="1" class="form-control form-control-lg" name="diasPagados" id="crearDiasPagados" placeholder="30" readonly />
-                                    <div class="form-text">Calculado automáticamente</div>
+                                    <input type="number" min="1" class="form-control form-control-lg" name="diasPagados" id="crearDiasPagados" placeholder="30" />
+                                    <div class="form-text">Editar recalcula fecha expiración</div>
                                 </div>
                             </div>
 
@@ -426,6 +427,88 @@
     </div>
 
     <!-- ============================================================== -->
+    <!-- TAB VENDEDORES — Gestión de vendedores                        -->
+    <!-- ============================================================== -->
+    <div class="tab-pane fade" id="vendedoresTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold mb-0"><i class="bi bi-person-badge text-primary me-2"></i>Vendedores</h4>
+            <button id="btnCrearVendedor" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Nuevo Vendedor
+            </button>
+        </div>
+
+        <div class="mg-card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="vendedoresTable" class="table table-row-bordered align-middle gs-0 gy-3">
+                        <thead>
+                            <tr class="fw-bold text-muted">
+                                <th>Nombre</th>
+                                <th>Correo</th>
+                                <th>Teléfono</th>
+                                <th>Negocios Activos</th>
+                                <th>Fecha</th>
+                                <th class="text-end">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Crear/Editar Vendedor -->
+    <div class="modal fade" id="vendedorModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h3 class="modal-title fw-bolder" id="vendedorModalTitle">
+                        <i class="bi bi-person-badge text-primary me-2"></i>Nuevo Vendedor
+                    </h3>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="vendedorForm">
+                        <input type="hidden" id="vendedorId" />
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold required">Nombre</label>
+                                <input type="text" class="form-control form-control-lg" id="vendedorNombre" placeholder="Ej: Carlos" required />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold required">Apellido</label>
+                                <input type="text" class="form-control form-control-lg" id="vendedorApellido" placeholder="Ej: López" required />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold required">Correo</label>
+                                <input type="email" class="form-control form-control-lg" id="vendedorCorreo" placeholder="vendedor@email.com" required />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold required">Teléfono</label>
+                                <input type="tel" class="form-control form-control-lg" id="vendedorTelefono" placeholder="+1 234 567 8900" required />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold" id="vendedorPasswordLabel">Contraseña</label>
+                            <input type="password" class="form-control form-control-lg" id="vendedorPassword" placeholder="Mínimo 6 caracteres" />
+                            <div class="form-text" id="vendedorPasswordHelp">Mínimo 6 caracteres</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="btnGuardarVendedor" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i>Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
     <!-- TAB SUGERENCIAS — Feedback de los negocios                     -->
     <!-- ============================================================== -->
     <div class="tab-pane fade" id="sugerenciasTab" role="tabpanel">
@@ -530,17 +613,22 @@
                     <hr class="my-3" />
                     <h6 class="fw-bold mb-3"><i class="bi bi-calendar-check text-primary me-2"></i>Suscripción</h6>
                     <div class="row">
-                        <div class="col-md-4 mb-4">
-                            <label class="form-label fw-semibold">Días pagados</label>
-                            <input type="number" class="form-control form-control-lg" name="DiasPagados" id="editDiasPagados" min="1" />
+                        <div class="col-md-3 mb-4">
+                            <label class="form-label fw-semibold">Fecha de pago</label>
+                            <input type="date" class="form-control form-control-lg" name="FechaPago" id="editFechaPago" />
                         </div>
-                        <div class="col-md-4 mb-4">
-                            <label class="form-label fw-semibold">Precio suscripción ($)</label>
-                            <input type="number" step="0.01" class="form-control form-control-lg" name="PrecioSuscripcion" id="editPrecioSuscripcion" min="0" />
-                        </div>
-                        <div class="col-md-4 mb-4">
+                        <div class="col-md-3 mb-4">
                             <label class="form-label fw-semibold">Fecha expiración</label>
                             <input type="date" class="form-control form-control-lg" name="FechaExpiracion" id="editFechaExpiracion" />
+                        </div>
+                        <div class="col-md-3 mb-4">
+                            <label class="form-label fw-semibold">Días pagados</label>
+                            <input type="number" class="form-control form-control-lg" name="DiasPagados" id="editDiasPagados" min="1" />
+                            <div class="form-text">Editar recalcula fecha expiración</div>
+                        </div>
+                        <div class="col-md-3 mb-4">
+                            <label class="form-label fw-semibold">Precio suscripción ($)</label>
+                            <input type="number" step="0.01" class="form-control form-control-lg" name="PrecioSuscripcion" id="editPrecioSuscripcion" min="0" />
                         </div>
                     </div>
                 </form>
@@ -563,6 +651,7 @@
 let tablaNegocios = null;
 let tablaLogs = null;
 let tablaVentasNegocios = null;
+let tablaVendedores = null;
 let resumenRevenueChart = null;
 let ventasRevenueChart = null;
 let ventasDonutChart = null;
@@ -617,6 +706,9 @@ document.addEventListener('mg-tab-shown', function (e) {
     } else if (tab === 'logsTab') {
         if (!tablaLogs) cargarTablaLogs();
         else tablaLogs.ajax.reload(null, false);
+    } else if (tab === 'vendedoresTab') {
+        if (!tablaVendedores) cargarTablaVendedores();
+        else tablaVendedores.ajax.reload(null, false);
     } else if (tab === 'sugerenciasTab') {
         cargarSugerencias();
     }
@@ -749,6 +841,13 @@ function cargarTablaNegocios() {
                 render: function (data) { return '<span class="badge badge-light-info fs-7 fw-bold">' + data + ' cliente' + (data !== 1 ? 's' : '') + '</span>'; }
             },
             {
+                data: 'vendedorNombre',
+                render: function (data) {
+                    if (!data) return '<span class="text-muted">Admin</span>';
+                    return '<span class="badge bg-light-primary text-primary">' + escHtml(data) + '</span>';
+                }
+            },
+            {
                 data: 'isActive',
                 render: function (data) {
                     return data ? '<span class="badge badge-light-success">Activo</span>' : '<span class="badge badge-light-danger">Inactivo</span>';
@@ -829,6 +928,11 @@ function editarNegocio(id) {
 
             $('#editDiasPagados').val(data.diasPagados || 30);
             $('#editPrecioSuscripcion').val(data.precioSuscripcion || 0);
+            if (data.fechaPago) {
+                $('#editFechaPago').val(data.fechaPago.split('T')[0]);
+            } else {
+                $('#editFechaPago').val('');
+            }
             if (data.fechaExpiracion) {
                 $('#editFechaExpiracion').val(data.fechaExpiracion.split('T')[0]);
             } else {
@@ -866,6 +970,7 @@ $('#btnGuardarEdicion').click(function () {
         EsPrueba: tipoNegocio === 'prueba',
         DiasPagados: $('#editDiasPagados').val() || 30,
         PrecioSuscripcion: $('#editPrecioSuscripcion').val() || 0,
+        FechaPago: $('#editFechaPago').val() || null,
         FechaExpiracion: $('#editFechaExpiracion').val() || null
     };
 
@@ -1025,6 +1130,7 @@ function actualizarCamposSuscripcion() {
         $('#crearPrecioSuscripcion').prop('readonly', true);
         $('#crearFechaPago').prop('readonly', true);
         $('#crearFechaExpiracion').prop('readonly', true);
+        $('#crearDiasPagados').prop('readonly', true);
     } else {
         $('#crearFechaPago').val(hoy);
         const expiracion = new Date();
@@ -1035,6 +1141,7 @@ function actualizarCamposSuscripcion() {
         $('#crearPrecioSuscripcion').prop('readonly', false);
         $('#crearFechaPago').prop('readonly', false);
         $('#crearFechaExpiracion').prop('readonly', false);
+        $('#crearDiasPagados').prop('readonly', false);
     }
 }
 
@@ -1313,7 +1420,19 @@ function cargarTablaLogs() {
                         'Editar': { icono: 'bi-pencil-square', color: 'primary' },
                         'Eliminar': { icono: 'bi-trash', color: 'danger' },
                         'CambiarEstado': { icono: 'bi-toggle-on', color: 'warning' },
-                        'Impersonar': { icono: 'bi-eye', color: 'info' }
+                        'Impersonar': { icono: 'bi-eye', color: 'info' },
+                        'VendedorLogin': { icono: 'bi-box-arrow-in-right', color: 'info' },
+                        'VendedorCrearNegocio': { icono: 'bi-building-add', color: 'success' },
+                        'VendedorImpersonar': { icono: 'bi-person-badge', color: 'info' },
+                        'VendedorDejarImpersonar': { icono: 'bi-person-badge', color: 'secondary' },
+                        'CrearVendedor': { icono: 'bi-person-plus', color: 'success' },
+                        'EditarVendedor': { icono: 'bi-person-gear', color: 'primary' },
+                        'EliminarVendedor': { icono: 'bi-person-x', color: 'danger' },
+                        'VendedorEditarNegocio': { icono: 'bi-pencil-square', color: 'primary' },
+                        'VendedorEliminarNegocio': { icono: 'bi-trash', color: 'danger' },
+                        'VendedorCambiarEstado': { icono: 'bi-toggle-on', color: 'warning' },
+                        'AdminImpersonarVendedor': { icono: 'bi-person-badge', color: 'info' },
+                        'AdminDejarImpersonarVendedor': { icono: 'bi-person-badge', color: 'secondary' }
                     };
                     const estilo = estilos[data] || { icono: 'bi-circle', color: 'secondary' };
                     return '<span class="badge badge-light-' + estilo.color + '"><i class="bi ' + estilo.icono + ' me-1"></i>' + escHtml(data) + '</span>';
@@ -1401,6 +1520,183 @@ function cargarSugerenciasBadge() {
         console.warn('No se pudo cargar conteo de sugerencias');
     });
 }
+
+// ================================================================
+// VENDEDORES
+// ================================================================
+var modoEdicionVendedor = false;
+
+function cargarTablaVendedores() {
+    if (tablaVendedores) tablaVendedores.destroy();
+    tablaVendedores = $('#vendedoresTable').DataTable({
+        ajax: { url: '/Negocios/GetVendedores', dataSrc: '' },
+        columns: [
+            { data: null, render: function(d, t, r) {
+                return '<strong>' + escHtml(r.nombreCompleto) + '</strong>';
+            }},
+            { data: 'correo', render: d => escHtml(d) },
+            { data: 'telefono', render: d => escHtml(d) },
+            { data: 'negociosCreados', render: function(d) {
+                return '<span class="badge bg-primary">' + d + '</span>';
+            }},
+            { data: 'fechaCreacion', render: d => d ? new Date(d).toLocaleDateString('es-MX') : '-' },
+            { data: null, orderable: false, className: 'text-end', render: function(d, t, r) {
+                return '<div class="d-flex justify-content-end gap-1">' +
+                    '<button class="btn btn-icon btn-bg-light btn-sm" onclick="impersonarVendedor(\'' + r.vendedorId + '\',\'' + escHtml(r.nombreCompleto).replace(/'/g, "\\'") + '\')" title="Impersonar"><i class="bi bi-eye text-info fs-5"></i></button>' +
+                    '<button class="btn btn-icon btn-bg-light btn-sm" onclick="editarVendedor(\'' + r.vendedorId + '\')" title="Editar"><i class="bi bi-pencil fs-5"></i></button>' +
+                    '<button class="btn btn-icon btn-bg-light btn-sm" onclick="eliminarVendedor(\'' + r.vendedorId + '\',\'' + escHtml(r.nombreCompleto) + '\')" title="Eliminar"><i class="bi bi-trash text-danger fs-5"></i></button>' +
+                    '</div>';
+            }}
+        ],
+        order: [[0, 'asc']],
+        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }
+    });
+}
+
+$('#btnCrearVendedor').click(function() {
+    modoEdicionVendedor = false;
+    $('#vendedorModalTitle').html('<i class="bi bi-person-badge text-primary me-2"></i>Nuevo Vendedor');
+    $('#vendedorForm')[0].reset();
+    $('#vendedorId').val('');
+    $('#vendedorPassword').prop('required', true);
+    $('#vendedorPasswordLabel').addClass('required');
+    $('#vendedorPasswordHelp').text('Mínimo 6 caracteres');
+    $('#vendedorModal').modal('show');
+});
+
+function editarVendedor(id) {
+    $.get('/Negocios/GetVendedor', { id }, function(data) {
+        modoEdicionVendedor = true;
+        $('#vendedorModalTitle').html('<i class="bi bi-person-badge text-primary me-2"></i>Editar Vendedor');
+        $('#vendedorId').val(data.vendedorId);
+        $('#vendedorNombre').val(data.nombre);
+        $('#vendedorApellido').val(data.apellido);
+        $('#vendedorCorreo').val(data.correo);
+        $('#vendedorTelefono').val(data.telefono);
+        $('#vendedorPassword').val('').prop('required', false);
+        $('#vendedorPasswordLabel').removeClass('required');
+        $('#vendedorPasswordHelp').text('Dejar en blanco para mantener la actual');
+        $('#vendedorModal').modal('show');
+    }).fail(function() { toastr.error('Error al cargar vendedor'); });
+}
+
+$('#btnGuardarVendedor').click(function() {
+    var nombre = $('#vendedorNombre').val().trim();
+    var apellido = $('#vendedorApellido').val().trim();
+    var correo = $('#vendedorCorreo').val().trim();
+    var telefono = $('#vendedorTelefono').val().trim();
+    var password = $('#vendedorPassword').val();
+
+    if (!nombre || !apellido || !correo || !telefono) {
+        toastr.error('Todos los campos son obligatorios');
+        return;
+    }
+    if (!modoEdicionVendedor && (!password || password.length < 6)) {
+        toastr.error('La contraseña debe tener al menos 6 caracteres');
+        return;
+    }
+
+    var btn = $(this);
+    var originalHtml = btn.html();
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...');
+
+    var url = modoEdicionVendedor ? '/Negocios/EditarVendedor' : '/Negocios/CrearVendedor';
+    var data = { nombre, apellido, correo, telefono, password };
+    if (modoEdicionVendedor) data.id = $('#vendedorId').val();
+
+    $.post(url, data, function(r) {
+        if (r.success) {
+            $('#vendedorModal').modal('hide');
+            if (tablaVendedores) tablaVendedores.ajax.reload();
+            toastr.success(r.message);
+        } else {
+            toastr.error(r.message || 'Error al guardar');
+        }
+    }).fail(function(xhr) {
+        toastr.error(xhr.responseJSON?.message || 'Error al guardar vendedor');
+    }).always(function() {
+        btn.prop('disabled', false).html(originalHtml);
+    });
+});
+
+function eliminarVendedor(id, nombre) {
+    swalMG.fire({
+        title: '¿Eliminar vendedor?',
+        text: 'Se eliminará a "' + nombre + '" del sistema.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#F1416C',
+        confirmButtonText: 'Sí, eliminar'
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            $.post('/Negocios/EliminarVendedor', { id }, function(r) {
+                if (r.success) {
+                    tablaVendedores.ajax.reload();
+                    swalMG.fire('Eliminado', r.message, 'success');
+                } else {
+                    swalMG.fire('Error', r.message, 'error');
+                }
+            }).fail(function(xhr) {
+                swalMG.fire('Error', xhr.responseJSON?.message || 'Error', 'error');
+            });
+        }
+    });
+}
+
+function impersonarVendedor(id, nombre) {
+    swalMG.fire({
+        title: '¿Impersonar vendedor?',
+        text: 'Vas a ver el dashboard como si fueras "' + nombre + '".',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, impersonar'
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/Negocios/AdminImpersonateVendedor/' + id;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+}
+
+// ================================================================
+// BIDIRECTIONAL DATE HANDLERS (Create)
+// ================================================================
+$('#crearDiasPagados').on('change input', function() {
+    var tipo = $('input[name="tipoNegocio"]:checked').val();
+    if (tipo === 'prueba') return;
+    var inicio = $('#crearFechaPago').val();
+    var dias = parseInt($(this).val());
+    if (inicio && dias > 0) {
+        var fecha = new Date(inicio);
+        fecha.setDate(fecha.getDate() + dias);
+        $('#crearFechaExpiracion').val(fecha.toISOString().split('T')[0]);
+    }
+});
+
+// ================================================================
+// BIDIRECTIONAL DATE HANDLERS (Edit)
+// ================================================================
+$('#editFechaPago, #editFechaExpiracion').on('change', function() {
+    var inicio = $('#editFechaPago').val();
+    var fin = $('#editFechaExpiracion').val();
+    if (inicio && fin) {
+        var diff = Math.ceil((new Date(fin) - new Date(inicio)) / (1000 * 60 * 60 * 24));
+        $('#editDiasPagados').val(diff > 0 ? diff : 0);
+    }
+});
+
+$('#editDiasPagados').on('change input', function() {
+    var inicio = $('#editFechaPago').val();
+    var dias = parseInt($(this).val());
+    if (inicio && dias > 0) {
+        var fecha = new Date(inicio);
+        fecha.setDate(fecha.getDate() + dias);
+        $('#editFechaExpiracion').val(fecha.toISOString().split('T')[0]);
+    }
+});
 </script>
 
 <style>

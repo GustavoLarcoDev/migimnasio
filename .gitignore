@@ -52,8 +52,32 @@ CodeCoverage/
 appsettings.json
 appsettings.Development.json
 appsettings.Production.json
+*.pfx
+*.pem
+*.key
 
 # NUnit
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# IDE
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Publish output
+publish/
+out/
+
+# Docker
+docker-compose.override.yml

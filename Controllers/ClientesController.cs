@@ -55,9 +55,9 @@ public class ClientesController : Controller
 
             return View("~/Views/Negocios/Dashboard.cshtml", negocio);
         }
-        catch (Exception ex)
+        catch
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -74,6 +74,10 @@ public class ClientesController : Controller
     {
         try
         {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+
             var stats = await _clienteService.GetDashboardStatsAsync(negocioId);
             return Ok(stats);
         }
@@ -91,6 +95,10 @@ public class ClientesController : Controller
     {
         try
         {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+
             var clientes = await _clienteService.GetClientesAsync(negocioId);
             return Ok(clientes);
         }
@@ -108,6 +116,10 @@ public class ClientesController : Controller
     {
         try
         {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+
             var cliente = await _clienteService.GetClienteAsync(id, negocioId);
             if (cliente == null)
                 return NotFound(new { success = false, message = "Cliente no encontrado" });
@@ -168,6 +180,10 @@ public class ClientesController : Controller
     {
         try
         {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+
             var clientes = await _clienteService.GetClientesDiariosAsync(negocioId);
             return Ok(clientes);
         }
@@ -244,6 +260,10 @@ public class ClientesController : Controller
     {
         try
         {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+
             var (success, message) = await _clienteService.EliminarClienteAsync(id, negocioId);
 
             if (!success)
@@ -266,6 +286,10 @@ public class ClientesController : Controller
     {
         try
         {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+
             var (success, message) = await _clienteService.RenovarClienteAsync(id, negocioId, nuevaFechaFin, precio);
 
             if (!success)
@@ -321,6 +345,10 @@ public class ClientesController : Controller
     {
         try
         {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+
             var content = await _clienteService.ExportClientesExcelAsync(negocioId);
             return File(content,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

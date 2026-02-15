@@ -17,11 +17,13 @@ public class AuthController : Controller
 {
     private readonly IAuthService _authService;
     private readonly ILogService _logService;
+    private readonly INegocioService _negocioService;
 
-    public AuthController(IAuthService authService, ILogService logService)
+    public AuthController(IAuthService authService, ILogService logService, INegocioService negocioService)
     {
         _authService = authService;
         _logService = logService;
+        _negocioService = negocioService;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -40,6 +42,9 @@ public class AuthController : Controller
             if (_authService.IsAdmin(User))
                 return RedirectToAction("Index", "Admin");
 
+            if (User.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Vendedor"))
+                return RedirectToAction("VendedorDashboard", "Vendedor");
+
             var negocioId = _authService.GetNegocioId(User);
             if (negocioId.HasValue)
                 return RedirectToAction("Dashboard", "Clientes", new { id = negocioId.Value });
@@ -56,7 +61,7 @@ public class AuthController : Controller
     [HttpPost("Login")]
     public async Task<IActionResult> Login(string email, string password)
     {
-        var (success, role, negocio, error) = await _authService.LoginAsync(email, password);
+        var (success, role, negocio, vendedorId, vendedorNombre, error) = await _authService.LoginAsync(email, password);
 
         if (!success)
         {
@@ -90,6 +95,31 @@ public class AuthController : Controller
             return RedirectToAction("Index", "Admin");
         }
 
+        // Login como Vendedor
+        if (role == "Vendedor" && vendedorId.HasValue)
+        {
+            var vendedorClaims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, vendedorNombre ?? email),
+                new Claim(ClaimTypes.Email, email),
+                new Claim("VendedorId", vendedorId.Value.ToString()),
+                new Claim(ClaimTypes.Role, "Vendedor")
+            };
+
+            var vendedorIdentity = new ClaimsIdentity(vendedorClaims, CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                new ClaimsPrincipal(vendedorIdentity),
+                new AuthenticationProperties { IsPersistent = true });
+
+            await _negocioService.RegistrarAdminLogAsync(
+                "VendedorLogin",
+                $"Vendedor {vendedorNombre} inició sesión",
+                null);
+
+            return RedirectToAction("VendedorDashboard", "Vendedor");
+        }
+
         // Login como Negocio
         var claims = new List<Claim>
         {
@@ -105,7 +135,6 @@ public class AuthController : Controller
             new ClaimsPrincipal(claimsIdentity),
             new AuthenticationProperties { IsPersistent = true });
 
-        // Registrar inicio de sesión en los logs del negocio
         await _logService.CreateLogAsync(negocio.NegocioId, "sesion_inicio",
             $"{negocio.DuenoNegocio} inició sesión en {negocio.NegocioNombre}");
 

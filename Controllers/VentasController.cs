@@ -15,10 +15,12 @@ namespace Gimnasio.Controllers;
 public class VentasController : Controller
 {
     private readonly IVentasService _ventasService;
+    private readonly IAuthService _authService;
 
-    public VentasController(IVentasService ventasService)
+    public VentasController(IVentasService ventasService, IAuthService authService)
     {
         _ventasService = ventasService;
+        _authService = authService;
     }
 
     /// <summary>
@@ -30,6 +32,10 @@ public class VentasController : Controller
     {
         try
         {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+
             var stats = await _ventasService.GetVentasStatsAsync(negocioId);
             return Ok(stats);
         }
@@ -48,6 +54,10 @@ public class VentasController : Controller
     {
         try
         {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+
             var data = await _ventasService.GetChartDataAsync(negocioId, periodo);
             return Ok(data);
         }
@@ -65,6 +75,10 @@ public class VentasController : Controller
     {
         try
         {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+
             var data = await _ventasService.GetClientesChartDataAsync(negocioId, periodo);
             return Ok(data);
         }

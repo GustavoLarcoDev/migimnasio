@@ -34,33 +34,44 @@ public class AuthService : IAuthService
     /// 3. Verifica contraseña (BCrypt o texto plano con migración lazy)
     /// 4. Valida que la cuenta esté activa y no haya expirado
     /// </summary>
-    public async Task<(bool success, string role, Gym negocio, string error)> LoginAsync(string email, string password)
+    public async Task<(bool success, string role, Gym negocio, Guid? vendedorId, string vendedorNombre, string error)> LoginAsync(string email, string password)
     {
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
-            return (false, null, null, "Email y contraseña son obligatorios");
+            return (false, null, null, null, null, "Email y contraseña son obligatorios");
 
         // Verificar credenciales de admin
         if (email == _adminSettings.Email && password == _adminSettings.Password)
-            return (true, "Admin", null, null);
+            return (true, "Admin", null, null, null, null);
+
+        // Verificar si es un vendedor (por correo)
+        if (email.Contains('@'))
+        {
+            var vendedor = await _context.Vendedores
+                .FirstOrDefaultAsync(v => v.Correo == email.Trim().ToLower() && v.IsActive);
+
+            if (vendedor != null)
+            {
+                if (VerifyPassword(password, vendedor.Password))
+                    return (true, "Vendedor", null, vendedor.VendedorId, $"{vendedor.Nombre} {vendedor.Apellido}", null);
+            }
+        }
 
         // Buscar negocio por email o teléfono
         var negocio = email.Contains('@')
             ? await _context.Negocios.FirstOrDefaultAsync(g => g.Email == email)
             : await _context.Negocios.FirstOrDefaultAsync(g => g.Telefono == email);
         if (negocio == null)
-            return (false, null, null, "Credenciales inválidas");
+            return (false, null, null, null, null, "Credenciales inválidas");
 
         // Verificar contraseña con migración lazy de texto plano a BCrypt
         bool passwordValid = false;
 
         if (negocio.Password.StartsWith("$2"))
         {
-            // Ya está hasheada con BCrypt
             passwordValid = VerifyPassword(password, negocio.Password);
         }
         else
         {
-            // Contraseña en texto plano: comparar y migrar a BCrypt
             if (negocio.Password == password)
             {
                 passwordValid = true;
@@ -72,17 +83,15 @@ public class AuthService : IAuthService
         }
 
         if (!passwordValid)
-            return (false, null, null, "Credenciales inválidas");
+            return (false, null, null, null, null, "Credenciales inválidas");
 
-        // Verificar que la cuenta esté activa
         if (!negocio.IsActive && !negocio.EsPrueba)
-            return (false, null, null, "Su cuenta no está activa. Contacte al administrador.");
+            return (false, null, null, null, null, "Su cuenta no está activa. Contacte al administrador.");
 
-        // Verificar expiración de suscripción
         if (negocio.FechaExpiracion.HasValue && negocio.FechaExpiracion.Value.Date < DateTime.Now.Date)
-            return (false, null, null, "EXPIRED");
+            return (false, null, null, null, null, "EXPIRED");
 
-        return (true, "Negocio", negocio, null);
+        return (true, "Negocio", negocio, null, null, null);
     }
 
     // ═══════════════════════════════════════════════════════════

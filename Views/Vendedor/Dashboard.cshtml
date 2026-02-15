@@ -1,0 +1,861 @@
+@{
+    Layout = null;
+    var vendedorNombre = User.Identity?.Name ?? "Vendedor";
+    var isAdminImpersonating = User.Claims.Any(c => c.Type == "AdminImpersonating" && c.Value == "true");
+}
+
+<!DOCTYPE html>
+<html lang="es" data-theme="">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Panel Vendedor - Mi Negocio</title>
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.3.6/css/dataTables.dataTables.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/css/toastr.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="~/css/metronic-style.css" />
+    <script>
+    (function() {
+        var t = localStorage.getItem('mg-theme') || '';
+        if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+    </script>
+</head>
+<body class="mg-dashboard @(isAdminImpersonating ? "is-impersonating" : "")">
+
+    @if (isAdminImpersonating)
+    {
+        <div class="mg-impersonation-banner">
+            <i class="bi bi-eye-fill me-2"></i>
+            Estás viendo como vendedor: <strong>@vendedorNombre</strong>
+            <form method="post" action="/Negocios/AdminStopImpersonateVendedor" style="display:inline;">
+                <button type="submit" class="btn btn-sm btn-light ms-3 fw-bold">
+                    <i class="bi bi-arrow-left me-1"></i>Volver al Panel Admin
+                </button>
+            </form>
+        </div>
+    }
+
+    <div class="mg-sidebar-overlay" id="sidebarOverlay"></div>
+
+    <aside class="mg-sidebar" id="sidebar">
+        <div class="mg-sidebar-brand">
+            <i class="bi bi-shop"></i>
+            <h4>Mi Negocio</h4>
+        </div>
+
+        <nav class="mg-sidebar-menu">
+            <a href="#resumenTab" class="nav-link active" data-mg-tab="resumenTab">
+                <i class="bi bi-speedometer2"></i>
+                <span>Resumen</span>
+                <span class="badge bg-danger rounded-pill ms-auto d-none" id="badgeLeads">0</span>
+            </a>
+            <a href="#negociosTab" class="nav-link" data-mg-tab="negociosTab">
+                <i class="bi bi-building"></i>
+                <span>Mis Negocios</span>
+            </a>
+            <a href="#crearTab" class="nav-link" data-mg-tab="crearTab">
+                <i class="bi bi-plus-circle"></i>
+                <span>Crear Negocio</span>
+            </a>
+        </nav>
+
+        <div class="mg-sidebar-footer">
+            <a href="@Url.Action("Logout", "Auth")" class="nav-link">
+                <i class="bi bi-box-arrow-left"></i>
+                <span>Cerrar Sesión</span>
+            </a>
+        </div>
+    </aside>
+
+    <header class="mg-topbar">
+        <div class="mg-topbar-left">
+            <button class="mg-hamburger" id="sidebarToggle" type="button">
+                <i class="bi bi-list"></i>
+            </button>
+            <div>
+                <h5 class="mb-0 fw-bold">@vendedorNombre</h5>
+                <small class="text-muted">Panel Vendedor</small>
+            </div>
+        </div>
+        <div class="mg-topbar-right">
+            <div class="dropdown">
+                <button class="mg-theme-btn" data-bs-toggle="dropdown" data-bs-auto-close="true" title="Cambiar tema">
+                    <i class="bi bi-palette fs-5"></i>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end mg-theme-dropdown">
+                    <button class="mg-theme-option" data-theme-value="">
+                        <span class="theme-swatch" style="background: linear-gradient(135deg, #F5F8FA 50%, #3E97FF 50%);"></span>
+                        <span>Claro</span>
+                        <i class="bi bi-check2 d-none"></i>
+                    </button>
+                    <button class="mg-theme-option" data-theme-value="dark">
+                        <span class="theme-swatch" style="background: linear-gradient(135deg, #1E1E2D 50%, #5BA7FF 50%);"></span>
+                        <span>Oscuro</span>
+                        <i class="bi bi-check2 d-none"></i>
+                    </button>
+                    <button class="mg-theme-option" data-theme-value="ocean">
+                        <span class="theme-swatch" style="background: linear-gradient(135deg, #F0F9FF 50%, #0EA5E9 50%);"></span>
+                        <span>Océano</span>
+                        <i class="bi bi-check2 d-none"></i>
+                    </button>
+                    <button class="mg-theme-option" data-theme-value="sunset">
+                        <span class="theme-swatch" style="background: linear-gradient(135deg, #FFF7ED 50%, #F97316 50%);"></span>
+                        <span>Atardecer</span>
+                        <i class="bi bi-check2 d-none"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="d-none d-md-flex align-items-center ms-2">
+                <div class="bg-light-primary rounded-circle d-flex align-items-center justify-content-center" style="width:38px;height:38px;">
+                    <i class="bi bi-person-badge-fill text-primary"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="mg-content">
+        <div class="tab-content" id="vendedorTabsContent">
+
+            <!-- TAB RESUMEN -->
+            <div class="tab-pane fade show active" id="resumenTab" role="tabpanel">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+                    <div>
+                        <h3 class="fw-bold mb-0" id="saludo">Buen día</h3>
+                        <p class="text-muted mb-0">Tu resumen de ventas</p>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-xl-3 col-md-6 col-6">
+                        <div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-primary) 0%, var(--mg-gradient-primary-end) 100%);">
+                            <div class="card-body text-white">
+                                <span class="d-block mb-1 opacity-75 small">Negocios Creados</span>
+                                <span class="fs-2x fw-bolder" id="statNegocios">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 col-6">
+                        <div class="mg-stat-card">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="stat-label">Activos</div>
+                                    <div class="stat-value" id="statActivos">0</div>
+                                </div>
+                                <div class="stat-icon bg-light-success">
+                                    <i class="bi bi-check-circle text-success"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 col-6">
+                        <div class="mg-stat-card">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="stat-label">En Prueba</div>
+                                    <div class="stat-value" id="statPrueba">0</div>
+                                </div>
+                                <div class="stat-icon bg-light-warning">
+                                    <i class="bi bi-clock-history text-warning"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 col-6">
+                        <div class="mg-stat-card">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="stat-label">Total Clientes</div>
+                                    <div class="stat-value" id="statClientes">0</div>
+                                </div>
+                                <div class="stat-icon bg-light-info">
+                                    <i class="bi bi-people text-info"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN INTERESADOS (LEADS) -->
+                <div class="mg-card">
+                    <div class="card-header border-0 d-flex align-items-center justify-content-between">
+                        <h5 class="fw-bold mb-0">
+                            <i class="bi bi-people-fill text-primary me-2"></i>Interesados
+                            <span class="badge bg-danger rounded-pill ms-2 d-none" id="leadsCountHeader">0</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-row-bordered align-middle gs-0 gy-3 mb-0" id="leadsTable">
+                                <thead>
+                                    <tr class="fw-bold text-muted">
+                                        <th>Nombre</th>
+                                        <th>Negocio</th>
+                                        <th>Contacto</th>
+                                        <th class="d-none d-md-table-cell">Mensaje</th>
+                                        <th>Fecha</th>
+                                        <th class="text-end">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leadsBody">
+                                    <tr><td colspan="6" class="text-center text-muted py-4">Cargando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB NEGOCIOS -->
+            <div class="tab-pane fade" id="negociosTab" role="tabpanel">
+                <div class="mg-card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="negociosTable" class="table table-row-bordered align-middle gs-0 gy-3">
+                                <thead>
+                                    <tr class="fw-bold text-muted">
+                                        <th>Negocio</th>
+                                        <th>Dueño</th>
+                                        <th>Contacto</th>
+                                        <th>Clientes</th>
+                                        <th>Estado</th>
+                                        <th>Suscripción</th>
+                                        <th>Expira</th>
+                                        <th class="text-end">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB CREAR NEGOCIO -->
+            <div class="tab-pane fade" id="crearTab" role="tabpanel">
+                <div class="row justify-content-center">
+                    <div class="col-xl-10 col-lg-12">
+                        <div class="mg-card">
+                            <div class="card-header border-0">
+                                <h5 class="fw-bold mb-0">
+                                    <i class="bi bi-building text-primary me-2"></i>Crear Nuevo Negocio
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="crearNegocioForm">
+                                    <div class="row">
+                                        <div class="col-lg-6">
+                                            <div class="mb-4">
+                                                <label class="form-label fw-semibold required">Nombre del Negocio</label>
+                                                <input type="text" class="form-control form-control-lg" name="NombreNegocio" id="crearNombre" placeholder="Ej: Fitness Plus" required />
+                                            </div>
+                                            <div class="mb-4">
+                                                <label class="form-label fw-semibold required">Nombre del Dueño</label>
+                                                <input type="text" class="form-control form-control-lg" name="duenoNegocio" id="crearDueno" placeholder="Ej: Juan Pérez" required />
+                                            </div>
+                                            <div class="mb-4">
+                                                <label class="form-label fw-semibold required">Teléfono</label>
+                                                <input type="tel" class="form-control form-control-lg" name="telefono" id="crearTelefono" placeholder="Ej: +1 234 567 8900" required />
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-6">
+                                            <div class="mb-4">
+                                                <label class="form-label fw-semibold required">Email</label>
+                                                <input type="email" class="form-control form-control-lg" name="EmailNegocio" id="crearEmail" placeholder="Ej: contacto@negocio.com" required />
+                                            </div>
+                                            <div class="mb-4">
+                                                <label class="form-label fw-semibold required">Contraseña</label>
+                                                <input type="password" class="form-control form-control-lg" name="passwordNegocio" id="crearPassword" placeholder="Mínimo 6 caracteres" required />
+                                            </div>
+                                            <div class="mb-4">
+                                                <label class="form-label fw-semibold required">Tipo de Negocio</label>
+                                                <div class="d-flex gap-4 mt-2">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="esPrueba" id="tipoPago" value="false" checked />
+                                                        <label class="form-check-label fw-semibold" for="tipoPago">
+                                                            <i class="bi bi-credit-card text-primary me-1"></i>De Pago
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="radio" name="esPrueba" id="tipoPrueba" value="true" />
+                                                        <label class="form-check-label fw-semibold" for="tipoPrueba">
+                                                            <i class="bi bi-clock-history text-warning me-1"></i>Prueba (7 días)
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <hr class="my-4" />
+                                    <h5 class="fw-bold mb-4"><i class="bi bi-calendar-check text-primary me-2"></i>Suscripción</h5>
+                                    <div class="row">
+                                        <div class="col-md-3 mb-4">
+                                            <label class="form-label fw-semibold">Fecha de Inicio</label>
+                                            <input type="date" class="form-control form-control-lg" name="fechaPago" id="crearFechaPago" />
+                                        </div>
+                                        <div class="col-md-3 mb-4">
+                                            <label class="form-label fw-semibold">Fecha de Expiración</label>
+                                            <input type="date" class="form-control form-control-lg" name="fechaExpiracion" id="crearFechaExpiracion" />
+                                        </div>
+                                        <div class="col-md-3 mb-4">
+                                            <label class="form-label fw-semibold">Precio ($)</label>
+                                            <input type="number" step="0.01" min="0" class="form-control form-control-lg" name="precioSuscripcion" id="crearPrecio" placeholder="0.00" />
+                                        </div>
+                                        <div class="col-md-3 mb-4">
+                                            <label class="form-label fw-semibold">Días Pagados</label>
+                                            <input type="number" min="1" class="form-control form-control-lg" name="diasPagados" id="crearDias" placeholder="30" readonly />
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-end gap-3 mt-4 pt-4 border-top">
+                                        <button type="button" class="btn btn-light btn-lg" id="btnCancelar">
+                                            <i class="bi bi-x-circle me-2"></i>Cancelar
+                                        </button>
+                                        <button type="submit" class="btn btn-primary btn-lg" id="btnCrear">
+                                            <i class="bi bi-check-circle me-2"></i>Crear Negocio
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal Editar Negocio -->
+    <div class="modal fade" id="editarNegocioModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h3 class="modal-title fw-bolder">
+                        <i class="bi bi-pencil-square text-primary me-2"></i>Editar Negocio
+                    </h3>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editarNegocioForm">
+                        <input type="hidden" id="editNegocioId" name="NegocioId" />
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label fw-semibold required">Nombre del Negocio</label>
+                                <input type="text" class="form-control form-control-lg" name="NegocioNombre" id="editNegocioNombre" required />
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label fw-semibold required">Nombre del Dueño</label>
+                                <input type="text" class="form-control form-control-lg" name="DuenoNegocio" id="editDuenoNegocio" required />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label fw-semibold required">Email</label>
+                                <input type="email" class="form-control form-control-lg" name="Email" id="editEmail" required />
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <label class="form-label fw-semibold required">Teléfono</label>
+                                <input type="tel" class="form-control form-control-lg" name="Telefono" id="editTelefono" required />
+                            </div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Contraseña</label>
+                            <input type="password" class="form-control form-control-lg" name="Password" id="editPassword" />
+                            <div class="form-text">Dejar en blanco para mantener la contraseña actual</div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold required">Tipo de Negocio</label>
+                            <div class="d-flex gap-3 mt-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="tipoNegocioEdit" id="editTipoPago" value="pago" />
+                                    <label class="form-check-label" for="editTipoPago">
+                                        <i class="bi bi-credit-card text-primary me-1"></i>De Pago (Activo)
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="tipoNegocioEdit" id="editTipoPrueba" value="prueba" />
+                                    <label class="form-check-label" for="editTipoPrueba">
+                                        <i class="bi bi-clock-history text-warning me-1"></i>De Prueba
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="my-3" />
+                        <h6 class="fw-bold mb-3"><i class="bi bi-calendar-check text-primary me-2"></i>Suscripción</h6>
+                        <div class="row">
+                            <div class="col-md-3 mb-4">
+                                <label class="form-label fw-semibold">Fecha de pago</label>
+                                <input type="date" class="form-control form-control-lg" name="FechaPago" id="editFechaPago" />
+                            </div>
+                            <div class="col-md-3 mb-4">
+                                <label class="form-label fw-semibold">Fecha expiración</label>
+                                <input type="date" class="form-control form-control-lg" name="FechaExpiracion" id="editFechaExpiracion" />
+                            </div>
+                            <div class="col-md-3 mb-4">
+                                <label class="form-label fw-semibold">Días pagados</label>
+                                <input type="number" class="form-control form-control-lg" name="DiasPagados" id="editDiasPagados" min="1" />
+                                <div class="form-text">Editar recalcula fecha expiración</div>
+                            </div>
+                            <div class="col-md-3 mb-4">
+                                <label class="form-label fw-semibold">Precio suscripción ($)</label>
+                                <input type="number" step="0.01" class="form-control form-control-lg" name="PrecioSuscripcion" id="editPrecioSuscripcion" min="0" />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" id="btnGuardarEdicion" class="btn btn-primary">
+                        <i class="bi bi-save me-2"></i>Guardar Cambios
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/js/toastr.js"></script>
+    <script src="https://cdn.datatables.net/2.3.6/js/dataTables.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <script>
+    (function() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const toggle = document.getElementById('sidebarToggle');
+
+        function openSidebar() { sidebar.classList.add('show'); overlay.classList.add('show'); }
+        function closeSidebar() { sidebar.classList.remove('show'); overlay.classList.remove('show'); }
+        if (toggle) toggle.addEventListener('click', openSidebar);
+        if (overlay) overlay.addEventListener('click', closeSidebar);
+
+        const sidebarLinks = document.querySelectorAll('[data-mg-tab]');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('data-mg-tab');
+                sidebarLinks.forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                tabPanes.forEach(pane => {
+                    if (pane.id === targetId) pane.classList.add('show', 'active');
+                    else pane.classList.remove('show', 'active');
+                });
+                const event = new CustomEvent('mg-tab-shown', { detail: { tab: targetId } });
+                document.dispatchEvent(event);
+                closeSidebar();
+            });
+        });
+
+        var currentTheme = localStorage.getItem('mg-theme') || '';
+        function updateThemeUI() {
+            document.querySelectorAll('.mg-theme-option').forEach(function(btn) {
+                var val = btn.getAttribute('data-theme-value');
+                var check = btn.querySelector('.bi-check2');
+                if (val === currentTheme) { btn.classList.add('active'); if (check) check.classList.remove('d-none'); }
+                else { btn.classList.remove('active'); if (check) check.classList.add('d-none'); }
+            });
+        }
+        updateThemeUI();
+        document.querySelectorAll('.mg-theme-option').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                currentTheme = this.getAttribute('data-theme-value');
+                document.documentElement.setAttribute('data-theme', currentTheme);
+                localStorage.setItem('mg-theme', currentTheme);
+                updateThemeUI();
+            });
+        });
+    })();
+    </script>
+
+    <script>
+    const swalMG = Swal.mixin({ confirmButtonColor: '#3E97FF', cancelButtonColor: '#E4E6EF', cancelButtonText: 'Cancelar', reverseButtons: true });
+
+    function escHtml(str) {
+        if (!str) return '';
+        return $('<span>').text(str).html();
+    }
+
+    let tablaNegocios = null;
+
+    $(document).ready(function() {
+        cargarStats();
+
+        var h = new Date().getHours();
+        $('#saludo').text(h < 12 ? 'Buenos días' : h < 18 ? 'Buenas tardes' : 'Buenas noches');
+    });
+
+    document.addEventListener('mg-tab-shown', function(e) {
+        if (e.detail.tab === 'resumenTab') { cargarStats(); }
+        else if (e.detail.tab === 'negociosTab') {
+            if (!tablaNegocios) cargarTabla();
+            else tablaNegocios.ajax.reload(null, false);
+        }
+    });
+
+    function cargarStats() {
+        $.get('/Negocios/GetVendedorStats', function(d) {
+            $('#statNegocios').text(d.totalNegocios);
+            $('#statActivos').text(d.activos);
+            $('#statPrueba').text(d.enPrueba);
+            $('#statClientes').text(d.totalClientes);
+        }).fail(function() { toastr.error('Error al cargar estadísticas'); });
+        cargarLeads();
+    }
+
+    const vendedorNombreActual = '@Html.Raw(vendedorNombre.Replace("'", "\\'"))';
+
+    function cargarLeads() {
+        $.get('/Negocios/GetVendedorLeads', function(leads) {
+            var sinAtender = leads.filter(l => !l.atendido).length;
+            // Update badges
+            if (sinAtender > 0) {
+                $('#badgeLeads').text(sinAtender).removeClass('d-none');
+                $('#leadsCountHeader').text(sinAtender + ' sin atender').removeClass('d-none');
+            } else {
+                $('#badgeLeads').addClass('d-none');
+                $('#leadsCountHeader').addClass('d-none');
+            }
+
+            if (leads.length === 0) {
+                $('#leadsBody').html('<tr><td colspan="6" class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-2"></i>No hay interesados aún</td></tr>');
+                return;
+            }
+
+            var html = '';
+            leads.forEach(function(l) {
+                var atendidoClass = l.atendido ? 'opacity-50' : '';
+                var nombreStyle = l.atendido ? 'text-decoration: line-through;' : '';
+
+                // Contact buttons
+                var telLimpio = l.telefono ? l.telefono.replace(/[^0-9+]/g, '') : '';
+                var msgWa = encodeURIComponent('Hola ' + l.nombre + ', soy ' + vendedorNombreActual + ' de Mi Negocio. Vi que estás interesado en nuestra plataforma, ¿te puedo ayudar?');
+                var waBtn = telLimpio
+                    ? '<a href="https://wa.me/' + telLimpio + '?text=' + msgWa + '" target="_blank" class="btn btn-icon btn-sm" style="background:#25D366;color:#fff;" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>'
+                    : '';
+                var emailBtn = '<a href="mailto:' + escHtml(l.email) + '" class="btn btn-icon btn-bg-light btn-sm" title="Email"><i class="bi bi-envelope text-primary"></i></a>';
+
+                var atendidoBtn = l.atendido
+                    ? '<span class="badge bg-light-success text-success"><i class="bi bi-check-circle me-1"></i>' + escHtml(l.atendidoPorNombre) + '</span>'
+                    : '<button class="btn btn-icon btn-bg-light btn-sm" onclick="marcarLeadAtendido(\'' + l.id + '\')" title="Marcar atendido"><i class="bi bi-check-lg text-success fs-5"></i></button>';
+
+                var contactoHtml = escHtml(l.email);
+                if (l.telefono) contactoHtml += '<br><small class="text-muted">' + escHtml(l.telefono) + '</small>';
+
+                var mensajeTruncado = l.mensaje ? (l.mensaje.length > 60 ? escHtml(l.mensaje.substring(0, 60)) + '...' : escHtml(l.mensaje)) : '<span class="text-muted">-</span>';
+
+                html += '<tr class="' + atendidoClass + '">'
+                    + '<td style="' + nombreStyle + '"><strong>' + escHtml(l.nombre) + '</strong></td>'
+                    + '<td style="' + nombreStyle + '">' + escHtml(l.nombreNegocio) + '</td>'
+                    + '<td>' + contactoHtml + '</td>'
+                    + '<td class="d-none d-md-table-cell"><small>' + mensajeTruncado + '</small></td>'
+                    + '<td><small class="text-muted">' + escHtml(l.fechaCreacion) + '</small></td>'
+                    + '<td class="text-end"><div class="d-flex justify-content-end gap-1">' + waBtn + emailBtn + atendidoBtn + '</div></td>'
+                    + '</tr>';
+            });
+            $('#leadsBody').html(html);
+        }).fail(function() {
+            $('#leadsBody').html('<tr><td colspan="6" class="text-center text-danger py-4">Error al cargar interesados</td></tr>');
+        });
+    }
+
+    function marcarLeadAtendido(id) {
+        swalMG.fire({
+            title: '¿Marcar como atendido?',
+            html: 'Se registrará que <strong>' + escHtml(vendedorNombreActual) + '</strong> atendió a este interesado.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, marcar'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                $.post('/Negocios/MarcarLeadAtendido', { id: id }, function(r) {
+                    if (r.success) {
+                        toastr.success(r.message);
+                        cargarLeads();
+                    } else {
+                        toastr.error(r.message);
+                    }
+                }).fail(function(xhr) {
+                    toastr.error(xhr.responseJSON?.message || 'Error al marcar lead');
+                });
+            }
+        });
+    }
+
+    function cargarTabla() {
+        tablaNegocios = $('#negociosTable').DataTable({
+            ajax: { url: '/Negocios/GetVendedorNegocios', dataSrc: '' },
+            columns: [
+                { data: 'negocioNombre', render: d => '<strong>' + escHtml(d) + '</strong>' },
+                { data: 'duenoNegocio', render: d => escHtml(d) },
+                { data: null, render: function(d, t, r) {
+                    return escHtml(r.email) + '<br><small class="text-muted">' + escHtml(r.telefono) + '</small>';
+                }},
+                { data: 'totalClientes', render: function(d) { return '<span class="badge badge-light-info fs-7 fw-bold">' + d + '</span>'; } },
+                { data: null, render: function(d, t, r) {
+                    if (r.esPrueba) return '<span class="badge bg-warning text-dark">Prueba</span>';
+                    if (r.isActive) return '<span class="badge bg-success">Activo</span>';
+                    return '<span class="badge bg-danger">Inactivo</span>';
+                }},
+                { data: null, render: function(d, t, r) {
+                    var tipo = r.esPrueba ? '<span class="badge badge-light-warning">Prueba</span>' : '<span class="badge badge-light-primary">Pago</span>';
+                    var dias = r.diasPagados ? '<small class="text-muted d-block">' + r.diasPagados + ' días</small>' : '';
+                    var precio = r.precioSuscripcion > 0 ? '<small class="text-muted d-block">$' + r.precioSuscripcion.toFixed(2) + '</small>' : '';
+                    return tipo + dias + precio;
+                }},
+                { data: 'diasRestantesSuscripcion', render: function(d, t, r) {
+                    if (!r.fechaExpiracion) return '<span class="text-muted">Sin fecha</span>';
+                    var fecha = new Date(r.fechaExpiracion).toLocaleDateString('es-ES');
+                    if (d === null || d === undefined) return '<span class="text-muted">' + fecha + '</span>';
+                    if (r.porEmpezar) return '<span class="badge bg-secondary">Por empezar</span>';
+                    if (d < 0) return '<span class="badge bg-danger">Expirado</span><br><small class="text-muted">' + fecha + '</small>';
+                    if (d <= 3) return '<span class="badge bg-warning text-dark">' + d + 'd</span><br><small class="text-muted">' + fecha + '</small>';
+                    if (d <= 7) return '<span class="badge bg-info">' + d + 'd</span><br><small class="text-muted">' + fecha + '</small>';
+                    return '<span class="badge bg-success">' + d + 'd</span><br><small class="text-muted">' + fecha + '</small>';
+                }},
+                { data: null, orderable: false, className: 'text-end', render: function(d, t, r) {
+                    var impersonateBtn = '<form method="post" action="/Negocios/VendedorImpersonate/' + r.negocioId + '" style="display:inline;"><button type="submit" class="btn btn-icon btn-bg-light btn-sm" title="Ver negocio"><i class="bi bi-eye text-primary fs-5"></i></button></form>';
+                    var estadoBtn = r.isActive
+                        ? '<button class="btn btn-icon btn-bg-light btn-sm" onclick="vendedorCambiarEstado(\'' + r.negocioId + '\')" title="Cambiar a Prueba"><i class="bi bi-toggle-on text-success fs-4"></i></button>'
+                        : '<button class="btn btn-icon btn-bg-light btn-sm" onclick="vendedorCambiarEstado(\'' + r.negocioId + '\')" title="Cambiar a Activo"><i class="bi bi-toggle-off text-danger fs-4"></i></button>';
+                    var editBtn = '<button class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm" onclick="vendedorEditarNegocio(\'' + r.negocioId + '\')" title="Editar"><i class="bi bi-pencil fs-5"></i></button>';
+                    var deleteBtn = '<button class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm" onclick="vendedorEliminarNegocio(\'' + r.negocioId + '\', \'' + escHtml(r.negocioNombre).replace(/'/g, "\\'") + '\')" title="Eliminar"><i class="bi bi-trash fs-5"></i></button>';
+                    return '<div class="d-flex justify-content-end gap-1">' + impersonateBtn + estadoBtn + editBtn + deleteBtn + '</div>';
+                }}
+            ],
+            order: [[0, 'asc']],
+            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }
+        });
+    }
+
+    // ================================================================
+    // VENDEDOR: Editar negocio
+    // ================================================================
+    function vendedorEditarNegocio(id) {
+        $.ajax({
+            url: '/Negocios/GetVendedorNegocio/' + id,
+            type: 'GET',
+            success: function(data) {
+                $('#editNegocioId').val(data.negocioId);
+                $('#editNegocioNombre').val(data.negocioNombre);
+                $('#editDuenoNegocio').val(data.duenoNegocio);
+                $('#editEmail').val(data.email);
+                $('#editTelefono').val(data.telefono);
+                $('#editPassword').val('');
+
+                if (data.isActive) {
+                    $('#editTipoPago').prop('checked', true);
+                } else {
+                    $('#editTipoPrueba').prop('checked', true);
+                }
+
+                $('#editDiasPagados').val(data.diasPagados || 30);
+                $('#editPrecioSuscripcion').val(data.precioSuscripcion || 0);
+                $('#editFechaPago').val(data.fechaPago ? data.fechaPago.split('T')[0] : '');
+                $('#editFechaExpiracion').val(data.fechaExpiracion ? data.fechaExpiracion.split('T')[0] : '');
+
+                $('#editarNegocioModal').modal('show');
+            },
+            error: function() {
+                toastr.error('Error al cargar los datos del negocio');
+            }
+        });
+    }
+
+    $('#btnGuardarEdicion').click(function() {
+        if (!$('#editarNegocioForm')[0].checkValidity()) {
+            $('#editarNegocioForm')[0].reportValidity();
+            return;
+        }
+
+        var btn = $(this);
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...');
+
+        var tipoNegocio = $('input[name="tipoNegocioEdit"]:checked').val();
+
+        var formData = {
+            NegocioId: $('#editNegocioId').val(),
+            NegocioNombre: $('#editNegocioNombre').val(),
+            DuenoNegocio: $('#editDuenoNegocio').val(),
+            Email: $('#editEmail').val(),
+            Telefono: $('#editTelefono').val(),
+            Password: $('#editPassword').val(),
+            IsActive: tipoNegocio === 'pago',
+            EsPrueba: tipoNegocio === 'prueba',
+            DiasPagados: $('#editDiasPagados').val() || 30,
+            PrecioSuscripcion: $('#editPrecioSuscripcion').val() || 0,
+            FechaPago: $('#editFechaPago').val() || null,
+            FechaExpiracion: $('#editFechaExpiracion').val() || null
+        };
+
+        $.ajax({
+            url: '/Negocios/VendedorEditarNegocio',
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    $('#editarNegocioModal').modal('hide');
+                    if (tablaNegocios) tablaNegocios.ajax.reload(null, false);
+                    toastr.success(response.message);
+                    cargarStats();
+                } else {
+                    toastr.error(response.message);
+                }
+                btn.prop('disabled', false).html('<i class="bi bi-save me-2"></i>Guardar Cambios');
+            },
+            error: function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Error al guardar el negocio');
+                btn.prop('disabled', false).html('<i class="bi bi-save me-2"></i>Guardar Cambios');
+            }
+        });
+    });
+
+    // ================================================================
+    // VENDEDOR: Eliminar negocio
+    // ================================================================
+    function vendedorEliminarNegocio(id, nombre) {
+        swalMG.fire({
+            title: '¿Eliminar negocio?',
+            html: 'Vas a eliminar <strong>' + nombre + '</strong>.<br><span class="text-danger">Esta acción no se puede deshacer.</span>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '/Negocios/VendedorEliminarNegocio',
+                    type: 'POST',
+                    data: { id: id },
+                    success: function(response) {
+                        if (response.success) {
+                            if (tablaNegocios) tablaNegocios.ajax.reload(null, false);
+                            swalMG.fire('Eliminado', response.message, 'success');
+                            cargarStats();
+                        } else {
+                            toastr.error(response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        toastr.error(xhr.responseJSON?.message || 'Error al eliminar el negocio');
+                    }
+                });
+            }
+        });
+    }
+
+    // ================================================================
+    // VENDEDOR: Cambiar estado
+    // ================================================================
+    function vendedorCambiarEstado(id) {
+        swalMG.fire({
+            title: '¿Cambiar estado?',
+            text: 'Se alternará entre Pago y Prueba.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, cambiar'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '/Negocios/VendedorCambiarEstado',
+                    type: 'POST',
+                    data: { id: id },
+                    success: function(response) {
+                        if (response.success) {
+                            if (tablaNegocios) tablaNegocios.ajax.reload(null, false);
+                            toastr.success(response.message);
+                            cargarStats();
+                        }
+                    },
+                    error: function() {
+                        toastr.error('Error al cambiar el estado');
+                    }
+                });
+            }
+        });
+    }
+
+    // ================================================================
+    // BIDIRECTIONAL DATE HANDLERS (Edit modal)
+    // ================================================================
+    $('#editFechaPago, #editFechaExpiracion').on('change', function() {
+        var inicio = $('#editFechaPago').val();
+        var fin = $('#editFechaExpiracion').val();
+        if (inicio && fin) {
+            var diff = Math.ceil((new Date(fin) - new Date(inicio)) / (1000 * 60 * 60 * 24));
+            $('#editDiasPagados').val(diff > 0 ? diff : 0);
+        }
+    });
+
+    $('#editDiasPagados').on('change input', function() {
+        var inicio = $('#editFechaPago').val();
+        var dias = parseInt($(this).val());
+        if (inicio && dias > 0) {
+            var fecha = new Date(inicio);
+            fecha.setDate(fecha.getDate() + dias);
+            $('#editFechaExpiracion').val(fecha.toISOString().split('T')[0]);
+        }
+    });
+
+    // Crear negocio
+    $('#crearFechaPago, #crearFechaExpiracion').on('change', function() {
+        var inicio = new Date($('#crearFechaPago').val());
+        var fin = new Date($('#crearFechaExpiracion').val());
+        if (inicio && fin && fin > inicio) {
+            var dias = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24));
+            $('#crearDias').val(dias);
+        }
+    });
+
+    $('input[name="esPrueba"]').on('change', function() {
+        var esPrueba = $(this).val() === 'true';
+        if (esPrueba) {
+            var hoy = new Date();
+            var fin = new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000);
+            $('#crearFechaPago').val(hoy.toISOString().split('T')[0]);
+            $('#crearFechaExpiracion').val(fin.toISOString().split('T')[0]);
+            $('#crearDias').val(7);
+            $('#crearPrecio').val(0);
+        } else {
+            $('#crearFechaPago, #crearFechaExpiracion, #crearPrecio').val('');
+            $('#crearDias').val('');
+        }
+    });
+
+    $('#crearNegocioForm').on('submit', function(e) {
+        e.preventDefault();
+        var btn = $('#btnCrear');
+        var originalHtml = btn.html();
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Creando...');
+
+        $.post('/Negocios/VendedorCrearNegocio', $(this).serialize(), function(r) {
+            if (r.success) {
+                swalMG.fire('Negocio creado', r.message, 'success');
+                $('#crearNegocioForm')[0].reset();
+                cargarStats();
+                if (tablaNegocios) tablaNegocios.ajax.reload();
+            } else {
+                toastr.error(r.message || 'Error al crear negocio');
+            }
+        }).fail(function(xhr) {
+            toastr.error(xhr.responseJSON?.message || xhr.responseText || 'Error al crear negocio');
+        }).always(function() {
+            btn.prop('disabled', false).html(originalHtml);
+        });
+    });
+
+    $('#btnCancelar').click(function() {
+        document.querySelector('[data-mg-tab="resumenTab"]').click();
+    });
+    </script>
+
+</body>
+</html>

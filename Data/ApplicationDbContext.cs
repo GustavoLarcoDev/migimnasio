@@ -42,4 +42,10 @@ public class ApplicationDbContext : DbContext
 
     /// <summary>Tabla de movimientos de inventario (audit trail inmutable)</summary>
     public DbSet<MovimientoInventario> MovimientosInventario { get; set; }
+
+    /// <summary>Tabla de vendedores del sistema</summary>
+    public DbSet<Vendedor> Vendedores { get; set; }
+
+    /// <summary>Tabla de leads/interesados desde la landing page</summary>
+    public DbSet<LeadVendedor> LeadsVendedor { get; set; }
 }

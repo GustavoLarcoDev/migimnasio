@@ -56,6 +56,10 @@ public class NotificacionesController : Controller
     {
         try
         {
+            var negocioIdClaim = _authService.GetNegocioId(User);
+            if (!negocioIdClaim.HasValue || negocioId != negocioIdClaim.Value)
+                return Forbid();
+
             var count = await _notificationService.GetNotificacionesCountAsync(negocioId);
             return Ok(new { count });
         }
@@ -77,6 +81,10 @@ public class NotificacionesController : Controller
     {
         try
         {
+            var negocioIdClaim = _authService.GetNegocioId(User);
+            if (!negocioIdClaim.HasValue || negocioId != negocioIdClaim.Value)
+                return Forbid();
+
             var (success, message) = await _notificationService.MarcarLeidaAsync(id, negocioId);
             if (!success)
                 return NotFound(new { success = false, message });
@@ -97,6 +105,10 @@ public class NotificacionesController : Controller
     {
         try
         {
+            var negocioIdClaim = _authService.GetNegocioId(User);
+            if (!negocioIdClaim.HasValue || negocioId != negocioIdClaim.Value)
+                return Forbid();
+
             var (success, message) = await _notificationService.MarcarTodasLeidasAsync(negocioId);
             return Ok(new { success = true, message });
         }
