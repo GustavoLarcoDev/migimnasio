@@ -3,8 +3,10 @@
 // Muestra la página principal pública y maneja errores generales
 // ═══════════════════════════════════════════════════════════
 
+using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Gimnasio.Models;
 using Gimnasio.Data;
 
@@ -32,9 +34,14 @@ public class HomeController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("lead")]
     public async Task<IActionResult> Lead(string Name, string GymName, string Email, string? Phone, string? Message)
     {
+        try
+        {
         if (string.IsNullOrWhiteSpace(Name) || string.IsNullOrWhiteSpace(GymName) || string.IsNullOrWhiteSpace(Email))
+            return BadRequest();
+        if (!new EmailAddressAttribute().IsValid(Email.Trim()))
             return BadRequest();
 
         var lead = new LeadVendedor
@@ -45,13 +52,15 @@ public class HomeController : Controller
             Email = Email.Trim(),
             Telefono = Phone?.Trim(),
             Mensaje = Message?.Trim(),
-            FechaCreacion = DateTime.Now
+            FechaCreacion = TimeHelper.Now
         };
 
         _context.LeadsVendedor.Add(lead);
         await _context.SaveChangesAsync();
 
         return Ok();
+        }
+        catch (Exception) { return StatusCode(500); }
     }
 
     /// <summary>

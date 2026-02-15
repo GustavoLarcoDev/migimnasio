@@ -39,10 +39,10 @@ public class ClienteService : IClienteService
             .ToListAsync();
 
         var totalClientes = clientes.Count;
-        var clientesActivos = clientes.Count(c => c.FechaQueTermina.Date >= DateTime.Now.Date);
-        var clientesVencidos = clientes.Count(c => c.FechaQueTermina.Date < DateTime.Now.Date);
-        var clientesNuevosHoy = clientes.Count(c => c.FechaDeCreacion.Date == DateTime.Now.Date);
-        var clientesNuevosMes = clientes.Count(c => c.FechaDeCreacion.Month == DateTime.Now.Month && c.FechaDeCreacion.Year == DateTime.Now.Year);
+        var clientesActivos = clientes.Count(c => c.FechaQueTermina.Date >= TimeHelper.Now.Date);
+        var clientesVencidos = clientes.Count(c => c.FechaQueTermina.Date < TimeHelper.Now.Date);
+        var clientesNuevosHoy = clientes.Count(c => c.FechaDeCreacion.Date == TimeHelper.Now.Date);
+        var clientesNuevosMes = clientes.Count(c => c.FechaDeCreacion.Month == TimeHelper.Now.Month && c.FechaDeCreacion.Year == TimeHelper.Now.Year);
 
         // Ingresos desde Logs (fuente inmutable). Eliminar un cliente no afecta los ingresos.
         var logs = await _context.Logs
@@ -50,16 +50,16 @@ public class ClienteService : IClienteService
             .ToListAsync();
 
         var ingresosMes = logs
-            .Where(l => l.Fecha.Month == DateTime.Now.Month && l.Fecha.Year == DateTime.Now.Year)
+            .Where(l => l.Fecha.Month == TimeHelper.Now.Month && l.Fecha.Year == TimeHelper.Now.Year)
             .Sum(l => l.Monto);
 
         var ingresosHoy = logs
-            .Where(l => l.Fecha.Date == DateTime.Now.Date)
+            .Where(l => l.Fecha.Date == TimeHelper.Now.Date)
             .Sum(l => l.Monto);
 
         // Clientes que vencen en los próximos 5 días
         var proximosVencer = clientes
-            .Where(c => c.FechaQueTermina.Date >= DateTime.Now.Date && c.FechaQueTermina.Date <= DateTime.Now.AddDays(5).Date)
+            .Where(c => c.FechaQueTermina.Date >= TimeHelper.Now.Date && c.FechaQueTermina.Date <= TimeHelper.Now.AddDays(5).Date)
             .Select(c => new
             {
                 c.Nombre,
@@ -67,7 +67,7 @@ public class ClienteService : IClienteService
                 NombreCompleto = $"{c.Nombre} {c.Apellido}",
                 c.Telefono,
                 c.FechaQueTermina,
-                DiasRestantes = (c.FechaQueTermina.Date - DateTime.Now.Date).Days
+                DiasRestantes = (c.FechaQueTermina.Date - TimeHelper.Now.Date).Days
             })
             .OrderBy(c => c.DiasRestantes)
             .ToList();
@@ -110,8 +110,11 @@ public class ClienteService : IClienteService
                 c.Precio,
                 c.FechaDeCreacion,
                 c.FechaQueTermina,
-                DiasRestantes = (c.FechaQueTermina.Date - DateTime.Now.Date).Days,
-                EstaActivo = c.FechaQueTermina.Date >= DateTime.Now.Date
+                PorEmpezar = c.FechaDeCreacion.Date > TimeHelper.Now.Date,
+                DiasRestantes = c.FechaDeCreacion.Date > TimeHelper.Now.Date
+                    ? (c.FechaQueTermina.Date - c.FechaDeCreacion.Date).Days
+                    : (c.FechaQueTermina.Date - TimeHelper.Now.Date).Days,
+                EstaActivo = c.FechaQueTermina.Date >= TimeHelper.Now.Date
             })
             .ToListAsync();
     }
@@ -165,7 +168,7 @@ public class ClienteService : IClienteService
         if (model.Precio <= 0)
             return (false, "El precio debe ser mayor a 0");
 
-        var fechaInicio = model.FechaInicio ?? DateTime.Now;
+        var fechaInicio = model.FechaInicio ?? TimeHelper.Now;
         DateTime fechaFin;
         int dias;
 
@@ -201,7 +204,7 @@ public class ClienteService : IClienteService
             Precio = model.Precio,
             EsDiario = model.EsDiario,
             FechaDeCreacion = fechaInicio,
-            FechaDeActualizacion = DateTime.Now,
+            FechaDeActualizacion = TimeHelper.Now,
             FechaQueTermina = fechaFin
         };
 
@@ -297,7 +300,7 @@ public class ClienteService : IClienteService
         cliente.EsDiario = model.EsDiario;
         cliente.FechaDeCreacion = fechaInicio;
         cliente.FechaQueTermina = fechaFin;
-        cliente.FechaDeActualizacion = DateTime.Now;
+        cliente.FechaDeActualizacion = TimeHelper.Now;
 
         _context.Update(cliente);
         await _context.SaveChangesAsync();
@@ -327,7 +330,7 @@ public class ClienteService : IClienteService
             return (false, "Cliente no encontrado");
 
         var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
-        var diasRestantes = (cliente.FechaQueTermina.Date - DateTime.Now.Date).Days;
+        var diasRestantes = (cliente.FechaQueTermina.Date - TimeHelper.Now.Date).Days;
         var estadoCliente = diasRestantes >= 0 ? $"activo, {diasRestantes} días restantes" : "vencido";
 
         _context.Clientes.Remove(cliente);
@@ -361,7 +364,7 @@ public class ClienteService : IClienteService
         cliente.FechaQueTermina = nuevaFechaFin;
         cliente.Dias = diasAgregados;
         cliente.Precio = precio;
-        cliente.FechaDeActualizacion = DateTime.Now;
+        cliente.FechaDeActualizacion = TimeHelper.Now;
 
         _context.Update(cliente);
         await _context.SaveChangesAsync();
@@ -394,7 +397,7 @@ public class ClienteService : IClienteService
         foreach (var cliente in clientesDiarios)
         {
             cliente.EsDiario = false;
-            cliente.FechaDeActualizacion = DateTime.Now;
+            cliente.FechaDeActualizacion = TimeHelper.Now;
         }
 
         await _context.SaveChangesAsync();
@@ -456,7 +459,7 @@ public class ClienteService : IClienteService
             worksheet.Cell(row, 7).Value = cliente.Dias;
             worksheet.Cell(row, 8).Value = cliente.Precio;
             worksheet.Cell(row, 9).Value = cliente.EsDiario ? "Diario" : "Regular";
-            bool activo = cliente.FechaQueTermina.Date >= DateTime.Now.Date;
+            bool activo = cliente.FechaQueTermina.Date >= TimeHelper.Now.Date;
             worksheet.Cell(row, 10).Value = activo ? "Activo" : "Vencido";
             row++;
         }
@@ -600,12 +603,12 @@ public class ClienteService : IClienteService
                 var direccion = colMap.ContainsKey("direccion") ? GetCellString(row.Cell(colMap["direccion"])) : "";
 
                 // Fechas
-                DateTime fechaInicio = DateTime.Now;
+                DateTime fechaInicio = TimeHelper.Now;
                 DateTime? fechaFin = null;
                 int dias = 30;
 
                 if (colMap.ContainsKey("fecha_inicio"))
-                    fechaInicio = TryParseExcelDate(row.Cell(colMap["fecha_inicio"])) ?? DateTime.Now;
+                    fechaInicio = TryParseExcelDate(row.Cell(colMap["fecha_inicio"])) ?? TimeHelper.Now;
 
                 if (colMap.ContainsKey("fecha_fin"))
                     fechaFin = TryParseExcelDate(row.Cell(colMap["fecha_fin"]));
@@ -660,7 +663,7 @@ public class ClienteService : IClienteService
                     Precio = precio,
                     EsDiario = esDiario,
                     FechaDeCreacion = fechaInicio,
-                    FechaDeActualizacion = DateTime.Now,
+                    FechaDeActualizacion = TimeHelper.Now,
                     FechaQueTermina = fechaFin.Value
                 };
 

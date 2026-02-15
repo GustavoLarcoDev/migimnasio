@@ -27,7 +27,7 @@ public class Sugerencia
     [MaxLength(1000)]
     public string Mensaje { get; set; }
 
-    public DateTime FechaCreacion { get; set; } = DateTime.Now;
+    public DateTime FechaCreacion { get; set; } = TimeHelper.Now;
 
     /// <summary>Si el admin ya leyó esta sugerencia</summary>
     public bool Leida { get; set; } = false;

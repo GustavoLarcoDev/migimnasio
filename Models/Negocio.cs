@@ -49,7 +49,7 @@ public class Gym
     // FECHAS
     // ═══════════════════════════════════════════════════════════
 
-    public DateTime FechaCreacion { get; set; } = DateTime.Now;
+    public DateTime FechaCreacion { get; set; } = TimeHelper.Now;
     public DateTime FechaDeActualizacion { get; set; }
 
     // ═══════════════════════════════════════════════════════════

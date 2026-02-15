@@ -80,7 +80,7 @@ public class DailyReportService : BackgroundService
 
         try
         {
-            var hoy = DateTime.Now.Date;
+            var hoy = TimeHelper.Now.Date;
 
             // Obtener todos los negocios activos
             var negociosActivos = await context.Negocios

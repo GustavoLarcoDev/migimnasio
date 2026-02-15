@@ -29,5 +29,5 @@ public class LeadVendedor
 
     public string? AtendidoPorNombre { get; set; }
 
-    public DateTime FechaCreacion { get; set; } = DateTime.Now;
+    public DateTime FechaCreacion { get; set; } = TimeHelper.Now;
 }

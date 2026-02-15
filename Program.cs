@@ -9,6 +9,8 @@ using Gimnasio.Models;
 using Gimnasio.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,8 +51,33 @@ builder.Services.AddHttpClient("WhatsApp");
 // Registrar servicios de fondo (recordatorios WhatsApp + resumen diario)
 builder.Services.AddBackgroundServices();
 
-// Registrar MVC con vistas
-builder.Services.AddControllersWithViews();
+// Registrar MVC con vistas + protección CSRF global en POST/PUT/DELETE
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+});
+
+// Configurar rate limiting para endpoints sensibles (login, leads)
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy("login", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 5,
+                Window = TimeSpan.FromMinutes(1)
+            }));
+    options.AddPolicy("lead", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 3,
+                Window = TimeSpan.FromMinutes(1)
+            }));
+});
 
 // Configurar autenticación por cookies
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -97,6 +124,7 @@ app.Use(async (context, next) =>
 });
 
 app.UseHttpsRedirection();
+app.UseRateLimiter();
 app.UseRouting();
 
 // Autenticación antes de autorización (orden importa)

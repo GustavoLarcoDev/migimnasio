@@ -41,7 +41,7 @@ public class SugerenciaService : ISugerenciaService
             NegocioId = negocioId,
             NegocioNombre = negocioNombre,
             Mensaje = mensaje.Trim(),
-            FechaCreacion = DateTime.Now
+            FechaCreacion = TimeHelper.Now
         };
 
         _context.Sugerencias.Add(sugerencia);

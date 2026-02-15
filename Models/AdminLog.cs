@@ -21,7 +21,7 @@ public class AdminLog
     public string Detalle { get; set; }
 
     /// <summary>Fecha y hora en que se realizó la acción</summary>
-    public DateTime Fecha { get; set; } = DateTime.Now;
+    public DateTime Fecha { get; set; } = TimeHelper.Now;
 
     /// <summary>Nombre del negocio afectado (null para acciones generales)</summary>
     public string NegocioAfectado { get; set; }

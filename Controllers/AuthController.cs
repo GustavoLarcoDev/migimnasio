@@ -8,6 +8,7 @@ using Gimnasio.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
 
 namespace Gimnasio.Controllers;
@@ -59,6 +60,7 @@ public class AuthController : Controller
     /// Si la suscripción expiró, muestra mensaje especial (EXPIRED).
     /// </summary>
     [HttpPost("Login")]
+    [EnableRateLimiting("login")]
     public async Task<IActionResult> Login(string email, string password)
     {
         var (success, role, negocio, vendedorId, vendedorNombre, error) = await _authService.LoginAsync(email, password);

@@ -266,7 +266,7 @@ public class InventarioController : Controller
             var content = await _inventarioService.ExportInventarioExcelAsync(negocioId);
             return File(content,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                $"Inventario_{DateTime.Now:yyyyMMdd}.xlsx");
+                $"Inventario_{TimeHelper.Now:yyyyMMdd}.xlsx");
         }
         catch (Exception ex)
         {

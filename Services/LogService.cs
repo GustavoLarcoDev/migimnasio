@@ -42,7 +42,7 @@ public class LogService : ILogService
                 Tipo = tipo,
                 ClienteId = clienteId,
                 NombreCliente = nombreCliente,
-                Fecha = DateTime.Now
+                Fecha = TimeHelper.Now
             };
 
             _context.Logs.Add(log);
@@ -70,7 +70,7 @@ public class LogService : ILogService
             Message = message,
             Monto = monto,
             Tipo = monto >= 0 ? "ingreso" : "gasto",
-            Fecha = DateTime.Now
+            Fecha = TimeHelper.Now
         };
 
         _context.Logs.Add(log);

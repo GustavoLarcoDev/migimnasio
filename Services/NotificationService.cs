@@ -105,7 +105,7 @@ public class NotificationService : INotificationService
     /// </summary>
     public async Task<(bool success, string message, int count)> GenerarNotificacionesAsync(Guid negocioId)
     {
-        var hoy = DateTime.Now.Date;
+        var hoy = TimeHelper.Now.Date;
         var en3Dias = hoy.AddDays(3);
 
         // Buscar clientes cuya membresía vence entre hoy y dentro de 3 días
@@ -140,7 +140,7 @@ public class NotificationService : INotificationService
                 ClienteId = cliente.ClienteId,
                 NombreCliente = nombreCompleto,
                 Leida = false,
-                FechaCreacion = DateTime.Now
+                FechaCreacion = TimeHelper.Now
             };
 
             _context.Notificaciones.Add(notificacion);

@@ -35,6 +35,7 @@
             <i class="bi bi-eye-fill me-2"></i>
             Estás viendo como vendedor: <strong>@vendedorNombre</strong>
             <form method="post" action="/Negocios/AdminStopImpersonateVendedor" style="display:inline;">
+                @Html.AntiForgeryToken()
                 <button type="submit" class="btn btn-sm btn-light ms-3 fw-bold">
                     <i class="bi bi-arrow-left me-1"></i>Volver al Panel Admin
                 </button>
@@ -420,11 +421,35 @@
         </div>
     </div>
 
+    @Html.AntiForgeryToken()
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/js/toastr.js"></script>
     <script src="https://cdn.datatables.net/2.3.6/js/dataTables.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <script>
+    $.extend(true, $.fn.dataTable.defaults, {
+        language: {
+            processing: "Procesando...",
+            search: "Buscar:",
+            lengthMenu: "Mostrar _MENU_ registros",
+            info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
+            infoEmpty: "Mostrando 0 a 0 de 0 registros",
+            infoFiltered: "(filtrado de _MAX_ registros totales)",
+            loadingRecords: "Cargando...",
+            zeroRecords: "No se encontraron resultados",
+            emptyTable: "No hay datos disponibles",
+            paginate: { first: "«", previous: "‹", next: "›", last: "»" },
+            aria: { sortAscending: ": activar para ordenar ascendente", sortDescending: ": activar para ordenar descendente" }
+        }
+    });
+    </script>
+
+    <script>
+    $.ajaxSetup({ headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() } });
+    </script>
 
     <script>
     (function() {
@@ -623,7 +648,8 @@
                     return '<span class="badge bg-success">' + d + 'd</span><br><small class="text-muted">' + fecha + '</small>';
                 }},
                 { data: null, orderable: false, className: 'text-end', render: function(d, t, r) {
-                    var impersonateBtn = '<form method="post" action="/Negocios/VendedorImpersonate/' + r.negocioId + '" style="display:inline;"><button type="submit" class="btn btn-icon btn-bg-light btn-sm" title="Ver negocio"><i class="bi bi-eye text-primary fs-5"></i></button></form>';
+                    var csrfToken = $('input[name="__RequestVerificationToken"]').val();
+                    var impersonateBtn = '<form method="post" action="/Negocios/VendedorImpersonate/' + r.negocioId + '" style="display:inline;"><input type="hidden" name="__RequestVerificationToken" value="' + csrfToken + '"><button type="submit" class="btn btn-icon btn-bg-light btn-sm" title="Ver negocio"><i class="bi bi-eye text-primary fs-5"></i></button></form>';
                     var estadoBtn = r.isActive
                         ? '<button class="btn btn-icon btn-bg-light btn-sm" onclick="vendedorCambiarEstado(\'' + r.negocioId + '\')" title="Cambiar a Prueba"><i class="bi bi-toggle-on text-success fs-4"></i></button>'
                         : '<button class="btn btn-icon btn-bg-light btn-sm" onclick="vendedorCambiarEstado(\'' + r.negocioId + '\')" title="Cambiar a Activo"><i class="bi bi-toggle-off text-danger fs-4"></i></button>';
@@ -632,8 +658,7 @@
                     return '<div class="d-flex justify-content-end gap-1">' + impersonateBtn + estadoBtn + editBtn + deleteBtn + '</div>';
                 }}
             ],
-            order: [[0, 'asc']],
-            language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }
+            order: [[0, 'asc']]
         });
     }
 

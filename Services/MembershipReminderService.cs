@@ -82,7 +82,7 @@ public class MembershipReminderService : BackgroundService
 
         try
         {
-            var hoy = DateTime.Now.Date;
+            var hoy = TimeHelper.Now.Date;
 
             // Obtener negocios activos con sus clientes
             var negociosActivos = await context.Negocios

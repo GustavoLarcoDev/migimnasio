@@ -39,8 +39,8 @@ public class AuthService : IAuthService
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             return (false, null, null, null, null, "Email y contraseña son obligatorios");
 
-        // Verificar credenciales de admin
-        if (email == _adminSettings.Email && password == _adminSettings.Password)
+        // Verificar credenciales de admin (BCrypt hash)
+        if (email == _adminSettings.Email && BCrypt.Net.BCrypt.Verify(password, _adminSettings.PasswordHash))
             return (true, "Admin", null, null, null, null);
 
         // Verificar si es un vendedor (por correo)
@@ -76,7 +76,7 @@ public class AuthService : IAuthService
             {
                 passwordValid = true;
                 negocio.Password = HashPassword(password);
-                negocio.FechaDeActualizacion = DateTime.Now;
+                negocio.FechaDeActualizacion = TimeHelper.Now;
                 _context.Update(negocio);
                 await _context.SaveChangesAsync();
             }
@@ -88,7 +88,7 @@ public class AuthService : IAuthService
         if (!negocio.IsActive && !negocio.EsPrueba)
             return (false, null, null, null, null, "Su cuenta no está activa. Contacte al administrador.");
 
-        if (negocio.FechaExpiracion.HasValue && negocio.FechaExpiracion.Value.Date < DateTime.Now.Date)
+        if (negocio.FechaExpiracion.HasValue && negocio.FechaExpiracion.Value.Date < TimeHelper.Now.Date)
             return (false, null, null, null, null, "EXPIRED");
 
         return (true, "Negocio", negocio, null, null, null);

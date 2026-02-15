@@ -30,7 +30,7 @@ public class Vendedor
 
     public bool IsActive { get; set; } = true;
 
-    public DateTime FechaCreacion { get; set; } = DateTime.Now;
+    public DateTime FechaCreacion { get; set; } = TimeHelper.Now;
 
     public int NegociosCreados { get; set; } = 0;
 }

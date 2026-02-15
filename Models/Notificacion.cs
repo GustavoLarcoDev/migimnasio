@@ -36,5 +36,5 @@ public class Notificacion
     /// <summary>Si el usuario ya vio esta notificación</summary>
     public bool Leida { get; set; } = false;
 
-    public DateTime FechaCreacion { get; set; } = DateTime.Now;
+    public DateTime FechaCreacion { get; set; } = TimeHelper.Now;
 }

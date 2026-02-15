@@ -43,7 +43,7 @@ public class Logs
     [MaxLength(200)]
     public string NombreCliente { get; set; }
 
-    public DateTime Fecha { get; set; } = DateTime.Now;
+    public DateTime Fecha { get; set; } = TimeHelper.Now;
 }
 
 /// <summary>

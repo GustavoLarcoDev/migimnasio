@@ -42,5 +42,5 @@ public class MovimientoInventario
     [MaxLength(500)]
     public string Nota { get; set; }
 
-    public DateTime Fecha { get; set; } = DateTime.Now;
+    public DateTime Fecha { get; set; } = TimeHelper.Now;
 }

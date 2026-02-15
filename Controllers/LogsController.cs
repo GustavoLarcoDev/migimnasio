@@ -168,7 +168,7 @@ public class LogsController : Controller
             var content = await _logService.ExportLogsExcelAsync(negocioId);
             return File(content,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                $"Logs_{DateTime.Now:yyyyMMdd}.xlsx");
+                $"Logs_{TimeHelper.Now:yyyyMMdd}.xlsx");
         }
         catch (Exception ex)
         {

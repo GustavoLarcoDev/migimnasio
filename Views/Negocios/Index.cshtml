@@ -902,8 +902,7 @@ function cargarTablaNegocios() {
         ],
         order: [[0, 'asc']],
         responsive: true,
-        pageLength: 10,
-        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }
+        pageLength: 10
     });
 }
 
@@ -1069,6 +1068,11 @@ function impersonarNegocio(id) {
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = '/Negocios/Impersonate/' + id;
+            const tokenInput = document.createElement('input');
+            tokenInput.type = 'hidden';
+            tokenInput.name = '__RequestVerificationToken';
+            tokenInput.value = $('input[name="__RequestVerificationToken"]').val();
+            form.appendChild(tokenInput);
             document.body.appendChild(form);
             form.submit();
         }
@@ -1383,8 +1387,7 @@ function cargarTablaVentasNegocios(data) {
         ],
         order: [[5, 'asc']],
         responsive: true,
-        pageLength: 10,
-        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }
+        pageLength: 10
     });
 }
 
@@ -1451,8 +1454,7 @@ function cargarTablaLogs() {
         ],
         order: [[0, 'desc']],
         responsive: true,
-        pageLength: 15,
-        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }
+        pageLength: 15
     });
 }
 
@@ -1548,8 +1550,7 @@ function cargarTablaVendedores() {
                     '</div>';
             }}
         ],
-        order: [[0, 'asc']],
-        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }
+        order: [[0, 'asc']]
     });
 }
 
@@ -1655,6 +1656,11 @@ function impersonarVendedor(id, nombre) {
             var form = document.createElement('form');
             form.method = 'POST';
             form.action = '/Negocios/AdminImpersonateVendedor/' + id;
+            var tokenInput = document.createElement('input');
+            tokenInput.type = 'hidden';
+            tokenInput.name = '__RequestVerificationToken';
+            tokenInput.value = $('input[name="__RequestVerificationToken"]').val();
+            form.appendChild(tokenInput);
             document.body.appendChild(form);
             form.submit();
         }

@@ -31,6 +31,10 @@ public class Producto
     /// <summary>Soft delete: false = producto eliminado logicamente</summary>
     public bool IsActive { get; set; } = true;
 
-    public DateTime FechaCreacion { get; set; } = DateTime.Now;
-    public DateTime FechaDeActualizacion { get; set; } = DateTime.Now;
+    public DateTime FechaCreacion { get; set; } = TimeHelper.Now;
+    public DateTime FechaDeActualizacion { get; set; } = TimeHelper.Now;
+
+    /// <summary>Token de concurrencia optimista para prevenir race conditions en stock</summary>
+    [Timestamp]
+    public byte[] RowVersion { get; set; }
 }

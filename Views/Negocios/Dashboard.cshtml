@@ -417,10 +417,11 @@ function cargarTablaClientes() {
             { data: 'precio', render: function(d) { return '$' + (d || 0).toFixed(2); } },
             { data: 'fechaDeCreacion', render: function(d) { return d ? new Date(d).toLocaleDateString('es-MX') : '-'; } },
             { data: 'fechaQueTermina', render: function(d) { return d ? new Date(d).toLocaleDateString('es-MX') : '-'; } },
-            { data: 'diasRestantes', render: function(d) {
-                if (d < 0) return '<span class="badge bg-danger">Vencido</span>';
-                var badgeCls = d <= 3 ? 'warning' : 'success';
-                return '<span class="badge bg-' + badgeCls + '">' + d + ' días</span>';
+            { data: null, render: function(d, t, r) {
+                if (r.porEmpezar) return '<span class="badge bg-info">Por empezar</span> <span class="badge bg-light text-dark">' + r.diasRestantes + ' días</span>';
+                if (r.diasRestantes < 0) return '<span class="badge bg-danger">Vencido</span>';
+                var badgeCls = r.diasRestantes <= 3 ? 'warning' : 'success';
+                return '<span class="badge bg-' + badgeCls + '">' + r.diasRestantes + ' días</span>';
             }},
             { data: null, orderable: false, className: 'text-end', render: function(d, t, r) {
                 var btns = '';
@@ -441,8 +442,7 @@ function cargarTablaClientes() {
                 return btns;
             }}
         ],
-        order: [[4, 'asc']], responsive: true,
-        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }
+        order: [[4, 'asc']], responsive: true
     });
 }
 
@@ -552,7 +552,7 @@ function uploadExcel(file) {
 function initLogsTab() {}
 const tipoLogBadges = { 'ingreso': 'bg-success', 'gasto': 'bg-danger', 'cliente_creado': 'bg-primary', 'cliente_editado': 'bg-warning text-dark', 'cliente_renovado': 'bg-info', 'cliente_eliminado': 'bg-danger', 'sesion_inicio': 'bg-secondary', 'sesion_cierre': 'bg-dark', 'manual': 'bg-light text-dark', 'venta_inventario': 'bg-success', 'devolucion_inventario': 'bg-warning text-dark', 'restock_inventario': 'bg-info', 'ajuste_inventario': 'bg-secondary', 'producto_creado': 'bg-primary', 'producto_editado': 'bg-warning text-dark', 'producto_eliminado': 'bg-danger' };
 const tipoLogLabels = { 'ingreso': 'Ingreso', 'gasto': 'Gasto', 'cliente_creado': 'Cliente Nuevo', 'cliente_editado': 'Edición', 'cliente_renovado': 'Renovación', 'cliente_eliminado': 'Eliminación', 'sesion_inicio': 'Inicio Sesión', 'sesion_cierre': 'Cierre Sesión', 'manual': 'Manual', 'venta_inventario': 'Venta Inv.', 'devolucion_inventario': 'Dev. Inv.', 'restock_inventario': 'Restock', 'ajuste_inventario': 'Ajuste Inv.', 'producto_creado': 'Producto', 'producto_editado': 'Edit. Prod.', 'producto_eliminado': 'Elim. Prod.' };
-function cargarTablaLogs() { if (tablaLogs) { tablaLogs.destroy(); } tablaLogs = $('#logsTable').DataTable({ ajax: { url: '/Negocios/GetLogs', data: { negocioId: negocioId }, dataSrc: '', error: function(xhr, error, code) { console.error('DataTables error:', xhr.responseText); toastr.error('Error al cargar los logs: ' + (xhr.responseJSON?.message || 'Error desconocido')); } }, columns: [ { data: 'message' }, { data: 'tipo', render: function(d) { const badge = tipoLogBadges[d] || 'bg-secondary'; const label = tipoLogLabels[d] || d; return `<span class="badge ${badge}">${label}</span>`; } }, { data: 'nombreCliente', render: d => d || '<span class="text-muted">-</span>' }, { data: 'monto', render: d => d === 0 ? '<span class="text-muted">-</span>' : `<span class="${d >= 0 ? 'text-success' : 'text-danger'} fw-bold">${d >= 0 ? '+' : ''}$${d.toFixed(2)}</span>` }, { data: 'fecha', render: function(d, type) { if (type === 'sort' || type === 'type') return d; return new Date(d).toLocaleString('es-MX'); } } ], order: [[4, 'desc']], language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' } }); }
+function cargarTablaLogs() { if (tablaLogs) { tablaLogs.destroy(); } tablaLogs = $('#logsTable').DataTable({ ajax: { url: '/Negocios/GetLogs', data: { negocioId: negocioId }, dataSrc: '', error: function(xhr, error, code) { console.error('DataTables error:', xhr.responseText); toastr.error('Error al cargar los logs: ' + (xhr.responseJSON?.message || 'Error desconocido')); } }, columns: [ { data: 'message' }, { data: 'tipo', render: function(d) { const badge = tipoLogBadges[d] || 'bg-secondary'; const label = tipoLogLabels[d] || d; return `<span class="badge ${badge}">${label}</span>`; } }, { data: 'nombreCliente', render: d => d || '<span class="text-muted">-</span>' }, { data: 'monto', render: d => d === 0 ? '<span class="text-muted">-</span>' : `<span class="${d >= 0 ? 'text-success' : 'text-danger'} fw-bold">${d >= 0 ? '+' : ''}$${d.toFixed(2)}</span>` }, { data: 'fecha', render: function(d, type) { if (type === 'sort' || type === 'type') return d; return new Date(d).toLocaleString('es-MX'); } } ], order: [[4, 'desc']] }); }
 // Registrar movimiento con estado de carga
 $('#btnRegistrarLog').click(function() {
     var message = $('#logDescripcion').val();
@@ -773,8 +773,7 @@ function cargarCharts() {
             { data: 'telefono', render: function(d) { return d ? $('<span>').text(d).html() : '<span class="text-muted">No registrado</span>'; } },
             { data: 'fechaDeCreacion', render: function(d) { return new Date(d).toLocaleDateString('es-MX'); } }
         ],
-        pageLength: 5, lengthChange: false, searching: false, info: false,
-        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }
+        pageLength: 5, lengthChange: false, searching: false, info: false
     });
 }
 $('#ventasPeriodPills').on('click', '.mg-pill', function() { $('#ventasPeriodPills .mg-pill').removeClass('active'); $(this).addClass('active'); ventasPeriodoActual = $(this).data('periodo'); actualizarStatCards(); cargarCharts(); });
@@ -1305,8 +1304,7 @@ function cargarTablaMovimientos() {
             { data: null, render: function(d, t, r) { return r.stockAnterior + ' → ' + r.stockNuevo; } },
             { data: 'nota', render: d => d ? '<small>' + escHtml(d) + '</small>' : '<span class="text-muted">-</span>' }
         ],
-        order: [[0, 'desc']],
-        language: { url: 'https://cdn.datatables.net/plug-ins/1.13.4/i18n/es-ES.json' }
+        order: [[0, 'desc']]
     });
 }
 

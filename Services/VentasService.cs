@@ -32,7 +32,7 @@ public class VentasService : IVentasService
     public async Task<object> GetVentasStatsAsync(Guid negocioId)
     {
         // Definir los límites de cada periodo de tiempo
-        var hoy = DateTime.Now.Date;
+        var hoy = TimeHelper.Now.Date;
         var inicioMes = new DateTime(hoy.Year, hoy.Month, 1);
         var inicioAnio = new DateTime(hoy.Year, 1, 1);
 
@@ -108,8 +108,8 @@ public class VentasService : IVentasService
     /// </summary>
     public async Task<object> GetChartDataAsync(Guid negocioId, string periodo)
     {
-        var hoy = DateTime.Now.Date;
-        var ahora = DateTime.Now;
+        var hoy = TimeHelper.Now.Date;
+        var ahora = TimeHelper.Now;
 
         var logs = await _context.Logs
             .Where(l => l.NegocioId == negocioId)
@@ -186,8 +186,8 @@ public class VentasService : IVentasService
     /// </summary>
     public async Task<object> GetClientesChartDataAsync(Guid negocioId, string periodo)
     {
-        var hoy = DateTime.Now.Date;
-        var ahora = DateTime.Now;
+        var hoy = TimeHelper.Now.Date;
+        var ahora = TimeHelper.Now;
 
         var clientes = await _context.Clientes
             .Where(c => c.NegocioId == negocioId)

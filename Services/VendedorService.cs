@@ -77,7 +77,7 @@ public class VendedorService : IVendedorService
             Telefono = telefono?.Trim() ?? "",
             Password = _authService.HashPassword(password),
             IsActive = true,
-            FechaCreacion = DateTime.Now
+            FechaCreacion = TimeHelper.Now
         };
 
         _context.Vendedores.Add(vendedor);
@@ -168,7 +168,7 @@ public class VendedorService : IVendedorService
             totalClientes = n.Clientes.Count,
             fechaCreacion = n.FechaCreacion.ToString("yyyy-MM-dd"),
             diasRestantes = n.FechaExpiracion.HasValue
-                ? (n.FechaExpiracion.Value.Date - DateTime.Now.Date).Days
+                ? (n.FechaExpiracion.Value.Date - TimeHelper.Now.Date).Days
                 : (int?)null,
             n.PrecioSuscripcion
         }).ToList();

@@ -48,7 +48,7 @@ public class Cliente
     public bool EsDiario { get; set; }
 
     /// <summary>Fecha en que se registró o inició la membresía</summary>
-    public DateTime FechaDeCreacion { get; set; } = DateTime.Now;
+    public DateTime FechaDeCreacion { get; set; } = TimeHelper.Now;
 
     public DateTime FechaDeActualizacion { get; set; }
 

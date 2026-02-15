@@ -194,6 +194,7 @@
         }
 
         <form method="post" action="@Url.Action("Login", "Auth")" id="loginForm">
+            @Html.AntiForgeryToken()
             <div class="mb-3">
                 <input type="text"
                        name="email"

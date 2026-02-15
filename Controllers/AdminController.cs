@@ -307,7 +307,7 @@ public class AdminController : Controller
             var content = await _negocioService.ExportExcelAsync();
             return File(content,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                $"Negocios_{DateTime.Now:yyyyMMdd}.xlsx");
+                $"Negocios_{TimeHelper.Now:yyyyMMdd}.xlsx");
         }
         catch (Exception ex)
         {

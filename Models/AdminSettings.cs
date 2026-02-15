@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════
 // AdminSettings.cs — Configuración del administrador del sistema
 // Se lee desde appsettings.json > sección "AdminSettings".
-// Contiene las credenciales del admin (comparación directa).
+// Contiene las credenciales del admin (hash BCrypt).
 // ═══════════════════════════════════════════════════════════
 
 namespace Gimnasio.Models;
@@ -15,6 +15,6 @@ public class AdminSettings
     /// <summary>Email del administrador para login</summary>
     public string Email { get; set; }
 
-    /// <summary>Contraseña del administrador (comparación directa, no hasheada)</summary>
-    public string Password { get; set; }
+    /// <summary>Hash BCrypt de la contraseña del administrador</summary>
+    public string PasswordHash { get; set; }
 }

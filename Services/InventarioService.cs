@@ -67,8 +67,8 @@ public class InventarioService : IInventarioService
             CostoCompra = model.CostoCompra,
             Stock = model.Stock,
             StockMinimo = model.StockMinimo,
-            FechaCreacion = DateTime.Now,
-            FechaDeActualizacion = DateTime.Now
+            FechaCreacion = TimeHelper.Now,
+            FechaDeActualizacion = TimeHelper.Now
         };
 
         _context.Productos.Add(producto);
@@ -107,7 +107,7 @@ public class InventarioService : IInventarioService
         producto.PrecioVenta = model.PrecioVenta;
         producto.CostoCompra = model.CostoCompra;
         producto.StockMinimo = model.StockMinimo;
-        producto.FechaDeActualizacion = DateTime.Now;
+        producto.FechaDeActualizacion = TimeHelper.Now;
 
         _context.Update(producto);
         await _context.SaveChangesAsync();
@@ -127,7 +127,7 @@ public class InventarioService : IInventarioService
             return (false, "Producto no encontrado");
 
         producto.IsActive = false;
-        producto.FechaDeActualizacion = DateTime.Now;
+        producto.FechaDeActualizacion = TimeHelper.Now;
 
         _context.Update(producto);
         await _context.SaveChangesAsync();
@@ -157,7 +157,7 @@ public class InventarioService : IInventarioService
 
         var stockAnterior = producto.Stock;
         producto.Stock -= cantidad;
-        producto.FechaDeActualizacion = DateTime.Now;
+        producto.FechaDeActualizacion = TimeHelper.Now;
         var total = cantidad * producto.PrecioVenta;
 
         _context.MovimientosInventario.Add(new MovimientoInventario
@@ -172,11 +172,18 @@ public class InventarioService : IInventarioService
             Total = total,
             StockAnterior = stockAnterior,
             StockNuevo = producto.Stock,
-            Fecha = DateTime.Now
+            Fecha = TimeHelper.Now
         });
 
-        _context.Update(producto);
-        await _context.SaveChangesAsync();
+        try
+        {
+            _context.Update(producto);
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return (false, "El stock fue modificado por otro usuario. Recarga e intenta de nuevo.");
+        }
 
         await _logService.CreateLogAsync(negocioId, "venta_inventario",
             $"Venta inventario: {cantidad}x {producto.Nombre} @ ${producto.PrecioVenta:F2} = ${total:F2}",
@@ -200,7 +207,7 @@ public class InventarioService : IInventarioService
 
         var stockAnterior = producto.Stock;
         producto.Stock += cantidad;
-        producto.FechaDeActualizacion = DateTime.Now;
+        producto.FechaDeActualizacion = TimeHelper.Now;
         var total = cantidad * producto.PrecioVenta;
 
         _context.MovimientosInventario.Add(new MovimientoInventario
@@ -216,11 +223,18 @@ public class InventarioService : IInventarioService
             StockAnterior = stockAnterior,
             StockNuevo = producto.Stock,
             Nota = nota,
-            Fecha = DateTime.Now
+            Fecha = TimeHelper.Now
         });
 
-        _context.Update(producto);
-        await _context.SaveChangesAsync();
+        try
+        {
+            _context.Update(producto);
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return (false, "El stock fue modificado por otro usuario. Recarga e intenta de nuevo.");
+        }
 
         await _logService.CreateLogAsync(negocioId, "devolucion_inventario",
             $"Devolución inventario: {cantidad}x {producto.Nombre}, ${total:F2}. Razón: {nota}",
@@ -244,7 +258,7 @@ public class InventarioService : IInventarioService
 
         var stockAnterior = producto.Stock;
         producto.Stock += cantidad;
-        producto.FechaDeActualizacion = DateTime.Now;
+        producto.FechaDeActualizacion = TimeHelper.Now;
         var costoUnitario = costoTotal / cantidad;
 
         _context.MovimientosInventario.Add(new MovimientoInventario
@@ -259,11 +273,18 @@ public class InventarioService : IInventarioService
             Total = costoTotal,
             StockAnterior = stockAnterior,
             StockNuevo = producto.Stock,
-            Fecha = DateTime.Now
+            Fecha = TimeHelper.Now
         });
 
-        _context.Update(producto);
-        await _context.SaveChangesAsync();
+        try
+        {
+            _context.Update(producto);
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return (false, "El stock fue modificado por otro usuario. Recarga e intenta de nuevo.");
+        }
 
         await _logService.CreateLogAsync(negocioId, "restock_inventario",
             $"Restock inventario: +{cantidad} {producto.Nombre}, costo ${costoTotal:F2}",
@@ -291,7 +312,7 @@ public class InventarioService : IInventarioService
 
         var stockAnterior = producto.Stock;
         producto.Stock = stockReal;
-        producto.FechaDeActualizacion = DateTime.Now;
+        producto.FechaDeActualizacion = TimeHelper.Now;
 
         _context.MovimientosInventario.Add(new MovimientoInventario
         {
@@ -306,11 +327,18 @@ public class InventarioService : IInventarioService
             StockAnterior = stockAnterior,
             StockNuevo = stockReal,
             Nota = nota,
-            Fecha = DateTime.Now
+            Fecha = TimeHelper.Now
         });
 
-        _context.Update(producto);
-        await _context.SaveChangesAsync();
+        try
+        {
+            _context.Update(producto);
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return (false, "El stock fue modificado por otro usuario. Recarga e intenta de nuevo.");
+        }
 
         var tipoAjuste = diferencia > 0 ? "incremento" : "reducción";
         await _logService.CreateLogAsync(negocioId, "ajuste_inventario",
@@ -352,7 +380,7 @@ public class InventarioService : IInventarioService
             .Where(p => p.NegocioId == negocioId && p.IsActive)
             .ToListAsync();
 
-        var hoy = DateTime.Now.Date;
+        var hoy = TimeHelper.Now.Date;
         var movimientosHoy = await _context.MovimientosInventario
             .Where(m => m.NegocioId == negocioId && m.Fecha.Date == hoy)
             .ToListAsync();

@@ -150,7 +150,7 @@ public class ClientesController : Controller
                 return NotFound();
 
             // Calcular días restantes de suscripción
-            var now = DateTime.Now;
+            var now = TimeHelper.Now;
             int? diasRestantes = negocio.FechaExpiracion.HasValue
                 ? (int)(negocio.FechaExpiracion.Value.Date - now.Date).TotalDays
                 : null;
@@ -352,7 +352,7 @@ public class ClientesController : Controller
             var content = await _clienteService.ExportClientesExcelAsync(negocioId);
             return File(content,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                $"Clientes_{DateTime.Now:yyyyMMdd}.xlsx");
+                $"Clientes_{TimeHelper.Now:yyyyMMdd}.xlsx");
         }
         catch (Exception ex)
         {

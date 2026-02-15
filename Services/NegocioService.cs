@@ -31,7 +31,7 @@ public class NegocioService : INegocioService
     /// </summary>
     public async Task<object> GetAllNegociosAsync()
     {
-        var now = DateTime.Now;
+        var now = TimeHelper.Now;
         return await _context.Negocios
             .Select(g => new
             {
@@ -131,7 +131,7 @@ public class NegocioService : INegocioService
         if (string.IsNullOrWhiteSpace(password))
             return (false, "Password es necesario");
 
-        var now = DateTime.Now;
+        var now = TimeHelper.Now;
 
         // Usar valores proporcionados o valores por defecto según tipo
         var fechaPagoFinal = fechaPago ?? now;
@@ -198,8 +198,8 @@ public class NegocioService : INegocioService
 
         // Si se establece fecha de expiración pero no hay fecha de pago, asignar ahora
         if (negocio.FechaExpiracion.HasValue && existente.FechaPago == null)
-            existente.FechaPago = DateTime.Now;
-        existente.FechaDeActualizacion = DateTime.Now;
+            existente.FechaPago = TimeHelper.Now;
+        existente.FechaDeActualizacion = TimeHelper.Now;
 
         // Solo re-hashear si se envió una nueva contraseña
         if (!string.IsNullOrEmpty(negocio.Password))
@@ -255,7 +255,7 @@ public class NegocioService : INegocioService
             negocio.EsPrueba = false;
         }
 
-        negocio.FechaDeActualizacion = DateTime.Now;
+        negocio.FechaDeActualizacion = TimeHelper.Now;
         _context.Update(negocio);
         await _context.SaveChangesAsync();
 
@@ -292,7 +292,7 @@ public class NegocioService : INegocioService
             .Sum(n => n.PrecioSuscripcion);
 
         // Ingresos por mes (basado en FechaPago de los últimos 12 meses)
-        var hace12Meses = DateTime.Now.AddMonths(-12);
+        var hace12Meses = TimeHelper.Now.AddMonths(-12);
         var ingresosporMes = negocios
             .Where(n => n.FechaPago.HasValue && n.FechaPago.Value >= hace12Meses && n.PrecioSuscripcion > 0)
             .GroupBy(n => new { n.FechaPago!.Value.Year, n.FechaPago.Value.Month })
@@ -308,7 +308,7 @@ public class NegocioService : INegocioService
         var revenuePorMes = new List<object>();
         for (int i = 11; i >= 0; i--)
         {
-            var fecha = DateTime.Now.AddMonths(-i);
+            var fecha = TimeHelper.Now.AddMonths(-i);
             var mesKey = $"{fecha.Year}-{fecha.Month:D2}";
             var mesNombre = fecha.ToString("MMM yyyy");
             var ingreso = ingresosporMes.FirstOrDefault(x => x.Mes == mesKey);
@@ -340,7 +340,7 @@ public class NegocioService : INegocioService
             Id = Guid.NewGuid(),
             Accion = accion,
             Detalle = detalle,
-            Fecha = DateTime.Now,
+            Fecha = TimeHelper.Now,
             NegocioAfectado = negocioAfectado
         };
         _context.AdminLogs.Add(log);
@@ -379,7 +379,7 @@ public class NegocioService : INegocioService
     /// </summary>
     public async Task<object> GetVentasAdminAsync()
     {
-        var now = DateTime.Now;
+        var now = TimeHelper.Now;
 
         // Negocios activos que pagan (no en prueba, con precio > 0)
         var negociosPagando = await _context.Negocios
