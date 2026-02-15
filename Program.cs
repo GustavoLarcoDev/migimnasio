@@ -7,6 +7,7 @@
 using Gimnasio.Data;
 using Gimnasio.Models;
 using Gimnasio.Services;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
@@ -95,8 +96,24 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 var app = builder.Build();
 
 // ═══════════════════════════════════════════════════════════
+// AUTO-MIGRACIÓN DE BASE DE DATOS
+// ═══════════════════════════════════════════════════════════
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+}
+
+// ═══════════════════════════════════════════════════════════
 // PIPELINE DE MIDDLEWARE
 // ═══════════════════════════════════════════════════════════
+
+// Forwarded headers (necesario detrás de Nginx para HTTPS, HSTS y cookies seguras)
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 
 if (!app.Environment.IsDevelopment())
 {
