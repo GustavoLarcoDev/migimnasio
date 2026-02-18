@@ -1,6 +1,7 @@
 #nullable enable
-using System.Net;
-using System.Net.Mail;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
 
 namespace Gimnasio.Services;
 
@@ -48,9 +49,9 @@ public class EmailService : IEmailService
         _logger = logger;
     }
 
-    public async Task<bool> EnviarBienvenidaVendedorAsync(string destinatario, string nombreVendedor)
+    private async Task<bool> EnviarEmailAsync(string destinatario, string subject, string htmlBody)
     {
-        if (string.IsNullOrEmpty(_settings.Password) || _settings.Password == "PONER_APP_PASSWORD_AQUI")
+        if (string.IsNullOrEmpty(_settings.Password) || _settings.Password.Contains("YOUR_"))
         {
             _logger.LogWarning("EmailService: No se ha configurado la App Password de Gmail. Correo no enviado.");
             return false;
@@ -58,15 +59,39 @@ public class EmailService : IEmailService
 
         try
         {
-            var frase = FrasesVendedor[Random.Shared.Next(FrasesVendedor.Length)];
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_settings.FromName, _settings.FromEmail));
+            message.To.Add(MailboxAddress.Parse(destinatario));
+            message.Subject = subject;
+            message.Body = new TextPart("html") { Text = htmlBody };
 
-            var body = $@"
+            using var client = new MailKit.Net.Smtp.SmtpClient();
+            await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(_settings.FromEmail, _settings.Password);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+
+            _logger.LogInformation("Email enviado exitosamente a {Email}", destinatario);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error enviando email a {Email}", destinatario);
+            return false;
+        }
+    }
+
+    public async Task<bool> EnviarBienvenidaVendedorAsync(string destinatario, string nombreVendedor)
+    {
+        var frase = FrasesVendedor[Random.Shared.Next(FrasesVendedor.Length)];
+
+        var body = $@"
 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>
     <div style='background: linear-gradient(135deg, #ff6b35, #f7931e); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;'>
         <h1 style='color: white; margin: 0; font-size: 28px;'>Bienvenido a My-Negocio</h1>
     </div>
     <div style='background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 12px 12px;'>
-        <h2 style='color: #333;'>Hola {nombreVendedor}! 👋</h2>
+        <h2 style='color: #333;'>Hola {nombreVendedor}!</h2>
         <p style='color: #555; font-size: 16px; line-height: 1.6;'>
             Estamos muy agradecidos de que te unas a nuestro equipo de vendedores.
             Tu talento y dedicacion son exactamente lo que necesitamos para seguir creciendo juntos.
@@ -93,47 +118,20 @@ public class EmailService : IEmailService
     </div>
 </div>";
 
-            using var message = new MailMessage();
-            message.From = new MailAddress(_settings.FromEmail, _settings.FromName);
-            message.To.Add(new MailAddress(destinatario));
-            message.Subject = "Bienvenido al equipo de My-Negocio! 🎉";
-            message.Body = body;
-            message.IsBodyHtml = true;
-
-            using var client = new SmtpClient(_settings.SmtpHost, _settings.SmtpPort);
-            client.Credentials = new NetworkCredential(_settings.FromEmail, _settings.Password);
-            client.EnableSsl = true;
-
-            await client.SendMailAsync(message);
-            _logger.LogInformation("Email de bienvenida enviado a {Email}", destinatario);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error enviando email de bienvenida a {Email}", destinatario);
-            return false;
-        }
+        return await EnviarEmailAsync(destinatario, "Bienvenido al equipo de My-Negocio!", body);
     }
 
     public async Task<bool> EnviarBienvenidaNegocioAsync(string destinatario, string nombreNegocio, string nombreDueno, string? nombreVendedor)
     {
-        if (string.IsNullOrEmpty(_settings.Password) || _settings.Password == "PONER_APP_PASSWORD_AQUI")
+        var frase = FrasesNegocio[Random.Shared.Next(FrasesNegocio.Length)];
+        var creadoPorAdmin = string.IsNullOrEmpty(nombreVendedor);
+
+        string saludo, mensaje, despedida;
+
+        if (creadoPorAdmin)
         {
-            _logger.LogWarning("EmailService: No se ha configurado la App Password de Gmail. Correo no enviado.");
-            return false;
-        }
-
-        try
-        {
-            var frase = FrasesNegocio[Random.Shared.Next(FrasesNegocio.Length)];
-            var creadoPorAdmin = string.IsNullOrEmpty(nombreVendedor);
-
-            string saludo, mensaje, despedida;
-
-            if (creadoPorAdmin)
-            {
-                saludo = $"Hola {nombreDueno}!";
-                mensaje = $@"
+            saludo = $"Hola {nombreDueno}!";
+            mensaje = $@"
         <p style='color: #555; font-size: 16px; line-height: 1.6;'>
             Le damos la mas calurosa bienvenida a <strong>My-Negocio</strong>. Estamos muy agradecidos
             de que haya elegido nuestra plataforma para gestionar <strong>{nombreNegocio}</strong>.
@@ -142,17 +140,17 @@ public class EmailService : IEmailService
             Cualquier pregunta, duda o sugerencia que tenga, estare muy feliz de atenderlo personalmente.
             Su exito es nuestra prioridad.
         </p>";
-                despedida = @"
+            despedida = @"
         <p style='color: #555; font-size: 16px;'>
             Con mucho gusto,<br>
             <strong>Gustavo Larco</strong><br>
             <span style='color: #888;'>C.E.O de My-Negocio.com</span>
         </p>";
-            }
-            else
-            {
-                saludo = $"Hola {nombreDueno}!";
-                mensaje = $@"
+        }
+        else
+        {
+            saludo = $"Hola {nombreDueno}!";
+            mensaje = $@"
         <p style='color: #555; font-size: 16px; line-height: 1.6;'>
             Queremos agradecerle de corazon por su confianza, su tiempo y su compra.
             Bienvenido a <strong>My-Negocio</strong>! Estamos emocionados de que
@@ -162,22 +160,22 @@ public class EmailService : IEmailService
             Su asesor <strong>{nombreVendedor}</strong> estara disponible para ayudarle en todo
             lo que necesite. No dude en contactarlo.
         </p>";
-                despedida = $@"
+            despedida = $@"
         <p style='color: #555; font-size: 16px;'>
             Con mucho agradecimiento,<br>
             <strong>{nombreVendedor}</strong><br>
             <span style='color: #888;'>Asesor de My-Negocio</span>
         </p>";
-            }
+        }
 
-            var body = $@"
+        var body = $@"
 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>
     <div style='background: linear-gradient(135deg, #ff6b35, #f7931e); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;'>
         <h1 style='color: white; margin: 0; font-size: 28px;'>Bienvenido a My-Negocio</h1>
         <p style='color: rgba(255,255,255,0.9); margin: 8px 0 0; font-size: 16px;'>{nombreNegocio}</p>
     </div>
     <div style='background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 12px 12px;'>
-        <h2 style='color: #333;'>{saludo} 👋</h2>
+        <h2 style='color: #333;'>{saludo}</h2>
         {mensaje}
         <div style='background: #fff8f0; border-left: 4px solid #ff6b35; padding: 15px 20px; margin: 25px 0; border-radius: 0 8px 8px 0;'>
             <p style='color: #333; font-size: 16px; font-style: italic; margin: 0;'>
@@ -191,25 +189,6 @@ public class EmailService : IEmailService
     </div>
 </div>";
 
-            using var mailMessage = new MailMessage();
-            mailMessage.From = new MailAddress(_settings.FromEmail, _settings.FromName);
-            mailMessage.To.Add(new MailAddress(destinatario));
-            mailMessage.Subject = $"Bienvenido a My-Negocio, {nombreDueno}! 🚀";
-            mailMessage.Body = body;
-            mailMessage.IsBodyHtml = true;
-
-            using var client = new SmtpClient(_settings.SmtpHost, _settings.SmtpPort);
-            client.Credentials = new NetworkCredential(_settings.FromEmail, _settings.Password);
-            client.EnableSsl = true;
-
-            await client.SendMailAsync(mailMessage);
-            _logger.LogInformation("Email de bienvenida negocio enviado a {Email}", destinatario);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error enviando email de bienvenida negocio a {Email}", destinatario);
-            return false;
-        }
+        return await EnviarEmailAsync(destinatario, $"Bienvenido a My-Negocio, {nombreDueno}!", body);
     }
 }
