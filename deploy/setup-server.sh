@@ -85,6 +85,13 @@ cat > /opt/myapp/appsettings.Production.json << APPSETTINGS
     "Email": "gustavo.larco@mynegocio.com",
     "PasswordHash": "$ADMIN_HASH"
   },
+  "EmailSettings": {
+    "SmtpHost": "smtp.gmail.com",
+    "SmtpPort": 587,
+    "FromEmail": "mynegociooficiall@gmail.com",
+    "FromName": "My-Negocio",
+    "Password": "YOUR_GMAIL_APP_PASSWORD"
+  },
   "WhatsAppSettings": {
     "PhoneNumberId": "",
     "AccessToken": "",

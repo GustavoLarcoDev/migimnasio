@@ -36,6 +36,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(
         builder.Configuration.GetConnectionString("DefaultConnection")
     )
+    .ConfigureWarnings(w => w.Log(
+        Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning))
 );
 
 // Registrar servicios de la aplicación (patrón interfaz + implementación)
