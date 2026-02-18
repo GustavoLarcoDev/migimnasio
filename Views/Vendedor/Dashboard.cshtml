@@ -8,7 +8,7 @@
 <html lang="es" data-theme="">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Panel Vendedor - Mi Negocio</title>
     <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
@@ -20,6 +20,11 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/css/toastr.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="~/css/metronic-style.css" />
+    <style>
+    .mg-modelo-card { border: 2px solid var(--mg-gray-300, #E4E6EF) !important; transition: all 0.3s ease; }
+    .mg-modelo-card:hover { border-color: var(--mg-primary, #3E97FF) !important; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .mg-modelo-card:has(input:checked) { border-color: var(--mg-primary, #3E97FF) !important; background-color: var(--mg-primary-light, rgba(62, 151, 255, 0.08)); }
+    </style>
     <script>
     (function() {
         var t = localStorage.getItem('mg-theme') || '';
@@ -218,7 +223,7 @@
                 <div class="mg-card">
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table id="negociosTable" class="table table-row-bordered align-middle gs-0 gy-3">
+                            <table id="vendedorNegociosTable" class="table table-row-bordered align-middle gs-0 gy-3">
                                 <thead>
                                     <tr class="fw-bold text-muted">
                                         <th>Negocio</th>
@@ -273,6 +278,27 @@
                                             <div class="mb-4">
                                                 <label class="form-label fw-semibold required">Contraseña</label>
                                                 <input type="password" class="form-control form-control-lg" name="passwordNegocio" id="crearPassword" placeholder="Mínimo 6 caracteres" required />
+                                            </div>
+                                            <div class="mb-4">
+                                                <label class="form-label fw-semibold">Modelo de Negocio</label>
+                                                <div class="row g-3 mt-1">
+                                                    <div class="col-6">
+                                                        <label class="mg-modelo-card d-block p-3 border rounded-3 text-center" for="vModeloMembresias" style="cursor:pointer;">
+                                                            <input class="form-check-input d-none" type="radio" name="tipoNegocio" id="vModeloMembresias" value="membresias" checked />
+                                                            <i class="bi bi-calendar-check fs-1 text-primary d-block mb-2"></i>
+                                                            <strong class="d-block">Membresías</strong>
+                                                            <small class="text-muted">Gimnasios, yoga, crossfit</small>
+                                                        </label>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <label class="mg-modelo-card d-block p-3 border rounded-3 text-center" for="vModeloArtesanal" style="cursor:pointer;">
+                                                            <input class="form-check-input d-none" type="radio" name="tipoNegocio" id="vModeloArtesanal" value="artesanal" />
+                                                            <i class="bi bi-scissors fs-1 text-success d-block mb-2"></i>
+                                                            <strong class="d-block">Artesanal</strong>
+                                                            <small class="text-muted">Salones de uñas, barberías</small>
+                                                        </label>
+                                                    </div>
+                                                </div>
                                             </div>
                                             <div class="mb-4">
                                                 <label class="form-label fw-semibold required">Tipo de Negocio</label>
@@ -457,8 +483,8 @@
         const overlay = document.getElementById('sidebarOverlay');
         const toggle = document.getElementById('sidebarToggle');
 
-        function openSidebar() { sidebar.classList.add('show'); overlay.classList.add('show'); }
-        function closeSidebar() { sidebar.classList.remove('show'); overlay.classList.remove('show'); }
+        function openSidebar() { sidebar.classList.add('show'); overlay.classList.add('show'); document.body.style.overflow = 'hidden'; }
+        function closeSidebar() { sidebar.classList.remove('show'); overlay.classList.remove('show'); document.body.style.overflow = ''; }
         if (toggle) toggle.addEventListener('click', openSidebar);
         if (overlay) overlay.addEventListener('click', closeSidebar);
 
@@ -617,7 +643,7 @@
     }
 
     function cargarTabla() {
-        tablaNegocios = $('#negociosTable').DataTable({
+        tablaNegocios = $('#vendedorNegociosTable').DataTable({
             ajax: { url: '/Negocios/GetVendedorNegocios', dataSrc: '' },
             columns: [
                 { data: 'negocioNombre', render: d => '<strong>' + escHtml(d) + '</strong>' },
@@ -871,7 +897,7 @@
                 toastr.error(r.message || 'Error al crear negocio');
             }
         }).fail(function(xhr) {
-            toastr.error(xhr.responseJSON?.message || xhr.responseText || 'Error al crear negocio');
+            toastr.error(xhr.responseJSON?.message || 'Error al crear negocio');
         }).always(function() {
             btn.prop('disabled', false).html(originalHtml);
         });

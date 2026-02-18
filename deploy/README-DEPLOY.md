@@ -38,7 +38,7 @@
 4. Name: `minegocio-ip`
 5. Click **"Create"**
 6. **ANOTA LA IP** (ej: `44.230.xxx.xxx`) — la necesitas para el dominio
-
+54.203.178.179
 ---
 
 ## PASO 4: Abrir puertos

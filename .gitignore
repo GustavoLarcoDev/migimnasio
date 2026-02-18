@@ -81,3 +81,20 @@ out/
 
 # Docker
 docker-compose.override.yml
+
+# Claude Code / AI tooling
+.claude/
+
+# Sales agent scripts (dev-only)
+agentes/
+agentes-ventas.html
+
+# Dev-only controllers (never commit)
+Controllers/SeedController.cs
+Controllers/TestAgentController.cs
+
+# Excel templates
+*.xlsx
+
+# Misc
+*.DS_Store

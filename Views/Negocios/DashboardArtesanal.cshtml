@@ -1,0 +1,1474 @@
+@model Gimnasio.Models.Gym
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "Dashboard - " + Model.NegocioNombre;
+    ViewData["NegocioId"] = Model.NegocioId;
+    ViewData["NegocioNombre"] = Model.NegocioNombre;
+    ViewData["DuenoNombre"] = Model.DuenoNegocio;
+    ViewData["TipoNegocio"] = "artesanal";
+    var negocioId = Model.NegocioId;
+}
+
+@if (Model.EsPrueba)
+{
+    <div class="alert border-0 d-flex align-items-center gap-3 mb-4 shadow-sm" id="trialBanner"
+         style="background: linear-gradient(135deg, #FFF8DD 0%, #FFF3CD 100%); border-left: 4px solid #FFC700 !important;">
+        <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+             style="width: 42px; height: 42px; background: rgba(255, 199, 0, 0.2);">
+            <i class="bi bi-hourglass-split text-warning fs-5"></i>
+        </div>
+        <div class="flex-grow-1">
+            <strong class="text-dark">Periodo de prueba</strong>
+            <span class="d-block d-sm-inline text-muted ms-sm-1" id="trialDaysText">Cargando...</span>
+        </div>
+        <a href="https://wa.me/593997143142?text=Hola%2C%20quiero%20activar%20mi%20plan%20de%20pago%20en%20Mi%20Negocio" target="_blank" rel="noopener"
+           class="btn btn-warning btn-sm fw-bold flex-shrink-0">
+            <i class="bi bi-whatsapp me-1"></i>Activar Plan
+        </a>
+    </div>
+}
+
+<div class="tab-content" id="dashboardTabsContent">
+
+    <!-- ═══════════════ TAB AGENDA ═══════════════ -->
+    <div class="tab-pane fade show active" id="agendaTab" role="tabpanel">
+        <!-- Stats -->
+        <div class="row g-3 mb-4">
+            <div class="col-xl-3 col-md-6 col-6">
+                <div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Citas Hoy</div><div class="stat-value" id="statCitasHoy">0</div></div><div class="stat-icon bg-light-primary"><i class="bi bi-calendar-check text-primary"></i></div></div></div>
+            </div>
+            <div class="col-xl-3 col-md-6 col-6">
+                <div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Ingresos Hoy</div><div class="stat-value text-success" id="statIngresosHoy">$0</div></div><div class="stat-icon bg-light-success"><i class="bi bi-currency-dollar text-success"></i></div></div></div>
+            </div>
+            <div class="col-xl-3 col-md-6 col-6">
+                <div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Completadas</div><div class="stat-value" id="statCompletadas">0</div></div><div class="stat-icon bg-light-info"><i class="bi bi-check-circle text-info"></i></div></div></div>
+            </div>
+            <div class="col-xl-3 col-md-6 col-6">
+                <div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Canceladas</div><div class="stat-value text-danger" id="statCanceladas">0</div></div><div class="stat-icon bg-light-danger"><i class="bi bi-x-circle text-danger"></i></div></div></div>
+            </div>
+        </div>
+
+        <!-- Employee Tabs -->
+        <div class="mg-emp-tabs-wrapper mb-3">
+            <ul class="nav nav-tabs mg-emp-tabs" id="employeeTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active mg-emp-tab" id="empTab-todos" data-emp-id="" type="button" role="tab">
+                        <i class="bi bi-people-fill me-1"></i>
+                        <span class="mg-emp-tab-name">Todos</span>
+                    </button>
+                </li>
+                <!-- Employee tabs generated dynamically -->
+            </ul>
+        </div>
+
+        <!-- Controles -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <button class="btn btn-primary" id="btnNuevaCita"><i class="bi bi-plus-circle me-2"></i>Nueva Cita</button>
+            <div class="mg-period-pills" id="calendarViewPills">
+                <button class="mg-pill" data-vista="timeGridDay">Dia</button>
+                <button class="mg-pill" data-vista="timeGridWeek">Semana</button>
+                <button class="mg-pill" data-vista="dayGridMonth">Mes</button>
+            </div>
+        </div>
+
+        <!-- FullCalendar -->
+        <div class="mg-card">
+            <div class="card-body p-2 p-md-3">
+                <div id="calendario-citas"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ TAB CLIENTES ═══════════════ -->
+    <div class="tab-pane fade" id="clientesTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <h4 class="fw-bold mb-0">Clientes</h4>
+            <button class="btn btn-primary" id="btnNuevoClienteArt"><i class="bi bi-plus-circle me-2"></i>Nuevo Cliente</button>
+        </div>
+        <div class="mg-card"><div class="card-body"><div class="table-responsive">
+            <table id="clientesArtTable" class="table table-row-bordered align-middle gs-0 gy-3">
+                <thead><tr class="fw-bold text-muted"><th>Cliente</th><th>Telefono</th><th>Email</th><th>Citas</th><th class="text-end">Acciones</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div></div></div>
+    </div>
+
+    <!-- ═══════════════ TAB SERVICIOS ═══════════════ -->
+    <div class="tab-pane fade" id="serviciosTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <h4 class="fw-bold mb-0">Servicios</h4>
+            <button class="btn btn-primary" id="btnNuevoServicio"><i class="bi bi-plus-circle me-2"></i>Nuevo Servicio</button>
+        </div>
+        <div class="row g-3" id="serviciosGrid"></div>
+    </div>
+
+    <!-- ═══════════════ TAB EMPLEADOS ═══════════════ -->
+    <div class="tab-pane fade" id="empleadosTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <h4 class="fw-bold mb-0">Empleados</h4>
+            <button class="btn btn-primary" id="btnNuevoEmpleado"><i class="bi bi-plus-circle me-2"></i>Nuevo Empleado</button>
+        </div>
+        <div class="row g-3" id="empleadosGrid"></div>
+    </div>
+
+    <!-- ═══════════════ TAB MOVIMIENTOS (reutilizado) ═══════════════ -->
+    <div class="tab-pane fade" id="logsTab" role="tabpanel">
+        <div class="mg-card mb-4"><div class="card-body"><h5 class="fw-bold mb-3"><i class="bi bi-plus-circle me-2"></i>Registrar Movimiento</h5><div class="row g-3 align-items-end"><div class="col-md-6"><label class="form-label">Descripcion</label><input type="text" class="form-control form-control-lg" id="logDescripcion" placeholder="Ej: Compra de esmaltes"></div><div class="col-md-3"><label class="form-label">Monto ($)</label><input type="number" step="0.01" class="form-control form-control-lg" id="logMonto" placeholder="4 o -15"></div><div class="col-md-3"><button id="btnRegistrarLog" class="btn btn-primary btn-lg w-100"><i class="bi bi-check-lg me-2"></i>Registrar</button></div></div><small class="text-muted mt-2 d-block">Usa valores positivos para ingresos y negativos para gastos</small></div></div>
+        <div class="d-flex flex-wrap gap-2 mb-3 align-items-center"><small class="text-muted"><i class="bi bi-shield-lock me-1"></i>Los registros son inmutables</small><div class="ms-auto d-flex gap-2"><button id="btnExportLogsExcel" class="btn btn-success"><i class="bi bi-file-earmark-excel me-2"></i>Exportar</button></div></div>
+        <div class="mg-card"><div class="card-body"><div class="table-responsive"><table id="logsTable" class="table table-row-bordered align-middle gs-0 gy-3"><thead><tr class="fw-bold text-muted"><th>Descripcion</th><th>Tipo</th><th>Cliente</th><th>Monto</th><th>Fecha</th></tr></thead><tbody></tbody></table></div></div></div>
+    </div>
+
+    <!-- ═══════════════ TAB REPORTES (reutilizado) ═══════════════ -->
+    <div class="tab-pane fade" id="ventasTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2"><div class="mg-period-pills" id="ventasPeriodPills"><button class="mg-pill active" data-periodo="dia">Dia</button><button class="mg-pill" data-periodo="semana">Semana</button><button class="mg-pill" data-periodo="mes">Mes</button></div></div>
+        <div class="row g-3 mb-4">
+            <div class="col-xl-4 col-md-6 col-12"><div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-primary) 0%, var(--mg-gradient-primary-end) 100%);"><div class="card-body text-white"><span class="d-block mb-2 opacity-75" id="ventasIngresosLabel">Ingresos del Dia</span><span class="fs-2x fw-bolder" id="ventasIngresos">$0</span></div></div></div>
+            <div class="col-xl-4 col-md-6 col-12"><div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-danger) 0%, var(--mg-gradient-danger-end) 100%);"><div class="card-body text-white"><span class="d-block mb-2 opacity-75" id="ventasGastosLabel">Gastos del Dia</span><span class="fs-2x fw-bolder" id="ventasGastos">$0</span></div></div></div>
+            <div class="col-xl-4 col-md-6 col-12"><div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-success) 0%, var(--mg-gradient-success-end) 100%);"><div class="card-body text-white"><span class="d-block mb-2 opacity-75" id="ventasGananciaLabel">Ganancia Neta</span><span class="fs-2x fw-bolder" id="ventasGanancia">$0</span></div></div></div>
+        </div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6"><div class="mg-card"><div class="card-header border-0"><h5 class="fw-bold mb-0">Ingresos vs Gastos</h5></div><div class="card-body"><div id="chartBarVentas"></div></div></div></div>
+            <div class="col-md-6"><div class="mg-card"><div class="card-header border-0"><h5 class="fw-bold mb-0" id="chartResumenTitle">Resumen del Dia</h5></div><div class="card-body"><div id="chartResumen"></div></div></div></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ TAB INVENTARIO (reutilizado) ═══════════════ -->
+    <div class="tab-pane fade" id="inventarioTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+            <button id="btnCrearProducto" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>Nuevo Producto</button>
+            <button id="btnExportInventarioExcel" class="btn btn-success"><i class="bi bi-file-earmark-excel me-2"></i>Exportar</button>
+            <button id="btnToggleMovimientos" class="btn btn-outline-primary"><i class="bi bi-clock-history me-2"></i>Historial</button>
+        </div>
+        <div class="row g-3 mb-4">
+            <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Total Productos</div><div class="stat-value" id="invTotalProductos">0</div></div><div class="stat-icon bg-light-primary"><i class="bi bi-box-seam text-primary"></i></div></div></div></div>
+            <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Stock Bajo</div><div class="stat-value text-warning" id="invStockBajo">0</div></div><div class="stat-icon bg-light-warning"><i class="bi bi-exclamation-triangle-fill text-warning"></i></div></div></div></div>
+            <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Ventas Hoy</div><div class="stat-value" id="invVentasHoy">0</div></div><div class="stat-icon bg-light-success"><i class="bi bi-cart-check-fill text-success"></i></div></div></div></div>
+            <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Ingresos Hoy</div><div class="stat-value text-success" id="invIngresosHoy">$0</div></div><div class="stat-icon bg-light-info"><i class="bi bi-currency-dollar text-info"></i></div></div></div></div>
+        </div>
+        <div class="row g-3 mb-4" id="productosGrid"></div>
+        <div id="movimientosSection" class="d-none">
+            <h5 class="fw-bold mb-3"><i class="bi bi-clock-history me-2"></i>Historial de Movimientos</h5>
+            <div class="mg-card"><div class="card-body"><div class="table-responsive"><table id="movimientosTable" class="table table-row-bordered align-middle gs-0 gy-3"><thead><tr class="fw-bold text-muted"><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Cant.</th><th>Total</th><th>Stock</th><th>Nota</th></tr></thead><tbody></tbody></table></div></div></div>
+        </div>
+    </div>
+
+    <!-- Modal Crear/Editar Producto -->
+    <div class="modal fade" id="productoModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down"><div class="modal-content"><div class="modal-header bg-light"><h3 class="modal-title fw-bolder" id="productoModalTitle">Nuevo Producto</h3><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="productoForm"><input type="hidden" id="prodId" name="ProductoId" /><input type="hidden" name="NegocioId" value="@negocioId" /><div class="row"><div class="col-12 mb-3"><label class="form-label fw-semibold required">Nombre del Producto</label><input type="text" class="form-control" name="Nombre" id="prodNombre" required /></div><div class="col-md-6 mb-3"><label class="form-label fw-semibold required">Precio de Venta ($)</label><input type="number" step="0.01" min="0.01" class="form-control" name="PrecioVenta" id="prodPrecioVenta" required /></div><div class="col-md-6 mb-3"><label class="form-label fw-semibold required">Costo de Compra ($)</label><input type="number" step="0.01" min="0.01" class="form-control" name="CostoCompra" id="prodCostoCompra" required /><div class="form-text" id="prodMargenText"></div></div><div class="col-md-6 mb-3"><label class="form-label fw-semibold required">Stock Inicial</label><input type="number" min="0" class="form-control" name="Stock" id="prodStock" required /></div><div class="col-md-6 mb-3"><label class="form-label fw-semibold">Stock Minimo (alerta)</label><input type="number" min="0" class="form-control" name="StockMinimo" id="prodStockMinimo" value="5" /></div></div></form></div><div class="modal-footer bg-light"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="button" id="btnGuardarProducto" class="btn btn-primary"><i class="bi bi-save me-2"></i>Guardar</button></div></div></div></div>
+
+    <!-- ═══════════════ TAB NOTIFICACIONES (reutilizado) ═══════════════ -->
+    <div class="tab-pane fade" id="notificacionesTab" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-4"><h4 class="fw-bold mb-0">Notificaciones</h4><div class="d-flex gap-2"><button id="btnMarcarTodasLeidasTab" class="btn btn-outline-primary"><i class="bi bi-check-all me-2"></i>Marcar todas leidas</button></div></div>
+        <div id="notificacionesList" class="d-flex flex-column gap-2"><div class="text-center py-5 text-muted"><i class="bi bi-bell-slash fs-1 d-block mb-3"></i><p>No hay notificaciones.</p></div></div>
+    </div>
+
+    <!-- ═══════════════ TAB SUGERENCIAS (reutilizado) ═══════════════ -->
+    <div class="tab-pane fade" id="sugerenciasTab" role="tabpanel">
+        <div class="row justify-content-center"><div class="col-lg-8"><div class="mg-card"><div class="card-header border-0"><h5 class="fw-bold mb-0"><i class="bi bi-chat-left-text me-2"></i>Enviar Sugerencia</h5></div><div class="card-body"><p class="text-muted mb-3">Ayudanos a mejorar. Escribe tu sugerencia, idea o comentario.</p><div class="mb-3"><textarea class="form-control form-control-lg" id="sugerenciaTexto" rows="5" maxlength="1000" placeholder="Escribe tu sugerencia aqui..."></textarea><div class="d-flex justify-content-between mt-1"><small class="text-muted">Maximo 1000 caracteres</small><small class="text-muted"><span id="sugerenciaCount">0</span>/1000</small></div></div><button id="btnEnviarSugerencia" class="btn btn-primary"><i class="bi bi-send me-2"></i>Enviar Sugerencia</button></div></div></div></div>
+    </div>
+
+</div><!-- /tab-content -->
+
+<!-- ═══════════════ MODALES ═══════════════ -->
+
+<!-- Modal Crear Cita Rapida -->
+<div class="modal fade" id="citaRapidaModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down"><div class="modal-content">
+    <div class="modal-header bg-light">
+        <div>
+            <h3 class="modal-title fw-bolder mb-0">Nueva Cita</h3>
+            <small class="text-muted" id="citaRapidaSubtitle"></small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+        <form id="citaRapidaForm">
+            <input type="hidden" name="NegocioId" value="@negocioId" />
+            <input type="hidden" name="EmpleadoId" id="crEmpleadoId" />
+            <input type="hidden" name="ClienteId" id="crClienteId" />
+            <input type="hidden" name="FechaHoraInicio" id="crFechaHoraInicio" />
+
+            <!-- Empleado selector (shown when "Todos" tab is active) -->
+            <div class="mb-3" id="crEmpleadoGroup">
+                <label class="form-label fw-semibold required">Empleado</label>
+                <select class="form-select" id="crEmpleadoSelect">
+                    <option value="">Seleccionar empleado...</option>
+                </select>
+            </div>
+
+            <!-- Servicio -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold required">Servicio</label>
+                <select class="form-select" name="ServicioId" id="crServicio" required>
+                    <option value="">Seleccionar servicio...</option>
+                </select>
+            </div>
+
+            <!-- Cliente section -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold required">Cliente</label>
+                <div class="d-flex gap-2 mb-2">
+                    <button type="button" class="btn btn-sm btn-primary" id="crModoSearchBtn"><i class="bi bi-search me-1"></i>Buscar existente</button>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="crModoCreateBtn"><i class="bi bi-person-plus me-1"></i>Crear nuevo</button>
+                </div>
+                <!-- Search mode -->
+                <div id="crClienteSearchMode">
+                    <div class="position-relative">
+                        <input type="text" class="form-control" id="crClienteSearch" placeholder="Buscar por nombre o telefono..." autocomplete="off" />
+                        <div class="mg-autocomplete-dropdown d-none" id="crClienteResults"></div>
+                    </div>
+                    <div class="mg-selected-client d-none mt-2" id="crSelectedClient">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="bg-light-primary rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;">
+                                <i class="bi bi-person-fill text-primary"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <strong id="crSelectedName"></strong>
+                                <small class="d-block text-muted" id="crSelectedPhone"></small>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-light" id="crClearClient"><i class="bi bi-x-lg"></i></button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Create mode -->
+                <div id="crClienteCreateMode" class="d-none">
+                    <div class="row g-2">
+                        <div class="col-md-6"><input type="text" class="form-control" name="Nombre" id="crNombre" placeholder="Nombre" /></div>
+                        <div class="col-md-6"><input type="text" class="form-control" name="Apellido" id="crApellido" placeholder="Apellido" /></div>
+                        <div class="col-md-6"><input type="tel" class="form-control" name="Telefono" id="crTelefono" placeholder="Telefono" /></div>
+                        <div class="col-md-6"><input type="email" class="form-control" name="Email" id="crEmail" placeholder="Email (opcional)" /></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fecha + Slots -->
+            <div class="mb-3">
+                <label class="form-label fw-semibold required">Fecha</label>
+                <input type="date" class="form-control" id="crFecha" required />
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold required">Horario Disponible</label>
+                <div class="mg-slot-grid" id="crSlotsContainer">
+                    <p class="text-muted col-span-full">Selecciona empleado, servicio y fecha para ver horarios</p>
+                </div>
+            </div>
+
+            <!-- Resumen -->
+            <div class="alert alert-info d-none" id="crResumen"></div>
+        </form>
+    </div>
+    <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" id="btnGuardarCitaRapida" class="btn btn-primary"><i class="bi bi-save me-2"></i>Agendar Cita</button>
+    </div>
+</div></div></div>
+
+<!-- Modal Detalle Cita -->
+<div class="modal fade" id="citaDetalleModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down"><div class="modal-content"><div class="modal-header bg-light"><h3 class="modal-title fw-bolder">Detalle de Cita</h3><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="citaDetalleBody"></div><div class="modal-footer bg-light" id="citaDetalleFooter"></div></div></div></div>
+
+<!-- Modal Pago -->
+<div class="modal fade" id="pagoModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down"><div class="modal-content"><div class="modal-header bg-light"><h3 class="modal-title fw-bolder">Registrar Pago</h3><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+    <form id="pagoForm">
+        <input type="hidden" id="pagoCitaId" name="CitaId" />
+        <input type="hidden" name="NegocioId" value="@negocioId" />
+        <div class="mb-3"><label class="form-label fw-semibold">Precio del Servicio</label><input type="text" class="form-control" id="pagoMonto" readonly /></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Metodo de Pago</label><select class="form-select" name="MetodoPago" id="pagoMetodo"><option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="transferencia">Transferencia</option></select></div>
+        <div class="row">
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold">Cargos Extra ($)</label><input type="number" step="0.01" class="form-control" name="MontoExtra" id="pagoExtra" value="0" min="0" /></div>
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold">Propina ($)</label><input type="number" step="0.01" class="form-control" name="Propina" id="pagoPropina" value="0" min="0" /></div>
+        </div>
+        <div class="mb-3 d-none" id="pagoDetalleExtraGroup"><label class="form-label">Detalle Extra</label><input type="text" class="form-control" name="DetalleExtra" id="pagoDetalleExtra" /></div>
+        <div class="mb-3"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="pagoEsRegalo" name="EsRegalo" value="true" /><label class="form-check-label fw-semibold" for="pagoEsRegalo">Es un regalo</label></div></div>
+        <div class="mb-3 d-none" id="pagoRegaloGroup"><label class="form-label fw-semibold required">Motivo del regalo</label><textarea class="form-control" name="MotivoRegalo" id="pagoMotivoRegalo" rows="2"></textarea></div>
+        <div class="alert alert-success"><strong>Total a cobrar: </strong><span id="pagoTotal">$0.00</span></div>
+    </form>
+</div><div class="modal-footer bg-light"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="button" id="btnConfirmarPago" class="btn btn-success"><i class="bi bi-check-lg me-2"></i>Confirmar Pago</button></div></div></div></div>
+
+<!-- Modal Cancelar Cita -->
+<div class="modal fade" id="cancelarCitaModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down"><div class="modal-content"><div class="modal-header bg-light"><h3 class="modal-title fw-bolder">Cancelar Cita</h3><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+    <input type="hidden" id="cancelarCitaId" />
+    <p class="text-muted">El motivo de cancelacion es obligatorio.</p>
+    <div class="mb-3"><label class="form-label fw-semibold required">Motivo</label><textarea class="form-control" id="cancelarMotivo" rows="3" required></textarea></div>
+</div><div class="modal-footer bg-light"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Volver</button><button type="button" id="btnConfirmarCancelar" class="btn btn-danger"><i class="bi bi-x-circle me-2"></i>Cancelar Cita</button></div></div></div></div>
+
+<!-- Modal Servicio -->
+<div class="modal fade" id="servicioModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down"><div class="modal-content"><div class="modal-header bg-light"><h3 class="modal-title fw-bolder" id="servicioModalTitle">Nuevo Servicio</h3><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+    <form id="servicioForm">
+        <input type="hidden" id="servId" name="ServicioId" />
+        <input type="hidden" name="NegocioId" value="@negocioId" />
+        <div class="row">
+            <div class="col-12 mb-3"><label class="form-label fw-semibold required">Nombre</label><input type="text" class="form-control" name="Nombre" id="servNombre" required /></div>
+            <div class="col-12 mb-3"><label class="form-label fw-semibold">Descripcion</label><input type="text" class="form-control" name="Descripcion" id="servDescripcion" /></div>
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold required">Precio ($)</label><input type="number" step="0.01" min="0.01" class="form-control" name="Precio" id="servPrecio" required /></div>
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold required">Duracion (min)</label><input type="number" min="5" class="form-control" name="DuracionMinutos" id="servDuracion" value="30" required /></div>
+            <div class="col-12 mb-3"><label class="form-label fw-semibold">Items Incluidos</label><input type="text" class="form-control" name="ItemsIncluidos" id="servItems" placeholder="Separar con | (ej: Limado|Cuticula|Esmaltado)" /></div>
+            <div class="col-12"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="EsCombo" id="servEsCombo" value="true" /><label class="form-check-label" for="servEsCombo">Es un combo</label></div></div>
+        </div>
+    </form>
+</div><div class="modal-footer bg-light"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="button" id="btnGuardarServicio" class="btn btn-primary"><i class="bi bi-save me-2"></i>Guardar</button></div></div></div></div>
+
+<!-- Modal Empleado -->
+<div class="modal fade" id="empleadoModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down"><div class="modal-content"><div class="modal-header bg-light"><h3 class="modal-title fw-bolder" id="empleadoModalTitle">Nuevo Empleado</h3><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+    <form id="empleadoForm">
+        <input type="hidden" id="empId" name="EmpleadoId" />
+        <input type="hidden" name="NegocioId" value="@negocioId" />
+        <div class="row">
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold required">Nombre</label><input type="text" class="form-control" name="Nombre" id="empNombre" required /></div>
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold required">Apellido</label><input type="text" class="form-control" name="Apellido" id="empApellido" required /></div>
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold">Telefono</label><input type="tel" class="form-control" name="Telefono" id="empTelefono" /></div>
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold">Especialidad</label><input type="text" class="form-control" name="Especialidad" id="empEspecialidad" placeholder="Ej: Manicurista" /></div>
+        </div>
+    </form>
+</div><div class="modal-footer bg-light"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="button" id="btnGuardarEmpleado" class="btn btn-primary"><i class="bi bi-save me-2"></i>Guardar</button></div></div></div></div>
+
+<!-- Modal Horario -->
+<div class="modal fade" id="horarioModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down"><div class="modal-content"><div class="modal-header bg-light"><h3 class="modal-title fw-bolder">Horario Semanal</h3><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+    <input type="hidden" id="horarioEmpleadoId" />
+    <div class="mg-horario-grid" id="horarioGrid"></div>
+</div><div class="modal-footer bg-light"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="button" id="btnGuardarHorario" class="btn btn-primary"><i class="bi bi-save me-2"></i>Guardar Horario</button></div></div></div></div>
+
+<!-- Modal Cliente Artesanal -->
+<div class="modal fade" id="clienteArtModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down"><div class="modal-content"><div class="modal-header bg-light"><h3 class="modal-title fw-bolder" id="clienteArtModalTitle">Nuevo Cliente</h3><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+    <form id="clienteArtForm">
+        <input type="hidden" id="clienteArtId" name="ClienteId" />
+        <input type="hidden" name="NegocioId" value="@negocioId" />
+        <div class="row">
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold required">Nombre</label><input type="text" class="form-control" name="Nombre" id="caNombre" required /></div>
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold required">Apellido</label><input type="text" class="form-control" name="Apellido" id="caApellido" required /></div>
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold">Email</label><input type="email" class="form-control" name="Email" id="caEmail" /></div>
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold">Telefono</label><input type="tel" class="form-control" name="Telefono" id="caTelefono" /></div>
+            <div class="col-12 mb-3"><label class="form-label fw-semibold">Direccion</label><input type="text" class="form-control" name="Direccion" id="caDireccion" /></div>
+        </div>
+    </form>
+</div><div class="modal-footer bg-light"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="button" id="btnGuardarClienteArt" class="btn btn-primary"><i class="bi bi-save me-2"></i>Guardar</button></div></div></div></div>
+
+@section Styles {
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
+<style>
+/* ---- Employee Tabs ---- */
+.mg-emp-tabs-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+.mg-emp-tabs-wrapper::-webkit-scrollbar { height: 4px; }
+.mg-emp-tabs-wrapper::-webkit-scrollbar-thumb { background: var(--mg-gray-300); border-radius: 4px; }
+
+.mg-emp-tabs {
+    border-bottom: 2px solid var(--mg-gray-200);
+    flex-wrap: nowrap;
+    min-width: max-content;
+    gap: 2px;
+}
+
+.mg-emp-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border: none !important;
+    border-bottom: 3px solid transparent !important;
+    background: transparent;
+    color: var(--mg-gray-600);
+    font-weight: 600;
+    font-size: 0.85rem;
+    border-radius: 0.5rem 0.5rem 0 0;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.mg-emp-tab:hover:not(.disabled) {
+    color: var(--mg-gray-800);
+    background: var(--mg-gray-100);
+}
+.mg-emp-tab.active {
+    color: var(--mg-primary) !important;
+    border-bottom-color: var(--mg-primary) !important;
+    background: var(--mg-primary-light);
+}
+.mg-emp-tab.disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    pointer-events: auto;
+}
+.mg-emp-tab .mg-emp-tab-name {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.mg-emp-tab .mg-emp-tab-specialty {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: var(--mg-gray-500);
+    display: block;
+    line-height: 1;
+}
+.mg-emp-tab .mg-emp-color-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.mg-emp-tab .badge {
+    font-size: 0.65rem;
+    padding: 0.2em 0.5em;
+    min-width: 18px;
+}
+
+/* ---- Client Search Autocomplete ---- */
+.mg-autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1055;
+    background: var(--mg-card-bg);
+    border: 1px solid var(--mg-border-color);
+    border-radius: 0 0 var(--mg-border-radius) var(--mg-border-radius);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    max-height: 240px;
+    overflow-y: auto;
+}
+.mg-autocomplete-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0.75rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    border-bottom: 1px solid var(--mg-gray-100);
+}
+.mg-autocomplete-item:last-child { border-bottom: none; }
+.mg-autocomplete-item:hover {
+    background: var(--mg-primary-light);
+}
+.mg-autocomplete-item .autocomplete-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--mg-gray-200);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    color: var(--mg-gray-600);
+}
+.mg-autocomplete-item .autocomplete-info { flex-grow: 1; line-height: 1.3; }
+.mg-autocomplete-item .autocomplete-name { font-weight: 600; font-size: 0.875rem; color: var(--mg-text-color); }
+.mg-autocomplete-item .autocomplete-phone { font-size: 0.75rem; color: var(--mg-text-muted); }
+.mg-autocomplete-empty {
+    padding: 1rem;
+    text-align: center;
+    color: var(--mg-text-muted);
+    font-size: 0.85rem;
+}
+
+/* ---- Selected Client Card ---- */
+.mg-selected-client {
+    background: var(--mg-primary-light);
+    border-radius: var(--mg-border-radius);
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--mg-primary);
+}
+
+/* ---- Employee Color Coding on Calendar ---- */
+.fc-event.mg-emp-event {
+    border: none !important;
+    border-radius: 4px !important;
+    font-size: 0.8rem !important;
+}
+
+/* ---- Responsive tweaks ---- */
+@@media (max-width: 767.98px) {
+    .mg-emp-tabs-wrapper { margin: 0 -0.75rem; padding: 0 0.75rem; }
+    .mg-emp-tab { padding: 0.5rem 0.75rem; font-size: 0.78rem; }
+    .mg-emp-tab .mg-emp-tab-specialty { display: none; }
+}
+</style>
+}
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@@fullcalendar/core@6.1.11/locales/es.global.min.js"></script>
+<script>
+const negocioId = '@negocioId';
+let calendar, tablaLogs, tablaClientesArt, tablaMovimientos;
+let serviciosCache = [], empleadosCache = [], clientesCache = [];
+let empleadosDisponibilidad = [];
+let activeEmpTabId = '';
+const empColors = ['#3E97FF','#50CD89','#F1416C','#FFC700','#7239EA','#009EF7','#E4E6EF','#181C32'];
+let empColorMap = {};
+
+const swalMG = Swal.mixin({ confirmButtonColor: '#3E97FF', cancelButtonColor: '#E4E6EF', cancelButtonText: 'Cancelar', reverseButtons: true });
+const diasNombres = ['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'];
+
+function escHtml(str) { if (!str) return ''; return $('<span>').text(str).html(); }
+function escAttr(str) { if (!str) return ''; return escHtml(str).replace(/'/g, '&#39;'); }
+
+function getEmpColor(empleadoId) {
+    return empColorMap[empleadoId] || '#3E97FF';
+}
+
+function buildEmpColorMap(empleados) {
+    empColorMap = {};
+    empleados.forEach(function(e, i) {
+        empColorMap[e.empleadoId] = empColors[i % empColors.length];
+    });
+}
+
+// ═══════════════ INIT ═══════════════
+$(document).ready(function() {
+    cargarEmpleadosTabs(function() {
+        initCalendario();
+    });
+    cargarAgendaStats();
+    verificarSuscripcion();
+    cargarNotificacionesCount();
+});
+
+function verificarSuscripcion() {
+    $.get('/Negocios/GetSuscripcionStatus', { negocioId }, function(d) {
+        var t = document.getElementById('trialDaysText');
+        if (t && d.diasRestantes !== null) {
+            if (d.porEmpezar) t.innerHTML = '- <span class="badge bg-secondary">Por empezar</span>';
+            else if (d.diasRestantes <= 0) t.innerHTML = '<span class="badge bg-danger">Expirado</span>';
+            else t.innerHTML = '- Te quedan <strong>' + d.diasRestantes + ' dias</strong>';
+        }
+    });
+}
+
+// ═══════════════ EMPLOYEE TABS ═══════════════
+function cargarEmpleadosTabs(callback) {
+    $.get('/Negocios/GetEmpleados', { negocioId }, function(data) {
+        empleadosCache = data;
+        buildEmpColorMap(data);
+        refreshEmployeeTabsAvailability(callback);
+    });
+}
+
+function refreshEmployeeTabsAvailability(callback) {
+    var fecha = calendar ? calendar.getDate().toISOString().split('T')[0] : new Date().toISOString().split('T')[0];
+    $.get('/Negocios/GetEmpleadosConDisponibilidad', { negocioId, fecha: fecha }, function(data) {
+        empleadosDisponibilidad = data;
+        renderEmployeeTabs(data);
+        if (typeof callback === 'function') callback();
+    }).fail(function() {
+        // Fallback: build tabs from cache without availability info
+        var fallbackData = empleadosCache.map(function(e) {
+            return { empleadoId: e.empleadoId, nombre: e.nombre, apellido: e.apellido, nombreCompleto: e.nombreCompleto, especialidad: e.especialidad, trabaja: true, citasHoy: 0 };
+        });
+        empleadosDisponibilidad = fallbackData;
+        renderEmployeeTabs(fallbackData);
+        if (typeof callback === 'function') callback();
+    });
+}
+
+function renderEmployeeTabs(empleados) {
+    var tabsUl = $('#employeeTabs');
+    // Keep "Todos" tab, remove the rest
+    tabsUl.find('li:not(:first)').remove();
+
+    empleados.forEach(function(e, i) {
+        var color = getEmpColor(e.empleadoId);
+        var disabled = !e.trabaja;
+        var badgeText = e.citasHoy || 0;
+        var tooltipAttr = disabled ? 'title="No trabaja hoy" data-bs-toggle="tooltip"' : '';
+        var disabledCls = disabled ? ' disabled' : '';
+        var activeCls = (activeEmpTabId === e.empleadoId) ? ' active' : '';
+
+        var specialtyHtml = e.especialidad ? '<span class="mg-emp-tab-specialty">' + escHtml(e.especialidad) + '</span>' : '';
+
+        var tabHtml = '<li class="nav-item" role="presentation">' +
+            '<button class="nav-link mg-emp-tab' + disabledCls + activeCls + '" ' +
+            'id="empTab-' + e.empleadoId + '" data-emp-id="' + e.empleadoId + '" ' +
+            'type="button" role="tab" ' + tooltipAttr + '>' +
+            '<span class="mg-emp-color-dot" style="background:' + color + '"></span>' +
+            '<div class="text-start">' +
+            '<span class="mg-emp-tab-name">' + escHtml(e.nombreCompleto) + '</span>' +
+            specialtyHtml +
+            '</div>' +
+            '<span class="badge bg-light text-dark">' + badgeText + '</span>' +
+            '</button></li>';
+        tabsUl.append(tabHtml);
+    });
+
+    // Re-check active state
+    if (activeEmpTabId) {
+        var activeBtn = tabsUl.find('[data-emp-id="' + activeEmpTabId + '"]');
+        if (activeBtn.length && !activeBtn.hasClass('disabled')) {
+            tabsUl.find('.mg-emp-tab').removeClass('active');
+            activeBtn.addClass('active');
+        } else {
+            // Fallback to Todos
+            activeEmpTabId = '';
+            tabsUl.find('.mg-emp-tab').removeClass('active');
+            $('#empTab-todos').addClass('active');
+        }
+    }
+
+    // Init Bootstrap tooltips
+    tabsUl.find('[data-bs-toggle="tooltip"]').each(function() {
+        new bootstrap.Tooltip(this);
+    });
+}
+
+// Employee tab click
+$(document).on('click', '.mg-emp-tab', function(e) {
+    e.preventDefault();
+    if ($(this).hasClass('disabled')) return;
+
+    $('.mg-emp-tab').removeClass('active');
+    $(this).addClass('active');
+    activeEmpTabId = $(this).data('emp-id') || '';
+
+    // Refetch calendar events with new filter
+    if (calendar) calendar.refetchEvents();
+});
+
+// ═══════════════ CALENDARIO ═══════════════
+function initCalendario() {
+    var calEl = document.getElementById('calendario-citas');
+    calendar = new FullCalendar.Calendar(calEl, {
+        locale: 'es',
+        initialView: window.innerWidth < 576 ? 'timeGridDay' : 'timeGridWeek',
+        headerToolbar: { left: 'prev,next today', center: 'title', right: '' },
+        slotMinTime: '07:00:00',
+        slotMaxTime: '22:00:00',
+        slotDuration: window.innerWidth < 576 ? '00:30:00' : '00:15:00',
+        allDaySlot: false,
+        editable: window.innerWidth >= 576,
+        selectable: true,
+        nowIndicator: true,
+        height: window.innerWidth < 576 ? 'auto' : 'auto',
+        scrollTime: new Date().getHours().toString().padStart(2, '0') + ':00:00',
+        events: function(info, successCallback, failureCallback) {
+            $.get('/Negocios/GetCitasCalendario', {
+                negocioId, start: info.startStr, end: info.endStr
+            }, function(data) {
+                // Apply employee color coding
+                data.forEach(function(ev) {
+                    var eid = ev.extendedProps ? ev.extendedProps.empleadoId : null;
+                    if (eid && empColorMap[eid]) {
+                        ev.backgroundColor = empColorMap[eid];
+                        ev.borderColor = empColorMap[eid];
+                    }
+                    ev.classNames = ['mg-emp-event'];
+                });
+
+                // Filter by active employee tab
+                if (activeEmpTabId) {
+                    data = data.filter(function(ev) {
+                        return ev.extendedProps && ev.extendedProps.empleadoId === activeEmpTabId;
+                    });
+                }
+                successCallback(data);
+            }).fail(failureCallback);
+        },
+        eventClick: function(info) {
+            abrirDetalleCita(info.event.extendedProps.citaId);
+        },
+        eventDrop: function(info) {
+            $.post('/Negocios/MoverCita', {
+                CitaId: info.event.extendedProps.citaId,
+                NegocioId: negocioId,
+                NuevaFechaHoraInicio: info.event.start.toISOString()
+            }, function(r) {
+                if (r.success) { toastr.success(r.message); cargarAgendaStats(); refreshEmployeeTabsAvailability(); }
+                else { toastr.error(r.message); info.revert(); }
+            }).fail(function() { toastr.error('Error al mover cita'); info.revert(); });
+        },
+        select: function(info) {
+            abrirModalCitaRapida(info.start, activeEmpTabId);
+            calendar.unselect();
+        },
+        datesSet: function(info) {
+            // When calendar navigates to a new date range, refresh tab availability
+            refreshEmployeeTabsAvailability();
+        }
+    });
+    calendar.render();
+
+    // Set pill active state to match initial view
+    var initialView = window.innerWidth < 576 ? 'timeGridDay' : 'timeGridWeek';
+    $('.mg-pill[data-vista]').removeClass('active');
+    $('.mg-pill[data-vista="' + initialView + '"]').addClass('active');
+}
+
+$('.mg-pill[data-vista]').on('click', function() {
+    $('.mg-pill[data-vista]').removeClass('active');
+    $(this).addClass('active');
+    calendar.changeView($(this).data('vista'));
+});
+
+function cargarAgendaStats() {
+    $.get('/Negocios/GetCitasDashboardStats', { negocioId }, function(d) {
+        $('#statCitasHoy').text(d.citasHoy);
+        $('#statIngresosHoy').text('$' + (d.ingresosHoy || 0).toFixed(2));
+        $('#statCompletadas').text(d.completadas);
+        $('#statCanceladas').text(d.canceladas);
+    });
+}
+
+// ═══════════════ CREAR CITA RAPIDA ═══════════════
+function abrirModalCitaRapida(fechaHora, empleadoId) {
+    var form = $('#citaRapidaForm')[0];
+    form.reset();
+    $('#crClienteId').val('');
+    $('#crFechaHoraInicio').val('');
+    $('#crResumen').addClass('d-none');
+    $('#crSelectedClient').addClass('d-none');
+    $('#crClienteSearch').val('');
+    $('#crClienteResults').addClass('d-none').empty();
+
+    // Reset client mode to search
+    switchClientMode('search');
+
+    // Pre-fill fecha
+    if (fechaHora) {
+        var dateStr = fechaHora.toISOString().split('T')[0];
+        $('#crFecha').val(dateStr);
+    }
+
+    // Handle employee pre-selection
+    if (empleadoId) {
+        $('#crEmpleadoId').val(empleadoId);
+        $('#crEmpleadoGroup').addClass('d-none');
+        var emp = empleadosDisponibilidad.find(function(e) { return e.empleadoId === empleadoId; });
+        if (emp) {
+            $('#citaRapidaSubtitle').text(emp.nombreCompleto + (emp.especialidad ? ' - ' + emp.especialidad : ''));
+        }
+    } else {
+        $('#crEmpleadoId').val('');
+        $('#crEmpleadoGroup').removeClass('d-none');
+        $('#citaRapidaSubtitle').text('');
+        // Populate employee dropdown
+        var sel = $('#crEmpleadoSelect');
+        sel.find('option:not(:first)').remove();
+        empleadosDisponibilidad.forEach(function(e) {
+            if (e.trabaja) {
+                sel.append('<option value="' + e.empleadoId + '">' + escHtml(e.nombreCompleto) + '</option>');
+            }
+        });
+    }
+
+    // Load services
+    $.get('/Negocios/GetServicios', { negocioId }, function(data) {
+        serviciosCache = data;
+        var sel = $('#crServicio');
+        sel.find('option:not(:first)').remove();
+        data.forEach(function(s) {
+            sel.append('<option value="' + s.servicioId + '" data-duracion="' + s.duracionMinutos + '" data-precio="' + s.precio + '">' + escHtml(s.nombre) + ' - $' + s.precio.toFixed(2) + ' (' + s.duracionMinutos + 'min)</option>');
+        });
+    });
+
+    // Load slots if we have enough info
+    cargarSlotsRapida();
+
+    new bootstrap.Modal('#citaRapidaModal').show();
+}
+
+$('#btnNuevaCita').on('click', function() {
+    var preDate = new Date();
+    abrirModalCitaRapida(preDate, activeEmpTabId || '');
+});
+
+// Employee dropdown change in modal
+$('#crEmpleadoSelect').on('change', function() {
+    $('#crEmpleadoId').val($(this).val());
+    cargarSlotsRapida();
+});
+
+// Client mode switching
+function switchClientMode(mode) {
+    if (mode === 'search') {
+        $('#crClienteSearchMode').removeClass('d-none');
+        $('#crClienteCreateMode').addClass('d-none');
+        $('#crModoSearchBtn').removeClass('btn-outline-primary').addClass('btn-primary');
+        $('#crModoCreateBtn').removeClass('btn-primary').addClass('btn-outline-primary');
+        // Clear create fields
+        $('#crNombre, #crApellido, #crTelefono, #crEmail').val('');
+    } else {
+        $('#crClienteSearchMode').addClass('d-none');
+        $('#crClienteCreateMode').removeClass('d-none');
+        $('#crModoCreateBtn').removeClass('btn-outline-primary').addClass('btn-primary');
+        $('#crModoSearchBtn').removeClass('btn-primary').addClass('btn-outline-primary');
+        // Clear search state
+        $('#crClienteId').val('');
+        $('#crClienteSearch').val('');
+        $('#crClienteResults').addClass('d-none').empty();
+        $('#crSelectedClient').addClass('d-none');
+    }
+    updateResumenRapida();
+}
+
+$('#crModoSearchBtn').on('click', function() { switchClientMode('search'); });
+$('#crModoCreateBtn').on('click', function() { switchClientMode('create'); });
+
+// Client search with debounce
+var searchTimeout = null;
+$('#crClienteSearch').on('input', function() {
+    var q = $(this).val().trim();
+    if (searchTimeout) clearTimeout(searchTimeout);
+    if (q.length < 2) {
+        $('#crClienteResults').addClass('d-none').empty();
+        return;
+    }
+    searchTimeout = setTimeout(function() {
+        $.get('/Negocios/BuscarClientes', { negocioId, q: q }, function(data) {
+            var container = $('#crClienteResults');
+            container.empty();
+            if (!data || !data.length) {
+                container.html('<div class="mg-autocomplete-empty"><i class="bi bi-search me-1"></i>No se encontraron clientes</div>');
+            } else {
+                data.forEach(function(c) {
+                    var initials = ((c.nombre || '').charAt(0) + (c.apellido || '').charAt(0)).toUpperCase();
+                    container.append(
+                        '<div class="mg-autocomplete-item" data-id="' + c.clienteId + '" data-nombre="' + escAttr(c.nombreCompleto) + '" data-telefono="' + escAttr(c.telefono || '') + '" data-email="' + escAttr(c.email || '') + '">' +
+                        '<div class="autocomplete-avatar">' + escHtml(initials) + '</div>' +
+                        '<div class="autocomplete-info">' +
+                        '<div class="autocomplete-name">' + escHtml(c.nombreCompleto) + '</div>' +
+                        '<div class="autocomplete-phone">' + escHtml(c.telefono || 'Sin telefono') + '</div>' +
+                        '</div></div>'
+                    );
+                });
+            }
+            container.removeClass('d-none');
+        });
+    }, 300);
+});
+
+// Select client from autocomplete
+$(document).on('click', '.mg-autocomplete-item', function() {
+    var id = $(this).data('id');
+    var nombre = $(this).data('nombre');
+    var telefono = $(this).data('telefono');
+
+    $('#crClienteId').val(id);
+    $('#crSelectedName').text(nombre);
+    $('#crSelectedPhone').text(telefono || 'Sin telefono');
+    $('#crSelectedClient').removeClass('d-none');
+    $('#crClienteSearch').val('');
+    $('#crClienteResults').addClass('d-none').empty();
+    updateResumenRapida();
+});
+
+// Clear selected client
+$('#crClearClient').on('click', function() {
+    $('#crClienteId').val('');
+    $('#crSelectedClient').addClass('d-none');
+    $('#crClienteSearch').val('').focus();
+    updateResumenRapida();
+});
+
+// Hide autocomplete on click outside
+$(document).on('mousedown', function(e) {
+    if (!$(e.target).closest('#crClienteSearch, #crClienteResults').length) {
+        $('#crClienteResults').addClass('d-none');
+    }
+});
+
+// Slots loading
+function cargarSlotsRapida() {
+    var empId = $('#crEmpleadoId').val();
+    var fecha = $('#crFecha').val();
+    var serv = $('#crServicio option:selected');
+    var dur = serv.data('duracion') || 30;
+
+    if (!empId || !fecha) {
+        $('#crSlotsContainer').html('<p class="text-muted">Selecciona empleado, servicio y fecha para ver horarios</p>');
+        return;
+    }
+
+    $.get('/Negocios/GetSlotsDisponibles', { negocioId, empleadoId: empId, fecha: fecha, duracionMinutos: dur }, function(d) {
+        var container = $('#crSlotsContainer');
+        container.empty();
+        if (d.mensaje) { container.html('<p class="text-warning">' + escHtml(d.mensaje) + '</p>'); return; }
+        if (!d.slots || d.slots.length === 0) { container.html('<p class="text-muted">No hay horarios disponibles</p>'); return; }
+        d.slots.forEach(function(s) {
+            container.append('<button type="button" class="mg-slot-btn" data-inicio="' + s.inicio + '">' + escHtml(s.hora) + '</button>');
+        });
+    });
+}
+
+$('#crServicio, #crFecha').on('change', cargarSlotsRapida);
+
+// Slot selection
+$(document).on('click', '#crSlotsContainer .mg-slot-btn', function() {
+    $('#crSlotsContainer .mg-slot-btn').removeClass('active');
+    $(this).addClass('active');
+    $('#crFechaHoraInicio').val($(this).data('inicio'));
+    updateResumenRapida();
+});
+
+function updateResumenRapida() {
+    var servText = $('#crServicio option:selected').text();
+    var empName = '';
+    if ($('#crEmpleadoId').val()) {
+        if ($('#crEmpleadoGroup').hasClass('d-none')) {
+            empName = $('#citaRapidaSubtitle').text().split(' - ')[0];
+        } else {
+            empName = $('#crEmpleadoSelect option:selected').text();
+        }
+    }
+    var clientName = '';
+    if ($('#crClienteId').val()) {
+        clientName = $('#crSelectedName').text();
+    } else if (!$('#crClienteCreateMode').hasClass('d-none')) {
+        var n = $('#crNombre').val(), a = $('#crApellido').val();
+        if (n || a) clientName = ((n || '') + ' ' + (a || '')).trim() + ' (nuevo)';
+    }
+    var slotText = $('#crSlotsContainer .mg-slot-btn.active').text();
+
+    if (servText && servText !== 'Seleccionar servicio...' && (empName || clientName || slotText)) {
+        var html = '<strong>' + escHtml(servText) + '</strong>';
+        if (empName) html += ' con ' + escHtml(empName);
+        if (clientName) html += ' para ' + escHtml(clientName);
+        if (slotText) html += ' a las <strong>' + escHtml(slotText) + '</strong>';
+        $('#crResumen').removeClass('d-none').html(html);
+    } else {
+        $('#crResumen').addClass('d-none');
+    }
+}
+
+// Update resumen when typing in create fields
+$('#crNombre, #crApellido').on('input', updateResumenRapida);
+
+// Submit cita rapida
+$('#btnGuardarCitaRapida').on('click', function() {
+    var empId = $('#crEmpleadoId').val();
+    var servId = $('#crServicio').val();
+    var fechaHora = $('#crFechaHoraInicio').val();
+    var clienteId = $('#crClienteId').val();
+    var isCreateMode = !$('#crClienteCreateMode').hasClass('d-none');
+
+    if (!empId) { toastr.warning('Selecciona un empleado'); return; }
+    if (!servId) { toastr.warning('Selecciona un servicio'); return; }
+    if (!fechaHora) { toastr.warning('Selecciona un horario'); return; }
+
+    if (!isCreateMode && !clienteId) {
+        toastr.warning('Busca y selecciona un cliente, o cambia a modo "Crear nuevo"');
+        return;
+    }
+    if (isCreateMode) {
+        var nombre = $('#crNombre').val().trim();
+        var telefono = $('#crTelefono').val().trim();
+        if (!nombre) { toastr.warning('El nombre del cliente es obligatorio'); return; }
+        if (!telefono) { toastr.warning('El telefono del cliente es obligatorio'); return; }
+    }
+
+    var btn = $(this);
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Agendando...');
+
+    $.post('/Negocios/CrearCitaRapida', $('#citaRapidaForm').serialize(), function(r) {
+        btn.prop('disabled', false).html('<i class="bi bi-save me-2"></i>Agendar Cita');
+        if (r.success) {
+            toastr.success(r.message);
+            bootstrap.Modal.getInstance('#citaRapidaModal').hide();
+            calendar.refetchEvents();
+            cargarAgendaStats();
+            refreshEmployeeTabsAvailability();
+        } else {
+            toastr.error(r.message);
+        }
+    }).fail(function(xhr) {
+        btn.prop('disabled', false).html('<i class="bi bi-save me-2"></i>Agendar Cita');
+        toastr.error(xhr.responseJSON?.message || 'Error al crear cita');
+    });
+});
+
+// ═══════════════ DETALLE CITA ═══════════════
+function abrirDetalleCita(citaId) {
+    $.get('/Negocios/GetCita', { citaId, negocioId }, function(d) {
+        var body = `
+            <div class="mb-3"><span class="mg-estado-badge mg-estado-${d.estado}">${d.estado.replace('_',' ')}</span></div>
+            <p><strong>Servicio:</strong> ${escHtml(d.nombreServicio)}</p>
+            <p><strong>Cliente:</strong> ${escHtml(d.nombreCliente)}</p>
+            <p><strong>Empleado:</strong> ${escHtml(d.nombreEmpleado)}</p>
+            <p><strong>Fecha:</strong> ${new Date(d.fechaHoraInicio).toLocaleDateString('es-MX')} ${new Date(d.fechaHoraInicio).toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit'})} - ${new Date(d.fechaHoraFin).toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit'})}</p>
+            <p><strong>Precio:</strong> $${d.precioServicio.toFixed(2)}</p>`;
+        if (d.motivoCancelacion) body += `<p class="text-danger"><strong>Motivo cancelacion:</strong> ${escHtml(d.motivoCancelacion)}</p>`;
+        if (d.tienePago && d.pago) {
+            body += `<hr><h6 class="fw-bold">Pago</h6><p>Total: <strong>$${d.pago.total.toFixed(2)}</strong> (${d.pago.metodoPago})</p>`;
+            if (d.pago.esRegalo) body += `<p class="text-info">Regalo: ${escHtml(d.pago.motivoRegalo)}</p>`;
+        }
+        $('#citaDetalleBody').html(body);
+
+        // Botones de accion segun estado
+        var footer = '';
+        if (d.estado === 'pendiente') {
+            footer = `<button class="btn btn-primary btn-sm" onclick="cambiarEstado('${d.citaId}','confirmada')"><i class="bi bi-check me-1"></i>Confirmar</button>`;
+            footer += `<button class="btn btn-danger btn-sm" onclick="abrirCancelar('${d.citaId}')"><i class="bi bi-x me-1"></i>Cancelar</button>`;
+        } else if (d.estado === 'confirmada') {
+            footer += `<button class="btn btn-info btn-sm text-white" onclick="cambiarEstado('${d.citaId}','en_progreso')"><i class="bi bi-play me-1"></i>En Progreso</button>`;
+            footer += `<button class="btn btn-danger btn-sm" onclick="abrirCancelar('${d.citaId}')"><i class="bi bi-x me-1"></i>Cancelar</button>`;
+        } else if (d.estado === 'en_progreso') {
+            footer += `<button class="btn btn-success btn-sm" onclick="completarCita('${d.citaId}', ${d.precioServicio})"><i class="bi bi-check-all me-1"></i>Completar</button>`;
+        }
+        if (footer === '') footer = '<button class="btn btn-light btn-sm" data-bs-dismiss="modal">Cerrar</button>';
+        $('#citaDetalleFooter').html(footer);
+        new bootstrap.Modal('#citaDetalleModal').show();
+    });
+}
+
+function cambiarEstado(citaId, nuevoEstado) {
+    $.post('/Negocios/CambiarEstadoCita', { citaId, negocioId, nuevoEstado }, function(r) {
+        if (r.success) {
+            toastr.success(r.message);
+            bootstrap.Modal.getInstance('#citaDetalleModal').hide();
+            calendar.refetchEvents(); cargarAgendaStats(); refreshEmployeeTabsAvailability();
+        } else toastr.error(r.message);
+    }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error'); });
+}
+
+function completarCita(citaId, precioServicio) {
+    cambiarEstado(citaId, 'completada');
+    setTimeout(function() {
+        bootstrap.Modal.getInstance('#citaDetalleModal')?.hide();
+        $('#pagoCitaId').val(citaId);
+        $('#pagoMonto').val('$' + precioServicio.toFixed(2));
+        $('#pagoExtra').val(0); $('#pagoPropina').val(0);
+        $('#pagoEsRegalo').prop('checked', false);
+        $('#pagoRegaloGroup, #pagoDetalleExtraGroup').addClass('d-none');
+        actualizarTotalPago(precioServicio);
+        new bootstrap.Modal('#pagoModal').show();
+    }, 500);
+}
+
+function abrirCancelar(citaId) {
+    bootstrap.Modal.getInstance('#citaDetalleModal')?.hide();
+    $('#cancelarCitaId').val(citaId);
+    $('#cancelarMotivo').val('');
+    new bootstrap.Modal('#cancelarCitaModal').show();
+}
+
+$('#btnConfirmarCancelar').on('click', function() {
+    var citaId = $('#cancelarCitaId').val(), motivo = $('#cancelarMotivo').val();
+    if (!motivo) { toastr.warning('El motivo es obligatorio'); return; }
+    $.post('/Negocios/CambiarEstadoCita', { citaId, negocioId, nuevoEstado: 'cancelada', motivoCancelacion: motivo }, function(r) {
+        if (r.success) { toastr.success('Cita cancelada'); bootstrap.Modal.getInstance('#cancelarCitaModal').hide(); calendar.refetchEvents(); cargarAgendaStats(); refreshEmployeeTabsAvailability(); }
+        else toastr.error(r.message);
+    });
+});
+
+// ═══════════════ PAGO ═══════════════
+function actualizarTotalPago(base) {
+    var extra = parseFloat($('#pagoExtra').val()) || 0;
+    var propina = parseFloat($('#pagoPropina').val()) || 0;
+    var esRegalo = $('#pagoEsRegalo').is(':checked');
+    var total = esRegalo ? 0 : (base + extra + propina);
+    $('#pagoTotal').text('$' + total.toFixed(2));
+}
+
+$('#pagoExtra, #pagoPropina').on('input', function() {
+    var base = parseFloat($('#pagoMonto').val().replace('$','')) || 0;
+    actualizarTotalPago(base);
+});
+$('#pagoExtra').on('input', function() {
+    $('#pagoDetalleExtraGroup').toggleClass('d-none', parseFloat($(this).val()) <= 0);
+});
+$('#pagoEsRegalo').on('change', function() {
+    var checked = $(this).is(':checked');
+    $('#pagoRegaloGroup').toggleClass('d-none', !checked);
+    $('#pagoMetodo').prop('disabled', checked);
+    var base = parseFloat($('#pagoMonto').val().replace('$','')) || 0;
+    actualizarTotalPago(base);
+});
+
+$('#btnConfirmarPago').on('click', function() {
+    if ($('#pagoEsRegalo').is(':checked') && !$('#pagoMotivoRegalo').val()) { toastr.warning('El motivo del regalo es obligatorio'); return; }
+    $.post('/Negocios/RegistrarPagoCita', $('#pagoForm').serialize(), function(r) {
+        if (r.success) { toastr.success(r.message); bootstrap.Modal.getInstance('#pagoModal').hide(); calendar.refetchEvents(); cargarAgendaStats(); }
+        else toastr.error(r.message);
+    }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al registrar pago'); });
+});
+
+// ═══════════════ SERVICIOS ═══════════════
+function cargarServicios() {
+    $.get('/Negocios/GetServicios', { negocioId }, function(data) {
+        serviciosCache = data;
+        var grid = $('#serviciosGrid');
+        grid.empty();
+        if (!data.length) { grid.html('<div class="col-12 text-center py-5 text-muted"><i class="bi bi-scissors fs-1 d-block mb-2"></i>No hay servicios. Crea el primero.</div>'); return; }
+        data.forEach(s => {
+            var items = s.itemsIncluidos ? s.itemsIncluidos.split('|').map(i => `<span class="badge bg-light-primary text-primary">${escHtml(i.trim())}</span>`).join('') : '';
+            grid.append(`<div class="col-xl-4 col-md-6"><div class="mg-service-card">
+                <div class="d-flex justify-content-between align-items-start mb-2"><h6 class="fw-bold mb-0">${escHtml(s.nombre)}</h6><div class="dropdown"><button class="btn btn-sm btn-light" data-bs-toggle="dropdown"><i class="bi bi-three-dots-vertical"></i></button><ul class="dropdown-menu"><li><a class="dropdown-item" href="#" onclick="editarServicio('${s.servicioId}')"><i class="bi bi-pencil me-2"></i>Editar</a></li><li><a class="dropdown-item text-danger" href="#" onclick="eliminarServicio('${s.servicioId}','${escAttr(s.nombre)}')"><i class="bi bi-trash me-2"></i>Eliminar</a></li></ul></div></div>
+                ${s.descripcion ? '<p class="text-muted small mb-2">' + escHtml(s.descripcion) + '</p>' : ''}
+                <div class="d-flex justify-content-between align-items-center"><span class="mg-price">$${s.precio.toFixed(2)}</span><span class="mg-duration"><i class="bi bi-clock me-1"></i>${s.duracionMinutos} min</span></div>
+                ${items ? '<div class="mg-items mt-2">' + items + '</div>' : ''}
+                ${s.esCombo ? '<span class="badge bg-info mt-2">Combo</span>' : ''}
+            </div></div>`);
+        });
+    });
+}
+
+$('#btnNuevoServicio').on('click', function() { $('#servicioForm')[0].reset(); $('#servId').val(''); $('#servicioModalTitle').text('Nuevo Servicio'); new bootstrap.Modal('#servicioModal').show(); });
+
+function editarServicio(id) {
+    $.get('/Negocios/GetServicio', { servicioId: id, negocioId }, function(s) {
+        $('#servId').val(s.servicioId); $('#servNombre').val(s.nombre); $('#servDescripcion').val(s.descripcion);
+        $('#servPrecio').val(s.precio); $('#servDuracion').val(s.duracionMinutos); $('#servItems').val(s.itemsIncluidos);
+        $('#servEsCombo').prop('checked', s.esCombo); $('#servicioModalTitle').text('Editar Servicio');
+        new bootstrap.Modal('#servicioModal').show();
+    });
+}
+
+$('#btnGuardarServicio').on('click', function() {
+    var url = $('#servId').val() ? '/Negocios/EditarServicio' : '/Negocios/CrearServicio';
+    $.post(url, $('#servicioForm').serialize(), function(r) {
+        if (r.success) { toastr.success(r.message); bootstrap.Modal.getInstance('#servicioModal').hide(); cargarServicios(); }
+        else toastr.error(r.message);
+    }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error'); });
+});
+
+function eliminarServicio(id, nombre) {
+    swalMG.fire({ title: 'Eliminar servicio', text: 'Se eliminara "' + nombre + '"', icon: 'warning', showCancelButton: true, confirmButtonText: 'Eliminar', confirmButtonColor: '#F1416C' }).then(r => {
+        if (r.isConfirmed) $.post('/Negocios/EliminarServicio', { servicioId: id, negocioId }, function(r) { if (r.success) { toastr.success(r.message); cargarServicios(); } else toastr.error(r.message); });
+    });
+}
+
+// ═══════════════ EMPLEADOS ═══════════════
+function cargarEmpleados() {
+    $.get('/Negocios/GetEmpleados', { negocioId }, function(data) {
+        empleadosCache = data;
+        buildEmpColorMap(data);
+        var grid = $('#empleadosGrid');
+        grid.empty();
+        if (!data.length) { grid.html('<div class="col-12 text-center py-5 text-muted"><i class="bi bi-person-badge fs-1 d-block mb-2"></i>No hay empleados. Crea el primero.</div>'); return; }
+        data.forEach(e => {
+            grid.append(`<div class="col-xl-4 col-md-6"><div class="mg-employee-card">
+                <div class="d-flex justify-content-between align-items-start mb-2"><div><h6 class="fw-bold mb-0">${escHtml(e.nombreCompleto)}</h6>${e.especialidad ? '<small class="text-muted">' + escHtml(e.especialidad) + '</small>' : ''}</div><div class="dropdown"><button class="btn btn-sm btn-light" data-bs-toggle="dropdown"><i class="bi bi-three-dots-vertical"></i></button><ul class="dropdown-menu"><li><a class="dropdown-item" href="#" onclick="editarEmpleado('${e.empleadoId}')"><i class="bi bi-pencil me-2"></i>Editar</a></li><li><a class="dropdown-item" href="#" onclick="abrirHorario('${e.empleadoId}')"><i class="bi bi-calendar-week me-2"></i>Horario</a></li><li><hr class="dropdown-divider"></li><li><a class="dropdown-item text-danger" href="#" onclick="eliminarEmpleado('${e.empleadoId}','${escAttr(e.nombreCompleto)}')"><i class="bi bi-trash me-2"></i>Eliminar</a></li></ul></div></div>
+                ${e.telefono ? '<p class="small mb-0"><i class="bi bi-telephone me-1"></i>' + escHtml(e.telefono) + '</p>' : ''}
+            </div></div>`);
+        });
+        // Also refresh tabs with new employee data
+        refreshEmployeeTabsAvailability();
+    });
+}
+
+$('#btnNuevoEmpleado').on('click', function() { $('#empleadoForm')[0].reset(); $('#empId').val(''); $('#empleadoModalTitle').text('Nuevo Empleado'); new bootstrap.Modal('#empleadoModal').show(); });
+
+function editarEmpleado(id) {
+    $.get('/Negocios/GetEmpleado', { empleadoId: id, negocioId }, function(e) {
+        $('#empId').val(e.empleadoId); $('#empNombre').val(e.nombre); $('#empApellido').val(e.apellido);
+        $('#empTelefono').val(e.telefono); $('#empEspecialidad').val(e.especialidad); $('#empleadoModalTitle').text('Editar Empleado');
+        new bootstrap.Modal('#empleadoModal').show();
+    });
+}
+
+$('#btnGuardarEmpleado').on('click', function() {
+    var url = $('#empId').val() ? '/Negocios/EditarEmpleado' : '/Negocios/CrearEmpleado';
+    $.post(url, $('#empleadoForm').serialize(), function(r) {
+        if (r.success) { toastr.success(r.message); bootstrap.Modal.getInstance('#empleadoModal').hide(); cargarEmpleados(); }
+        else toastr.error(r.message);
+    }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error'); });
+});
+
+function eliminarEmpleado(id, nombre) {
+    swalMG.fire({ title: 'Eliminar empleado', text: 'Se eliminara "' + nombre + '"', icon: 'warning', showCancelButton: true, confirmButtonText: 'Eliminar', confirmButtonColor: '#F1416C' }).then(r => {
+        if (r.isConfirmed) $.post('/Negocios/EliminarEmpleado', { empleadoId: id, negocioId }, function(r) { if (r.success) { toastr.success(r.message); cargarEmpleados(); } else toastr.error(r.message); });
+    });
+}
+
+// ═══════════════ HORARIOS ═══════════════
+function abrirHorario(empleadoId) {
+    $('#horarioEmpleadoId').val(empleadoId);
+    $.get('/Negocios/GetHorarios', { empleadoId, negocioId }, function(data) {
+        var grid = $('#horarioGrid');
+        grid.empty();
+        for (var dia = 0; dia < 7; dia++) {
+            var h = data.find(x => x.diaSemana === dia) || { horaInicio: '09:00', horaFin: '17:00', activo: dia > 0 && dia < 7 };
+            grid.append(`<div class="mg-horario-dia">
+                <span class="dia-nombre">${diasNombres[dia]}</span>
+                <div class="form-check form-switch"><input class="form-check-input horario-activo" type="checkbox" data-dia="${dia}" ${h.activo ? 'checked' : ''} /></div>
+                <input type="time" class="form-control form-control-sm horario-inicio" data-dia="${dia}" value="${h.horaInicio}" />
+                <span>a</span>
+                <input type="time" class="form-control form-control-sm horario-fin" data-dia="${dia}" value="${h.horaFin}" />
+            </div>`);
+        }
+        new bootstrap.Modal('#horarioModal').show();
+    });
+}
+
+$('#btnGuardarHorario').on('click', function() {
+    var dias = [];
+    for (var d = 0; d < 7; d++) {
+        dias.push({
+            diaSemana: d,
+            horaInicio: $(`.horario-inicio[data-dia="${d}"]`).val(),
+            horaFin: $(`.horario-fin[data-dia="${d}"]`).val(),
+            activo: $(`.horario-activo[data-dia="${d}"]`).is(':checked')
+        });
+    }
+    $.ajax({
+        url: '/Negocios/GuardarHorarios', method: 'POST', contentType: 'application/json',
+        data: JSON.stringify({ empleadoId: $('#horarioEmpleadoId').val(), negocioId, dias }),
+        success: function(r) { if (r.success) { toastr.success(r.message); bootstrap.Modal.getInstance('#horarioModal').hide(); } else toastr.error(r.message); },
+        error: function() { toastr.error('Error al guardar horario'); }
+    });
+});
+
+// ═══════════════ CLIENTES ARTESANAL ═══════════════
+function cargarClientesArt() {
+    if (tablaClientesArt) { tablaClientesArt.ajax.reload(); return; }
+    tablaClientesArt = $('#clientesArtTable').DataTable({
+        ajax: { url: '/Negocios/GetClientesArtesanal', data: { negocioId }, dataSrc: '' },
+        columns: [
+            { data: null, render: function(d,t,r) { return '<strong>' + escHtml(r.nombreCompleto) + '</strong>'; } },
+            { data: 'telefono', render: function(d) { return d ? '<a href="tel:' + escHtml(d) + '" class="text-decoration-none">' + escHtml(d) + '</a>' : '-'; } },
+            { data: 'email', render: function(d) { return escHtml(d || '-'); } },
+            { data: 'totalCitas' },
+            { data: null, orderable: false, className: 'text-end', render: function(d,t,r) {
+                var phone = r.telefono ? r.telefono.replace(/\D/g, '') : '';
+                return `<div class="d-flex gap-1 justify-content-end">
+                    ${phone ? '<a href="https://wa.me/' + phone + '" target="_blank" class="btn btn-sm btn-success"><i class="bi bi-whatsapp"></i></a>' : ''}
+                    <button class="btn btn-sm btn-light-primary" onclick="editarClienteArt('${r.clienteId}')"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-light-danger" onclick="eliminarClienteArt('${r.clienteId}','${escAttr(r.nombreCompleto)}')"><i class="bi bi-trash"></i></button>
+                </div>`;
+            }}
+        ],
+        order: [[0, 'asc']]
+    });
+}
+
+$('#btnNuevoClienteArt').on('click', function() { $('#clienteArtForm')[0].reset(); $('#clienteArtId').val(''); $('#clienteArtModalTitle').text('Nuevo Cliente'); new bootstrap.Modal('#clienteArtModal').show(); });
+
+function editarClienteArt(id) {
+    $.get('/Negocios/GetCliente', { id, negocioId }, function(c) {
+        $('#clienteArtId').val(c.clienteId); $('#caNombre').val(c.nombre); $('#caApellido').val(c.apellido);
+        $('#caEmail').val(c.email); $('#caTelefono').val(c.telefono); $('#caDireccion').val(c.direccion);
+        $('#clienteArtModalTitle').text('Editar Cliente');
+        new bootstrap.Modal('#clienteArtModal').show();
+    });
+}
+
+$('#btnGuardarClienteArt').on('click', function() {
+    var url = $('#clienteArtId').val() ? '/Negocios/EditarClienteArtesanal' : '/Negocios/CrearClienteArtesanal';
+    $.post(url, $('#clienteArtForm').serialize(), function(r) {
+        if (r.success) { toastr.success(r.message); bootstrap.Modal.getInstance('#clienteArtModal').hide(); cargarClientesArt(); }
+        else toastr.error(r.message);
+    }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error'); });
+});
+
+function eliminarClienteArt(id, nombre) {
+    swalMG.fire({ title: 'Eliminar cliente', text: 'Se eliminara "' + nombre + '"', icon: 'warning', showCancelButton: true, confirmButtonText: 'Eliminar', confirmButtonColor: '#F1416C' }).then(r => {
+        if (r.isConfirmed) $.post('/Negocios/EliminarCliente', { id, negocioId }, function(r) { if (r.success) { toastr.success(r.message); cargarClientesArt(); } else toastr.error(r.message); });
+    });
+}
+
+// ═══════════════ LOGS (MOVIMIENTOS) ═══════════════
+function cargarTablaLogs() {
+    tablaLogs = $('#logsTable').DataTable({
+        ajax: { url: '/Negocios/GetLogs', data: { negocioId }, dataSrc: '' },
+        columns: [
+            { data: 'message', render: function(d) { return '<span class="text-truncate d-inline-block" style="max-width:250px" title="' + escHtml(d) + '">' + escHtml(d) + '</span>'; } },
+            { data: 'tipo', render: function(d) {
+                var cls = d === 'ingreso' || d === 'cita_completada' ? 'success' : d === 'gasto' ? 'danger' : 'info';
+                return '<span class="badge bg-light-' + cls + ' text-' + cls + '">' + escHtml(d) + '</span>';
+            }},
+            { data: 'nombreCliente', render: function(d) { return escHtml(d || '-'); } },
+            { data: 'monto', render: function(d) { return d >= 0 ? '<span class="text-success fw-bold">$' + d.toFixed(2) + '</span>' : '<span class="text-danger fw-bold">-$' + Math.abs(d).toFixed(2) + '</span>'; } },
+            { data: 'fecha', render: function(d) { return d ? new Date(d).toLocaleDateString('es-MX') + ' ' + new Date(d).toLocaleTimeString('es-MX', {hour:'2-digit',minute:'2-digit'}) : '-'; } }
+        ],
+        order: [[4, 'desc']]
+    });
+}
+
+$('#btnRegistrarLog').on('click', function() {
+    var desc = $('#logDescripcion').val(), monto = parseFloat($('#logMonto').val());
+    if (!desc || isNaN(monto)) { toastr.warning('Completa todos los campos'); return; }
+    $.post('/Negocios/CrearLog', { negocioId, message: desc, monto }, function(r) {
+        if (r.success) { toastr.success('Movimiento registrado'); $('#logDescripcion').val(''); $('#logMonto').val(''); tablaLogs.ajax.reload(); }
+        else toastr.error(r.message);
+    });
+});
+
+$('#btnExportLogsExcel').on('click', function() { window.location.href = '/Negocios/ExportLogsExcel?negocioId=' + negocioId; });
+
+// ═══════════════ VENTAS/REPORTES ═══════════════
+let chartBarVentas, chartResumen;
+
+function cargarVentasStats() {
+    $.get('/Negocios/GetLogs', { negocioId }, function(logs) {
+        var periodo = $('#ventasPeriodPills .mg-pill.active').data('periodo');
+        var now = new Date(), filtered;
+        if (periodo === 'dia') { filtered = logs.filter(l => new Date(l.fecha).toDateString() === now.toDateString()); }
+        else if (periodo === 'semana') { var w = new Date(now); w.setDate(w.getDate() - 7); filtered = logs.filter(l => new Date(l.fecha) >= w); }
+        else { filtered = logs.filter(l => new Date(l.fecha).getMonth() === now.getMonth() && new Date(l.fecha).getFullYear() === now.getFullYear()); }
+
+        var ingresos = filtered.filter(l => l.monto > 0).reduce((s,l) => s + l.monto, 0);
+        var gastos = Math.abs(filtered.filter(l => l.monto < 0).reduce((s,l) => s + l.monto, 0));
+        $('#ventasIngresos').text('$' + ingresos.toFixed(2));
+        $('#ventasGastos').text('$' + gastos.toFixed(2));
+        $('#ventasGanancia').text('$' + (ingresos - gastos).toFixed(2));
+
+        var labels = {dia:'del Dia', semana:'de la Semana', mes:'del Mes'};
+        $('#ventasIngresosLabel').text('Ingresos ' + labels[periodo]);
+        $('#ventasGastosLabel').text('Gastos ' + labels[periodo]);
+        $('#ventasGananciaLabel').text('Ganancia ' + labels[periodo]);
+    });
+}
+
+function cargarCharts() {
+    $.get('/Negocios/GetLogs', { negocioId }, function(logs) {
+        // Bar chart
+        var meses = [], ingArr = [], gasArr = [];
+        for (var i = 5; i >= 0; i--) {
+            var d = new Date(); d.setMonth(d.getMonth() - i);
+            var m = d.toLocaleDateString('es-MX', {month:'short'}); meses.push(m);
+            var ml = logs.filter(l => { var ld = new Date(l.fecha); return ld.getMonth() === d.getMonth() && ld.getFullYear() === d.getFullYear(); });
+            ingArr.push(ml.filter(l => l.monto > 0).reduce((s,l) => s + l.monto, 0));
+            gasArr.push(Math.abs(ml.filter(l => l.monto < 0).reduce((s,l) => s + l.monto, 0)));
+        }
+        if (chartBarVentas) chartBarVentas.destroy();
+        chartBarVentas = new ApexCharts(document.querySelector('#chartBarVentas'), {
+            chart: { type: 'bar', height: 300 }, series: [{ name: 'Ingresos', data: ingArr },{ name: 'Gastos', data: gasArr }],
+            xaxis: { categories: meses }, colors: ['#50CD89','#F1416C'], plotOptions: { bar: { borderRadius: 4 } }
+        });
+        chartBarVentas.render();
+
+        // Donut
+        var hoy = logs.filter(l => new Date(l.fecha).toDateString() === new Date().toDateString());
+        var ing = hoy.filter(l => l.monto > 0).reduce((s,l) => s + l.monto, 0);
+        var gas = Math.abs(hoy.filter(l => l.monto < 0).reduce((s,l) => s + l.monto, 0));
+        if (chartResumen) chartResumen.destroy();
+        chartResumen = new ApexCharts(document.querySelector('#chartResumen'), {
+            chart: { type: 'donut', height: 300 }, series: [ing, gas], labels: ['Ingresos','Gastos'], colors: ['#50CD89','#F1416C']
+        });
+        chartResumen.render();
+    });
+}
+
+$('#ventasPeriodPills').on('click', '.mg-pill', function() { $('#ventasPeriodPills .mg-pill').removeClass('active'); $(this).addClass('active'); cargarVentasStats(); });
+
+// ═══════════════ INVENTARIO (reutilizado) ═══════════════
+function cargarProductosGrid() {
+    $.get('/Negocios/GetProductos', { negocioId }, function(data) {
+        var grid = $('#productosGrid');
+        grid.empty();
+        if (!data || !data.length) { grid.html('<div class="col-12 text-center py-5 text-muted"><i class="bi bi-box-seam fs-1 d-block mb-2"></i>No hay productos</div>'); return; }
+        data.forEach(p => {
+            var stockCls = p.stock <= p.stockMinimo ? 'danger' : 'success';
+            grid.append(`<div class="col-xl-3 col-md-4 col-6"><div class="mg-card h-100"><div class="card-body text-center">
+                <h6 class="fw-bold">${escHtml(p.nombre)}</h6>
+                <p class="text-success fw-bold mb-1">$${p.precioVenta.toFixed(2)}</p>
+                <span class="badge bg-${stockCls}">Stock: ${p.stock}</span>
+                <div class="mt-2 d-flex gap-1 justify-content-center">
+                    <button class="btn btn-sm btn-outline-success" onclick="venderProducto('${p.productoId}','${escAttr(p.nombre)}',${p.precioVenta})"><i class="bi bi-cart-plus"></i></button>
+                    <button class="btn btn-sm btn-outline-primary" onclick="editarProducto('${p.productoId}')"><i class="bi bi-pencil"></i></button>
+                </div>
+            </div></div></div>`);
+        });
+    });
+}
+
+function cargarInventarioStats() {
+    $.get('/Negocios/GetInventarioStats', { negocioId }, function(d) {
+        if (d) { $('#invTotalProductos').text(d.totalProductos || 0); $('#invStockBajo').text(d.stockBajo || 0); $('#invVentasHoy').text(d.ventasHoy || 0); $('#invIngresosHoy').text('$' + (d.ingresosHoy || 0).toFixed(2)); }
+    });
+}
+
+$('#btnCrearProducto').on('click', function() { $('#productoForm')[0].reset(); $('#prodId').val(''); $('#productoModalTitle').text('Nuevo Producto'); new bootstrap.Modal('#productoModal').show(); });
+
+$('#btnGuardarProducto').on('click', function() {
+    var url = $('#prodId').val() ? '/Negocios/EditarProducto' : '/Negocios/CrearProducto';
+    $.post(url, $('#productoForm').serialize(), function(r) {
+        if (r.success) { toastr.success(r.message); bootstrap.Modal.getInstance('#productoModal').hide(); cargarProductosGrid(); cargarInventarioStats(); }
+        else toastr.error(r.message);
+    }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error'); });
+});
+
+function editarProducto(id) {
+    $.get('/Negocios/GetProducto', { id: id, negocioId }, function(p) {
+        $('#prodId').val(p.productoId); $('#prodNombre').val(p.nombre); $('#prodPrecioVenta').val(p.precioVenta);
+        $('#prodCostoCompra').val(p.costoCompra); $('#prodStock').val(p.stock); $('#prodStockMinimo').val(p.stockMinimo);
+        $('#productoModalTitle').text('Editar Producto'); new bootstrap.Modal('#productoModal').show();
+    });
+}
+
+function venderProducto(id, nombre, precio) {
+    swalMG.fire({ title: 'Vender ' + nombre, input: 'number', inputLabel: 'Cantidad', inputValue: 1, inputAttributes: { min: 1 }, showCancelButton: true, confirmButtonText: 'Vender' }).then(r => {
+        if (r.isConfirmed && r.value > 0) {
+            $.post('/Negocios/VenderProducto', { productoId: id, negocioId, cantidad: r.value }, function(r) {
+                if (r.success) { toastr.success(r.message); cargarProductosGrid(); cargarInventarioStats(); } else toastr.error(r.message);
+            });
+        }
+    });
+}
+
+$('#btnToggleMovimientos').on('click', function() {
+    var sec = $('#movimientosSection');
+    sec.toggleClass('d-none');
+    if (!sec.hasClass('d-none') && !tablaMovimientos) {
+        tablaMovimientos = $('#movimientosTable').DataTable({
+            ajax: { url: '/Negocios/GetMovimientos', data: { negocioId }, dataSrc: '' },
+            columns: [
+                { data: 'fecha', render: function(d) { return new Date(d).toLocaleDateString('es-MX'); } },
+                { data: 'nombreProducto' }, { data: 'tipo' }, { data: 'cantidad' },
+                { data: 'total', render: function(d) { return '$' + (d || 0).toFixed(2); } },
+                { data: 'stockResultante' }, { data: 'nota', render: function(d) { return escHtml(d || '-'); } }
+            ], order: [[0, 'desc']]
+        });
+    }
+});
+
+$('#btnExportInventarioExcel').on('click', function() { window.location.href = '/Negocios/ExportInventarioExcel?negocioId=' + negocioId; });
+
+// ═══════════════ NOTIFICACIONES ═══════════════
+function cargarNotificacionesCount() {
+    $.get('/Negocios/GetNotificacionesCount', { negocioId }, function(d) {
+        var count = d.count || d;
+        if (count > 0) { $('#sidebarNotifBadge, #topbarNotifBadge').text(count).removeClass('d-none'); }
+        else { $('#sidebarNotifBadge, #topbarNotifBadge').addClass('d-none'); }
+    });
+}
+
+function cargarNotificacionesTab() {
+    $.get('/Negocios/GetNotificaciones', { negocioId }, function(data) {
+        var list = $('#notificacionesList');
+        list.empty();
+        if (!data.length) { list.html('<div class="text-center py-5 text-muted"><i class="bi bi-bell-slash fs-1 d-block mb-3"></i><p>No hay notificaciones</p></div>'); return; }
+        data.forEach(n => {
+            list.append(`<div class="mg-card ${n.leida ? 'opacity-50' : ''}"><div class="card-body py-2 d-flex align-items-center gap-3">
+                <i class="bi bi-bell${n.leida ? '' : '-fill'} ${n.leida ? 'text-muted' : 'text-warning'}"></i>
+                <div class="flex-grow-1"><p class="mb-0 small">${escHtml(n.mensaje)}</p><small class="text-muted">${new Date(n.fechaCreacion).toLocaleDateString('es-MX')}</small></div>
+                ${!n.leida ? '<button class="btn btn-sm btn-outline-primary" onclick="marcarLeida(\'' + n.id + '\')"><i class="bi bi-check"></i></button>' : ''}
+            </div></div>`);
+        });
+    });
+}
+
+function marcarLeida(id) {
+    $.post('/Negocios/MarcarNotificacionLeida', { id, negocioId }, function() { cargarNotificacionesTab(); cargarNotificacionesCount(); });
+}
+
+$('#btnMarcarTodasLeidasTab').on('click', function() {
+    $.post('/Negocios/MarcarTodasNotificacionesLeidas', { negocioId }, function() { cargarNotificacionesTab(); cargarNotificacionesCount(); toastr.success('Todas marcadas como leidas'); });
+});
+
+// ═══════════════ SUGERENCIAS ═══════════════
+$('#sugerenciaTexto').on('input', function() { $('#sugerenciaCount').text($(this).val().length); });
+$('#btnEnviarSugerencia').on('click', function() {
+    var texto = $('#sugerenciaTexto').val();
+    if (!texto) { toastr.warning('Escribe una sugerencia'); return; }
+    $.post('/Negocios/EnviarSugerencia', { negocioId, mensaje: texto }, function(r) {
+        if (r.success) { toastr.success('Sugerencia enviada'); $('#sugerenciaTexto').val(''); $('#sugerenciaCount').text('0'); }
+        else toastr.error(r.message);
+    });
+});
+
+// ═══════════════ TAB SWITCHING ═══════════════
+document.addEventListener('mg-tab-shown', function(e) {
+    var tab = e.detail.tab;
+    if (tab === 'agendaTab') { if (calendar) { calendar.refetchEvents(); } cargarAgendaStats(); refreshEmployeeTabsAvailability(); }
+    else if (tab === 'clientesTab') { cargarClientesArt(); }
+    else if (tab === 'serviciosTab') { cargarServicios(); }
+    else if (tab === 'empleadosTab') { cargarEmpleados(); }
+    else if (tab === 'logsTab') { if (!tablaLogs) cargarTablaLogs(); }
+    else if (tab === 'ventasTab') { cargarVentasStats(); cargarCharts(); }
+    else if (tab === 'inventarioTab') { cargarProductosGrid(); cargarInventarioStats(); }
+    else if (tab === 'notificacionesTab') { cargarNotificacionesTab(); }
+});
+
+</script>
+}

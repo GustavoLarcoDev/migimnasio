@@ -21,18 +21,23 @@ public class Gym
 
     /// <summary>Nombre del negocio</summary>
     [Required]
+    [MaxLength(200)]
     public string NegocioNombre { get; set; }
 
     /// <summary>Nombre del dueño del negocio</summary>
+    [MaxLength(200)]
     public string DuenoNegocio { get; set; }
 
     [Phone]
+    [MaxLength(20)]
     public string Telefono { get; set; }
 
     [EmailAddress]
+    [MaxLength(200)]
     public string Email { get; set; }
 
     /// <summary>Contraseña hasheada con BCrypt (o texto plano pre-migración)</summary>
+    [MaxLength(200)]
     public string Password { get; set; }
 
     // ═══════════════════════════════════════════════════════════
@@ -44,6 +49,14 @@ public class Gym
 
     /// <summary>True = negocio en periodo de prueba</summary>
     public bool EsPrueba { get; set; }
+
+    // ═══════════════════════════════════════════════════════════
+    // TIPO DE NEGOCIO
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>Tipo de negocio: "membresias" (default) o "artesanal"</summary>
+    [MaxLength(20)]
+    public string TipoNegocio { get; set; } = "membresias";
 
     // ═══════════════════════════════════════════════════════════
     // FECHAS
@@ -81,4 +94,13 @@ public class Gym
 
     /// <summary>Lista de clientes registrados en este negocio</summary>
     public ICollection<Cliente> Clientes { get; set; } = new List<Cliente>();
+
+    /// <summary>Empleados del negocio (modelo artesanal)</summary>
+    public ICollection<Empleado> Empleados { get; set; } = new List<Empleado>();
+
+    /// <summary>Servicios ofrecidos por el negocio (modelo artesanal)</summary>
+    public ICollection<ServicioNegocio> Servicios { get; set; } = new List<ServicioNegocio>();
+
+    /// <summary>Citas/appointments del negocio (modelo artesanal)</summary>
+    public ICollection<Cita> Citas { get; set; } = new List<Cita>();
 }

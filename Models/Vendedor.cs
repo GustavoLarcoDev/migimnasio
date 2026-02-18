@@ -26,6 +26,7 @@ public class Vendedor
     public string Telefono { get; set; }
 
     [Required]
+    [MaxLength(200)]
     public string Password { get; set; }
 
     public bool IsActive { get; set; } = true;

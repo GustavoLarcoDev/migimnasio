@@ -16,12 +16,14 @@ public class VendedorController : Controller
     private readonly IVendedorService _vendedorService;
     private readonly IAuthService _authService;
     private readonly INegocioService _negocioService;
+    private readonly IEmailService _emailService;
 
-    public VendedorController(IVendedorService vendedorService, IAuthService authService, INegocioService negocioService)
+    public VendedorController(IVendedorService vendedorService, IAuthService authService, INegocioService negocioService, IEmailService emailService)
     {
         _vendedorService = vendedorService;
         _authService = authService;
         _negocioService = negocioService;
+        _emailService = emailService;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -70,6 +72,9 @@ public class VendedorController : Controller
             return BadRequest(new { success = false, message });
 
         await _negocioService.RegistrarAdminLogAsync("CrearVendedor", $"Vendedor '{nombre} {apellido}' creado", null);
+
+        // Enviar email de bienvenida al vendedor (fire-and-forget, no bloquea la respuesta)
+        _ = _emailService.EnviarBienvenidaVendedorAsync(correo, $"{nombre} {apellido}");
 
         return Ok(new { success = true, message });
     }
@@ -221,7 +226,8 @@ public class VendedorController : Controller
     public async Task<IActionResult> VendedorCrearNegocio(
         string NombreNegocio, string duenoNegocio, string telefono, string EmailNegocio,
         string passwordNegocio, bool esPrueba,
-        DateTime? fechaPago, DateTime? fechaExpiracion, decimal? precioSuscripcion, int? diasPagados)
+        DateTime? fechaPago, DateTime? fechaExpiracion, decimal? precioSuscripcion, int? diasPagados,
+        string tipoNegocio = "membresias")
     {
         var vendedorId = GetVendedorId();
         if (!vendedorId.HasValue)
@@ -232,7 +238,7 @@ public class VendedorController : Controller
         var (success, message) = await _negocioService.CreateNegocioAsync(
             NombreNegocio, duenoNegocio, telefono, EmailNegocio, passwordNegocio,
             isActive, esPrueba, fechaPago, fechaExpiracion, precioSuscripcion, diasPagados,
-            vendedorId.Value);
+            vendedorId.Value, tipoNegocio);
 
         if (!success)
             return BadRequest(new { success = false, message });
@@ -242,6 +248,8 @@ public class VendedorController : Controller
             "VendedorCrearNegocio",
             $"Vendedor {vendedorNombre} creó el negocio '{NombreNegocio}'",
             NombreNegocio);
+
+        _ = _emailService.EnviarBienvenidaNegocioAsync(EmailNegocio, NombreNegocio, duenoNegocio, vendedorNombre);
 
         return Ok(new { success = true, message });
     }

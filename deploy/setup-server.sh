@@ -20,13 +20,17 @@ echo "════════════════════════�
 echo "[1/9] Actualizando sistema..."
 apt-get update && apt-get upgrade -y
 
-# ─── 2. Instalar .NET 9 Runtime ───
+# ─── 2. Agregar repositorio de Microsoft + Instalar .NET 9 ───
 echo "[2/9] Instalando .NET 9..."
-apt-get install -y dotnet-sdk-9.0 aspnetcore-runtime-9.0
+curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
+curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -o /tmp/packages-microsoft-prod.deb
+dpkg -i /tmp/packages-microsoft-prod.deb
+rm /tmp/packages-microsoft-prod.deb
+apt-get update
+apt-get install -y aspnetcore-runtime-9.0
 
 # ─── 3. Instalar SQL Server 2022 Express ───
 echo "[3/9] Instalando SQL Server 2022 Express..."
-curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor -o /usr/share/keyrings/microsoft-prod.gpg
 curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/mssql-server-2022.list | tee /etc/apt/sources.list.d/mssql-server-2022.list
 apt-get update
 apt-get install -y mssql-server

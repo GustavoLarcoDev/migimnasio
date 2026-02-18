@@ -43,7 +43,88 @@ namespace Gimnasio.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AdminLogs", (string)null);
+                    b.ToTable("AdminLogs");
+                });
+
+            modelBuilder.Entity("Gimnasio.Models.Cita", b =>
+                {
+                    b.Property<Guid>("CitaId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ClienteId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("DuracionMinutos")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("EmpleadoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Estado")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaDeActualizacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaHoraFin")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaHoraInicio")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MotivoCancelacion")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid>("NegocioId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("NombreCliente")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("NombreEmpleado")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("NombreServicio")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal>("PrecioServicio")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("RecordatorioEnviado")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("ServicioId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("CitaId");
+
+                    b.HasIndex("ClienteId");
+
+                    b.HasIndex("ServicioId");
+
+                    b.HasIndex("NegocioId", "Estado")
+                        .HasDatabaseName("IX_Citas_NegocioId_Estado");
+
+                    b.HasIndex("NegocioId", "FechaHoraInicio")
+                        .HasDatabaseName("IX_Citas_NegocioId_FechaHoraInicio");
+
+                    b.HasIndex("EmpleadoId", "FechaHoraInicio", "FechaHoraFin")
+                        .HasDatabaseName("IX_Citas_EmpleadoId_Horario");
+
+                    b.HasIndex("RecordatorioEnviado", "Estado", "FechaHoraInicio")
+                        .HasDatabaseName("IX_Citas_Recordatorio");
+
+                    b.ToTable("Citas");
                 });
 
             modelBuilder.Entity("Gimnasio.Models.Cliente", b =>
@@ -99,7 +180,47 @@ namespace Gimnasio.Migrations
 
                     b.HasIndex("GymNegocioId");
 
-                    b.ToTable("Clientes", (string)null);
+                    b.ToTable("Clientes");
+                });
+
+            modelBuilder.Entity("Gimnasio.Models.Empleado", b =>
+                {
+                    b.Property<Guid>("EmpleadoId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Apellido")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Especialidad")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("NegocioId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Telefono")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("EmpleadoId");
+
+                    b.HasIndex("NegocioId");
+
+                    b.ToTable("Empleados");
                 });
 
             modelBuilder.Entity("Gimnasio.Models.Gym", b =>
@@ -148,12 +269,90 @@ namespace Gimnasio.Migrations
                     b.Property<string>("Telefono")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("TipoNegocio")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
                     b.Property<Guid?>("VendedorId")
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("NegocioId");
 
-                    b.ToTable("Negocios", (string)null);
+                    b.ToTable("Negocios");
+                });
+
+            modelBuilder.Entity("Gimnasio.Models.HorarioEmpleado", b =>
+                {
+                    b.Property<Guid>("HorarioId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Activo")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("DiaSemana")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("EmpleadoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("HoraFin")
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
+
+                    b.Property<string>("HoraInicio")
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
+
+                    b.Property<Guid>("NegocioId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("HorarioId");
+
+                    b.HasIndex("EmpleadoId", "DiaSemana")
+                        .IsUnique()
+                        .HasDatabaseName("IX_HorariosEmpleado_EmpleadoId_Dia");
+
+                    b.ToTable("HorariosEmpleado");
+                });
+
+            modelBuilder.Entity("Gimnasio.Models.HorarioExcepcion", b =>
+                {
+                    b.Property<Guid>("ExcepcionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("EmpleadoId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("EsDiaLibre")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("Fecha")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("HoraFin")
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
+
+                    b.Property<string>("HoraInicio")
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
+
+                    b.Property<string>("Motivo")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<Guid>("NegocioId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("ExcepcionId");
+
+                    b.HasIndex("EmpleadoId", "Fecha")
+                        .IsUnique()
+                        .HasDatabaseName("IX_HorariosExcepcion_EmpleadoId_Fecha");
+
+                    b.ToTable("HorariosExcepcion");
                 });
 
             modelBuilder.Entity("Gimnasio.Models.LeadVendedor", b =>
@@ -199,7 +398,7 @@ namespace Gimnasio.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("LeadsVendedor", (string)null);
+                    b.ToTable("LeadsVendedor");
                 });
 
             modelBuilder.Entity("Gimnasio.Models.Logs", b =>
@@ -235,7 +434,7 @@ namespace Gimnasio.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Logs", (string)null);
+                    b.ToTable("Logs");
                 });
 
             modelBuilder.Entity("Gimnasio.Models.MovimientoInventario", b =>
@@ -284,7 +483,7 @@ namespace Gimnasio.Migrations
 
                     b.HasKey("MovimientoId");
 
-                    b.ToTable("MovimientosInventario", (string)null);
+                    b.ToTable("MovimientosInventario");
                 });
 
             modelBuilder.Entity("Gimnasio.Models.Notificacion", b =>
@@ -320,7 +519,67 @@ namespace Gimnasio.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Notificaciones", (string)null);
+                    b.ToTable("Notificaciones");
+                });
+
+            modelBuilder.Entity("Gimnasio.Models.PagoCita", b =>
+                {
+                    b.Property<Guid>("PagoId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("CitaId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("DetalleExtra")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("EsRegalo")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MetodoPago")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("MontoExtra")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("MontoServicio")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("MotivoRegalo")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid>("NegocioId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("NombreCliente")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("NombreServicio")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal>("Propina")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Total")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("PagoId");
+
+                    b.HasIndex("CitaId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_PagosCita_CitaId_Unique");
+
+                    b.ToTable("PagosCita");
                 });
 
             modelBuilder.Entity("Gimnasio.Models.Producto", b =>
@@ -365,7 +624,54 @@ namespace Gimnasio.Migrations
 
                     b.HasKey("ProductoId");
 
-                    b.ToTable("Productos", (string)null);
+                    b.ToTable("Productos");
+                });
+
+            modelBuilder.Entity("Gimnasio.Models.ServicioNegocio", b =>
+                {
+                    b.Property<Guid>("ServicioId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Descripcion")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("DuracionMinutos")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("EsCombo")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("FechaCreacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FechaDeActualizacion")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("ItemsIncluidos")
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<Guid>("NegocioId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal>("Precio")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("ServicioId");
+
+                    b.HasIndex("NegocioId");
+
+                    b.ToTable("ServiciosNegocio");
                 });
 
             modelBuilder.Entity("Gimnasio.Models.Sugerencia", b =>
@@ -395,7 +701,7 @@ namespace Gimnasio.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Sugerencias", (string)null);
+                    b.ToTable("Sugerencias");
                 });
 
             modelBuilder.Entity("Gimnasio.Models.Vendedor", b =>
@@ -439,7 +745,42 @@ namespace Gimnasio.Migrations
 
                     b.HasKey("VendedorId");
 
-                    b.ToTable("Vendedores", (string)null);
+                    b.ToTable("Vendedores");
+                });
+
+            modelBuilder.Entity("Gimnasio.Models.Cita", b =>
+                {
+                    b.HasOne("Gimnasio.Models.Cliente", "Cliente")
+                        .WithMany("Citas")
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Gimnasio.Models.Empleado", "Empleado")
+                        .WithMany("Citas")
+                        .HasForeignKey("EmpleadoId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Gimnasio.Models.Gym", "Negocio")
+                        .WithMany("Citas")
+                        .HasForeignKey("NegocioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Gimnasio.Models.ServicioNegocio", "Servicio")
+                        .WithMany("Citas")
+                        .HasForeignKey("ServicioId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Cliente");
+
+                    b.Navigation("Empleado");
+
+                    b.Navigation("Negocio");
+
+                    b.Navigation("Servicio");
                 });
 
             modelBuilder.Entity("Gimnasio.Models.Cliente", b =>
@@ -449,9 +790,92 @@ namespace Gimnasio.Migrations
                         .HasForeignKey("GymNegocioId");
                 });
 
+            modelBuilder.Entity("Gimnasio.Models.Empleado", b =>
+                {
+                    b.HasOne("Gimnasio.Models.Gym", "Negocio")
+                        .WithMany("Empleados")
+                        .HasForeignKey("NegocioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Negocio");
+                });
+
+            modelBuilder.Entity("Gimnasio.Models.HorarioEmpleado", b =>
+                {
+                    b.HasOne("Gimnasio.Models.Empleado", "Empleado")
+                        .WithMany("Horarios")
+                        .HasForeignKey("EmpleadoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Empleado");
+                });
+
+            modelBuilder.Entity("Gimnasio.Models.HorarioExcepcion", b =>
+                {
+                    b.HasOne("Gimnasio.Models.Empleado", "Empleado")
+                        .WithMany()
+                        .HasForeignKey("EmpleadoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Empleado");
+                });
+
+            modelBuilder.Entity("Gimnasio.Models.PagoCita", b =>
+                {
+                    b.HasOne("Gimnasio.Models.Cita", "Cita")
+                        .WithOne("Pago")
+                        .HasForeignKey("Gimnasio.Models.PagoCita", "CitaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Cita");
+                });
+
+            modelBuilder.Entity("Gimnasio.Models.ServicioNegocio", b =>
+                {
+                    b.HasOne("Gimnasio.Models.Gym", "Negocio")
+                        .WithMany("Servicios")
+                        .HasForeignKey("NegocioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Negocio");
+                });
+
+            modelBuilder.Entity("Gimnasio.Models.Cita", b =>
+                {
+                    b.Navigation("Pago");
+                });
+
+            modelBuilder.Entity("Gimnasio.Models.Cliente", b =>
+                {
+                    b.Navigation("Citas");
+                });
+
+            modelBuilder.Entity("Gimnasio.Models.Empleado", b =>
+                {
+                    b.Navigation("Citas");
+
+                    b.Navigation("Horarios");
+                });
+
             modelBuilder.Entity("Gimnasio.Models.Gym", b =>
                 {
+                    b.Navigation("Citas");
+
                     b.Navigation("Clientes");
+
+                    b.Navigation("Empleados");
+
+                    b.Navigation("Servicios");
+                });
+
+            modelBuilder.Entity("Gimnasio.Models.ServicioNegocio", b =>
+                {
+                    b.Navigation("Citas");
                 });
 #pragma warning restore 612, 618
         }

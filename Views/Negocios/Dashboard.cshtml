@@ -383,7 +383,7 @@ function verificarSuscripcion() {
             });
         }
     }).fail(function(xhr) {
-        console.warn('Error al verificar suscripción:', xhr.responseText);
+        console.warn('Error al verificar suscripción');
     });
 }
 document.addEventListener('mg-tab-shown', function(e) { if (e.detail.tab === 'resumenTab') { cargarResumen(); } else if (e.detail.tab === 'clientesTab') { if (!tablaClientes) { cargarTablaClientes(); } cargarEstadisticas(); } else if (e.detail.tab === 'ventasTab') { cargarVentasStats(); cargarCharts(); } else if (e.detail.tab === 'logsTab') { if (!tablaLogs) cargarTablaLogs(); verificarCerrarPeriodo(); } else if (e.detail.tab === 'notificacionesTab') { cargarNotificacionesTab(); } else if (e.detail.tab === 'inventarioTab') { cargarProductosGrid(); cargarInventarioStats(); } });
@@ -396,7 +396,7 @@ function cargarEstadisticas() {
         $('#clientesVencidos').text(data.clientesVencidos);
         $('#ingresosMes').text('$' + data.ingresosMes.toFixed(2));
     }).fail(function(xhr) {
-        console.error('Error al cargar estadísticas:', xhr.responseText);
+        console.error('Error al cargar estadísticas:');
         toastr.error('Error al cargar estadísticas del negocio');
     });
 }
@@ -406,13 +406,14 @@ function cargarTablaClientes() {
         ajax: {
             url: '/Negocios/GetClientes', data: { negocioId }, dataSrc: '',
             error: function(xhr) {
-                console.error('Error al cargar clientes:', xhr.responseText);
+                console.error('Error al cargar clientes:');
                 toastr.error('Error al cargar la lista de clientes');
             }
         },
         columns: [
             { data: null, render: function(d, t, r) {
-                return '<strong>' + escHtml(r.nombreCompleto) + '</strong><br><small class="text-muted">' + escHtml(r.telefono || '-') + '</small>';
+                var tel = r.telefono ? '<a href="tel:' + escHtml(r.telefono) + '" class="text-muted text-decoration-none">' + escHtml(r.telefono) + '</a>' : '-';
+                return '<strong>' + escHtml(r.nombreCompleto) + '</strong><br><small>' + tel + '</small>';
             }},
             { data: 'precio', render: function(d) { return '$' + (d || 0).toFixed(2); } },
             { data: 'fechaDeCreacion', render: function(d) { return d ? new Date(d).toLocaleDateString('es-MX') : '-'; } },
@@ -552,7 +553,7 @@ function uploadExcel(file) {
 function initLogsTab() {}
 const tipoLogBadges = { 'ingreso': 'bg-success', 'gasto': 'bg-danger', 'cliente_creado': 'bg-primary', 'cliente_editado': 'bg-warning text-dark', 'cliente_renovado': 'bg-info', 'cliente_eliminado': 'bg-danger', 'sesion_inicio': 'bg-secondary', 'sesion_cierre': 'bg-dark', 'manual': 'bg-light text-dark', 'venta_inventario': 'bg-success', 'devolucion_inventario': 'bg-warning text-dark', 'restock_inventario': 'bg-info', 'ajuste_inventario': 'bg-secondary', 'producto_creado': 'bg-primary', 'producto_editado': 'bg-warning text-dark', 'producto_eliminado': 'bg-danger' };
 const tipoLogLabels = { 'ingreso': 'Ingreso', 'gasto': 'Gasto', 'cliente_creado': 'Cliente Nuevo', 'cliente_editado': 'Edición', 'cliente_renovado': 'Renovación', 'cliente_eliminado': 'Eliminación', 'sesion_inicio': 'Inicio Sesión', 'sesion_cierre': 'Cierre Sesión', 'manual': 'Manual', 'venta_inventario': 'Venta Inv.', 'devolucion_inventario': 'Dev. Inv.', 'restock_inventario': 'Restock', 'ajuste_inventario': 'Ajuste Inv.', 'producto_creado': 'Producto', 'producto_editado': 'Edit. Prod.', 'producto_eliminado': 'Elim. Prod.' };
-function cargarTablaLogs() { if (tablaLogs) { tablaLogs.destroy(); } tablaLogs = $('#logsTable').DataTable({ ajax: { url: '/Negocios/GetLogs', data: { negocioId: negocioId }, dataSrc: '', error: function(xhr, error, code) { console.error('DataTables error:', xhr.responseText); toastr.error('Error al cargar los logs: ' + (xhr.responseJSON?.message || 'Error desconocido')); } }, columns: [ { data: 'message' }, { data: 'tipo', render: function(d) { const badge = tipoLogBadges[d] || 'bg-secondary'; const label = tipoLogLabels[d] || d; return `<span class="badge ${badge}">${label}</span>`; } }, { data: 'nombreCliente', render: d => d || '<span class="text-muted">-</span>' }, { data: 'monto', render: d => d === 0 ? '<span class="text-muted">-</span>' : `<span class="${d >= 0 ? 'text-success' : 'text-danger'} fw-bold">${d >= 0 ? '+' : ''}$${d.toFixed(2)}</span>` }, { data: 'fecha', render: function(d, type) { if (type === 'sort' || type === 'type') return d; return new Date(d).toLocaleString('es-MX'); } } ], order: [[4, 'desc']] }); }
+function cargarTablaLogs() { if (tablaLogs) { tablaLogs.destroy(); } tablaLogs = $('#logsTable').DataTable({ ajax: { url: '/Negocios/GetLogs', data: { negocioId: negocioId }, dataSrc: '', error: function(xhr, error, code) { console.error('DataTables error:'); toastr.error('Error al cargar los logs: ' + (xhr.responseJSON?.message || 'Error desconocido')); } }, columns: [ { data: 'message' }, { data: 'tipo', render: function(d) { const badge = tipoLogBadges[d] || 'bg-secondary'; const label = tipoLogLabels[d] || d; return `<span class="badge ${badge}">${label}</span>`; } }, { data: 'nombreCliente', render: d => d || '<span class="text-muted">-</span>' }, { data: 'monto', render: d => d === 0 ? '<span class="text-muted">-</span>' : `<span class="${d >= 0 ? 'text-success' : 'text-danger'} fw-bold">${d >= 0 ? '+' : ''}$${d.toFixed(2)}</span>` }, { data: 'fecha', render: function(d, type) { if (type === 'sort' || type === 'type') return d; return new Date(d).toLocaleString('es-MX'); } } ], order: [[4, 'desc']] }); }
 // Registrar movimiento con estado de carga
 $('#btnRegistrarLog').click(function() {
     var message = $('#logDescripcion').val();
@@ -610,7 +611,7 @@ function cargarVentasStats() {
         $('#ventasClientesDiarios').text(d.clientesDiariosHoy || 0);
         $('#ventasGananciaMes').text('$' + (d.gananciaMes || 0).toFixed(2));
     }).fail(function(xhr) {
-        console.error('Error al cargar estadísticas de ventas:', xhr.responseText);
+        console.error('Error al cargar estadísticas de ventas:');
         toastr.error('Error al cargar estadísticas de ventas');
     });
 }
@@ -736,7 +737,7 @@ function cargarCharts() {
             chartResumen.render();
         }
     }).fail(function(xhr) {
-        console.error('Error al cargar datos del gráfico de barras:', xhr.responseText);
+        console.error('Error al cargar datos del gráfico de barras:');
         toastr.error('Error al cargar gráficos de ventas');
     });
 
@@ -757,7 +758,7 @@ function cargarCharts() {
         });
         chartClientes.render();
     }).fail(function(xhr) {
-        console.error('Error al cargar datos del gráfico de clientes:', xhr.responseText);
+        console.error('Error al cargar datos del gráfico de clientes:');
         toastr.error('Error al cargar gráfico de clientes');
     });
 
@@ -766,7 +767,7 @@ function cargarCharts() {
     tablaUsuariosDiarios = $('#tablaUsuariosDiarios').DataTable({
         ajax: {
             url: '/Negocios/GetClientesDiarios', data: { negocioId }, dataSrc: '',
-            error: function(xhr) { console.error('Error al cargar usuarios diarios:', xhr.responseText); toastr.error('Error al cargar usuarios diarios'); }
+            error: function(xhr) { console.error('Error al cargar usuarios diarios:'); toastr.error('Error al cargar usuarios diarios'); }
         },
         columns: [
             { data: 'nombreCompleto', render: function(d) { return $('<span>').text(d || '-').html(); } },
@@ -988,7 +989,7 @@ function cargarResumen() {
         resumenStatsData = d;
         actualizarResumenCards();
     }).fail(function(xhr) {
-        console.error('Error al cargar stats de resumen:', xhr.responseText);
+        console.error('Error al cargar stats de resumen:');
     });
     $.get('/Negocios/GetDashboardStats', { negocioId: negocioId }, function(d) {
         $('#resumenTotalClientes').text(d.totalClientes || 0);
@@ -997,7 +998,7 @@ function cargarResumen() {
         $('#resumenNuevosHoy').text(d.clientesNuevosHoy || 0);
         renderProximosVencer(d.proximosVencer);
     }).fail(function(xhr) {
-        console.error('Error al cargar dashboard stats:', xhr.responseText);
+        console.error('Error al cargar dashboard stats:');
         toastr.error('Error al cargar datos del resumen');
     });
     cargarChartOverview();
@@ -1064,7 +1065,7 @@ function cargarChartOverview() {
         });
         chartOverview.render();
     }).fail(function(xhr) {
-        console.error('Error al cargar gráfico overview:', xhr.responseText);
+        console.error('Error al cargar gráfico overview:');
         var chartEl = document.querySelector("#chartResumenOverview");
         if (chartEl) chartEl.innerHTML = '<div class="text-center py-4 text-muted"><i class="bi bi-exclamation-triangle fs-1 d-block mb-2 text-warning"></i><p class="mb-0">Error al cargar gráfico</p></div>';
     });
@@ -1144,7 +1145,7 @@ function cargarProductosGrid() {
                     '<div class="inv-card-stock-row">' +
                         '<button class="inv-arrow inv-arrow-up" onclick="accionSubir(\'' + p.productoId + '\',\'' + escHtml(p.nombre) + '\',' + p.precioVenta + ',' + p.stock + ')" title="Devolver o actualizar"><i class="bi bi-caret-up-fill"></i></button>' +
                         '<span class="inv-card-stock ' + stockClass + '" id="stock-' + p.productoId + '">' + p.stock + '</span>' +
-                        '<button class="inv-arrow inv-arrow-down' + (p.stock <= 0 ? ' disabled' : '') + '" onclick="venderRapido(\'' + p.productoId + '\',' + p.stock + ')" title="Vender 1 unidad"><i class="bi bi-caret-down-fill"></i></button>' +
+                        '<button class="inv-arrow inv-arrow-down' + (p.stock <= 0 ? ' disabled' : '') + '" onclick="venderRapido(\'' + p.productoId + '\')" title="Vender 1 unidad"><i class="bi bi-caret-down-fill"></i></button>' +
                     '</div>' +
                     (p.stockBajo ? '<small class="inv-card-alert"><i class="bi bi-exclamation-triangle-fill me-1"></i>Stock bajo</small>' : '') +
                 '</div>' +
@@ -1157,11 +1158,12 @@ function cargarProductosGrid() {
 }
 
 // Flecha abajo = venta instantanea de 1 unidad
-function venderRapido(productoId, stockActual) {
+function venderRapido(productoId) {
+    var stockEl = $('#stock-' + productoId);
+    var stockActual = parseInt(stockEl.text());
     if (stockActual <= 0) { toastr.warning('No hay stock disponible'); return; }
 
     // Animacion visual inmediata
-    var stockEl = $('#stock-' + productoId);
     var cardEl = stockEl.closest('.inv-card');
     cardEl.addClass('inv-card-selling');
     stockEl.text(parseInt(stockEl.text()) - 1);

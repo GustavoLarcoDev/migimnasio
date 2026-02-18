@@ -54,6 +54,7 @@ public class NegocioService : INegocioService
                 // Indica si la suscripción aún no ha comenzado (fecha de inicio en el futuro)
                 PorEmpezar = g.FechaPago.HasValue && g.FechaPago.Value.Date > now.Date,
                 TotalClientes = _context.Clientes.Count(c => c.NegocioId == g.NegocioId),
+                g.TipoNegocio,
                 g.VendedorId,
                 VendedorNombre = g.VendedorId.HasValue
                     ? _context.Vendedores
@@ -86,7 +87,8 @@ public class NegocioService : INegocioService
             negocio.DiasPagados,
             negocio.PrecioSuscripcion,
             negocio.FechaPago,
-            negocio.FechaExpiracion
+            negocio.FechaExpiracion,
+            negocio.TipoNegocio
         };
     }
 
@@ -107,7 +109,7 @@ public class NegocioService : INegocioService
     /// Si no se proporcionan fechas, se calculan según el tipo (prueba = 7 días, pago = 30 días).
     /// </summary>
     public async Task<(bool success, string message)> CreateNegocioAsync(string nombre, string dueno, string telefono, string email, string password, bool isActive, bool esPrueba,
-        DateTime? fechaPago = null, DateTime? fechaExpiracion = null, decimal? precioSuscripcion = null, int? diasPagados = null, Guid? vendedorId = null)
+        DateTime? fechaPago = null, DateTime? fechaExpiracion = null, decimal? precioSuscripcion = null, int? diasPagados = null, Guid? vendedorId = null, string tipoNegocio = "membresias")
     {
         // Validar que no sea pago Y prueba al mismo tiempo
         if (isActive && esPrueba)
@@ -156,6 +158,7 @@ public class NegocioService : INegocioService
             FechaPago = fechaPagoFinal,
             FechaExpiracion = fechaExpiracionFinal,
             VendedorId = vendedorId,
+            TipoNegocio = tipoNegocio ?? "membresias",
         };
 
         _context.Negocios.Add(negocio);

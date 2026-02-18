@@ -1,3 +1,10 @@
+// ═══════════════════════════════════════════════════════════
+// InventarioService.cs — Servicio de gestión de inventario
+// Maneja CRUD de productos, movimientos (ventas, devoluciones,
+// restock, ajustes), estadísticas y exportación Excel.
+// Cada movimiento genera un log inmutable para tracking financiero.
+// ═══════════════════════════════════════════════════════════
+
 using ClosedXML.Excel;
 using Gimnasio.Data;
 using Gimnasio.Models;
@@ -21,6 +28,9 @@ public class InventarioService : IInventarioService
     // CRUD DE PRODUCTOS
     // ═══════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// Obtiene todos los productos activos con margen unitario y alerta de stock bajo
+    /// </summary>
     public async Task<object> GetProductosAsync(Guid negocioId)
     {
         return await _context.Productos
@@ -41,12 +51,18 @@ public class InventarioService : IInventarioService
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Obtiene un producto específico por su ID dentro de un negocio
+    /// </summary>
     public async Task<Producto> GetProductoAsync(Guid id, Guid negocioId)
     {
         return await _context.Productos
             .FirstOrDefaultAsync(p => p.ProductoId == id && p.NegocioId == negocioId && p.IsActive);
     }
 
+    /// <summary>
+    /// Crea un nuevo producto con validación de nombre, precios y stock
+    /// </summary>
     public async Task<(bool success, string message)> CrearProductoAsync(ProductoCreateDto model)
     {
         if (string.IsNullOrWhiteSpace(model.Nombre))
@@ -81,6 +97,9 @@ public class InventarioService : IInventarioService
         return (true, "Producto creado exitosamente");
     }
 
+    /// <summary>
+    /// Edita un producto existente y registra cambios detectados en logs
+    /// </summary>
     public async Task<(bool success, string message)> EditarProductoAsync(ProductoCreateDto model)
     {
         var producto = await _context.Productos
@@ -118,6 +137,9 @@ public class InventarioService : IInventarioService
         return (true, "Producto actualizado exitosamente");
     }
 
+    /// <summary>
+    /// Elimina un producto de forma lógica (IsActive = false)
+    /// </summary>
     public async Task<(bool success, string message)> EliminarProductoAsync(Guid id, Guid negocioId)
     {
         var producto = await _context.Productos
@@ -142,6 +164,9 @@ public class InventarioService : IInventarioService
     // MOVIMIENTOS DE INVENTARIO
     // ═══════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// Registra la venta de unidades, reduce stock y genera log de ingreso
+    /// </summary>
     public async Task<(bool success, string message)> VenderProductoAsync(Guid productoId, Guid negocioId, int cantidad)
     {
         if (cantidad <= 0)
@@ -192,6 +217,9 @@ public class InventarioService : IInventarioService
         return (true, $"Venta registrada: {cantidad}x {producto.Nombre} (${total:F2})");
     }
 
+    /// <summary>
+    /// Registra una devolución de producto, incrementa stock y genera log de gasto
+    /// </summary>
     public async Task<(bool success, string message)> DevolverProductoAsync(Guid productoId, Guid negocioId, int cantidad, string nota)
     {
         if (cantidad <= 0)
@@ -243,6 +271,9 @@ public class InventarioService : IInventarioService
         return (true, $"Devolución registrada: {cantidad}x {producto.Nombre}");
     }
 
+    /// <summary>
+    /// Registra un reabastecimiento de stock y genera log de gasto por el costo
+    /// </summary>
     public async Task<(bool success, string message)> RestockAsync(Guid productoId, Guid negocioId, int cantidad, decimal costoTotal)
     {
         if (cantidad <= 0)
@@ -293,6 +324,9 @@ public class InventarioService : IInventarioService
         return (true, $"Restock registrado: +{cantidad} {producto.Nombre}");
     }
 
+    /// <summary>
+    /// Ajusta el stock tras conteo físico y genera log de ajuste
+    /// </summary>
     public async Task<(bool success, string message)> AjustarStockAsync(Guid productoId, Guid negocioId, int stockReal, string nota)
     {
         if (stockReal < 0)
@@ -352,6 +386,9 @@ public class InventarioService : IInventarioService
     // CONSULTAS
     // ═══════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// Obtiene el historial de movimientos de inventario ordenados por fecha
+    /// </summary>
     public async Task<object> GetMovimientosAsync(Guid negocioId)
     {
         return await _context.MovimientosInventario
@@ -374,6 +411,9 @@ public class InventarioService : IInventarioService
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Calcula estadísticas de inventario: productos, stock bajo, ventas del día
+    /// </summary>
     public async Task<object> GetInventarioStatsAsync(Guid negocioId)
     {
         var productos = await _context.Productos
@@ -401,6 +441,9 @@ public class InventarioService : IInventarioService
     // EXPORTACION EXCEL
     // ═══════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// Exporta productos y movimientos a un archivo Excel de dos hojas
+    /// </summary>
     public async Task<byte[]> ExportInventarioExcelAsync(Guid negocioId)
     {
         var productos = await _context.Productos

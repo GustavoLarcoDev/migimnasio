@@ -21,6 +21,7 @@ public static class BackgroundServicesRegistration
     {
         services.AddHostedService<MembershipReminderService>();
         services.AddHostedService<DailyReportService>();
+        services.AddHostedService<AppointmentReminderService>();
         return services;
     }
 }

@@ -234,6 +234,27 @@
                                         <div class="form-text">Contraseña para acceder al sistema</div>
                                     </div>
                                     <div class="mb-4">
+                                        <label class="form-label fw-semibold">Modelo de Negocio</label>
+                                        <div class="row g-3 mt-1">
+                                            <div class="col-6">
+                                                <label class="mg-modelo-card d-block p-3 border rounded-3 text-center" for="modeloMembresias" style="cursor:pointer;">
+                                                    <input class="form-check-input d-none" type="radio" name="modeloNegocio" id="modeloMembresias" value="membresias" checked />
+                                                    <i class="bi bi-calendar-check fs-1 text-primary d-block mb-2"></i>
+                                                    <strong class="d-block">Membresías</strong>
+                                                    <small class="text-muted">Gimnasios, yoga, crossfit, clases de baile</small>
+                                                </label>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="mg-modelo-card d-block p-3 border rounded-3 text-center" for="modeloArtesanal" style="cursor:pointer;">
+                                                    <input class="form-check-input d-none" type="radio" name="modeloNegocio" id="modeloArtesanal" value="artesanal" />
+                                                    <i class="bi bi-scissors fs-1 text-success d-block mb-2"></i>
+                                                    <strong class="d-block">Artesanal</strong>
+                                                    <small class="text-muted">Salones de uñas, barberías, maquillaje, cejas</small>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-4">
                                         <label class="form-label fw-semibold required">Tipo de Negocio</label>
                                         <div class="d-flex gap-4 mt-2">
                                             <div class="form-check crear-tipo-check">
@@ -807,7 +828,7 @@ function cargarTablaNegocios() {
                 return data;
             },
             error: function (xhr) {
-                console.error('Error al cargar negocios:', xhr.responseText);
+                console.error('Error al cargar negocios:');
                 toastr.error('Error al cargar la lista de negocios');
             }
         },
@@ -1193,6 +1214,7 @@ function ejecutarCreacion() {
         passwordNegocio: $('#crearPasswordNegocio').val(),
         isActive: tipoNegocio === 'pago',
         esPrueba: tipoNegocio === 'prueba',
+        tipoNegocio: $('input[name="modeloNegocio"]:checked').val() || 'membresias',
         fechaPago: $('#crearFechaPago').val() || null,
         fechaExpiracion: $('#crearFechaExpiracion').val() || null,
         precioSuscripcion: $('#crearPrecioSuscripcion').val() || null,
@@ -1220,9 +1242,7 @@ function ejecutarCreacion() {
             btn.prop('disabled', false).html('<i class="bi bi-check-circle me-2"></i>Crear Negocio');
         },
         error: function (xhr) {
-            let message = 'Error al crear el negocio';
-            if (xhr.responseText) message = xhr.responseText;
-            swalMG.fire('Error', message, 'error');
+            swalMG.fire('Error', 'Error al crear el negocio', 'error');
             btn.prop('disabled', false).html('<i class="bi bi-check-circle me-2"></i>Crear Negocio');
         }
     });
@@ -1401,7 +1421,7 @@ function cargarTablaLogs() {
             type: 'GET',
             dataSrc: '',
             error: function (xhr) {
-                console.error('Error al cargar logs:', xhr.responseText);
+                console.error('Error al cargar logs:');
                 toastr.error('Error al cargar registro de actividad');
             }
         },
@@ -1720,6 +1740,18 @@ $('#editDiasPagados').on('change input', function() {
 .crear-tipo-check .form-check-input:checked {
     background-color: var(--mg-primary, #3E97FF);
     border-color: var(--mg-primary, #3E97FF);
+}
+.mg-modelo-card {
+    border: 2px solid var(--mg-gray-300, #E4E6EF) !important;
+    transition: all 0.3s ease;
+}
+.mg-modelo-card:hover {
+    border-color: var(--mg-primary, #3E97FF) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.mg-modelo-card:has(input:checked) {
+    border-color: var(--mg-primary, #3E97FF) !important;
+    background-color: var(--mg-primary-light, rgba(62, 151, 255, 0.08));
 }
 </style>
 }

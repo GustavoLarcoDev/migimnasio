@@ -84,9 +84,9 @@ public class MembershipReminderService : BackgroundService
         {
             var hoy = TimeHelper.Now.Date;
 
-            // Obtener negocios activos con sus clientes
+            // Obtener negocios activos de tipo membresias (artesanal no tiene membresías)
             var negociosActivos = await context.Negocios
-                .Where(n => n.IsActive)
+                .Where(n => n.IsActive && n.TipoNegocio != "artesanal")
                 .Select(n => new { n.NegocioId, n.NegocioNombre })
                 .ToListAsync(stoppingToken);
 

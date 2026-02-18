@@ -53,6 +53,10 @@ public class ClientesController : Controller
             if (negocio == null)
                 return NotFound();
 
+            // Redirigir según tipo de negocio
+            if (negocio.TipoNegocio == "artesanal")
+                return View("~/Views/Negocios/DashboardArtesanal.cshtml", negocio);
+
             return View("~/Views/Negocios/Dashboard.cshtml", negocio);
         }
         catch

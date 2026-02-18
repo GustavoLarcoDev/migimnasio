@@ -30,12 +30,15 @@ public class ClienteCreateDto
     public string Apellido { get; set; }
 
     [EmailAddress]
+    [MaxLength(200)]
     public string Email { get; set; }
 
     [Required]
     [Phone]
+    [MaxLength(20)]
     public string Telefono { get; set; }
 
+    [MaxLength(500)]
     public string Direccion { get; set; }
 
     /// <summary>True si el cliente paga por día</summary>

@@ -1,4 +1,3 @@
-#nullable enable
 using System.ComponentModel.DataAnnotations;
 
 namespace Gimnasio.Models;
@@ -18,16 +17,16 @@ public class LeadVendedor
     public string Email { get; set; } = "";
 
     [MaxLength(40)]
-    public string? Telefono { get; set; }
+    public string Telefono { get; set; }
 
     [MaxLength(1200)]
-    public string? Mensaje { get; set; }
+    public string Mensaje { get; set; }
 
     public bool Atendido { get; set; } = false;
 
     public Guid? AtendidoPorId { get; set; }
 
-    public string? AtendidoPorNombre { get; set; }
+    public string AtendidoPorNombre { get; set; }
 
     public DateTime FechaCreacion { get; set; } = TimeHelper.Now;
 }

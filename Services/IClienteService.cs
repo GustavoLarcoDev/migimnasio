@@ -67,4 +67,24 @@ public interface IClienteService
     /// Se llama después de que el dueño envió los mensajes via wa.me.
     /// </summary>
     Task<int> LimpiarClientesDiariosAsync(Guid negocioId);
+
+    /// <summary>
+    /// Busca clientes por nombre o telefono (autocomplete para booking rapido)
+    /// </summary>
+    Task<object> BuscarClientesAsync(Guid negocioId, string query);
+
+    /// <summary>
+    /// Crea un cliente para negocio artesanal (sin campos de membresía)
+    /// </summary>
+    Task<(bool success, string message)> CrearClienteArtesanalAsync(ClienteArtesanalCreateDto model);
+
+    /// <summary>
+    /// Edita un cliente artesanal (sin campos de membresía)
+    /// </summary>
+    Task<(bool success, string message)> EditarClienteArtesanalAsync(ClienteArtesanalCreateDto model);
+
+    /// <summary>
+    /// Obtiene clientes de un negocio artesanal (sin campos de membresía)
+    /// </summary>
+    Task<object> GetClientesArtesanalAsync(Guid negocioId);
 }

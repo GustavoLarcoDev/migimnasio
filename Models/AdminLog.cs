@@ -15,14 +15,17 @@ public class AdminLog
 
     /// <summary>Tipo de acción: "Crear", "Editar", "Eliminar", "CambiarEstado", "Impersonar"</summary>
     [Required]
+    [MaxLength(50)]
     public string Accion { get; set; }
 
     /// <summary>Descripción detallada de la acción realizada</summary>
+    [MaxLength(1000)]
     public string Detalle { get; set; }
 
     /// <summary>Fecha y hora en que se realizó la acción</summary>
     public DateTime Fecha { get; set; } = TimeHelper.Now;
 
     /// <summary>Nombre del negocio afectado (null para acciones generales)</summary>
+    [MaxLength(200)]
     public string NegocioAfectado { get; set; }
 }

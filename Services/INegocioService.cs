@@ -38,7 +38,7 @@ public interface INegocioService
     /// Hashea la contraseña con BCrypt antes de guardar.
     /// </summary>
     Task<(bool success, string message)> CreateNegocioAsync(string nombre, string dueno, string telefono, string email, string password, bool isActive, bool esPrueba,
-        DateTime? fechaPago = null, DateTime? fechaExpiracion = null, decimal? precioSuscripcion = null, int? diasPagados = null, Guid? vendedorId = null);
+        DateTime? fechaPago = null, DateTime? fechaExpiracion = null, decimal? precioSuscripcion = null, int? diasPagados = null, Guid? vendedorId = null, string tipoNegocio = "membresias");
 
     /// <summary>
     /// Edita un negocio existente. Si se envía contraseña nueva, se re-hashea.

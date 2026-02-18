@@ -103,6 +103,30 @@ public class WhatsAppService : IWhatsAppService
     }
 
     // ═══════════════════════════════════════════════════════════
+    // RECORDATORIOS DE CITAS (MODELO ARTESANAL)
+    // ═══════════════════════════════════════════════════════════
+
+    public async Task<bool> EnviarRecordatorioCitaClienteAsync(
+        string telefono, string nombreCliente, string nombreNegocio, string nombreEmpleado, string hora)
+    {
+        var mensaje = $"Hola {nombreCliente}, te recordamos la cita en *{nombreNegocio}* con {nombreEmpleado} a las *{hora}*. " +
+                      $"Si deseas cancelar, comunícate con nosotros lo más rápido.\n\n" +
+                      $"_Este es un mensaje automatizado. Por favor no responda a este número. " +
+                      $"Si tiene alguna duda, comuníquese directamente con *{nombreNegocio}*._";
+
+        return await EnviarMensajeTextoAsync(telefono, mensaje);
+    }
+
+    public async Task<bool> EnviarRecordatorioCitaNegocioAsync(
+        string telefono, string nombreDueno, string nombreServicio, string hora, string nombreEmpleado)
+    {
+        var mensaje = $"Hola {nombreDueno}, recuerda que tienes una cita para *{nombreServicio}* programada a las *{hora}* para {nombreEmpleado}.\n\n" +
+                      $"— MiNegocio";
+
+        return await EnviarMensajeTextoAsync(telefono, mensaje);
+    }
+
+    // ═══════════════════════════════════════════════════════════
     // MÉTODOS PRIVADOS
     // ═══════════════════════════════════════════════════════════
 

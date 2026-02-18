@@ -288,11 +288,7 @@ function ejecutarCreacion() {
             });
         },
         error: function(xhr) {
-            let message = 'Error al crear el negocio';
-            if (xhr.responseText) {
-                message = xhr.responseText;
-            }
-            swalMG.fire('Error', message, 'error');
+            swalMG.fire('Error', 'Error al crear el negocio', 'error');
             btn.prop('disabled', false).html('<i class="bi bi-check-circle me-2"></i>Crear Negocio');
         }
     });

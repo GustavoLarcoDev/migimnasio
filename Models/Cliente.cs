@@ -33,11 +33,14 @@ public class Cliente
     public string Apellido { get; set; }
 
     [EmailAddress]
+    [MaxLength(200)]
     public string Email { get; set; }
 
     [Phone]
+    [MaxLength(20)]
     public string Telefono { get; set; }
 
+    [MaxLength(500)]
     public string Direccion { get; set; }
 
     // ═══════════════════════════════════════════════════════════
@@ -60,6 +63,13 @@ public class Cliente
 
     /// <summary>Precio pagado por la membresía actual</summary>
     public decimal Precio { get; set; }
+
+    // ═══════════════════════════════════════════════════════════
+    // RELACIONES (modelo artesanal)
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>Citas del cliente (modelo artesanal)</summary>
+    public ICollection<Cita> Citas { get; set; } = new List<Cita>();
 }
 
 /// <summary>

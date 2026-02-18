@@ -7,7 +7,7 @@
 <html lang="es" data-theme="">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>@ViewData["Title"] - Mi Negocio</title>
     <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
 
@@ -88,35 +88,78 @@
         </div>
 
         <nav class="mg-sidebar-menu">
-            <a href="#resumenTab" class="nav-link active" data-mg-tab="resumenTab">
-                <i class="bi bi-speedometer2"></i>
-                <span>Resumen</span>
-            </a>
-            <a href="#clientesTab" class="nav-link" data-mg-tab="clientesTab">
-                <i class="bi bi-people-fill"></i>
-                <span>Clientes</span>
-            </a>
-            <a href="#logsTab" class="nav-link" data-mg-tab="logsTab">
-                <i class="bi bi-journal-text"></i>
-                <span>Movimientos</span>
-            </a>
-            <a href="#ventasTab" class="nav-link" data-mg-tab="ventasTab">
-                <i class="bi bi-graph-up"></i>
-                <span>Reportes</span>
-            </a>
-            <a href="#inventarioTab" class="nav-link" data-mg-tab="inventarioTab">
-                <i class="bi bi-box-seam"></i>
-                <span>Inventario</span>
-            </a>
-            <a href="#notificacionesTab" class="nav-link" data-mg-tab="notificacionesTab">
-                <i class="bi bi-bell-fill"></i>
-                <span>Notificaciones</span>
-                <span class="badge bg-danger ms-auto d-none" id="sidebarNotifBadge">0</span>
-            </a>
-            <a href="#sugerenciasTab" class="nav-link" data-mg-tab="sugerenciasTab">
-                <i class="bi bi-chat-left-text"></i>
-                <span>Sugerencias</span>
-            </a>
+            @if (ViewData["TipoNegocio"]?.ToString() == "artesanal")
+            {
+                <a href="#agendaTab" class="nav-link active" data-mg-tab="agendaTab">
+                    <i class="bi bi-calendar-week"></i>
+                    <span>Agenda</span>
+                </a>
+                <a href="#clientesTab" class="nav-link" data-mg-tab="clientesTab">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Clientes</span>
+                </a>
+                <a href="#serviciosTab" class="nav-link" data-mg-tab="serviciosTab">
+                    <i class="bi bi-scissors"></i>
+                    <span>Servicios</span>
+                </a>
+                <a href="#empleadosTab" class="nav-link" data-mg-tab="empleadosTab">
+                    <i class="bi bi-person-badge"></i>
+                    <span>Empleados</span>
+                </a>
+                <a href="#logsTab" class="nav-link" data-mg-tab="logsTab">
+                    <i class="bi bi-journal-text"></i>
+                    <span>Movimientos</span>
+                </a>
+                <a href="#ventasTab" class="nav-link" data-mg-tab="ventasTab">
+                    <i class="bi bi-graph-up"></i>
+                    <span>Reportes</span>
+                </a>
+                <a href="#inventarioTab" class="nav-link" data-mg-tab="inventarioTab">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Inventario</span>
+                </a>
+                <a href="#notificacionesTab" class="nav-link" data-mg-tab="notificacionesTab">
+                    <i class="bi bi-bell-fill"></i>
+                    <span>Notificaciones</span>
+                    <span class="badge bg-danger ms-auto d-none" id="sidebarNotifBadge">0</span>
+                </a>
+                <a href="#sugerenciasTab" class="nav-link" data-mg-tab="sugerenciasTab">
+                    <i class="bi bi-chat-left-text"></i>
+                    <span>Sugerencias</span>
+                </a>
+            }
+            else
+            {
+                <a href="#resumenTab" class="nav-link active" data-mg-tab="resumenTab">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Resumen</span>
+                </a>
+                <a href="#clientesTab" class="nav-link" data-mg-tab="clientesTab">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Clientes</span>
+                </a>
+                <a href="#logsTab" class="nav-link" data-mg-tab="logsTab">
+                    <i class="bi bi-journal-text"></i>
+                    <span>Movimientos</span>
+                </a>
+                <a href="#ventasTab" class="nav-link" data-mg-tab="ventasTab">
+                    <i class="bi bi-graph-up"></i>
+                    <span>Reportes</span>
+                </a>
+                <a href="#inventarioTab" class="nav-link" data-mg-tab="inventarioTab">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Inventario</span>
+                </a>
+                <a href="#notificacionesTab" class="nav-link" data-mg-tab="notificacionesTab">
+                    <i class="bi bi-bell-fill"></i>
+                    <span>Notificaciones</span>
+                    <span class="badge bg-danger ms-auto d-none" id="sidebarNotifBadge">0</span>
+                </a>
+                <a href="#sugerenciasTab" class="nav-link" data-mg-tab="sugerenciasTab">
+                    <i class="bi bi-chat-left-text"></i>
+                    <span>Sugerencias</span>
+                </a>
+            }
         </nav>
 
         <div class="mg-sidebar-footer">
@@ -264,10 +307,12 @@
         function openSidebar() {
             sidebar.classList.add('show');
             overlay.classList.add('show');
+            document.body.style.overflow = 'hidden';
         }
         function closeSidebar() {
             sidebar.classList.remove('show');
             overlay.classList.remove('show');
+            document.body.style.overflow = '';
         }
 
         if (toggle) toggle.addEventListener('click', openSidebar);

@@ -1,3 +1,7 @@
+// ═══════════════════════════════════════════════════════════
+// ProductoCreateDto.cs — DTO para crear/editar productos del inventario
+// ═══════════════════════════════════════════════════════════
+
 using System.ComponentModel.DataAnnotations;
 
 namespace Gimnasio.Models.DTOs;

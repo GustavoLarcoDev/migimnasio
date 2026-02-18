@@ -1,3 +1,9 @@
+// ═══════════════════════════════════════════════════════════
+// VendedorService.cs — Servicio de gestión de vendedores
+// Maneja CRUD de vendedores, login, asignación de negocios,
+// estadísticas de rendimiento y gestión de leads comerciales.
+// ═══════════════════════════════════════════════════════════
+
 #nullable enable
 using Gimnasio.Data;
 using Gimnasio.Models;
@@ -16,6 +22,13 @@ public class VendedorService : IVendedorService
         _authService = authService;
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // CONSULTAS
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Obtiene todos los vendedores activos con conteo de negocios asignados
+    /// </summary>
     public async Task<List<object>> GetAllVendedoresAsync()
     {
         var vendedores = await _context.Vendedores
@@ -47,11 +60,21 @@ public class VendedorService : IVendedorService
         }).ToList();
     }
 
+    /// <summary>
+    /// Obtiene un vendedor específico por su ID
+    /// </summary>
     public async Task<Vendedor?> GetVendedorAsync(Guid id)
     {
         return await _context.Vendedores.FirstOrDefaultAsync(v => v.VendedorId == id && v.IsActive);
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // CRUD DE VENDEDORES
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Crea un nuevo vendedor con contraseña hasheada (mínimo 6 caracteres)
+    /// </summary>
     public async Task<(bool success, string message)> CrearVendedorAsync(
         string nombre, string apellido, string correo, string telefono, string password)
     {
@@ -86,6 +109,9 @@ public class VendedorService : IVendedorService
         return (true, $"Vendedor '{nombre} {apellido}' creado exitosamente");
     }
 
+    /// <summary>
+    /// Edita un vendedor existente. Si se envía contraseña nueva, se re-hashea.
+    /// </summary>
     public async Task<(bool success, string message)> EditarVendedorAsync(
         Guid id, string nombre, string apellido, string correo, string telefono, string? password)
     {
@@ -118,6 +144,9 @@ public class VendedorService : IVendedorService
         return (true, $"Vendedor '{nombre} {apellido}' actualizado");
     }
 
+    /// <summary>
+    /// Elimina un vendedor de forma lógica (IsActive = false)
+    /// </summary>
     public async Task<(bool success, string message)> EliminarVendedorAsync(Guid id)
     {
         var vendedor = await _context.Vendedores.FirstOrDefaultAsync(v => v.VendedorId == id);
@@ -131,6 +160,13 @@ public class VendedorService : IVendedorService
         return (true, $"Vendedor '{vendedor.Nombre} {vendedor.Apellido}' eliminado");
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // LOGIN Y SESIÓN
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Valida credenciales de un vendedor y retorna el objeto si es válido
+    /// </summary>
     public async Task<Vendedor?> LoginVendedorAsync(string correo, string password)
     {
         if (string.IsNullOrWhiteSpace(correo) || string.IsNullOrWhiteSpace(password))
@@ -148,32 +184,46 @@ public class VendedorService : IVendedorService
         return vendedor;
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // NEGOCIOS ASIGNADOS Y ESTADÍSTICAS
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Obtiene los negocios asignados a un vendedor con estadísticas básicas
+    /// </summary>
     public async Task<List<object>> GetNegociosByVendedorAsync(Guid vendedorId)
     {
-        var negocios = await _context.Negocios
+        var now = TimeHelper.Now;
+        return (await _context.Negocios
             .Where(n => n.VendedorId == vendedorId)
-            .Include(n => n.Clientes)
             .OrderByDescending(n => n.FechaCreacion)
-            .ToListAsync();
-
-        return negocios.Select(n => (object)new
-        {
-            n.NegocioId,
-            n.NegocioNombre,
-            n.DuenoNegocio,
-            n.Email,
-            n.Telefono,
-            n.IsActive,
-            n.EsPrueba,
-            totalClientes = n.Clientes.Count,
-            fechaCreacion = n.FechaCreacion.ToString("yyyy-MM-dd"),
-            diasRestantes = n.FechaExpiracion.HasValue
-                ? (n.FechaExpiracion.Value.Date - TimeHelper.Now.Date).Days
-                : (int?)null,
-            n.PrecioSuscripcion
-        }).ToList();
+            .Select(n => new
+            {
+                n.NegocioId,
+                n.NegocioNombre,
+                n.DuenoNegocio,
+                n.Email,
+                n.Telefono,
+                n.IsActive,
+                n.EsPrueba,
+                totalClientes = _context.Clientes.Count(c => c.NegocioId == n.NegocioId),
+                fechaCreacion = n.FechaCreacion.ToString("yyyy-MM-dd"),
+                diasRestantesSuscripcion = n.FechaExpiracion.HasValue
+                    ? (int)(n.FechaExpiracion.Value.Date - now.Date).TotalDays
+                    : (int?)null,
+                n.FechaExpiracion,
+                n.DiasPagados,
+                n.PrecioSuscripcion,
+                porEmpezar = n.FechaPago.HasValue && n.FechaPago.Value.Date > now.Date
+            })
+            .ToListAsync())
+            .Cast<object>()
+            .ToList();
     }
 
+    /// <summary>
+    /// Calcula estadísticas del vendedor: negocios totales, activos, en prueba y clientes
+    /// </summary>
     public async Task<object> GetVendedorStatsAsync(Guid vendedorId)
     {
         var negocios = await _context.Negocios
@@ -191,6 +241,13 @@ public class VendedorService : IVendedorService
         };
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // GESTIÓN DE LEADS
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Obtiene todos los leads ordenados por estado (no atendidos primero) y fecha
+    /// </summary>
     public async Task<List<object>> GetLeadsAsync()
     {
         var leads = await _context.LeadsVendedor
@@ -212,6 +269,9 @@ public class VendedorService : IVendedorService
         }).ToList();
     }
 
+    /// <summary>
+    /// Marca un lead como atendido por un vendedor específico
+    /// </summary>
     public async Task<(bool success, string message)> MarcarLeadAtendidoAsync(Guid leadId, Guid vendedorId, string vendedorNombre)
     {
         var lead = await _context.LeadsVendedor.FirstOrDefaultAsync(l => l.Id == leadId);
@@ -231,6 +291,9 @@ public class VendedorService : IVendedorService
         return (true, "Lead marcado como atendido");
     }
 
+    /// <summary>
+    /// Obtiene el conteo de leads no atendidos (para badge de notificaciones)
+    /// </summary>
     public async Task<int> GetLeadsCountAsync()
     {
         return await _context.LeadsVendedor.CountAsync(l => !l.Atendido);

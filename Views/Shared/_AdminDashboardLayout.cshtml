@@ -7,7 +7,7 @@
 <html lang="es" data-theme="">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>@ViewData["Title"] - Admin</title>
     <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
 
@@ -191,10 +191,12 @@
         function openSidebar() {
             sidebar.classList.add('show');
             overlay.classList.add('show');
+            document.body.style.overflow = 'hidden';
         }
         function closeSidebar() {
             sidebar.classList.remove('show');
             overlay.classList.remove('show');
+            document.body.style.overflow = '';
         }
 
         if (toggle) toggle.addEventListener('click', openSidebar);

@@ -27,4 +27,14 @@ public interface IWhatsAppService
     /// Envía un resumen diario del negocio al dueño
     /// </summary>
     Task<bool> EnviarResumenDiarioAsync(string telefono, string nombreNegocio, decimal ingresosDia, int nuevosClientes, int porVencerManana);
+
+    /// <summary>
+    /// Envía recordatorio de cita al cliente
+    /// </summary>
+    Task<bool> EnviarRecordatorioCitaClienteAsync(string telefono, string nombreCliente, string nombreNegocio, string nombreEmpleado, string hora);
+
+    /// <summary>
+    /// Envía recordatorio de cita al dueño del negocio
+    /// </summary>
+    Task<bool> EnviarRecordatorioCitaNegocioAsync(string telefono, string nombreDueno, string nombreServicio, string hora, string nombreEmpleado);
 }

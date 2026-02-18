@@ -20,11 +20,13 @@ public class AdminController : Controller
 {
     private readonly INegocioService _negocioService;
     private readonly IAuthService _authService;
+    private readonly IEmailService _emailService;
 
-    public AdminController(INegocioService negocioService, IAuthService authService)
+    public AdminController(INegocioService negocioService, IAuthService authService, IEmailService emailService)
     {
         _negocioService = negocioService;
         _authService = authService;
+        _emailService = emailService;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -165,7 +167,8 @@ public class AdminController : Controller
     [HttpPost("Create")]
     public async Task<IActionResult> Create(string NombreNegocio, string duenoNegocio, string telefono, string EmailNegocio,
         string passwordNegocio, bool isActive, bool esPrueba,
-        DateTime? fechaPago, DateTime? fechaExpiracion, decimal? precioSuscripcion, int? diasPagados)
+        DateTime? fechaPago, DateTime? fechaExpiracion, decimal? precioSuscripcion, int? diasPagados,
+        string tipoNegocio = "membresias")
     {
         try
         {
@@ -174,7 +177,7 @@ public class AdminController : Controller
 
             var (success, message) = await _negocioService.CreateNegocioAsync(
                 NombreNegocio, duenoNegocio, telefono, EmailNegocio, passwordNegocio, isActive, esPrueba,
-                fechaPago, fechaExpiracion, precioSuscripcion, diasPagados);
+                fechaPago, fechaExpiracion, precioSuscripcion, diasPagados, tipoNegocio: tipoNegocio);
 
             if (!success)
                 return BadRequest(message);
@@ -183,6 +186,8 @@ public class AdminController : Controller
                 "Crear",
                 $"Negocio '{NombreNegocio}' creado ({(esPrueba ? "Prueba" : "Pago")})",
                 NombreNegocio);
+
+            _ = _emailService.EnviarBienvenidaNegocioAsync(EmailNegocio, NombreNegocio, duenoNegocio, null);
 
             return Ok(new { success = true, message });
         }

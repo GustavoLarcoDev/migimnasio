@@ -329,6 +329,12 @@ public class ClienteService : IClienteService
         if (cliente == null)
             return (false, "Cliente no encontrado");
 
+        // Verificar si tiene citas asociadas (artesanal)
+        var tieneCitas = await _context.Citas
+            .AnyAsync(c => c.ClienteId == id);
+        if (tieneCitas)
+            return (false, "No se puede eliminar. El cliente tiene citas registradas.");
+
         var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
         var diasRestantes = (cliente.FechaQueTermina.Date - TimeHelper.Now.Date).Days;
         var estadoCliente = diasRestantes >= 0 ? $"activo, {diasRestantes} días restantes" : "vencido";
@@ -407,6 +413,111 @@ public class ClienteService : IClienteService
             0, null, null);
 
         return clientesDiarios.Count;
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // CLIENTES ARTESANAL (sin campos de membresía)
+    // ═══════════════════════════════════════════════════════════
+
+    public async Task<object> BuscarClientesAsync(Guid negocioId, string query)
+    {
+        if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
+            return new List<object>();
+
+        var q = query.ToLower();
+        return await _context.Clientes
+            .Where(c => c.NegocioId == negocioId &&
+                (c.Nombre.ToLower().Contains(q) ||
+                 c.Apellido.ToLower().Contains(q) ||
+                 (c.Telefono != null && c.Telefono.Contains(q))))
+            .OrderBy(c => c.Nombre)
+            .Take(10)
+            .Select(c => new
+            {
+                c.ClienteId,
+                c.Nombre,
+                c.Apellido,
+                NombreCompleto = c.Nombre + " " + c.Apellido,
+                c.Telefono,
+                c.Email
+            })
+            .ToListAsync();
+    }
+
+    public async Task<(bool success, string message)> CrearClienteArtesanalAsync(ClienteArtesanalCreateDto model)
+    {
+        if (string.IsNullOrWhiteSpace(model.Nombre) || string.IsNullOrWhiteSpace(model.Apellido))
+            return (false, "Nombre y Apellido son obligatorios");
+
+        var cliente = new Cliente
+        {
+            ClienteId = Guid.NewGuid(),
+            NegocioId = model.NegocioId,
+            Nombre = model.Nombre,
+            Apellido = model.Apellido,
+            Email = model.Email,
+            Telefono = model.Telefono,
+            Direccion = model.Direccion,
+            Dias = 0,
+            Precio = 0,
+            EsDiario = false,
+            FechaDeCreacion = TimeHelper.Now,
+            FechaDeActualizacion = TimeHelper.Now,
+            FechaQueTermina = TimeHelper.Now
+        };
+
+        _context.Clientes.Add(cliente);
+        await _context.SaveChangesAsync();
+
+        var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
+        await _logService.CreateLogAsync(model.NegocioId, "cliente_creado",
+            $"Nuevo cliente registrado (artesanal): {nombreCompleto}",
+            0, cliente.ClienteId, nombreCompleto);
+
+        return (true, "Cliente creado exitosamente");
+    }
+
+    public async Task<(bool success, string message)> EditarClienteArtesanalAsync(ClienteArtesanalCreateDto model)
+    {
+        if (string.IsNullOrWhiteSpace(model.Nombre))
+            return (false, "El nombre es obligatorio");
+
+        var cliente = await _context.Clientes
+            .FirstOrDefaultAsync(c => c.ClienteId == model.ClienteId && c.NegocioId == model.NegocioId);
+
+        if (cliente == null)
+            return (false, "Cliente no encontrado");
+
+        cliente.Nombre = model.Nombre;
+        cliente.Apellido = model.Apellido;
+        cliente.Email = model.Email;
+        cliente.Telefono = model.Telefono;
+        cliente.Direccion = model.Direccion;
+        cliente.FechaDeActualizacion = TimeHelper.Now;
+
+        await _context.SaveChangesAsync();
+
+        return (true, "Cliente actualizado exitosamente");
+    }
+
+    public async Task<object> GetClientesArtesanalAsync(Guid negocioId)
+    {
+        return await _context.Clientes
+            .Where(c => c.NegocioId == negocioId)
+            .OrderBy(c => c.Nombre)
+            .Select(c => new
+            {
+                c.ClienteId,
+                c.Nombre,
+                c.Apellido,
+                NombreCompleto = c.Nombre + " " + c.Apellido,
+                c.Email,
+                c.Telefono,
+                c.Direccion,
+                c.FechaDeCreacion,
+                TotalCitas = _context.Citas.Count(ci => ci.ClienteId == c.ClienteId)
+            })
+            .ToListAsync();
     }
 
     // ═══════════════════════════════════════════════════════════

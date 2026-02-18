@@ -82,9 +82,9 @@ public class DailyReportService : BackgroundService
         {
             var hoy = TimeHelper.Now.Date;
 
-            // Obtener todos los negocios activos
+            // Obtener negocios activos de tipo membresias (artesanal usa otro reporte)
             var negociosActivos = await context.Negocios
-                .Where(n => n.IsActive)
+                .Where(n => n.IsActive && n.TipoNegocio != "artesanal")
                 .ToListAsync(stoppingToken);
 
             _logger.LogInformation(

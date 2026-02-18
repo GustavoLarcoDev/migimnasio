@@ -16,20 +16,25 @@ public class NegocioEditDto
     public Guid NegocioId { get; set; }
 
     [Required]
+    [MaxLength(200)]
     public string NegocioNombre { get; set; }
 
     [Required]
+    [MaxLength(200)]
     public string DuenoNegocio { get; set; }
 
     [Required]
     [Phone]
+    [MaxLength(20)]
     public string Telefono { get; set; }
 
     [Required]
     [EmailAddress]
+    [MaxLength(200)]
     public string Email { get; set; }
 
     /// <summary>Si se envía, se re-hashea con BCrypt. Si vacío, se mantiene la actual.</summary>
+    [MaxLength(200)]
     public string Password { get; set; }
 
     public bool IsActive { get; set; }

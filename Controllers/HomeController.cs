@@ -39,31 +39,31 @@ public class HomeController : Controller
     {
         try
         {
-        if (string.IsNullOrWhiteSpace(Name) || string.IsNullOrWhiteSpace(GymName) || string.IsNullOrWhiteSpace(Email))
-            return BadRequest();
-        if (!new EmailAddressAttribute().IsValid(Email.Trim()))
-            return BadRequest();
+            if (string.IsNullOrWhiteSpace(Name) || string.IsNullOrWhiteSpace(GymName) || string.IsNullOrWhiteSpace(Email))
+                return BadRequest();
+            if (!new EmailAddressAttribute().IsValid(Email.Trim()))
+                return BadRequest();
 
-        var lead = new LeadVendedor
-        {
-            Id = Guid.NewGuid(),
-            Nombre = Name.Trim(),
-            NombreNegocio = GymName.Trim(),
-            Email = Email.Trim(),
-            Telefono = Phone?.Trim(),
-            Mensaje = Message?.Trim(),
-            FechaCreacion = TimeHelper.Now
-        };
+            var lead = new LeadVendedor
+            {
+                Id = Guid.NewGuid(),
+                Nombre = Name.Trim(),
+                NombreNegocio = GymName.Trim(),
+                Email = Email.Trim(),
+                Telefono = Phone?.Trim(),
+                Mensaje = Message?.Trim(),
+                FechaCreacion = TimeHelper.Now
+            };
 
-        _context.LeadsVendedor.Add(lead);
-        await _context.SaveChangesAsync();
+            _context.LeadsVendedor.Add(lead);
+            await _context.SaveChangesAsync();
 
-        return Ok();
+            return Ok();
         }
         catch (Exception) { return StatusCode(500); }
     }
 
-/// <summary>
+    /// <summary>
     /// Muestra la página de error genérica con el ID de seguimiento
     /// </summary>
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

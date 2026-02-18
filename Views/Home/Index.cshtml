@@ -1,113 +1,122 @@
-﻿@{
-    ViewData["Title"] = "Mi Negocio - Software de Gestión para tu Negocio";
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Mi Negocio";
 }
 
-@* 
-    Requisitos recomendados en tu _Layout.cshtml:
-    - Bootstrap 5 (CSS/JS)
-    - Bootstrap Icons (si usas los <i class="bi ...">)
-    - AOS (opcional) para animaciones data-aos
-*@
-
-<!-- Hero Section -->
-<div class="position-relative overflow-hidden hero-gradient" style="min-height: 90vh;">
-    <!-- Grid Overlay (sin SVG para evitar problemas de comillas) -->
+<!-- ============================================ -->
+<!-- HERO SECTION                                 -->
+<!-- ============================================ -->
+<div class="position-relative overflow-hidden hero-gradient" style="min-height: 92vh;">
     <div class="position-absolute w-100 h-100 hero-grid-overlay"></div>
 
-    <div class="container position-relative" style="padding-top: 8rem; padding-bottom: 8rem;">
+    <!-- Floating decorative orbs -->
+    <div class="position-absolute hero-orb hero-orb-1"></div>
+    <div class="position-absolute hero-orb hero-orb-2"></div>
+
+    <div class="container position-relative" style="padding-top: 7rem; padding-bottom: 7rem;">
         <div class="row align-items-center">
-            <div class="col-lg-6 mb-5 mb-lg-0" data-aos="fade-right">
-                <div class="badge text-white px-4 py-2 rounded-pill mb-4 backdrop-blur" style="background: rgba(255,255,255,0.25);">
-                    <i class="bi bi-lightning-charge me-2"></i>
-                    Software líder para negocios
+            <div class="col-lg-7 mb-5 mb-lg-0" data-aos="fade-right">
+                <div class="d-inline-flex align-items-center gap-2 px-3 py-2 rounded-pill mb-4 backdrop-blur" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.15);">
+                    <span class="badge bg-warning text-dark rounded-pill px-2 py-1 fw-bold" style="font-size: 0.7rem;">NUEVO</span>
+                    <span class="text-white small fw-medium">Ahora con agenda de citas y reservaciones</span>
                 </div>
 
-                <h1 class="display-2 fw-bolder text-white mb-4 lh-sm">
-                    Tu negocio organizado,
-                    <span class="d-block text-warning">tus clientes contentos</span>
+                <h1 class="display-2 fw-bolder text-white mb-4 lh-1">
+                    Tu negocio.<br>
+                    <span class="hero-text-gradient">Organizado.</span><br>
+                    Rentable.
                 </h1>
 
-                <p class="fs-4 text-white mb-5 opacity-90 pe-lg-5">
-                    Deja el Excel y el papel. Controla clientes, pagos, renovaciones y ventas desde cualquier dispositivo con un sistema que trabaja por ti 24/7.
+                <p class="fs-4 text-white mb-5 pe-lg-5" style="opacity: 0.88;">
+                    Gestiona clientes, pagos y operaciones desde un solo lugar. Ya sea que manejes
+                    <strong>membresias</strong> o <strong>citas y reservaciones</strong>, Mi Negocio se adapta a ti.
                 </p>
 
                 <div class="d-flex flex-column flex-sm-row gap-3 mb-5">
-                    <a href="#planes" class="btn btn-warning btn-lg px-5 py-3 fw-bold shadow-lg">
+                    <a href="#contacto" class="btn btn-warning btn-lg px-5 py-3 fw-bold shadow-lg btn-hover-lift">
                         <i class="bi bi-rocket-takeoff me-2"></i>
-                        Comenzar Ahora
+                        Probar gratis 7 dias
                     </a>
-                    <a href="#demo" class="btn btn-outline-light btn-lg px-5 py-3 fw-semibold">
-                        <i class="bi bi-play-circle me-2"></i>
-                        Ver Cómo Funciona
+                    <a href="https://wa.me/593997143142?text=Hola%20quiero%20información%20de%20Mi%20Negocio" target="_blank" rel="noopener" class="btn btn-outline-light btn-lg px-5 py-3 fw-semibold btn-hover-lift">
+                        <i class="bi bi-whatsapp me-2"></i>
+                        Escribenos
                     </a>
                 </div>
 
-                <!-- Stats Cards -->
-                <div class="row g-3">
-                    <div class="col-4">
-                        <div class="card border-0 backdrop-blur text-white text-center py-3" style="background: rgba(255,255,255,0.1);">
-                            <i class="bi bi-wallet2 fs-2 mb-2 text-warning d-block"></i>
-                            <div class="fs-2 fw-bold">$30</div>
-                            <div class="small opacity-75">por mes</div>
-                        </div>
+                <div class="d-flex flex-wrap gap-4 align-items-center">
+                    <div class="d-flex align-items-center gap-2 text-white">
+                        <i class="bi bi-check-circle-fill text-success"></i>
+                        <span class="small fw-medium" style="opacity:.85;">Sin tarjeta requerida</span>
                     </div>
-                    <div class="col-4">
-                        <div class="card border-0 backdrop-blur text-white text-center py-3" style="background: rgba(255,255,255,0.1);">
-                            <i class="bi bi-stopwatch fs-2 mb-2 text-info d-block"></i>
-                            <div class="fs-2 fw-bold">5min</div>
-                            <div class="small opacity-75">configuración</div>
-                        </div>
+                    <div class="d-flex align-items-center gap-2 text-white">
+                        <i class="bi bi-check-circle-fill text-success"></i>
+                        <span class="small fw-medium" style="opacity:.85;">Setup en 5 minutos</span>
                     </div>
-                    <div class="col-4">
-                        <div class="card border-0 backdrop-blur text-white text-center py-3" style="background: rgba(255,255,255,0.1);">
-                            <i class="bi bi-people-fill fs-2 mb-2 text-success d-block"></i>
-                            <div class="fs-2 fw-bold">Sin Límite</div>
-                            <div class="small opacity-75">clientes</div>
-                        </div>
+                    <div class="d-flex align-items-center gap-2 text-white">
+                        <i class="bi bi-check-circle-fill text-success"></i>
+                        <span class="small fw-medium" style="opacity:.85;">Cancela cuando quieras</span>
                     </div>
                 </div>
             </div>
 
-            <div class="col-lg-6" data-aos="fade-left">
+            <div class="col-lg-5" data-aos="fade-left" data-aos-delay="200">
                 <div class="position-relative">
-                    <!-- Floating Card Mockup -->
-                    <div class="card border-0 shadow-lg floating-mockup" style="background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);">
+                    <div class="card border-0 shadow-lg floating-mockup" style="background: rgba(255,255,255,0.97); backdrop-filter: blur(12px); border-radius: 1rem;">
                         <div class="card-body p-4">
-                            <div class="d-flex align-items-center mb-4">
-                                <div class="bg-primary rounded-circle p-2 me-3">
-                                    <i class="bi bi-graph-up text-white fs-4"></i>
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;background:linear-gradient(135deg,#3E97FF,#7239EA);">
+                                        <i class="bi bi-shop text-white"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold small">Mi Negocio</div>
+                                        <div style="font-size:0.7rem;" class="text-muted">Panel de control</div>
+                                    </div>
                                 </div>
-                                <div>
-                                    <div class="small text-muted">Ingresos del mes</div>
-                                    <div class="fs-3 fw-bold text-primary">$12,450</div>
+                                <span class="badge bg-success bg-opacity-10 text-success small">En linea</span>
+                            </div>
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <div class="rounded-3 p-2 text-center" style="background:linear-gradient(135deg,#3E97FF,#7239EA);">
+                                        <div class="text-white fw-bold fs-5">$4,280</div>
+                                        <div class="text-white small" style="opacity:.8;">Ingresos</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="rounded-3 p-2 text-center" style="background:linear-gradient(135deg,#50CD89,#0BB783);">
+                                        <div class="text-white fw-bold fs-5">156</div>
+                                        <div class="text-white small" style="opacity:.8;">Clientes</div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="progress mb-3" style="height: 8px;">
-                                <div class="progress-bar bg-success" role="progressbar" style="width: 75%"></div>
-                            </div>
-                            <div class="row g-3">
-                                <div class="col-6">
-                                    <div class="small text-muted">Nuevos clientes</div>
-                                    <div class="fs-4 fw-bold">+24</div>
+                            <div class="bg-light rounded-3 p-2">
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <div class="bg-success rounded-circle" style="width:8px;height:8px;"></div>
+                                    <span style="font-size:0.75rem;" class="text-muted">Maria G. renovo membresia</span>
+                                    <span style="font-size:0.65rem;" class="text-muted ms-auto">2m</span>
                                 </div>
-                                <div class="col-6">
-                                    <div class="small text-muted">Tasa retención</div>
-                                    <div class="fs-4 fw-bold text-success">94%</div>
+                                <div class="d-flex align-items-center gap-2 mb-2">
+                                    <div class="bg-primary rounded-circle" style="width:8px;height:8px;"></div>
+                                    <span style="font-size:0.75rem;" class="text-muted">Cita confirmada: 10:30am</span>
+                                    <span style="font-size:0.65rem;" class="text-muted ms-auto">5m</span>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="bg-warning rounded-circle" style="width:8px;height:8px;"></div>
+                                    <span style="font-size:0.75rem;" class="text-muted">Pago recibido: $45</span>
+                                    <span style="font-size:0.65rem;" class="text-muted ms-auto">8m</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Floating Elements -->
-                    <div class="position-absolute top-0 start-0 translate-middle">
+                    <div class="position-absolute top-0 start-0" style="transform: translate(-30%, -30%);">
                         <div class="bg-success text-white rounded-circle p-3 shadow-lg pulse-animation">
-                            <i class="bi bi-check-lg fs-4"></i>
+                            <i class="bi bi-check-lg fs-5"></i>
                         </div>
                     </div>
-
-                    <div class="position-absolute bottom-0 end-0 translate-middle-y">
-                        <div class="bg-warning text-white rounded-circle p-3 shadow-lg pulse-animation" style="animation-delay: 1s;">
-                            <i class="bi bi-bell-fill fs-4"></i>
+                    <div class="position-absolute bottom-0 end-0" style="transform: translate(20%, 20%);">
+                        <div class="bg-warning text-dark rounded-circle p-3 shadow-lg pulse-animation" style="animation-delay: 1s;">
+                            <i class="bi bi-bell-fill fs-5"></i>
                         </div>
                     </div>
                 </div>
@@ -115,394 +124,585 @@
         </div>
     </div>
 
-    <!-- Wave Bottom -->
     <div class="position-absolute bottom-0 start-0 w-100">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 120" style="display: block;">
-            <path fill="#ffffff" d="M0,64L48,69.3C96,75,192,85,288,80C384,75,480,53,576,48C672,43,768,53,864,58.7C960,64,1056,64,1152,58.7C1248,53,1344,43,1392,37.3L1440,32L1440,120L1392,120C1344,120,1248,120,1152,120C1056,120,960,120,864,120C768,120,672,120,576,120C480,120,384,120,288,120C192,120,96,120,48,120L0,120Z"></path>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 100" style="display:block;">
+            <path fill="#ffffff" d="M0,64L60,58.7C120,53,240,43,360,48C480,53,600,75,720,74.7C840,75,960,53,1080,42.7C1200,32,1320,32,1380,32L1440,32L1440,100L0,100Z"></path>
         </svg>
     </div>
 </div>
 
-<!-- Problemas Section -->
-<div class="py-7 bg-light">
+<!-- ============================================ -->
+<!-- BUSINESS TYPES COMPARISON                    -->
+<!-- ============================================ -->
+<div class="py-7" id="modelos">
     <div class="container">
         <div class="text-center mb-6" data-aos="fade-up">
-            <span class="badge bg-light-danger text-danger fs-6 fw-semibold px-4 py-2 rounded-pill mb-3">
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                El caos diario
+            <span class="badge bg-light-primary text-primary fs-6 fw-semibold px-4 py-2 rounded-pill mb-3">
+                <i class="bi bi-diagram-3 me-2"></i>
+                Dos modelos, una plataforma
             </span>
-            <h2 class="display-4 fw-bolder mb-4">¿Cansado de esto?</h2>
-            <p class="fs-5 text-muted mx-auto" style="max-width: 650px;">
-                Reconocemos los desafíos que enfrentas cada día al gestionar tu negocio
+            <h2 class="display-5 fw-bolder mb-3">Elige como funciona tu negocio</h2>
+            <p class="fs-5 text-muted mx-auto" style="max-width: 660px;">
+                Mi Negocio se adapta a ti. Selecciona el modelo que mejor describe tu operacion.
+            </p>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            <div class="col-lg-5" data-aos="fade-right" data-aos-delay="100">
+                <div class="card border-0 shadow-hover h-100 position-relative overflow-hidden modelo-card" style="border-left: 4px solid #3E97FF !important;">
+                    <div class="card-body p-4 p-xl-5">
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:56px;height:56px;background:linear-gradient(135deg,#3E97FF,#7239EA);">
+                                <i class="bi bi-people-fill text-white fs-3"></i>
+                            </div>
+                            <div>
+                                <h3 class="fw-bolder mb-0">Membresias</h3>
+                                <span class="small text-muted">Clientes recurrentes con planes</span>
+                            </div>
+                        </div>
+                        <p class="text-muted mb-4">Ideal para negocios donde los clientes pagan una cuota periodica y necesitas controlar vigencias, renovaciones y asistencias.</p>
+                        <div class="vstack gap-2 mb-4">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-check2-circle text-primary"></i>
+                                <span class="small">Gimnasios y centros fitness</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-check2-circle text-primary"></i>
+                                <span class="small">Yoga, CrossFit, artes marciales</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-check2-circle text-primary"></i>
+                                <span class="small">Piscinas y centros deportivos</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-check2-circle text-primary"></i>
+                                <span class="small">Academias y escuelas</span>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge bg-light-primary text-primary px-3 py-2 rounded-pill">Control de pagos</span>
+                            <span class="badge bg-light-primary text-primary px-3 py-2 rounded-pill">Vencimientos</span>
+                            <span class="badge bg-light-primary text-primary px-3 py-2 rounded-pill">Recordatorios</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5" data-aos="fade-left" data-aos-delay="200">
+                <div class="card border-0 shadow-hover h-100 position-relative overflow-hidden modelo-card" style="border-left: 4px solid #7239EA !important;">
+                    <div class="card-body p-4 p-xl-5">
+                        <div class="d-flex align-items-center gap-3 mb-4">
+                            <div class="rounded-3 d-flex align-items-center justify-content-center" style="width:56px;height:56px;background:linear-gradient(135deg,#7239EA,#F1416C);">
+                                <i class="bi bi-calendar-check text-white fs-3"></i>
+                            </div>
+                            <div>
+                                <h3 class="fw-bolder mb-0">Citas / Reservaciones</h3>
+                                <span class="small text-muted">Agenda y empleados</span>
+                            </div>
+                        </div>
+                        <p class="text-muted mb-4">Perfecto para negocios que funcionan con citas agendadas, multiples empleados y servicios con distintos precios y duraciones.</p>
+                        <div class="vstack gap-2 mb-4">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-check2-circle text-purple" style="color:#7239EA;"></i>
+                                <span class="small">Barberias y peluquerias</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-check2-circle text-purple" style="color:#7239EA;"></i>
+                                <span class="small">Salones de belleza y spas</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-check2-circle text-purple" style="color:#7239EA;"></i>
+                                <span class="small">Estudios de tatuaje</span>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="bi bi-check2-circle text-purple" style="color:#7239EA;"></i>
+                                <span class="small">Consultorios y clinicas dentales</span>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge bg-light-info text-info px-3 py-2 rounded-pill">Agenda visual</span>
+                            <span class="badge bg-light-info text-info px-3 py-2 rounded-pill">Empleados</span>
+                            <span class="badge bg-light-info text-info px-3 py-2 rounded-pill">Servicios</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- DASHBOARD SHOWCASE                           -->
+<!-- ============================================ -->
+<div class="py-7 bg-light" id="demo">
+    <div class="container">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <span class="badge bg-light-success text-success fs-6 fw-semibold px-4 py-2 rounded-pill mb-3">
+                <i class="bi bi-display me-2"></i>
+                Vista previa
+            </span>
+            <h2 class="display-5 fw-bolder mb-3">Mira tu dashboard en accion</h2>
+            <p class="fs-5 text-muted mx-auto" style="max-width: 660px;">
+                Cambia entre los dos modelos para ver como se adapta el panel a tu tipo de negocio.
+            </p>
+        </div>
+
+        <div class="row justify-content-center" data-aos="zoom-in">
+            <div class="col-lg-10">
+                <div class="position-relative" id="dashboardShowcase">
+                    <div class="card border-0 shadow-lg overflow-hidden" style="border-radius: 1rem;">
+                        <!-- Browser chrome -->
+                        <div class="card-header py-3" style="background: #1B2028;">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="bg-danger rounded-circle" style="width:12px;height:12px;"></div>
+                                <div class="bg-warning rounded-circle" style="width:12px;height:12px;"></div>
+                                <div class="bg-success rounded-circle" style="width:12px;height:12px;"></div>
+                                <div class="ms-3 flex-grow-1">
+                                    <div class="d-flex align-items-center rounded-pill px-3 py-1" style="background:rgba(255,255,255,0.08);max-width:320px;">
+                                        <i class="bi bi-lock-fill text-success me-2" style="font-size:0.7rem;"></i>
+                                        <span class="text-white-50 small">minegocio.com/dashboard</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab Switcher -->
+                        <div class="d-flex border-bottom bg-white">
+                            <button class="btn btn-link text-decoration-none flex-fill py-3 px-4 fw-semibold showcase-tab active" data-target="panelMembresias">
+                                <i class="bi bi-people-fill me-2"></i>Membresias
+                            </button>
+                            <button class="btn btn-link text-decoration-none flex-fill py-3 px-4 fw-semibold showcase-tab" data-target="panelArtesanal">
+                                <i class="bi bi-scissors me-2"></i>Citas / Artesanal
+                            </button>
+                        </div>
+
+                        <!-- Panel: Membresias -->
+                        <div class="card-body p-4 bg-light showcase-panel active" id="panelMembresias">
+                            <!-- Gradient stat cards row -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-6 col-md-3">
+                                    <div class="rounded-3 p-3 text-white" style="background:linear-gradient(135deg,#3E97FF,#7239EA);">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <i class="bi bi-people-fill" style="font-size:0.8rem;opacity:.8;"></i>
+                                            <span class="small" style="opacity:.8;">Miembros</span>
+                                        </div>
+                                        <div class="fs-4 fw-bold"><span class="counter" data-target="156">0</span></div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="rounded-3 p-3 text-white" style="background:linear-gradient(135deg,#50CD89,#0BB783);">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <i class="bi bi-cash-stack" style="font-size:0.8rem;opacity:.8;"></i>
+                                            <span class="small" style="opacity:.8;">Ingresos/mes</span>
+                                        </div>
+                                        <div class="fs-4 fw-bold">$<span class="counter" data-target="4280">0</span></div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="rounded-3 p-3 text-white" style="background:linear-gradient(135deg,#F1416C,#E74C3C);">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <i class="bi bi-exclamation-triangle" style="font-size:0.8rem;opacity:.8;"></i>
+                                            <span class="small" style="opacity:.8;">Por vencer</span>
+                                        </div>
+                                        <div class="fs-4 fw-bold"><span class="counter" data-target="12">0</span></div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="rounded-3 p-3 text-white" style="background:linear-gradient(135deg,#7239EA,#3E97FF);">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <i class="bi bi-person-check" style="font-size:0.8rem;opacity:.8;"></i>
+                                            <span class="small" style="opacity:.8;">Activos hoy</span>
+                                        </div>
+                                        <div class="fs-4 fw-bold"><span class="counter" data-target="38">0</span></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3">
+                                <!-- Bar Chart -->
+                                <div class="col-md-7">
+                                    <div class="bg-white rounded-3 p-3 border h-100">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <span class="fw-semibold small">Ingresos vs Gastos</span>
+                                            <span class="badge bg-light text-muted small">Esta semana</span>
+                                        </div>
+                                        <div class="d-flex align-items-end gap-2 chart-bars" style="height:100px;">
+                                            <div class="flex-fill d-flex flex-column align-items-center">
+                                                <div class="w-100 rounded-top bar-income" data-height="70" style="background:linear-gradient(180deg,#3E97FF,#7239EA);height:0;transition:height 1.2s cubic-bezier(0.34,1.56,0.64,1);"></div>
+                                                <div class="w-100 rounded-top bar-expense mt-1" data-height="20" style="background:linear-gradient(180deg,#F1416C,#E74C3C);height:0;transition:height 1.2s cubic-bezier(0.34,1.56,0.64,1) 0.1s;"></div>
+                                                <div style="font-size:0.65rem;" class="text-muted mt-1">L</div>
+                                            </div>
+                                            <div class="flex-fill d-flex flex-column align-items-center">
+                                                <div class="w-100 rounded-top bar-income" data-height="55" style="background:linear-gradient(180deg,#3E97FF,#7239EA);height:0;transition:height 1.2s cubic-bezier(0.34,1.56,0.64,1) 0.1s;"></div>
+                                                <div class="w-100 rounded-top bar-expense mt-1" data-height="15" style="background:linear-gradient(180deg,#F1416C,#E74C3C);height:0;transition:height 1.2s cubic-bezier(0.34,1.56,0.64,1) 0.2s;"></div>
+                                                <div style="font-size:0.65rem;" class="text-muted mt-1">M</div>
+                                            </div>
+                                            <div class="flex-fill d-flex flex-column align-items-center">
+                                                <div class="w-100 rounded-top bar-income" data-height="85" style="background:linear-gradient(180deg,#3E97FF,#7239EA);height:0;transition:height 1.2s cubic-bezier(0.34,1.56,0.64,1) 0.2s;"></div>
+                                                <div class="w-100 rounded-top bar-expense mt-1" data-height="25" style="background:linear-gradient(180deg,#F1416C,#E74C3C);height:0;transition:height 1.2s cubic-bezier(0.34,1.56,0.64,1) 0.3s;"></div>
+                                                <div style="font-size:0.65rem;" class="text-muted mt-1">Mi</div>
+                                            </div>
+                                            <div class="flex-fill d-flex flex-column align-items-center">
+                                                <div class="w-100 rounded-top bar-income" data-height="95" style="background:linear-gradient(180deg,#3E97FF,#7239EA);height:0;transition:height 1.2s cubic-bezier(0.34,1.56,0.64,1) 0.3s;"></div>
+                                                <div class="w-100 rounded-top bar-expense mt-1" data-height="18" style="background:linear-gradient(180deg,#F1416C,#E74C3C);height:0;transition:height 1.2s cubic-bezier(0.34,1.56,0.64,1) 0.4s;"></div>
+                                                <div style="font-size:0.65rem;" class="text-muted mt-1">J</div>
+                                            </div>
+                                            <div class="flex-fill d-flex flex-column align-items-center">
+                                                <div class="w-100 rounded-top bar-income" data-height="65" style="background:linear-gradient(180deg,#3E97FF,#7239EA);height:0;transition:height 1.2s cubic-bezier(0.34,1.56,0.64,1) 0.4s;"></div>
+                                                <div class="w-100 rounded-top bar-expense mt-1" data-height="22" style="background:linear-gradient(180deg,#F1416C,#E74C3C);height:0;transition:height 1.2s cubic-bezier(0.34,1.56,0.64,1) 0.5s;"></div>
+                                                <div style="font-size:0.65rem;" class="text-muted mt-1">V</div>
+                                            </div>
+                                            <div class="flex-fill d-flex flex-column align-items-center">
+                                                <div class="w-100 rounded-top bar-income" data-height="50" style="background:linear-gradient(180deg,#3E97FF,#7239EA);height:0;transition:height 1.2s cubic-bezier(0.34,1.56,0.64,1) 0.5s;"></div>
+                                                <div class="w-100 rounded-top bar-expense mt-1" data-height="12" style="background:linear-gradient(180deg,#F1416C,#E74C3C);height:0;transition:height 1.2s cubic-bezier(0.34,1.56,0.64,1) 0.6s;"></div>
+                                                <div style="font-size:0.65rem;" class="text-muted mt-1">S</div>
+                                            </div>
+                                            <div class="flex-fill d-flex flex-column align-items-center">
+                                                <div class="w-100 rounded-top bar-income" data-height="35" style="background:linear-gradient(180deg,#3E97FF,#7239EA);height:0;transition:height 1.2s cubic-bezier(0.34,1.56,0.64,1) 0.6s;"></div>
+                                                <div class="w-100 rounded-top bar-expense mt-1" data-height="10" style="background:linear-gradient(180deg,#F1416C,#E74C3C);height:0;transition:height 1.2s cubic-bezier(0.34,1.56,0.64,1) 0.7s;"></div>
+                                                <div style="font-size:0.65rem;" class="text-muted mt-1">D</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Activity Feed -->
+                                <div class="col-md-5">
+                                    <div class="bg-white rounded-3 p-3 border h-100 overflow-hidden">
+                                        <div class="fw-semibold small mb-2">Actividad reciente</div>
+                                        <div class="activity-feed-scroll" style="height: 110px;">
+                                            <div class="activity-feed-inner">
+                                                <div class="d-flex align-items-center gap-2 mb-2">
+                                                    <div class="bg-success rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:24px;height:24px;"><i class="bi bi-arrow-repeat text-white" style="font-size:0.65rem;"></i></div>
+                                                    <div class="flex-grow-1"><span class="small">Maria G. <strong>renovo</strong> membresia</span></div>
+                                                    <span class="text-muted flex-shrink-0" style="font-size:0.65rem;">2m</span>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2 mb-2">
+                                                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:24px;height:24px;"><i class="bi bi-cash text-white" style="font-size:0.65rem;"></i></div>
+                                                    <div class="flex-grow-1"><span class="small">Pago recibido <strong>$45</strong></span></div>
+                                                    <span class="text-muted flex-shrink-0" style="font-size:0.65rem;">5m</span>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2 mb-2">
+                                                    <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:24px;height:24px;"><i class="bi bi-clock text-white" style="font-size:0.65rem;"></i></div>
+                                                    <div class="flex-grow-1"><span class="small">Pedro L. <strong>vence en 3 dias</strong></span></div>
+                                                    <span class="text-muted flex-shrink-0" style="font-size:0.65rem;">8m</span>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2 mb-2">
+                                                    <div class="bg-info rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:24px;height:24px;"><i class="bi bi-person-plus text-white" style="font-size:0.65rem;"></i></div>
+                                                    <div class="flex-grow-1"><span class="small">Nueva cliente: <strong>Ana M.</strong></span></div>
+                                                    <span class="text-muted flex-shrink-0" style="font-size:0.65rem;">12m</span>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2 mb-2">
+                                                    <div class="bg-danger rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:24px;height:24px;"><i class="bi bi-bell text-white" style="font-size:0.65rem;"></i></div>
+                                                    <div class="flex-grow-1"><span class="small">Recordatorio enviado a <strong>8 clientes</strong></span></div>
+                                                    <span class="text-muted flex-shrink-0" style="font-size:0.65rem;">15m</span>
+                                                </div>
+                                                <!-- Duplicate for infinite scroll -->
+                                                <div class="d-flex align-items-center gap-2 mb-2">
+                                                    <div class="bg-success rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:24px;height:24px;"><i class="bi bi-arrow-repeat text-white" style="font-size:0.65rem;"></i></div>
+                                                    <div class="flex-grow-1"><span class="small">Maria G. <strong>renovo</strong> membresia</span></div>
+                                                    <span class="text-muted flex-shrink-0" style="font-size:0.65rem;">2m</span>
+                                                </div>
+                                                <div class="d-flex align-items-center gap-2 mb-2">
+                                                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:24px;height:24px;"><i class="bi bi-cash text-white" style="font-size:0.65rem;"></i></div>
+                                                    <div class="flex-grow-1"><span class="small">Pago recibido <strong>$45</strong></span></div>
+                                                    <span class="text-muted flex-shrink-0" style="font-size:0.65rem;">5m</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel: Artesanal / Citas -->
+                        <div class="card-body p-4 bg-light showcase-panel" id="panelArtesanal" style="display:none;">
+                            <!-- Stat cards -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-6 col-md-3">
+                                    <div class="rounded-3 p-3 text-white" style="background:linear-gradient(135deg,#7239EA,#3E97FF);">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <i class="bi bi-calendar-event" style="font-size:0.8rem;opacity:.8;"></i>
+                                            <span class="small" style="opacity:.8;">Citas hoy</span>
+                                        </div>
+                                        <div class="fs-4 fw-bold"><span class="counter" data-target="8">0</span></div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="rounded-3 p-3 text-white" style="background:linear-gradient(135deg,#50CD89,#0BB783);">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <i class="bi bi-cash-stack" style="font-size:0.8rem;opacity:.8;"></i>
+                                            <span class="small" style="opacity:.8;">Ing. semana</span>
+                                        </div>
+                                        <div class="fs-4 fw-bold">$<span class="counter" data-target="890">0</span></div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="rounded-3 p-3 text-white" style="background:linear-gradient(135deg,#F1416C,#E74C3C);">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <i class="bi bi-person-badge" style="font-size:0.8rem;opacity:.8;"></i>
+                                            <span class="small" style="opacity:.8;">Empleados</span>
+                                        </div>
+                                        <div class="fs-4 fw-bold"><span class="counter" data-target="4">0</span></div>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <div class="rounded-3 p-3 text-white" style="background:linear-gradient(135deg,#3E97FF,#7239EA);">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <i class="bi bi-tags" style="font-size:0.8rem;opacity:.8;"></i>
+                                            <span class="small" style="opacity:.8;">Servicios</span>
+                                        </div>
+                                        <div class="fs-4 fw-bold"><span class="counter" data-target="12">0</span></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3">
+                                <!-- Schedule / Agenda -->
+                                <div class="col-md-7">
+                                    <div class="bg-white rounded-3 p-3 border h-100">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <span class="fw-semibold small">Agenda de hoy</span>
+                                            <span class="badge bg-light text-muted small">Lun 17 Feb</span>
+                                        </div>
+                                        <div class="vstack gap-2">
+                                            <div class="d-flex align-items-center gap-2 schedule-item" style="opacity:0;transform:translateX(-20px);">
+                                                <div class="text-muted fw-semibold" style="font-size:0.75rem;min-width:42px;">09:00</div>
+                                                <div class="vr" style="border-left:3px solid #50CD89;height:28px;"></div>
+                                                <div class="flex-grow-1">
+                                                    <div class="small fw-semibold">Corte + Barba</div>
+                                                    <div class="text-muted" style="font-size:0.7rem;">Juan Perez - Carlos</div>
+                                                </div>
+                                                <span class="badge bg-success" style="font-size:0.65rem;">Confirmada</span>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2 schedule-item" style="opacity:0;transform:translateX(-20px);">
+                                                <div class="text-muted fw-semibold" style="font-size:0.75rem;min-width:42px;">10:30</div>
+                                                <div class="vr" style="border-left:3px solid #3E97FF;height:28px;"></div>
+                                                <div class="flex-grow-1">
+                                                    <div class="small fw-semibold">Manicure Gel</div>
+                                                    <div class="text-muted" style="font-size:0.7rem;">Laura Diaz - Sofia</div>
+                                                </div>
+                                                <span class="badge bg-primary badge-pulse" style="font-size:0.65rem;">En curso</span>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2 schedule-item" style="opacity:0;transform:translateX(-20px);">
+                                                <div class="text-muted fw-semibold" style="font-size:0.75rem;min-width:42px;">11:00</div>
+                                                <div class="vr" style="border-left:3px solid #FFC700;height:28px;"></div>
+                                                <div class="flex-grow-1">
+                                                    <div class="small fw-semibold">Tinte + Secado</div>
+                                                    <div class="text-muted" style="font-size:0.7rem;">Ana Torres - Maria</div>
+                                                </div>
+                                                <span class="badge bg-warning text-dark" style="font-size:0.65rem;">Pendiente</span>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2 schedule-item" style="opacity:0;transform:translateX(-20px);">
+                                                <div class="text-muted fw-semibold" style="font-size:0.75rem;min-width:42px;">14:00</div>
+                                                <div class="vr" style="border-left:3px solid #50CD89;height:28px;"></div>
+                                                <div class="flex-grow-1">
+                                                    <div class="small fw-semibold">Corte Dama</div>
+                                                    <div class="text-muted" style="font-size:0.7rem;">Rosa Mendez - Sofia</div>
+                                                </div>
+                                                <span class="badge bg-success" style="font-size:0.65rem;">Confirmada</span>
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2 schedule-item" style="opacity:0;transform:translateX(-20px);">
+                                                <div class="text-muted fw-semibold" style="font-size:0.75rem;min-width:42px;">15:30</div>
+                                                <div class="vr" style="border-left:3px solid #7239EA;height:28px;"></div>
+                                                <div class="flex-grow-1">
+                                                    <div class="small fw-semibold">Alisado Keratina</div>
+                                                    <div class="text-muted" style="font-size:0.7rem;">Carmen Vega - Carlos</div>
+                                                </div>
+                                                <span class="badge bg-success" style="font-size:0.65rem;">Confirmada</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Services + Employees -->
+                                <div class="col-md-5">
+                                    <div class="bg-white rounded-3 p-3 border mb-3">
+                                        <div class="fw-semibold small mb-2">Servicios populares</div>
+                                        <div class="d-flex justify-content-between small mb-2 pb-1 border-bottom"><span>Corte + Barba</span><span class="fw-bold text-success">$15</span></div>
+                                        <div class="d-flex justify-content-between small mb-2 pb-1 border-bottom"><span>Manicure Gel</span><span class="fw-bold text-success">$25</span></div>
+                                        <div class="d-flex justify-content-between small mb-2 pb-1 border-bottom"><span>Tinte + Secado</span><span class="fw-bold text-success">$45</span></div>
+                                        <div class="d-flex justify-content-between small"><span>Alisado Keratina</span><span class="fw-bold text-success">$60</span></div>
+                                    </div>
+                                    <div class="bg-white rounded-3 p-3 border">
+                                        <div class="fw-semibold small mb-2">Equipo activo</div>
+                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                            <div class="rounded-circle" style="width:28px;height:28px;background:linear-gradient(135deg,#3E97FF,#7239EA);"></div>
+                                            <div><div class="small fw-semibold">Carlos</div><div style="font-size:0.65rem;" class="text-muted">Barbero - 3 citas hoy</div></div>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                            <div class="rounded-circle" style="width:28px;height:28px;background:linear-gradient(135deg,#50CD89,#0BB783);"></div>
+                                            <div><div class="small fw-semibold">Sofia</div><div style="font-size:0.65rem;" class="text-muted">Estilista - 4 citas hoy</div></div>
+                                        </div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="rounded-circle" style="width:28px;height:28px;background:linear-gradient(135deg,#F1416C,#E74C3C);"></div>
+                                            <div><div class="small fw-semibold">Maria</div><div style="font-size:0.65rem;" class="text-muted">Colorista - 1 cita hoy</div></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================ -->
+<!-- FEATURES GRID                                -->
+<!-- ============================================ -->
+<div class="py-7">
+    <div class="container">
+        <div class="text-center mb-6" data-aos="fade-up">
+            <span class="badge bg-light-warning text-warning fs-6 fw-semibold px-4 py-2 rounded-pill mb-3">
+                <i class="bi bi-stars me-2"></i>
+                Herramientas poderosas
+            </span>
+            <h2 class="display-5 fw-bolder mb-3">Todo lo que necesitas, incluido</h2>
+            <p class="fs-5 text-muted mx-auto" style="max-width: 660px;">
+                Funciones profesionales para que te concentres en lo que importa: hacer crecer tu negocio.
             </p>
         </div>
 
         <div class="row g-4">
-            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
-                <div class="card border-0 shadow-hover h-100">
-                    <div class="card-body p-5 text-center">
-                        <div class="mb-4">
-                            <div class="bg-light-danger rounded-4 d-inline-flex p-4">
-                                <i class="bi bi-file-earmark-x fs-1 text-danger"></i>
-                            </div>
+            <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="50">
+                <div class="card border-0 h-100 p-4 feature-card">
+                    <div class="mb-3">
+                        <div class="bg-light-primary rounded-3 d-inline-flex p-3">
+                            <i class="bi bi-people-fill fs-2 text-primary"></i>
                         </div>
-                        <h4 class="fw-bold mb-3">Documentos perdidos</h4>
-                        <p class="text-muted mb-0 lh-lg">
-                            Contratos extraviados, registros que desaparecen y horas buscando información que debería estar al alcance.
-                        </p>
                     </div>
+                    <h5 class="fw-bold mb-2">Gestion de clientes</h5>
+                    <p class="text-muted small mb-0">Perfiles completos con historial de pagos, asistencias, membresias y citas. Busca y filtra al instante.</p>
                 </div>
             </div>
 
-            <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
-                <div class="card border-0 shadow-hover h-100">
-                    <div class="card-body p-5 text-center">
-                        <div class="mb-4">
-                            <div class="bg-light-warning rounded-4 d-inline-flex p-4">
-                                <i class="bi bi-hourglass-split fs-1 text-warning"></i>
-                            </div>
+            <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="card border-0 h-100 p-4 feature-card">
+                    <div class="mb-3">
+                        <div class="bg-light-success rounded-3 d-inline-flex p-3">
+                            <i class="bi bi-graph-up-arrow fs-2 text-success"></i>
                         </div>
-                        <h4 class="fw-bold mb-3">Tiempo desperdiciado</h4>
-                        <p class="text-muted mb-0 lh-lg">
-                            Excel desactualizados, cálculos manuales y procesos repetitivos que consumen tu día productivo.
-                        </p>
                     </div>
+                    <h5 class="fw-bold mb-2">Control financiero</h5>
+                    <p class="text-muted small mb-0">Registra ingresos y gastos. Visualiza reportes de ventas, cobros pendientes y flujo de caja en tiempo real.</p>
                 </div>
             </div>
 
-            <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
-                <div class="card border-0 shadow-hover h-100">
-                    <div class="card-body p-5 text-center">
-                        <div class="mb-4">
-                            <div class="bg-light-primary rounded-4 d-inline-flex p-4">
-                                <i class="bi bi-cash-stack fs-1 text-primary"></i>
-                            </div>
-                        </div>
-                        <h4 class="fw-bold mb-3">Dinero perdido</h4>
-                        <p class="text-muted mb-0 lh-lg">
-                            Pagos retrasados, renovaciones olvidadas y un flujo de caja irregular que afecta tu negocio.
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Solución Section -->
-<div class="py-7" id="demo">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-6 mb-5 mb-lg-0" data-aos="fade-right">
-                <span class="badge bg-light-success text-success fs-6 fw-semibold px-4 py-2 rounded-pill mb-3">
-                    <i class="bi bi-check-circle-fill me-2"></i>
-                    La solución definitiva
-                </span>
-                <h2 class="display-4 fw-bolder mb-4">
-                    Automatiza todo y enfócate en crecer
-                </h2>
-                <p class="fs-5 text-muted mb-5 lh-lg">
-                    Mi Negocio elimina el trabajo tedioso y te da control total desde cualquier lugar. Solo registra un cliente y el sistema hace el resto.
-                </p>
-
-                <!-- Feature List -->
-                <div class="vstack gap-4">
-                    <div class="d-flex gap-3">
-                        <div class="flex-shrink-0">
-                            <div class="bg-primary rounded-3 p-3 shadow-sm">
-                                <i class="bi bi-person-plus-fill text-white fs-4"></i>
-                            </div>
-                        </div>
-                        <div>
-                            <h5 class="fw-bold mb-2">Registro instantáneo</h5>
-                            <p class="text-muted mb-0">Añade clientes en segundos con formularios inteligentes que se autocompletar.</p>
+            <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="150">
+                <div class="card border-0 h-100 p-4 feature-card">
+                    <div class="mb-3">
+                        <div class="bg-light-info rounded-3 d-inline-flex p-3">
+                            <i class="bi bi-calendar-check fs-2" style="color:#7239EA;"></i>
                         </div>
                     </div>
-
-                    <div class="d-flex gap-3">
-                        <div class="flex-shrink-0">
-                            <div class="bg-success rounded-3 p-3 shadow-sm">
-                                <i class="bi bi-arrow-repeat text-white fs-4"></i>
-                            </div>
-                        </div>
-                        <div>
-                            <h5 class="fw-bold mb-2">Seguimiento automático</h5>
-                            <p class="text-muted mb-0">El sistema envía recordatorios, gestiona renovaciones y promociones sin intervención.</p>
-                        </div>
-                    </div>
-
-                    <div class="d-flex gap-3">
-                        <div class="flex-shrink-0">
-                            <div class="bg-info rounded-3 p-3 shadow-sm">
-                                <i class="bi bi-globe2 text-white fs-4"></i>
-                            </div>
-                        </div>
-                        <div>
-                            <h5 class="fw-bold mb-2">Accede desde cualquier lugar</h5>
-                            <p class="text-muted mb-0">Funciona en cualquier dispositivo con navegador: PC, tablet o celular. Sin instalar nada.</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-5 d-flex flex-column flex-sm-row gap-3">
-                    <a href="#contacto" class="btn btn-primary btn-lg px-4">
-                        <i class="bi bi-chat-dots me-2"></i>
-                        Hablar con ventas
-                    </a>
-                    <a href="#planes" class="btn btn-outline-secondary btn-lg px-4">
-                        <i class="bi bi-tags me-2"></i>
-                        Ver planes
-                    </a>
+                    <h5 class="fw-bold mb-2">Agenda inteligente</h5>
+                    <p class="text-muted small mb-0">Gestiona citas por empleado, horarios y servicios. Evita conflictos de agenda automaticamente.</p>
                 </div>
             </div>
 
-            <div class="col-lg-6" data-aos="fade-left">
-                <!-- Dashboard Preview -->
-                <div class="position-relative">
-                    <div class="card border-0 shadow-lg">
-                        <div class="card-header bg-dark text-white py-3">
-                            <div class="d-flex align-items-center gap-2">
-                                <div class="bg-danger rounded-circle" style="width: 12px; height: 12px;"></div>
-                                <div class="bg-warning rounded-circle" style="width: 12px; height: 12px;"></div>
-                                <div class="bg-success rounded-circle" style="width: 12px; height: 12px;"></div>
-                                <span class="ms-3 small">minegocio.com/dashboard</span>
-                            </div>
-                        </div>
-                        <div class="card-body p-4 bg-light">
-                            <!-- Mini Dashboard -->
-                            <div class="row g-3 mb-4">
-                                <div class="col-6">
-                                    <div class="bg-white rounded-3 p-3 border">
-                                        <div class="small text-muted mb-1">Clientes Activos</div>
-                                        <div class="h4 fw-bold mb-0 text-primary">156</div>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="bg-white rounded-3 p-3 border">
-                                        <div class="small text-muted mb-1">Ingresos Hoy</div>
-                                        <div class="h4 fw-bold mb-0 text-success">$890</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="bg-white rounded-3 p-3 border mb-3">
-                                <div class="d-flex align-items-center justify-content-between mb-2">
-                                    <span class="fw-semibold">Renovaciones pendientes</span>
-                                    <span class="badge bg-warning">12</span>
-                                </div>
-                                <div class="progress" style="height: 6px;">
-                                    <div class="progress-bar bg-warning" style="width: 40%"></div>
-                                </div>
-                            </div>
-
-                            <div class="bg-white rounded-3 p-3 border">
-                                <div class="small text-muted mb-2">Últimos registros</div>
-
-                                <div class="d-flex align-items-center gap-2 mb-2">
-                                    <div class="bg-primary rounded-circle p-1">
-                                        <i class="bi bi-person text-white small"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="small fw-semibold">María González</div>
-                                        <div class="text-muted" style="font-size: 0.75rem;">Hace 5 min</div>
-                                    </div>
-                                    <span class="badge bg-success">Pagado</span>
-                                </div>
-
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="bg-primary rounded-circle p-1">
-                                        <i class="bi bi-person text-white small"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="small fw-semibold">Carlos Ruiz</div>
-                                        <div class="text-muted" style="font-size: 0.75rem;">Hace 12 min</div>
-                                    </div>
-                                    <span class="badge bg-success">Pagado</span>
-                                </div>
-                            </div>
+            <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="card border-0 h-100 p-4 feature-card">
+                    <div class="mb-3">
+                        <div class="bg-light-warning rounded-3 d-inline-flex p-3">
+                            <i class="bi bi-bell-fill fs-2 text-warning"></i>
                         </div>
                     </div>
+                    <h5 class="fw-bold mb-2">Notificaciones</h5>
+                    <p class="text-muted small mb-0">Recordatorios automaticos por WhatsApp para renovaciones, citas proximas y pagos pendientes.</p>
+                </div>
+            </div>
 
-                    <!-- Floating Badge -->
-                    <div class="position-absolute top-0 end-0 translate-middle">
-                        <div class="bg-success text-white rounded-pill px-3 py-2 shadow-lg">
-                            <i class="bi bi-shield-check me-1"></i>
-                            <span class="small fw-semibold">100% Seguro</span>
+            <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="250">
+                <div class="card border-0 h-100 p-4 feature-card">
+                    <div class="mb-3">
+                        <div class="bg-light-danger rounded-3 d-inline-flex p-3">
+                            <i class="bi bi-box-seam fs-2 text-danger"></i>
                         </div>
                     </div>
+                    <h5 class="fw-bold mb-2">Inventario</h5>
+                    <p class="text-muted small mb-0">Registra productos, controla stock y vincula ventas directamente con tu caja diaria.</p>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="card border-0 h-100 p-4 feature-card">
+                    <div class="mb-3">
+                        <div class="rounded-3 d-inline-flex p-3" style="background:rgba(114,57,234,0.1);">
+                            <i class="bi bi-file-earmark-bar-graph fs-2" style="color:#7239EA;"></i>
+                        </div>
+                    </div>
+                    <h5 class="fw-bold mb-2">Reportes</h5>
+                    <p class="text-muted small mb-0">Dashboards visuales con graficos de ingresos, clientes activos, tasas de retencion y mas.</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- How It Works -->
+<!-- ============================================ -->
+<!-- HOW IT WORKS                                 -->
+<!-- ============================================ -->
 <div class="py-7" style="background: linear-gradient(180deg, #F8FAFC 0%, #fff 100%);">
     <div class="container">
         <div class="text-center mb-6" data-aos="fade-up">
             <span class="badge bg-light-info text-info fs-6 fw-semibold px-4 py-2 rounded-pill mb-3">
                 <i class="bi bi-lightning-charge me-2"></i>
-                Super fácil
+                Super facil
             </span>
-            <h2 class="display-4 fw-bolder mb-4">3 pasos para organizarte</h2>
+            <h2 class="display-5 fw-bolder mb-3">3 pasos para empezar</h2>
             <p class="fs-5 text-muted mx-auto" style="max-width: 650px;">
-                No necesitas ser experto en tecnología. Si puedes usar WhatsApp, puedes usar Mi Negocio.
+                No necesitas ser experto en tecnologia. Si puedes usar WhatsApp, puedes usar Mi Negocio.
             </p>
         </div>
 
         <div class="row g-4">
             <div class="col-md-4" data-aos="fade-up" data-aos-delay="50">
                 <div class="text-center position-relative">
-                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4" style="width: 80px; height: 80px; background: linear-gradient(135deg, #3E97FF, #7239EA); font-size: 2rem; color: #fff; font-weight: 800;">1</div>
-                    <h4 class="fw-bold mb-3">Regístrate</h4>
-                    <p class="text-muted px-3">Nos escribes por WhatsApp, te creamos tu cuenta y en menos de 1 hora ya estás funcionando.</p>
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4 shadow" style="width:80px;height:80px;background:linear-gradient(135deg,#3E97FF,#7239EA);font-size:2rem;color:#fff;font-weight:800;">1</div>
+                    <h4 class="fw-bold mb-3">Registrate</h4>
+                    <p class="text-muted px-3">Escribenos por WhatsApp o llena el formulario. En menos de 1 hora tu cuenta esta lista.</p>
+                    <!-- Connector arrow (hidden on mobile) -->
+                    <div class="d-none d-md-block position-absolute top-50 end-0" style="transform: translate(50%, -150%);">
+                        <i class="bi bi-arrow-right fs-3 text-muted" style="opacity:.3;"></i>
+                    </div>
                 </div>
             </div>
             <div class="col-md-4" data-aos="fade-up" data-aos-delay="150">
                 <div class="text-center position-relative">
-                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4" style="width: 80px; height: 80px; background: linear-gradient(135deg, #50CD89, #0BB783); font-size: 2rem; color: #fff; font-weight: 800;">2</div>
-                    <h4 class="fw-bold mb-3">Carga tus clientes</h4>
-                    <p class="text-muted px-3">Importa desde Excel o agrégalos manualmente. Nosotros te ayudamos con la migración.</p>
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4 shadow" style="width:80px;height:80px;background:linear-gradient(135deg,#50CD89,#0BB783);font-size:2rem;color:#fff;font-weight:800;">2</div>
+                    <h4 class="fw-bold mb-3">Configura</h4>
+                    <p class="text-muted px-3">Elige tu modelo (membresias o citas), importa clientes desde Excel o agregalos manualmente.</p>
+                    <div class="d-none d-md-block position-absolute top-50 end-0" style="transform: translate(50%, -150%);">
+                        <i class="bi bi-arrow-right fs-3 text-muted" style="opacity:.3;"></i>
+                    </div>
                 </div>
             </div>
             <div class="col-md-4" data-aos="fade-up" data-aos-delay="250">
-                <div class="text-center position-relative">
-                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4" style="width: 80px; height: 80px; background: linear-gradient(135deg, #FFC700, #F97316); font-size: 2rem; color: #fff; font-weight: 800;">3</div>
-                    <h4 class="fw-bold mb-3">Controla todo</h4>
-                    <p class="text-muted px-3">Ingresos, gastos, renovaciones, notificaciones automáticas... desde tu celular o PC.</p>
+                <div class="text-center">
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-4 shadow" style="width:80px;height:80px;background:linear-gradient(135deg,#FFC700,#F97316);font-size:2rem;color:#fff;font-weight:800;">3</div>
+                    <h4 class="fw-bold mb-3">Administra</h4>
+                    <p class="text-muted px-3">Ingresos, gastos, recordatorios automaticos, reportes... Todo desde tu celular o PC.</p>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Características Grid -->
-<div class="py-7 bg-light">
-    <div class="container">
-        <div class="text-center mb-6" data-aos="fade-up">
-            <span class="badge bg-light-primary text-primary fs-6 fw-semibold px-4 py-2 rounded-pill mb-3">
-                <i class="bi bi-stars me-2"></i>
-                Herramientas poderosas
-            </span>
-            <h2 class="display-4 fw-bolder mb-4">Todo lo que necesitas incluido</h2>
-            <p class="fs-5 text-muted mx-auto" style="max-width: 650px;">
-                Funciones profesionales diseñadas específicamente para tu negocio
-            </p>
-        </div>
-
-        <div class="row g-4">
-            <div class="col-md-6 col-lg-3" data-aos="zoom-in" data-aos-delay="50">
-                <div class="card border-0 h-100 text-center p-4 feature-card">
-                    <div class="mb-3">
-                        <div class="bg-light-primary rounded-4 d-inline-flex p-3">
-                            <i class="bi bi-people-fill fs-2 text-primary"></i>
-                        </div>
-                    </div>
-                    <h5 class="fw-bold mb-2">Gestión de Clientes</h5>
-                    <p class="text-muted small mb-0">Perfiles completos con historial y métricas</p>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-3" data-aos="zoom-in" data-aos-delay="100">
-                <div class="card border-0 h-100 text-center p-4 feature-card">
-                    <div class="mb-3">
-                        <div class="bg-light-success rounded-4 d-inline-flex p-3">
-                            <i class="bi bi-graph-up-arrow fs-2 text-success"></i>
-                        </div>
-                    </div>
-                    <h5 class="fw-bold mb-2">Reportes Avanzados</h5>
-                    <p class="text-muted small mb-0">Análisis de ventas e ingresos en tiempo real</p>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-3" data-aos="zoom-in" data-aos-delay="150">
-                <div class="card border-0 h-100 text-center p-4 feature-card">
-                    <div class="mb-3">
-                        <div class="bg-light-warning rounded-4 d-inline-flex p-3">
-                            <i class="bi bi-bell-fill fs-2 text-warning"></i>
-                        </div>
-                    </div>
-                    <h5 class="fw-bold mb-2">Recordatorios</h5>
-                    <p class="text-muted small mb-0">Mensajes automáticos de pago y renovación</p>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-3" data-aos="zoom-in" data-aos-delay="200">
-                <div class="card border-0 h-100 text-center p-4 feature-card">
-                    <div class="mb-3">
-                        <div class="bg-light-info rounded-4 d-inline-flex p-3">
-                            <i class="bi bi-globe2 fs-2 text-info"></i>
-                        </div>
-                    </div>
-                    <h5 class="fw-bold mb-2">Acceso Web</h5>
-                    <p class="text-muted small mb-0">Funciona desde cualquier dispositivo con navegador</p>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-3" data-aos="zoom-in" data-aos-delay="250">
-                <div class="card border-0 h-100 text-center p-4 feature-card">
-                    <div class="mb-3">
-                        <div class="bg-light-danger rounded-4 d-inline-flex p-3">
-                            <i class="bi bi-file-earmark-spreadsheet fs-2 text-danger"></i>
-                        </div>
-                    </div>
-                    <h5 class="fw-bold mb-2">Importación Excel</h5>
-                    <p class="text-muted small mb-0">Migra tus clientes desde Excel en un clic</p>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-3" data-aos="zoom-in" data-aos-delay="300">
-                <div class="card border-0 h-100 text-center p-4 feature-card">
-                    <div class="mb-3">
-                        <div class="bg-light-secondary rounded-4 d-inline-flex p-3">
-                            <i class="bi bi-cash-coin fs-2 text-secondary"></i>
-                        </div>
-                    </div>
-                    <h5 class="fw-bold mb-2">Control de Ventas</h5>
-                    <p class="text-muted small mb-0">Registra ingresos y visualiza reportes al instante</p>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-3" data-aos="zoom-in" data-aos-delay="350">
-                <div class="card border-0 h-100 text-center p-4 feature-card">
-                    <div class="mb-3">
-                        <div class="bg-light-primary rounded-4 d-inline-flex p-3">
-                            <i class="bi bi-clock-history fs-2 text-primary"></i>
-                        </div>
-                    </div>
-                    <h5 class="fw-bold mb-2">Historial Completo</h5>
-                    <p class="text-muted small mb-0">Cada acción queda registrada con fecha y detalle</p>
-                </div>
-            </div>
-
-            <div class="col-md-6 col-lg-3" data-aos="zoom-in" data-aos-delay="400">
-                <div class="card border-0 h-100 text-center p-4 feature-card">
-                    <div class="mb-3">
-                        <div class="bg-light-success rounded-4 d-inline-flex p-3">
-                            <i class="bi bi-shield-lock-fill fs-2 text-success"></i>
-                        </div>
-                    </div>
-                    <h5 class="fw-bold mb-2">Seguridad Total</h5>
-                    <p class="text-muted small mb-0">Encriptación y backups automáticos de tu información</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Pricing Section -->
+<!-- ============================================ -->
+<!-- PRICING                                      -->
+<!-- ============================================ -->
 <div class="py-7 position-relative overflow-hidden" id="planes" style="background: linear-gradient(135deg, #181C32 0%, #3E97FF 100%);">
     <div class="container position-relative">
         <div class="text-center mb-6" data-aos="fade-up">
-            <span class="badge text-white fs-6 fw-semibold px-4 py-2 rounded-pill mb-3" style="background: rgba(255,255,255,0.25);">
+            <span class="badge text-white fs-6 fw-semibold px-4 py-2 rounded-pill mb-3" style="background:rgba(255,255,255,0.18);">
                 <i class="bi bi-currency-dollar me-2"></i>
                 Planes y precios
             </span>
-            <h2 class="display-4 fw-bolder text-white mb-4">
-                Elige el plan perfecto para tu negocio
-            </h2>
-            <p class="fs-5 text-white opacity-90 mx-auto" style="max-width: 650px;">
-                Sin letra pequeña, sin sorpresas. Escala cuando lo necesites.
+            <h2 class="display-5 fw-bolder text-white mb-3">Elige el plan perfecto para tu negocio</h2>
+            <p class="fs-5 text-white mx-auto" style="max-width:650px;opacity:.88;">
+                Sin letra pequena, sin sorpresas. Escala cuando lo necesites.
             </p>
         </div>
 
@@ -510,164 +710,98 @@
 
             <!-- Plan 1: Sistema -->
             <div class="col-lg-4">
-                <div class="card border-0 shadow-lg h-100">
+                <div class="card border-0 shadow-lg h-100" style="border-radius:1rem;">
                     <div class="card-body p-4 p-xl-5 d-flex flex-column">
                         <div class="text-center mb-4">
-                            <h3 class="fw-bold mb-1">Sistema</h3>
-                            <p class="text-muted small mb-3">Gestiona tu negocio al 100%</p>
-                            
-                            <!-- Promo Badge -->
-                            <div class="badge bg-light-danger text-danger px-3 py-2 rounded-pill mb-2 fw-bold">
-                                50% OFF por 3 meses
+                            <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width:56px;height:56px;background:linear-gradient(135deg,#3E97FF,#7239EA);">
+                                <i class="bi bi-people-fill text-white fs-4"></i>
                             </div>
-
+                            <h3 class="fw-bold mb-1">Sistema</h3>
+                            <p class="text-muted small mb-3">Ideal para negocios de membresias</p>
+                            <div class="badge bg-light-danger text-danger px-3 py-2 rounded-pill mb-2 fw-bold">50% OFF por 3 meses</div>
                             <div class="d-flex align-items-baseline justify-content-center gap-2 my-1">
                                 <span class="text-muted text-decoration-line-through fs-5">$30</span>
                                 <span class="display-4 fw-bolder text-primary">$15</span>
-                                <span class="text-muted">USD / mes</span>
+                                <span class="text-muted">/ mes</span>
                             </div>
-                            <p class="text-muted small mb-0">Facturación mensual sin permanencia</p>
                         </div>
 
                         <ul class="list-unstyled mb-4 vstack gap-2 flex-grow-1">
-                            <li class="d-flex align-items-start gap-2">
-                                <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                <span><strong>Clientes ilimitados</strong></span>
-                            </li>
-                            <li class="d-flex align-items-start gap-2">
-                                <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                <span><strong>Recordatorios automáticos</strong> WhatsApp y SMS</span>
-                            </li>
-                            <li class="d-flex align-items-start gap-2">
-                                <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                <span><strong>Reportes en tiempo real</strong></span>
-                            </li>
-                            <li class="d-flex align-items-start gap-2">
-                                <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                <span><strong>Acceso web</strong> desde cualquier dispositivo</span>
-                            </li>
-                            <li class="d-flex align-items-start gap-2">
-                                <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                <span><strong>Soporte prioritario</strong> 7 días</span>
-                            </li>
-                            <li class="d-flex align-items-start gap-2">
-                                <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                <span><strong>Actualizaciones</strong> siempre gratis</span>
-                            </li>
-                            <li class="d-flex align-items-start gap-2">
-                                <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                <span><strong>Backups diarios</strong></span>
-                            </li>
-                            <li class="d-flex align-items-start gap-2">
-                                <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                <span><strong>Usuarios ilimitados</strong></span>
-                            </li>
+                            <li class="d-flex align-items-start gap-2"><i class="bi bi-check-circle-fill text-success flex-shrink-0"></i><span><strong>Clientes ilimitados</strong></span></li>
+                            <li class="d-flex align-items-start gap-2"><i class="bi bi-check-circle-fill text-success flex-shrink-0"></i><span><strong>Recordatorios</strong> WhatsApp automaticos</span></li>
+                            <li class="d-flex align-items-start gap-2"><i class="bi bi-check-circle-fill text-success flex-shrink-0"></i><span><strong>Reportes</strong> en tiempo real</span></li>
+                            <li class="d-flex align-items-start gap-2"><i class="bi bi-check-circle-fill text-success flex-shrink-0"></i><span><strong>Acceso web</strong> desde cualquier dispositivo</span></li>
+                            <li class="d-flex align-items-start gap-2"><i class="bi bi-check-circle-fill text-success flex-shrink-0"></i><span><strong>Soporte prioritario</strong> 7 dias</span></li>
+                            <li class="d-flex align-items-start gap-2"><i class="bi bi-check-circle-fill text-success flex-shrink-0"></i><span><strong>Actualizaciones</strong> siempre gratis</span></li>
+                            <li class="d-flex align-items-start gap-2"><i class="bi bi-check-circle-fill text-success flex-shrink-0"></i><span><strong>Backups diarios</strong></span></li>
+                            <li class="d-flex align-items-start gap-2"><i class="bi bi-check-circle-fill text-success flex-shrink-0"></i><span><strong>Usuarios ilimitados</strong></span></li>
                         </ul>
 
-                        <div class="d-grid gap-2 mt-auto">
+                        <div class="d-grid mt-auto">
                             <a href="#contacto" class="btn btn-outline-primary btn-lg fw-bold py-3">
-                                <i class="bi bi-rocket-takeoff me-2"></i>
-                                Empezar hoy
+                                <i class="bi bi-rocket-takeoff me-2"></i>Empezar hoy
                             </a>
                         </div>
-
-                        <div class="text-center mt-3 small text-muted">
-                            <i class="bi bi-shield-check me-1"></i>
-                            Cancela cuando quieras
-                        </div>
+                        <div class="text-center mt-3 small text-muted"><i class="bi bi-shield-check me-1"></i>Cancela cuando quieras</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Plan 2: Sistema + Web (MÁS POPULAR) -->
+            <!-- Plan 2: Sistema + Web (POPULAR) -->
             <div class="col-lg-4">
-                <div class="card border-0 shadow-lg h-100 position-relative overflow-hidden" style="border: 2px solid #3E97FF !important; transform: scale(1.03);">
+                <div class="card border-0 shadow-lg h-100 position-relative overflow-hidden" style="border:2px solid #3E97FF !important;border-radius:1rem;transform:scale(1.03);">
                     <div class="position-absolute top-0 start-0 end-0">
-                        <div class="bg-warning text-dark text-center py-2 fw-bold small">
-                            <i class="bi bi-star-fill me-1"></i>
-                            MAS POPULAR
+                        <div class="text-dark text-center py-2 fw-bold small" style="background:linear-gradient(90deg,#FFC700,#F97316);">
+                            <i class="bi bi-star-fill me-1"></i>MAS POPULAR
                         </div>
                     </div>
-
-                    <div class="card-body p-4 p-xl-5 d-flex flex-column" style="padding-top: 3.5rem !important;">
+                    <div class="card-body p-4 p-xl-5 d-flex flex-column" style="padding-top:3.5rem !important;">
                         <div class="text-center mb-4">
-                            <h3 class="fw-bold mb-1">Sistema + Web</h3>
-                            <p class="text-muted small mb-3">Sistema de gestion + tu pagina web profesional</p>
-                            
-                            <!-- Promo Badge -->
-                            <div class="badge bg-light-danger text-danger px-3 py-2 rounded-pill mb-2 fw-bold">
-                                50% OFF por 3 meses
+                            <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width:56px;height:56px;background:linear-gradient(135deg,#50CD89,#0BB783);">
+                                <i class="bi bi-globe2 text-white fs-4"></i>
                             </div>
-                            
+                            <h3 class="fw-bold mb-1">Sistema + Web</h3>
+                            <p class="text-muted small mb-3">Gestion completa + pagina web profesional</p>
+                            <div class="badge bg-light-danger text-danger px-3 py-2 rounded-pill mb-2 fw-bold">50% OFF por 3 meses</div>
                             <div class="d-flex align-items-baseline justify-content-center gap-2 my-1">
                                 <span class="text-muted text-decoration-line-through fs-5">$50</span>
                                 <span class="display-4 fw-bolder text-primary">$25</span>
-                                <span class="text-muted">USD / mes</span>
+                                <span class="text-muted">/ mes</span>
                             </div>
-                            <p class="text-muted small mb-0">Todo del plan Sistema + pagina web</p>
                         </div>
 
                         <ul class="list-unstyled mb-4 vstack gap-2 flex-grow-1">
-                            <li class="d-flex align-items-start gap-2">
-                                <i class="bi bi-check-circle-fill text-primary flex-shrink-0"></i>
-                                <span><strong>Todo del plan Sistema</strong></span>
-                            </li>
-                            <li class="d-flex align-items-start gap-2 pt-2" style="border-top: 1px solid #eee;">
-                                <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                <span><strong>Pagina web profesional</strong> diseñada para tu negocio</span>
-                            </li>
-                            <li class="d-flex align-items-start gap-2">
-                                <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                <span><strong>Dominio propio</strong> (tunegocio.com)*</span>
-                            </li>
-                            <li class="d-flex align-items-start gap-2">
-                                <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                <span><strong>Actualizaciones ilimitadas</strong> de contenido</span>
-                            </li>
-                            <li class="d-flex align-items-start gap-2">
-                                <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                <span><strong>Diseño responsive</strong> optimizado para movil</span>
-                            </li>
-                            <li class="d-flex align-items-start gap-2">
-                                <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                <span><strong>SEO basico</strong> para aparecer en Google</span>
-                            </li>
-                            <li class="d-flex align-items-start gap-2">
-                                <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                <span><strong>Hosting incluido</strong> sin costo adicional</span>
-                            </li>
+                            <li class="d-flex align-items-start gap-2"><i class="bi bi-check-circle-fill text-primary flex-shrink-0"></i><span><strong>Todo del plan Sistema</strong></span></li>
+                            <li class="d-flex align-items-start gap-2 pt-2" style="border-top:1px solid #eee;"><i class="bi bi-check-circle-fill text-success flex-shrink-0"></i><span><strong>Pagina web profesional</strong> para tu negocio</span></li>
+                            <li class="d-flex align-items-start gap-2"><i class="bi bi-check-circle-fill text-success flex-shrink-0"></i><span><strong>Dominio propio</strong> (tunegocio.com)*</span></li>
+                            <li class="d-flex align-items-start gap-2"><i class="bi bi-check-circle-fill text-success flex-shrink-0"></i><span><strong>Actualizaciones ilimitadas</strong> de contenido</span></li>
+                            <li class="d-flex align-items-start gap-2"><i class="bi bi-check-circle-fill text-success flex-shrink-0"></i><span><strong>Diseno responsive</strong> optimizado para movil</span></li>
+                            <li class="d-flex align-items-start gap-2"><i class="bi bi-check-circle-fill text-success flex-shrink-0"></i><span><strong>SEO basico</strong> para aparecer en Google</span></li>
+                            <li class="d-flex align-items-start gap-2"><i class="bi bi-check-circle-fill text-success flex-shrink-0"></i><span><strong>Hosting incluido</strong> sin costo adicional</span></li>
                         </ul>
+                        <p class="text-muted small mb-3">*Sujeto a disponibilidad del dominio</p>
 
-                        <p class="text-muted small mb-3">*Sujeto a disponibilidad del nombre de dominio</p>
-
-                        <div class="d-grid gap-2 mt-auto">
+                        <div class="d-grid mt-auto">
                             <a href="#contacto" class="btn btn-primary btn-lg fw-bold py-3">
-                                <i class="bi bi-rocket-takeoff me-2"></i>
-                                Empezar hoy
+                                <i class="bi bi-rocket-takeoff me-2"></i>Empezar hoy
                             </a>
                         </div>
-
-                        <div class="text-center mt-3 small text-muted">
-                            <i class="bi bi-shield-check me-1"></i>
-                            Cancela cuando quieras
-                        </div>
+                        <div class="text-center mt-3 small text-muted"><i class="bi bi-shield-check me-1"></i>Cancela cuando quieras</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Plan 3: Sistema + Web + Tarjetas -->
+            <!-- Plan 3: Completo -->
             <div class="col-lg-4">
-                <div class="card border-0 shadow-lg h-100">
+                <div class="card border-0 shadow-lg h-100" style="border-radius:1rem;">
                     <div class="card-body p-4 p-xl-5 d-flex flex-column">
                         <div class="text-center mb-4">
+                            <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width:56px;height:56px;background:linear-gradient(135deg,#F1416C,#E74C3C);">
+                                <i class="bi bi-gem text-white fs-4"></i>
+                            </div>
                             <h3 class="fw-bold mb-1">Plan Completo</h3>
                             <p class="text-muted small mb-3">Sistema + Web + Cobros con tarjeta</p>
-
-                            <!-- Promo Badge -->
-                            <div class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill mb-2 fw-bold">
-                                <i class="bi bi-percent me-1"></i> 50% OFF por 3 meses
-                            </div>
-
+                            <div class="badge bg-light-danger text-danger px-3 py-2 rounded-pill mb-2 fw-bold">50% OFF por 3 meses</div>
                             <div class="d-flex align-items-baseline justify-content-center gap-2 my-1">
                                 <span class="display-5 fw-bolder text-dark">Personalizado</span>
                             </div>
@@ -675,83 +809,21 @@
                         </div>
 
                         <ul class="list-unstyled mb-4 vstack gap-2 flex-grow-1">
-                            <li class="d-flex align-items-start gap-2">
-                                <i class="bi bi-check-circle-fill text-primary flex-shrink-0"></i>
-                                <span><strong>Todo del plan Sistema + Web</strong></span>
-                            </li>
-                            <li class="d-flex align-items-start gap-2 pt-2" style="border-top: 1px solid #eee;">
-                                <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                <span><strong>Pagos con tarjeta de credito</strong> y debito</span>
-                            </li>
-                            <li class="d-flex align-items-start gap-2">
-                                <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                <span><strong>Pasarela de pago integrada</strong> en tu web</span>
-                            </li>
-                            <li class="d-flex align-items-start gap-2">
-                                <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                <span><strong>Cobros recurrentes</strong> automaticos</span>
-                            </li>
-                            <li class="d-flex align-items-start gap-2">
-                                <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                <span><strong>Reportes de transacciones</strong></span>
-                            </li>
-                            <li class="d-flex align-items-start gap-2">
-                                <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                <span><strong>Conciliacion automatica</strong></span>
-                            </li>
-                            <li class="d-flex align-items-start gap-2">
-                                <i class="bi bi-check-circle-fill text-success flex-shrink-0"></i>
-                                <span><strong>Soporte dedicado</strong> y onboarding</span>
-                            </li>
+                            <li class="d-flex align-items-start gap-2"><i class="bi bi-check-circle-fill text-primary flex-shrink-0"></i><span><strong>Todo del plan Sistema + Web</strong></span></li>
+                            <li class="d-flex align-items-start gap-2 pt-2" style="border-top:1px solid #eee;"><i class="bi bi-check-circle-fill text-success flex-shrink-0"></i><span><strong>Pagos con tarjeta</strong> credito y debito</span></li>
+                            <li class="d-flex align-items-start gap-2"><i class="bi bi-check-circle-fill text-success flex-shrink-0"></i><span><strong>Pasarela de pago</strong> integrada en tu web</span></li>
+                            <li class="d-flex align-items-start gap-2"><i class="bi bi-check-circle-fill text-success flex-shrink-0"></i><span><strong>Cobros recurrentes</strong> automaticos</span></li>
+                            <li class="d-flex align-items-start gap-2"><i class="bi bi-check-circle-fill text-success flex-shrink-0"></i><span><strong>Reportes de transacciones</strong></span></li>
+                            <li class="d-flex align-items-start gap-2"><i class="bi bi-check-circle-fill text-success flex-shrink-0"></i><span><strong>Conciliacion automatica</strong></span></li>
+                            <li class="d-flex align-items-start gap-2"><i class="bi bi-check-circle-fill text-success flex-shrink-0"></i><span><strong>Soporte dedicado</strong> + onboarding</span></li>
                         </ul>
 
-                        <div class="d-grid gap-2 mt-auto">
+                        <div class="d-grid mt-auto">
                             <a href="#contacto" class="btn btn-dark btn-lg fw-bold py-3">
-                                <i class="bi bi-chat-dots me-2"></i>
-                                Contactar ventas
+                                <i class="bi bi-chat-dots me-2"></i>Contactar ventas
                             </a>
                         </div>
-
-                        <div class="text-center mt-3 small text-muted">
-                            <i class="bi bi-file-earmark-text me-1"></i>
-                            Requiere contrato
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Trust Row -->
-        <div class="row justify-content-center mt-5" data-aos="fade-up" data-aos-delay="100">
-            <div class="col-lg-10">
-                <div class="row g-3 text-white">
-                    <div class="col-md-4">
-                        <div class="d-flex align-items-center gap-3 p-3 rounded-3 backdrop-blur" style="background: rgba(255,255,255,0.1);">
-                            <i class="bi bi-clock-history fs-3"></i>
-                            <div>
-                                <div class="fw-semibold">Setup rapido</div>
-                                <div class="small opacity-75">En menos de 1 hora</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="d-flex align-items-center gap-3 p-3 rounded-3 backdrop-blur" style="background: rgba(255,255,255,0.1);">
-                            <i class="bi bi-cloud-check fs-3"></i>
-                            <div>
-                                <div class="fw-semibold">En la nube</div>
-                                <div class="small opacity-75">Accede desde cualquier lugar</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="d-flex align-items-center gap-3 p-3 rounded-3 backdrop-blur" style="background: rgba(255,255,255,0.1);">
-                            <i class="bi bi-headset fs-3"></i>
-                            <div>
-                                <div class="fw-semibold">Soporte humano</div>
-                                <div class="small opacity-75">Chat y onboarding</div>
-                            </div>
-                        </div>
+                        <div class="text-center mt-3 small text-muted"><i class="bi bi-file-earmark-text me-1"></i>Requiere contrato</div>
                     </div>
                 </div>
             </div>
@@ -759,7 +831,9 @@
     </div>
 </div>
 
-<!-- Testimonials -->
+<!-- ============================================ -->
+<!-- TESTIMONIALS                                 -->
+<!-- ============================================ -->
 <div class="py-7 bg-light">
     <div class="container">
         <div class="text-center mb-6" data-aos="fade-up">
@@ -767,74 +841,104 @@
                 <i class="bi bi-chat-quote-fill me-2"></i>
                 Resultados reales
             </span>
-            <h2 class="display-5 fw-bolder mb-3">Negocios que ya se ordenaron</h2>
-            <p class="text-muted mx-auto" style="max-width: 650px;">
-                Menos caos, más caja, más clientes contentos.
+            <h2 class="display-5 fw-bolder mb-3">Negocios que ya se organizaron</h2>
+            <p class="fs-5 text-muted mx-auto" style="max-width: 660px;">
+                Menos caos, mas caja, mas clientes contentos.
             </p>
         </div>
 
         <div class="row g-4">
-            <div class="col-md-4" data-aos="fade-up" data-aos-delay="50">
+            <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="50">
                 <div class="card border-0 shadow-hover h-100">
                     <div class="card-body p-4">
-                        <div class="d-flex align-items-center gap-3 mb-3">
-                            <div class="bg-light-primary rounded-circle p-3">
-                                <i class="bi bi-person-fill text-primary"></i>
-                            </div>
+                        <div class="text-warning mb-3"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+                        <p class="mb-4 text-muted">"Dejamos el Excel y ahora se quien debe, quien renueva y cuanto vendimos hoy. Todo desde el celular, sin preguntarle a nadie."</p>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-light-primary rounded-circle d-flex align-items-center justify-content-center" style="width:44px;height:44px;"><i class="bi bi-person-fill text-primary"></i></div>
                             <div>
-                                <div class="fw-bold">Andrea M.</div>
-                                <div class="small text-muted">Dueña de negocio</div>
+                                <div class="fw-bold small">Andrea Morales</div>
+                                <div style="font-size:0.75rem;" class="text-muted">Gimnasio FitZone - Quito</div>
                             </div>
-                        </div>
-                        <p class="mb-0 text-muted">
-                            “Dejamos Excel y ahora sé quién debe, quién renueva y cuánto vendimos hoy sin preguntar a nadie.”
-                        </p>
-                        <div class="mt-3 text-warning">
-                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+            <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100">
                 <div class="card border-0 shadow-hover h-100">
                     <div class="card-body p-4">
-                        <div class="d-flex align-items-center gap-3 mb-3">
-                            <div class="bg-light-success rounded-circle p-3">
-                                <i class="bi bi-person-fill text-success"></i>
-                            </div>
+                        <div class="text-warning mb-3"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+                        <p class="mb-4 text-muted">"Mis barberos antes anotaban en un cuaderno. Ahora cada uno ve su agenda, los clientes confirman por WhatsApp y no se cruzan citas."</p>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-light-success rounded-circle d-flex align-items-center justify-content-center" style="width:44px;height:44px;"><i class="bi bi-person-fill text-success"></i></div>
                             <div>
-                                <div class="fw-bold">Carlos R.</div>
-                                <div class="small text-muted">Administrador</div>
+                                <div class="fw-bold small">Carlos Reyes</div>
+                                <div style="font-size:0.75rem;" class="text-muted">Barberia El Patron - Guayaquil</div>
                             </div>
-                        </div>
-                        <p class="mb-0 text-muted">
-                            “Los recordatorios redujeron atrasos. El flujo de caja mejoró y mis coaches ya no pierden tiempo.”
-                        </p>
-                        <div class="mt-3 text-warning">
-                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-4" data-aos="fade-up" data-aos-delay="150">
+            <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="150">
                 <div class="card border-0 shadow-hover h-100">
                     <div class="card-body p-4">
-                        <div class="d-flex align-items-center gap-3 mb-3">
-                            <div class="bg-warning bg-opacity-10 rounded-circle p-3">
-                                <i class="bi bi-person-fill text-warning"></i>
-                            </div>
+                        <div class="text-warning mb-3"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+                        <p class="mb-4 text-muted">"Los recordatorios automaticos redujeron los atrasos un 60%. El flujo de caja mejoro y mis coaches ya no pierden tiempo cobrando."</p>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:44px;height:44px;background:rgba(114,57,234,0.1);"><i class="bi bi-person-fill" style="color:#7239EA;"></i></div>
                             <div>
-                                <div class="fw-bold">Sofía G.</div>
-                                <div class="small text-muted">Negocio boutique</div>
+                                <div class="fw-bold small">Sofia Garcia</div>
+                                <div style="font-size:0.75rem;" class="text-muted">CrossFit Box Sur - Lima</div>
                             </div>
                         </div>
-                        <p class="mb-0 text-muted">
-                            "En 1 semana ya tenía control de renovaciones y ventas. Poder verlo todo desde el celular es lo mejor."
-                        </p>
-                        <div class="mt-3 text-warning">
-                            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="card border-0 shadow-hover h-100">
+                    <div class="card-body p-4">
+                        <div class="text-warning mb-3"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+                        <p class="mb-4 text-muted">"Tengo 3 estilistas y antes era un caos coordinar horarios. Ahora cada una tiene su agenda, los clientes reservan y el sistema cobra solo."</p>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-light-warning rounded-circle d-flex align-items-center justify-content-center" style="width:44px;height:44px;"><i class="bi bi-person-fill text-warning"></i></div>
+                            <div>
+                                <div class="fw-bold small">Maria Fernanda Lopez</div>
+                                <div style="font-size:0.75rem;" class="text-muted">Salon Bella - Medellin</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="250">
+                <div class="card border-0 shadow-hover h-100">
+                    <div class="card-body p-4">
+                        <div class="text-warning mb-3"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+                        <p class="mb-4 text-muted">"En una semana ya tenia todo organizado. Lo mejor es poder ver reportes de ingresos por mes y saber exactamente cuanto gano mi academia."</p>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-light-danger rounded-circle d-flex align-items-center justify-content-center" style="width:44px;height:44px;"><i class="bi bi-person-fill text-danger"></i></div>
+                            <div>
+                                <div class="fw-bold small">Roberto Sanchez</div>
+                                <div style="font-size:0.75rem;" class="text-muted">Academia de Artes Marciales - Bogota</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="card border-0 shadow-hover h-100">
+                    <div class="card-body p-4">
+                        <div class="text-warning mb-3"><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i></div>
+                        <p class="mb-4 text-muted">"Pase de perder 2 horas diarias en papeles a tener todo automatizado. Los clientes reciben recordatorio y llegan puntuales. Increible."</p>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-light-primary rounded-circle d-flex align-items-center justify-content-center" style="width:44px;height:44px;"><i class="bi bi-person-fill text-primary"></i></div>
+                            <div>
+                                <div class="fw-bold small">Patricia Villanueva</div>
+                                <div style="font-size:0.75rem;" class="text-muted">Spa Zen - Ciudad de Mexico</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -843,31 +947,35 @@
     </div>
 </div>
 
-<!-- Social Proof / Numbers -->
+<!-- ============================================ -->
+<!-- SOCIAL PROOF COUNTERS                        -->
+<!-- ============================================ -->
 <div class="py-6 position-relative overflow-hidden" style="background: linear-gradient(135deg, #181C32 0%, #1B2559 100%);">
     <div class="container">
-        <div class="row g-4 text-center text-white">
+        <div class="row g-4 text-center text-white" id="socialProofSection">
             <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="50">
-                <div class="display-4 fw-bolder text-warning mb-2">50+</div>
-                <div class="fs-6 opacity-75">Negocios activos</div>
+                <div class="display-4 fw-bolder text-warning mb-2"><span class="social-counter" data-target="500">0</span>+</div>
+                <div class="fs-6" style="opacity:.75;">Negocios</div>
             </div>
             <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="100">
-                <div class="display-4 fw-bolder text-warning mb-2">2,500+</div>
-                <div class="fs-6 opacity-75">Clientes gestionados</div>
+                <div class="display-4 fw-bolder text-warning mb-2"><span class="social-counter" data-target="15000">0</span>+</div>
+                <div class="fs-6" style="opacity:.75;">Clientes gestionados</div>
             </div>
             <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="150">
-                <div class="display-4 fw-bolder text-warning mb-2">99.9%</div>
-                <div class="fs-6 opacity-75">Uptime garantizado</div>
+                <div class="display-4 fw-bolder text-warning mb-2"><span class="social-counter" data-target="98">0</span>%</div>
+                <div class="fs-6" style="opacity:.75;">Satisfaccion</div>
             </div>
             <div class="col-6 col-md-3" data-aos="fade-up" data-aos-delay="200">
                 <div class="display-4 fw-bolder text-warning mb-2">24/7</div>
-                <div class="fs-6 opacity-75">Soporte disponible</div>
+                <div class="fs-6" style="opacity:.75;">Soporte disponible</div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- FAQ -->
+<!-- ============================================ -->
+<!-- FAQ                                          -->
+<!-- ============================================ -->
 <div class="py-7" id="faq">
     <div class="container">
         <div class="row align-items-start g-5">
@@ -877,81 +985,74 @@
                     FAQ
                 </span>
                 <h2 class="display-6 fw-bolder mb-3">Preguntas frecuentes</h2>
-                <p class="text-muted mb-0">
-                    Si necesitas algo más específico, escríbenos y te respondemos en minutos.
+                <p class="text-muted mb-4">
+                    Si no encuentras tu respuesta, escribenos directamente y te respondemos en minutos.
                 </p>
-
-                <div class="mt-4">
-                    <a href="#contacto" class="btn btn-outline-primary btn-lg">
-                        <i class="bi bi-chat-dots me-2"></i>
-                        Hacer una pregunta
-                    </a>
-                </div>
+                <a href="#contacto" class="btn btn-outline-primary btn-lg">
+                    <i class="bi bi-chat-dots me-2"></i>
+                    Hacer una pregunta
+                </a>
             </div>
 
             <div class="col-lg-7" data-aos="fade-left">
-                <div class="accordion shadow-sm" id="faqAccordion">
+                <div class="accordion shadow-sm" id="faqAccordion" style="border-radius:1rem;overflow:hidden;">
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="q1">
                             <button class="accordion-button fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#a1" aria-expanded="true" aria-controls="a1">
-                                ¿Puedo cancelar cuando quiera?
+                                Cuanto cuesta y puedo cancelar cuando quiera?
                             </button>
                         </h2>
                         <div id="a1" class="accordion-collapse collapse show" aria-labelledby="q1" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted">
-                                Sí. Es mensual sin permanencia. Si cancelas, no se vuelve a facturar el siguiente ciclo.
+                                Los planes empiezan desde $15/mes. Es mensual sin permanencia ni contratos largos. Si cancelas, simplemente no se factura el siguiente ciclo. Tu informacion siempre es tuya.
                             </div>
                         </div>
                     </div>
-
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="q2">
                             <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#a2" aria-expanded="false" aria-controls="a2">
-                                ¿Necesito instalar algo?
+                                Puedo migrar mis datos desde Excel?
                             </button>
                         </h2>
                         <div id="a2" class="accordion-collapse collapse" aria-labelledby="q2" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted">
-                                No. Funciona en la nube. Entras desde navegador en PC o móvil.
+                                Si. Te damos una plantilla y te ayudamos con la importacion completa para que tus datos queden limpios y organizados desde el primer dia.
                             </div>
                         </div>
                     </div>
-
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="q3">
                             <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#a3" aria-expanded="false" aria-controls="a3">
-                                ¿Puedo migrar mis clientes desde Excel?
+                                Mis datos estan seguros?
                             </button>
                         </h2>
                         <div id="a3" class="accordion-collapse collapse" aria-labelledby="q3" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted">
-                                Sí. Te damos una plantilla y te ayudamos con la importación para que quede limpio.
+                                Absolutamente. Usamos cifrado en transito y en reposo, backups diarios automaticos y controles de acceso por roles. Tu informacion esta protegida 24/7.
                             </div>
                         </div>
                     </div>
-
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="q4">
                             <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#a4" aria-expanded="false" aria-controls="a4">
-                                ¿Cómo protegen mis datos?
+                                Que tipos de negocios pueden usar Mi Negocio?
                             </button>
                         </h2>
                         <div id="a4" class="accordion-collapse collapse" aria-labelledby="q4" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted">
-                                Cifrado en tránsito y en reposo, backups diarios y controles de acceso por roles.
+                                Cualquier negocio de servicios con clientes recurrentes. Si manejas <strong>membresias</strong> (gimnasios, academias, yoga, CrossFit, piscinas) o <strong>citas</strong> (barberias, salones, spas, consultorios, tattoo studios), Mi Negocio es para ti.
                             </div>
                         </div>
                     </div>
-
                     <div class="accordion-item">
                         <h2 class="accordion-header" id="q5">
                             <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#a5" aria-expanded="false" aria-controls="a5">
-                                ¿Sirve solo para un tipo de negocio?
+                                Tienen prueba gratis?
                             </button>
                         </h2>
                         <div id="a5" class="accordion-collapse collapse" aria-labelledby="q5" data-bs-parent="#faqAccordion">
                             <div class="accordion-body text-muted">
-                                No. Mi Negocio funciona para cualquier negocio de servicios con clientes recurrentes: academias, estudios, consultorios, escuelas de idiomas, barbershops y más. Si manejas membresías o pagos periódicos, es para ti.
+                                Si. Ofrecemos 7 dias de prueba gratis sin necesidad de tarjeta de credito. Configuramos tu cuenta, importamos tus datos y te acompanamos en todo el proceso.
                             </div>
                         </div>
                     </div>
@@ -961,27 +1062,27 @@
     </div>
 </div>
 
-<!-- Guarantee Section -->
+<!-- ============================================ -->
+<!-- GUARANTEE SECTION                            -->
+<!-- ============================================ -->
 <div class="py-6" data-aos="fade-up">
     <div class="container">
-        <div class="card border-0 shadow-lg overflow-hidden" style="background: linear-gradient(135deg, #181C32 0%, #1B2559 50%, #3E97FF 100%);">
+        <div class="card border-0 shadow-lg overflow-hidden" style="background:linear-gradient(135deg,#181C32 0%,#1B2559 50%,#3E97FF 100%);border-radius:1rem;">
             <div class="card-body p-4 p-lg-5 text-white text-center">
                 <div class="mb-3">
-                    <i class="bi bi-shield-check" style="font-size: 3.5rem;"></i>
+                    <i class="bi bi-shield-check" style="font-size:3.5rem;"></i>
                 </div>
-                <h3 class="fw-bolder mb-3">Sin riesgo. Sin permanencia. Sin letra pequeña.</h3>
-                <p class="fs-5 opacity-90 mb-4 mx-auto" style="max-width: 700px;">
-                    Prueba Mi Negocio gratis por 7 días. Si no te convence, no pagas nada.
-                    Cancela cuando quieras, tu información siempre es tuya.
+                <h3 class="fw-bolder mb-3">Sin riesgo. Sin permanencia. Sin letra pequena.</h3>
+                <p class="fs-5 mb-4 mx-auto" style="max-width:700px;opacity:.88;">
+                    Prueba Mi Negocio gratis por 7 dias. Si no te convence, no pagas nada.
+                    Cancela cuando quieras, tu informacion siempre es tuya.
                 </p>
                 <div class="d-flex flex-column flex-sm-row justify-content-center gap-3">
-                    <a href="#contacto" class="btn btn-warning btn-lg px-5 fw-bold">
-                        <i class="bi bi-rocket-takeoff me-2"></i>
-                        Probar 7 días gratis
+                    <a href="#contacto" class="btn btn-warning btn-lg px-5 fw-bold btn-hover-lift">
+                        <i class="bi bi-rocket-takeoff me-2"></i>Probar 7 dias gratis
                     </a>
-                    <a href="https://wa.me/593997143142?text=Hola%20quiero%20probar%20Mi%20Negocio%20gratis" target="_blank" rel="noopener" class="btn btn-outline-light btn-lg px-5 fw-semibold">
-                        <i class="bi bi-whatsapp me-2"></i>
-                        Hablar con nosotros
+                    <a href="https://wa.me/593997143142?text=Hola%20quiero%20probar%20Mi%20Negocio%20gratis" target="_blank" rel="noopener" class="btn btn-outline-light btn-lg px-5 fw-semibold btn-hover-lift">
+                        <i class="bi bi-whatsapp me-2"></i>Hablar con nosotros
                     </a>
                 </div>
             </div>
@@ -989,59 +1090,49 @@
     </div>
 </div>
 
-<!-- Contacto -->
-<div class="py-7 bg-light mb-6" id="contacto">
-    <div class="container mb-6">
+<!-- ============================================ -->
+<!-- CONTACT FORM                                 -->
+<!-- ============================================ -->
+<div class="py-7 bg-light" id="contacto">
+    <div class="container">
         <div class="text-center mb-6" data-aos="fade-up">
             <span class="badge bg-light-warning text-warning fs-6 fw-semibold px-4 py-2 rounded-pill mb-3">
                 <i class="bi bi-envelope-paper-heart me-2"></i>
                 Contacto
             </span>
-            <h2 class="display-5 fw-bolder mb-3">Recibe una demo y cotización</h2>
-            <p class="fs-5 text-muted mx-auto" style="max-width: 720px;">
-                Déjanos tus datos y te contactamos. También puedes habilitar WhatsApp abajo.
+            <h2 class="display-5 fw-bolder mb-3">Recibe una demo personalizada</h2>
+            <p class="fs-5 text-muted mx-auto" style="max-width:700px;">
+                Dejanos tus datos y te contactamos. Tambien puedes escribirnos directo por WhatsApp.
             </p>
         </div>
 
         <div class="row g-4 align-items-stretch">
             <div class="col-lg-5" data-aos="fade-right">
-                <div class="card border-0 shadow-hover h-100">
+                <div class="card border-0 shadow-hover h-100" style="border-radius:1rem;">
                     <div class="card-body p-4 p-lg-5">
-                        <h4 class="fw-bold mb-3">¿Qué obtienes?</h4>
-                        <div class="vstack gap-3 text-muted">
-                            <div class="d-flex gap-3">
-                                <i class="bi bi-check-circle-fill text-success fs-5"></i>
-                                <div>Diagnóstico rápido de tu proceso actual</div>
-                            </div>
-                            <div class="d-flex gap-3">
-                                <i class="bi bi-check-circle-fill text-success fs-5"></i>
-                                <div>Demo guiada y configuración inicial</div>
-                            </div>
-                            <div class="d-flex gap-3">
-                                <i class="bi bi-check-circle-fill text-success fs-5"></i>
-                                <div>Importación de clientes (si vienes de Excel)</div>
-                            </div>
-                            <div class="d-flex gap-3">
-                                <i class="bi bi-check-circle-fill text-success fs-5"></i>
-                                <div>Recomendaciones para mejorar cobranza y retención</div>
-                            </div>
+                        <h4 class="fw-bold mb-4">Que obtienes?</h4>
+                        <div class="vstack gap-3 text-muted mb-4">
+                            <div class="d-flex gap-3"><i class="bi bi-check-circle-fill text-success fs-5 flex-shrink-0"></i><div>Diagnostico rapido de tu proceso actual</div></div>
+                            <div class="d-flex gap-3"><i class="bi bi-check-circle-fill text-success fs-5 flex-shrink-0"></i><div>Demo guiada y configuracion inicial</div></div>
+                            <div class="d-flex gap-3"><i class="bi bi-check-circle-fill text-success fs-5 flex-shrink-0"></i><div>Importacion de clientes (si vienes de Excel)</div></div>
+                            <div class="d-flex gap-3"><i class="bi bi-check-circle-fill text-success fs-5 flex-shrink-0"></i><div>Recomendaciones para mejorar cobranza y retencion</div></div>
                         </div>
 
                         <hr class="my-4" />
 
                         <div class="small text-muted">
-                            <div class="fw-semibold mb-2">Contacto directo</div>
-                            <div class="d-flex align-items-center gap-2 mb-2">
-                                <i class="bi bi-envelope-fill text-primary"></i>
-                                <a href="mailto:mynegociooficiall@gmail.com" class="text-muted text-decoration-none">mynegociooficiall@gmail.com</a>
+                            <div class="fw-semibold mb-3">Contacto directo</div>
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <div class="bg-light-primary rounded-circle d-flex align-items-center justify-content-center" style="width:32px;height:32px;"><i class="bi bi-envelope-fill text-primary small"></i></div>
+                                <a href="mailto:mynegociooficiall@gmail.com" class="text-muted text-decoration-none">mynegociooficiall&#64;gmail.com</a>
                             </div>
-                            <div class="d-flex align-items-center gap-2 mb-2">
-                                <i class="bi bi-telephone-fill text-primary"></i>
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <div class="bg-light-primary rounded-circle d-flex align-items-center justify-content-center" style="width:32px;height:32px;"><i class="bi bi-telephone-fill text-primary small"></i></div>
                                 <a href="tel:+593997143142" class="text-muted text-decoration-none">+593 99 714 3142</a>
                             </div>
                             <div class="d-flex align-items-center gap-2">
-                                <i class="bi bi-whatsapp text-success"></i>
-                                <a href="https://wa.me/593997143142?text=Hola%20quiero%20información%20de%20Mi%20Negocio" target="_blank" rel="noopener" class="text-muted text-decoration-none">Escríbenos por WhatsApp</a>
+                                <div class="bg-light-success rounded-circle d-flex align-items-center justify-content-center" style="width:32px;height:32px;"><i class="bi bi-whatsapp text-success small"></i></div>
+                                <a href="https://wa.me/593997143142?text=Hola%20quiero%20información%20de%20Mi%20Negocio" target="_blank" rel="noopener" class="text-muted text-decoration-none">Escribenos por WhatsApp</a>
                             </div>
                         </div>
                     </div>
@@ -1049,7 +1140,7 @@
             </div>
 
             <div class="col-lg-7" data-aos="fade-left">
-                <div class="card border-0 shadow-lg h-100">
+                <div class="card border-0 shadow-lg h-100" style="border-radius:1rem;">
                     <div class="card-body p-4 p-lg-5">
                         <h4 class="fw-bold mb-4">Solicitar demo</h4>
 
@@ -1057,46 +1148,34 @@
                             @Html.AntiForgeryToken()
 
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Nombre</label>
-                                <input type="text" class="form-control form-control-lg" name="Name" required maxlength="120" />
+                                <label class="form-label fw-semibold small">Tu nombre</label>
+                                <input type="text" class="form-control form-control-lg" name="Name" required maxlength="120" placeholder="Ej: Juan Perez" />
                             </div>
-
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Nombre del negocio</label>
-                                <input type="text" class="form-control form-control-lg" name="GymName" required maxlength="150" />
+                                <label class="form-label fw-semibold small">Nombre del negocio</label>
+                                <input type="text" class="form-control form-control-lg" name="GymName" required maxlength="150" placeholder="Ej: Gimnasio FitZone" />
                             </div>
-
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Email</label>
-                                <input type="email" class="form-control form-control-lg" name="Email" required maxlength="180" />
+                                <label class="form-label fw-semibold small">Email</label>
+                                <input type="email" class="form-control form-control-lg" name="Email" required maxlength="180" placeholder="tu@email.com" />
                             </div>
-
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Teléfono / WhatsApp</label>
-                                <input type="tel" class="form-control form-control-lg" name="Phone" maxlength="40" />
+                                <label class="form-label fw-semibold small">Telefono / WhatsApp</label>
+                                <input type="tel" class="form-control form-control-lg" name="Phone" maxlength="40" placeholder="+593 99 999 9999" />
                             </div>
-
                             <div class="col-12">
-                                <label class="form-label fw-semibold">Mensaje</label>
-                                <textarea class="form-control form-control-lg" name="Message" rows="4" placeholder="Cuéntanos cuántos clientes tienes, si usas Excel, y qué te gustaría mejorar." maxlength="1200"></textarea>
+                                <label class="form-label fw-semibold small">Mensaje</label>
+                                <textarea class="form-control form-control-lg" name="Message" rows="4" placeholder="Cuentanos cuantos clientes tienes, si usas Excel, y que te gustaria mejorar." maxlength="1200"></textarea>
                             </div>
-
                             <div class="col-12 d-flex flex-column flex-sm-row gap-3 mt-2">
                                 <button type="submit" class="btn btn-primary btn-lg px-4 fw-bold">
-                                    <i class="bi bi-send me-2"></i>
-                                    Enviar
+                                    <i class="bi bi-send me-2"></i>Enviar
                                 </button>
-
-                                <!-- WhatsApp: reemplaza el número por el tuyo (formato internacional sin +) -->
-                                <a class="btn btn-outline-success btn-lg px-4 fw-semibold"
-                                   target="_blank"
-                                   rel="noopener"
+                                <a class="btn btn-outline-success btn-lg px-4 fw-semibold" target="_blank" rel="noopener"
                                    href="https://wa.me/593997143142?text=Hola%20quiero%20una%20demo%20de%20Mi%20Negocio">
-                                    <i class="bi bi-whatsapp me-2"></i>
-                                    Escribir por WhatsApp
+                                    <i class="bi bi-whatsapp me-2"></i>Escribir por WhatsApp
                                 </a>
                             </div>
-
                             <div class="col-12">
                                 <div class="small text-muted">
                                     Al enviar aceptas que te contactemos para coordinar la demo. No compartimos tus datos con terceros.
@@ -1105,26 +1184,20 @@
                         </form>
 
                         <!-- Toasts -->
-                        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+                        <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080;">
                             <div id="leadToast" class="toast align-items-center text-bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
                                 <div class="d-flex">
-                                    <div class="toast-body">
-                                        Listo. Recibimos tu solicitud y te contactaremos pronto.
-                                    </div>
+                                    <div class="toast-body">Listo. Recibimos tu solicitud y te contactaremos pronto.</div>
                                     <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                                 </div>
                             </div>
-
                             <div id="leadToastError" class="toast align-items-center text-bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
                                 <div class="d-flex">
-                                    <div class="toast-body">
-                                        Ocurrió un problema enviando el formulario. Intenta de nuevo.
-                                    </div>
+                                    <div class="toast-body">Ocurrio un problema. Intenta de nuevo o escribenos por WhatsApp.</div>
                                     <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                                 </div>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </div>
@@ -1132,35 +1205,98 @@
     </div>
 </div>
 
-<!-- Floating WhatsApp Button -->
+<!-- ============================================ -->
+<!-- FLOATING ELEMENTS                            -->
+<!-- ============================================ -->
+
+<!-- WhatsApp Button -->
 <a id="btnWhatsApp" href="https://wa.me/593997143142?text=Hola%20quiero%20una%20demo%20de%20Mi%20Negocio" target="_blank" rel="noopener"
    class="shadow-lg d-flex align-items-center justify-content-center"
-   title="Escríbenos por WhatsApp"
-   style="position: fixed; right: 18px; bottom: 80px; z-index: 1070; width: 52px; height: 52px; border-radius: 50%; background: #25D366; color: white; text-decoration: none; transition: transform 0.2s ease;">
+   title="Escribenos por WhatsApp"
+   style="position:fixed;right:18px;bottom:80px;z-index:1070;width:56px;height:56px;border-radius:50%;background:#25D366;color:white;text-decoration:none;transition:transform 0.2s ease;">
     <i class="bi bi-whatsapp fs-4"></i>
 </a>
 
 <!-- Back to top -->
 <button id="btnTop" type="button" class="btn btn-primary shadow-lg rounded-circle d-none"
-        style="position: fixed; right: 18px; bottom: 18px; z-index: 1070; width: 48px; height: 48px;">
+        style="position:fixed;right:18px;bottom:18px;z-index:1070;width:48px;height:48px;">
     <i class="bi bi-arrow-up"></i>
 </button>
 
+
 @section Styles {
     <style>
-        /* Utilidades si no tienes Metronic */
+        /* ============================== */
+        /* UTILITY CLASSES                */
+        /* ============================== */
         .py-7 { padding-top: 5rem; padding-bottom: 5rem; }
         .py-6 { padding-top: 4rem; padding-bottom: 4rem; }
         .mb-6 { margin-bottom: 3rem; }
 
         .backdrop-blur { backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
 
+        .bg-light-primary { background-color: rgba(62, 151, 255, 0.1) !important; }
+        .bg-light-success { background-color: rgba(80, 205, 137, 0.1) !important; }
+        .bg-light-warning { background-color: rgba(255, 199, 0, 0.1) !important; }
+        .bg-light-danger  { background-color: rgba(241, 65, 108, 0.1) !important; }
+        .bg-light-info    { background-color: rgba(114, 57, 234, 0.1) !important; }
+
+        /* ============================== */
+        /* HOVER EFFECTS                  */
+        /* ============================== */
         .shadow-hover { transition: transform .2s ease, box-shadow .2s ease; }
         .shadow-hover:hover { transform: translateY(-4px); box-shadow: 0 1rem 2.5rem rgba(0,0,0,.12) !important; }
 
-        .feature-card { transition: transform .2s ease, box-shadow .2s ease; }
+        .feature-card { transition: transform .25s ease, box-shadow .25s ease; cursor: default; }
         .feature-card:hover { transform: translateY(-6px); box-shadow: 0 1rem 2.5rem rgba(0,0,0,.10) !important; }
 
+        .btn-hover-lift { transition: transform .2s ease, box-shadow .2s ease; }
+        .btn-hover-lift:hover { transform: translateY(-2px); box-shadow: 0 .5rem 1.5rem rgba(0,0,0,.15) !important; }
+
+        .modelo-card { transition: transform .25s ease, box-shadow .25s ease; }
+        .modelo-card:hover { transform: translateY(-4px); box-shadow: 0 1.5rem 3rem rgba(0,0,0,.10) !important; }
+
+        /* ============================== */
+        /* HERO                           */
+        /* ============================== */
+        .hero-gradient {
+            background: linear-gradient(135deg, #181C32 0%, #1B2559 40%, #3E97FF 100%);
+        }
+
+        .hero-grid-overlay {
+            opacity: .2;
+            background-image:
+                linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px);
+            background-size: 48px 48px;
+        }
+
+        .hero-text-gradient {
+            background: linear-gradient(90deg, #FFC700, #F97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-orb {
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: .25;
+        }
+        .hero-orb-1 {
+            width: 400px; height: 400px;
+            background: #7239EA;
+            top: -100px; right: -100px;
+        }
+        .hero-orb-2 {
+            width: 300px; height: 300px;
+            background: #3E97FF;
+            bottom: 10%; left: -80px;
+        }
+
+        /* ============================== */
+        /* ANIMATIONS                     */
+        /* ============================== */
         .pulse-animation { animation: pulse 2.2s ease-in-out infinite; }
         @@keyframes pulse {
             0%   { transform: scale(1);   box-shadow: 0 0 0 0 rgba(25,135,84,.35); }
@@ -1168,100 +1304,268 @@
             100% { transform: scale(1);   box-shadow: 0 0 0 0 rgba(25,135,84,0); }
         }
 
-        .hero-gradient {
-            background: linear-gradient(135deg, #181C32 0%, #3E97FF 100%);
-        }
-
-        .hero-grid-overlay {
-            opacity: .28;
-            background-image:
-                linear-gradient(rgba(255,255,255,.08) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,.08) 1px, transparent 1px);
-            background-size: 40px 40px;
-        }
-
-        #btnWhatsApp:hover { transform: scale(1.1); }
-
         .floating-mockup { animation: float 6s ease-in-out infinite; }
         @@keyframes float {
-            0% { transform: rotate(-3deg) translateY(0); }
-            50% { transform: rotate(-3deg) translateY(-12px); }
-            100% { transform: rotate(-3deg) translateY(0); }
+            0%   { transform: rotate(-2deg) translateY(0); }
+            50%  { transform: rotate(-2deg) translateY(-14px); }
+            100% { transform: rotate(-2deg) translateY(0); }
+        }
+
+        /* ============================== */
+        /* SHOWCASE TABS                  */
+        /* ============================== */
+        .showcase-tab { color: #999; border-bottom: 3px solid transparent; border-radius: 0; font-size: 0.9rem; transition: all .2s ease; }
+        .showcase-tab.active { color: #3E97FF; border-bottom-color: #3E97FF; background: rgba(62,151,255,0.04); }
+        .showcase-tab:hover { color: #3E97FF; }
+
+        .showcase-panel { animation: panelFadeIn 0.35s ease; }
+        @@keyframes panelFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ============================== */
+        /* ACTIVITY FEED                  */
+        /* ============================== */
+        .activity-feed-scroll { overflow: hidden; position: relative; }
+        .activity-feed-inner { animation: feedScroll 10s linear infinite; }
+        .activity-feed-scroll:hover .activity-feed-inner { animation-play-state: paused; }
+        @@keyframes feedScroll {
+            0%   { transform: translateY(0); }
+            100% { transform: translateY(-50%); }
+        }
+
+        /* ============================== */
+        /* SCHEDULE ITEMS                 */
+        /* ============================== */
+        .schedule-item.visible {
+            opacity: 1 !important;
+            transform: translateX(0) !important;
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        /* ============================== */
+        /* BADGE PULSE                    */
+        /* ============================== */
+        .badge-pulse { animation: badgePulse 2s ease-in-out infinite; }
+        @@keyframes badgePulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        /* ============================== */
+        /* WHATSAPP BUTTON                */
+        /* ============================== */
+        #btnWhatsApp:hover { transform: scale(1.12); }
+
+        /* ============================== */
+        /* RESPONSIVE                     */
+        /* ============================== */
+        @@media (max-width: 768px) {
+            .py-7 { padding-top: 3.5rem; padding-bottom: 3.5rem; }
+            .display-2 { font-size: 2.4rem; }
+            .display-5 { font-size: 1.8rem; }
+            .hero-orb { display: none; }
         }
     </style>
 }
 
 @section Scripts {
-    <!-- AOS (opcional). Si ya lo cargas en _Layout, puedes borrar estas 2 líneas -->
+    <!-- AOS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" />
     <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
 
     <script>
+    (function () {
+        // ============================
+        // AOS INIT
+        // ============================
+        if (window.AOS) {
+            AOS.init({ duration: 750, once: true, offset: 80 });
+        }
+
+        // ============================
+        // BACK TO TOP
+        // ============================
+        var btnTop = document.getElementById('btnTop');
+        function toggleTop() {
+            if (!btnTop) return;
+            if (window.scrollY > 500) btnTop.classList.remove('d-none');
+            else btnTop.classList.add('d-none');
+        }
+        window.addEventListener('scroll', toggleTop);
+        toggleTop();
+        if (btnTop) {
+            btnTop.addEventListener('click', function () {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+
+        // ============================
+        // DASHBOARD SHOWCASE
+        // ============================
         (function () {
-            // AOS init (si existe)
-            if (window.AOS) {
-                AOS.init({ duration: 750, once: true, offset: 80 });
-            }
+            var showcase = document.getElementById('dashboardShowcase');
+            if (!showcase) return;
 
-            // Back to top
-            var btnTop = document.getElementById('btnTop');
-            var toggleTop = function () {
-                if (!btnTop) return;
-                if (window.scrollY > 500) btnTop.classList.remove('d-none');
-                else btnTop.classList.add('d-none');
-            };
-            window.addEventListener('scroll', toggleTop);
-            toggleTop();
+            // Tab switching
+            var tabs = showcase.querySelectorAll('.showcase-tab');
+            tabs.forEach(function (tab) {
+                tab.addEventListener('click', function () {
+                    tabs.forEach(function (t) { t.classList.remove('active'); });
+                    tab.classList.add('active');
+                    var targetId = tab.getAttribute('data-target');
+                    showcase.querySelectorAll('.showcase-panel').forEach(function (p) {
+                        p.style.display = 'none';
+                        p.classList.remove('active');
+                    });
+                    var target = document.getElementById(targetId);
+                    if (target) {
+                        target.style.display = '';
+                        target.classList.add('active');
+                        animatePanel(target);
+                    }
+                });
+            });
 
-            if (btnTop) {
-                btnTop.addEventListener('click', function () {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Counter animation with requestAnimationFrame + easeOutCubic
+            function animateCounters(container) {
+                var counters = container.querySelectorAll('.counter');
+                counters.forEach(function (el) {
+                    var target = parseInt(el.getAttribute('data-target'), 10);
+                    if (isNaN(target)) return;
+                    el.textContent = '0';
+                    var duration = 1500;
+                    var startTime = null;
+                    function step(ts) {
+                        if (!startTime) startTime = ts;
+                        var progress = Math.min((ts - startTime) / duration, 1);
+                        var eased = 1 - Math.pow(1 - progress, 3);
+                        el.textContent = Math.round(eased * target).toLocaleString();
+                        if (progress < 1) requestAnimationFrame(step);
+                    }
+                    requestAnimationFrame(step);
                 });
             }
 
-            // Envío del formulario con fetch (degradación: si falla, hace POST normal)
-            var form = document.getElementById('leadForm');
-            if (!form) return;
+            // Bar chart animation
+            function animateBars(container) {
+                container.querySelectorAll('.bar-income, .bar-expense').forEach(function (bar) {
+                    var h = bar.getAttribute('data-height');
+                    if (h) {
+                        bar.style.height = '0px';
+                        setTimeout(function() { bar.style.height = h + 'px'; }, 50);
+                    }
+                });
+            }
 
-            form.addEventListener('submit', async function (e) {
-                // Si quieres forzar POST normal, comenta todo este bloque y listo.
-                e.preventDefault();
+            // Schedule items stagger animation
+            function animateSchedule(container) {
+                var items = container.querySelectorAll('.schedule-item');
+                items.forEach(function (item, i) {
+                    item.classList.remove('visible');
+                    setTimeout(function () { item.classList.add('visible'); }, 200 * (i + 1));
+                });
+            }
 
-                try {
-                    var formData = new FormData(form);
+            function animatePanel(panel) {
+                animateCounters(panel);
+                animateBars(panel);
+                animateSchedule(panel);
+            }
 
-                    // Antiforgery (si usas ValidateAntiForgeryToken en el endpoint)
-                    var tokenInput = form.querySelector('input[name="__RequestVerificationToken"]');
-                    var token = tokenInput ? tokenInput.value : null;
-
-                    var res = await fetch(form.action, {
-                        method: 'POST',
-                        body: formData,
-                        headers: token ? { 'RequestVerificationToken': token } : {}
+            // IntersectionObserver to trigger animations when visible
+            var animated = false;
+            if ('IntersectionObserver' in window) {
+                var observer = new IntersectionObserver(function (entries) {
+                    entries.forEach(function (entry) {
+                        if (entry.isIntersecting && !animated) {
+                            animated = true;
+                            var activePanel = showcase.querySelector('.showcase-panel.active');
+                            if (activePanel) animatePanel(activePanel);
+                        }
                     });
-
-                    if (!res.ok) throw new Error('Bad response');
-
-                    // Mostrar toast success
-                    var toastEl = document.getElementById('leadToast');
-                    if (toastEl && window.bootstrap) new bootstrap.Toast(toastEl).show();
-
-                    form.reset();
-                } catch (err) {
-                    // Mostrar toast error y permitir fallback si deseas
-                    var toastErrEl = document.getElementById('leadToastError');
-                    if (toastErrEl && window.bootstrap) new bootstrap.Toast(toastErrEl).show();
-                }
-            });
+                }, { threshold: 0.25 });
+                observer.observe(showcase);
+            } else {
+                var activePanel = showcase.querySelector('.showcase-panel.active');
+                if (activePanel) animatePanel(activePanel);
+            }
         })();
-    </script>
 
-    <style>
-        /* Ensure transparency utilities are available */
-        .bg-light-primary { background-color: var(--mg-primary-light, rgba(62, 151, 255, 0.1)) !important; }
-        .bg-light-success { background-color: var(--mg-success-light, rgba(80, 205, 137, 0.1)) !important; }
-        .bg-light-warning { background-color: var(--mg-warning-light, rgba(255, 199, 0, 0.1)) !important; }
-        .bg-light-danger { background-color: var(--mg-danger-light, rgba(241, 65, 108, 0.1)) !important; }
-        .bg-light-info { background-color: var(--mg-info-light, rgba(114, 57, 234, 0.1)) !important; }
-    </style>
+        // ============================
+        // SOCIAL PROOF COUNTERS
+        // ============================
+        (function () {
+            var section = document.getElementById('socialProofSection');
+            if (!section) return;
+
+            var socialAnimated = false;
+
+            function animateSocialCounters() {
+                var counters = section.querySelectorAll('.social-counter');
+                counters.forEach(function (el) {
+                    var target = parseInt(el.getAttribute('data-target'), 10);
+                    if (isNaN(target)) return;
+                    el.textContent = '0';
+                    var duration = 2000;
+                    var startTime = null;
+                    function step(ts) {
+                        if (!startTime) startTime = ts;
+                        var progress = Math.min((ts - startTime) / duration, 1);
+                        var eased = 1 - Math.pow(1 - progress, 3);
+                        var val = Math.round(eased * target);
+                        el.textContent = val.toLocaleString();
+                        if (progress < 1) requestAnimationFrame(step);
+                    }
+                    requestAnimationFrame(step);
+                });
+            }
+
+            if ('IntersectionObserver' in window) {
+                var observer = new IntersectionObserver(function (entries) {
+                    entries.forEach(function (entry) {
+                        if (entry.isIntersecting && !socialAnimated) {
+                            socialAnimated = true;
+                            animateSocialCounters();
+                        }
+                    });
+                }, { threshold: 0.3 });
+                observer.observe(section);
+            } else {
+                animateSocialCounters();
+            }
+        })();
+
+        // ============================
+        // LEAD FORM FETCH SUBMIT
+        // ============================
+        var form = document.getElementById('leadForm');
+        if (!form) return;
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            try {
+                var formData = new FormData(form);
+                var tokenInput = form.querySelector('input[name="__RequestVerificationToken"]');
+                var token = tokenInput ? tokenInput.value : null;
+
+                var res = await fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                    headers: token ? { 'RequestVerificationToken': token } : {}
+                });
+
+                if (!res.ok) throw new Error('Bad response');
+
+                var toastEl = document.getElementById('leadToast');
+                if (toastEl && window.bootstrap) new bootstrap.Toast(toastEl).show();
+                form.reset();
+            } catch (err) {
+                var toastErrEl = document.getElementById('leadToastError');
+                if (toastErrEl && window.bootstrap) new bootstrap.Toast(toastErrEl).show();
+            }
+        });
+    })();
+    </script>
 }

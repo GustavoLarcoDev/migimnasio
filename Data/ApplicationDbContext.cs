@@ -48,4 +48,93 @@ public class ApplicationDbContext : DbContext
 
     /// <summary>Tabla de leads/interesados desde la landing page</summary>
     public DbSet<LeadVendedor> LeadsVendedor { get; set; }
+
+    // ═══════════════════════════════════════════════════════════
+    // TABLAS MODELO ARTESANAL (citas, servicios, empleados)
+    // ═══════════════════════════════════════════════════════════
+
+    public DbSet<ServicioNegocio> ServiciosNegocio { get; set; }
+    public DbSet<Empleado> Empleados { get; set; }
+    public DbSet<HorarioEmpleado> HorariosEmpleado { get; set; }
+    public DbSet<HorarioExcepcion> HorariosExcepcion { get; set; }
+    public DbSet<Cita> Citas { get; set; }
+    public DbSet<PagoCita> PagosCita { get; set; }
+
+    // ═══════════════════════════════════════════════════════════
+    // CONFIGURACIÓN DE MODELO (índices y constraints)
+    // ═══════════════════════════════════════════════════════════
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // Citas — índices para calendario, doble-booking, filtros y recordatorios
+        modelBuilder.Entity<Cita>(entity =>
+        {
+            entity.HasIndex(c => new { c.NegocioId, c.FechaHoraInicio })
+                .HasDatabaseName("IX_Citas_NegocioId_FechaHoraInicio");
+
+            entity.HasIndex(c => new { c.EmpleadoId, c.FechaHoraInicio, c.FechaHoraFin })
+                .HasDatabaseName("IX_Citas_EmpleadoId_Horario");
+
+            entity.HasIndex(c => new { c.NegocioId, c.Estado })
+                .HasDatabaseName("IX_Citas_NegocioId_Estado");
+
+            entity.HasIndex(c => new { c.RecordatorioEnviado, c.Estado, c.FechaHoraInicio })
+                .HasDatabaseName("IX_Citas_Recordatorio");
+        });
+
+        // PagoCita — 1 pago por cita (índice único)
+        modelBuilder.Entity<PagoCita>(entity =>
+        {
+            entity.HasIndex(p => p.CitaId)
+                .IsUnique()
+                .HasDatabaseName("IX_PagosCita_CitaId_Unique");
+
+            entity.HasOne(p => p.Cita)
+                .WithOne(c => c.Pago)
+                .HasForeignKey<PagoCita>(p => p.CitaId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // HorarioEmpleado — UNIQUE por empleado/dia
+        modelBuilder.Entity<HorarioEmpleado>(entity =>
+        {
+            entity.HasIndex(h => new { h.EmpleadoId, h.DiaSemana })
+                .IsUnique()
+                .HasDatabaseName("IX_HorariosEmpleado_EmpleadoId_Dia");
+        });
+
+        // HorarioExcepcion — UNIQUE por empleado/fecha
+        modelBuilder.Entity<HorarioExcepcion>(entity =>
+        {
+            entity.HasIndex(h => new { h.EmpleadoId, h.Fecha })
+                .IsUnique()
+                .HasDatabaseName("IX_HorariosExcepcion_EmpleadoId_Fecha");
+        });
+
+        // Evitar cascade delete múltiple en Cita
+        modelBuilder.Entity<Cita>(entity =>
+        {
+            entity.HasOne(c => c.Cliente)
+                .WithMany(cl => cl.Citas)
+                .HasForeignKey(c => c.ClienteId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(c => c.Empleado)
+                .WithMany(e => e.Citas)
+                .HasForeignKey(c => c.EmpleadoId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(c => c.Servicio)
+                .WithMany(s => s.Citas)
+                .HasForeignKey(c => c.ServicioId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(c => c.Negocio)
+                .WithMany(n => n.Citas)
+                .HasForeignKey(c => c.NegocioId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+    }
 }

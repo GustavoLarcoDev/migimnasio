@@ -105,6 +105,11 @@ public class NotificationService : INotificationService
     /// </summary>
     public async Task<(bool success, string message, int count)> GenerarNotificacionesAsync(Guid negocioId)
     {
+        // Negocios artesanales no tienen membresías — skip
+        var negocio = await _context.Negocios.FindAsync(negocioId);
+        if (negocio?.TipoNegocio == "artesanal")
+            return (true, "Negocio artesanal — sin notificaciones de membresía", 0);
+
         var hoy = TimeHelper.Now.Date;
         var en3Dias = hoy.AddDays(3);
 
