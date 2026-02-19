@@ -91,10 +91,13 @@
 
         <!-- Pie del sidebar: solo cerrar sesión -->
         <div class="mg-sidebar-footer">
-            <a href="@Url.Action("Logout", "Auth")" class="nav-link">
-                <i class="bi bi-box-arrow-left"></i>
-                <span>Cerrar Sesión</span>
-            </a>
+            <form method="post" action="@Url.Action("Logout", "Auth")">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="nav-link" style="border:none;background:none;width:100%;text-align:left;cursor:pointer;">
+                    <i class="bi bi-box-arrow-left"></i>
+                    <span>Cerrar Sesión</span>
+                </button>
+            </form>
         </div>
     </aside>
 
@@ -159,6 +162,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/2.0.1/js/toastr.js"></script>
+    <script>toastr.options.escapeHtml = true;</script>
     <script src="https://cdn.datatables.net/2.3.6/js/dataTables.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 

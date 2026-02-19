@@ -48,9 +48,9 @@ public class LogsController : Controller
 
             return Ok(new { success = true, message });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -73,9 +73,9 @@ public class LogsController : Controller
             var logs = await _logService.GetLogsAsync(negocioId);
             return Ok(logs);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -97,9 +97,9 @@ public class LogsController : Controller
 
             return Ok(log);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -118,9 +118,9 @@ public class LogsController : Controller
             var oldest = await _logService.GetOldestLogDateAsync(negocioId);
             return Ok(new { fecha = oldest });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -143,9 +143,9 @@ public class LogsController : Controller
             var (success, message) = await _logService.EliminarTodosLogsAsync(negocioId);
             return Ok(new { success, message });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -170,9 +170,9 @@ public class LogsController : Controller
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 $"Logs_{TimeHelper.Now:yyyyMMdd}.xlsx");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 }

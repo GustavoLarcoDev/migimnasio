@@ -39,9 +39,9 @@ public class VentasController : Controller
             var stats = await _ventasService.GetVentasStatsAsync(negocioId);
             return Ok(stats);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -61,9 +61,9 @@ public class VentasController : Controller
             var data = await _ventasService.GetChartDataAsync(negocioId, periodo);
             return Ok(data);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -82,9 +82,9 @@ public class VentasController : Controller
             var data = await _ventasService.GetClientesChartDataAsync(negocioId, periodo);
             return Ok(data);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 }

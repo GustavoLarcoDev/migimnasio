@@ -1566,7 +1566,7 @@ function cargarTablaVendedores() {
                 return '<div class="d-flex justify-content-end gap-1">' +
                     '<button class="btn btn-icon btn-bg-light btn-sm" onclick="impersonarVendedor(\'' + r.vendedorId + '\',\'' + escHtml(r.nombreCompleto).replace(/'/g, "\\'") + '\')" title="Impersonar"><i class="bi bi-eye text-info fs-5"></i></button>' +
                     '<button class="btn btn-icon btn-bg-light btn-sm" onclick="editarVendedor(\'' + r.vendedorId + '\')" title="Editar"><i class="bi bi-pencil fs-5"></i></button>' +
-                    '<button class="btn btn-icon btn-bg-light btn-sm" onclick="eliminarVendedor(\'' + r.vendedorId + '\',\'' + escHtml(r.nombreCompleto) + '\')" title="Eliminar"><i class="bi bi-trash text-danger fs-5"></i></button>' +
+                    '<button class="btn btn-icon btn-bg-light btn-sm" onclick="eliminarVendedor(\'' + r.vendedorId + '\',\'' + escHtml(r.nombreCompleto).replace(/'/g, "\\'") + '\')" title="Eliminar"><i class="bi bi-trash text-danger fs-5"></i></button>' +
                     '</div>';
             }}
         ],

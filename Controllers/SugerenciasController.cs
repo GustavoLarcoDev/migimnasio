@@ -48,9 +48,9 @@ public class SugerenciasController : Controller
 
             return Ok(new { success = true, message });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -84,9 +84,9 @@ public class SugerenciasController : Controller
             var sugerencias = await _sugerenciaService.GetSugerenciasAsync();
             return Ok(sugerencias);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -104,9 +104,9 @@ public class SugerenciasController : Controller
             var (success, message) = await _sugerenciaService.MarcarLeidaAsync(id);
             return Ok(new { success, message });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 }

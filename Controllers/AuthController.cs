@@ -7,6 +7,7 @@
 using Gimnasio.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Security.Claims;
@@ -150,8 +151,11 @@ public class AuthController : Controller
     /// <summary>
     /// Cierra la sesión del usuario. Si es un negocio, registra
     /// el cierre de sesión en los logs antes de cerrar.
+    /// Usa POST para prevenir ataques CSRF (un sitio malicioso
+    /// no puede forzar logout con un simple link o imagen).
     /// </summary>
-    [HttpGet("Logout")]
+    [Authorize]
+    [HttpPost("Logout")]
     public async Task<IActionResult> Logout()
     {
         var negocioId = _authService.GetNegocioId(User);

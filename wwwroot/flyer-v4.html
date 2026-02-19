@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=874">
+<title>My-Negocio - Flyer V4: Perfecto para tu Negocio</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{
+    width:874px;height:1240px;
+    font-family:'Inter',sans-serif;
+    background:#ffffff;
+    overflow:hidden;
+    position:relative;
+    color:#1e1b4b;
+  }
+
+  /* === CORNER RIBBON === */
+  .ribbon{
+    position:absolute;top:28px;right:-34px;
+    width:170px;text-align:center;
+    padding:7px 0;
+    background:linear-gradient(135deg,#f1416c,#e11d48);
+    color:#fff;font-size:13px;font-weight:800;letter-spacing:1.2px;
+    transform:rotate(45deg);
+    z-index:100;
+    box-shadow:0 3px 12px rgba(241,65,108,.45);
+    text-transform:uppercase;
+  }
+
+  /* === HEADER === */
+  .header{
+    text-align:center;
+    padding:28px 40px 18px;
+    position:relative;
+  }
+  .logo{
+    width:48px;height:48px;
+    border-radius:12px;
+    background:linear-gradient(135deg,#6366f1,#8b5cf6);
+    display:inline-flex;align-items:center;justify-content:center;
+    color:#fff;font-weight:900;font-size:18px;letter-spacing:-0.5px;
+    box-shadow:0 4px 16px rgba(99,102,241,.35);
+    margin-bottom:10px;
+  }
+  .header h1{
+    font-size:28px;font-weight:900;
+    background:linear-gradient(135deg,#6366f1,#8b5cf6);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;
+    line-height:1.15;
+    margin-bottom:4px;
+  }
+  .header .subtitle{
+    font-size:13.5px;font-weight:500;color:#64748b;
+    letter-spacing:0.3px;
+  }
+  .header .subtitle span{
+    color:#6366f1;font-weight:700;
+  }
+
+  /* === TU ELIGES BADGE === */
+  .badge-eliges{
+    display:inline-flex;align-items:center;gap:5px;
+    background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 100%);
+    color:#fff;font-size:10.5px;font-weight:700;
+    padding:4px 14px;border-radius:20px;
+    margin-top:8px;
+    letter-spacing:0.8px;
+    text-transform:uppercase;
+    box-shadow:0 2px 10px rgba(99,102,241,.3);
+  }
+
+  /* === TWO PANELS === */
+  .panels{
+    display:flex;gap:14px;
+    padding:0 22px;
+    margin-top:10px;
+  }
+  .panel{
+    flex:1;
+    border-radius:16px;
+    padding:16px 14px 14px;
+    position:relative;
+    overflow:hidden;
+  }
+  .panel::before{
+    content:'';position:absolute;inset:0;border-radius:16px;
+    opacity:0.06;pointer-events:none;
+  }
+  .panel-blue{
+    background:linear-gradient(170deg,#eff6ff 0%,#e0ecff 40%,#dbeafe 100%);
+    border:1.5px solid rgba(59,130,246,.18);
+  }
+  .panel-blue::before{background:linear-gradient(135deg,#3b82f6,#6366f1)}
+  .panel-purple{
+    background:linear-gradient(170deg,#f5f3ff 0%,#ede9fe 40%,#e8e0fe 100%);
+    border:1.5px solid rgba(139,92,246,.18);
+  }
+  .panel-purple::before{background:linear-gradient(135deg,#8b5cf6,#a855f7)}
+
+  .panel-icon{
+    width:36px;height:36px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;margin-bottom:8px;
+    box-shadow:0 3px 10px rgba(0,0,0,.08);
+  }
+  .panel-blue .panel-icon{background:linear-gradient(135deg,#3e97ff,#6366f1);color:#fff}
+  .panel-purple .panel-icon{background:linear-gradient(135deg,#8b5cf6,#a855f7);color:#fff}
+
+  .panel-title{
+    font-size:17px;font-weight:900;
+    margin-bottom:2px;
+    letter-spacing:-0.3px;
+  }
+  .panel-blue .panel-title{color:#1e40af}
+  .panel-purple .panel-title{color:#5b21b6}
+
+  .panel-tagline{
+    font-size:10px;font-weight:600;
+    margin-bottom:10px;
+    letter-spacing:0.3px;
+  }
+  .panel-blue .panel-tagline{color:#3b82f6}
+  .panel-purple .panel-tagline{color:#8b5cf6}
+
+  /* Industry list */
+  .industries{
+    display:flex;flex-wrap:wrap;gap:4px;
+    margin-bottom:12px;
+  }
+  .industry{
+    font-size:9px;font-weight:600;
+    padding:3.5px 8px;
+    border-radius:6px;
+    display:inline-flex;align-items:center;gap:3px;
+    line-height:1.2;
+  }
+  .panel-blue .industry{
+    background:rgba(59,130,246,.1);color:#1e40af;
+  }
+  .panel-purple .industry{
+    background:rgba(139,92,246,.1);color:#5b21b6;
+  }
+
+  /* Feature pills */
+  .features-label{
+    font-size:8px;font-weight:700;text-transform:uppercase;
+    letter-spacing:1px;margin-bottom:5px;
+    opacity:.55;
+  }
+  .feature-pills{
+    display:flex;flex-wrap:wrap;gap:3px;
+    margin-bottom:12px;
+  }
+  .fpill{
+    font-size:8px;font-weight:600;
+    padding:3px 7px;border-radius:4px;
+    display:inline-flex;align-items:center;gap:2px;
+  }
+  .panel-blue .fpill{background:rgba(59,130,246,.08);color:#2563eb}
+  .panel-purple .fpill{background:rgba(139,92,246,.08);color:#7c3aed}
+
+  /* === MINI DASHBOARD MOCKUPS === */
+  .mockup{
+    background:#fff;
+    border-radius:12px;
+    padding:10px;
+    box-shadow:0 2px 12px rgba(0,0,0,.06);
+    border:1px solid rgba(0,0,0,.05);
+  }
+  .mockup-bar{
+    display:flex;align-items:center;gap:5px;
+    margin-bottom:8px;
+    padding-bottom:6px;
+    border-bottom:1px solid #f1f5f9;
+  }
+  .mockup-dot{width:5px;height:5px;border-radius:50%}
+  .mockup-dot.r{background:#f1416c}.mockup-dot.y{background:#ffc700}.mockup-dot.g{background:#50cd89}
+  .mockup-title-bar{
+    font-size:7.5px;font-weight:700;color:#94a3b8;
+    margin-left:3px;text-transform:uppercase;letter-spacing:0.8px;
+  }
+
+  /* Stat cards */
+  .stat-cards{display:flex;gap:5px;margin-bottom:8px}
+  .stat-card{
+    flex:1;padding:7px 6px;border-radius:8px;
+    color:#fff;position:relative;overflow:hidden;
+  }
+  .stat-card::after{
+    content:'';position:absolute;top:-8px;right:-8px;
+    width:28px;height:28px;border-radius:50%;
+    background:rgba(255,255,255,.15);
+  }
+  .stat-card .num{font-size:15px;font-weight:900;line-height:1}
+  .stat-card .lbl{font-size:6.5px;font-weight:500;opacity:.85;margin-top:1px}
+  .sc-blue{background:linear-gradient(135deg,#3e97ff,#6366f1)}
+  .sc-green{background:linear-gradient(135deg,#50cd89,#36b37e)}
+  .sc-red{background:linear-gradient(135deg,#f1416c,#e11d48)}
+  .sc-purple{background:linear-gradient(135deg,#8b5cf6,#7c3aed)}
+  .sc-indigo{background:linear-gradient(135deg,#6366f1,#4f46e5)}
+  .sc-yellow{background:linear-gradient(135deg,#ffc700,#f59e0b)}
+
+  /* Membership list */
+  .mem-list{display:flex;flex-direction:column;gap:4px}
+  .mem-list-header{
+    font-size:7.5px;font-weight:700;color:#64748b;
+    text-transform:uppercase;letter-spacing:0.6px;
+    margin-bottom:2px;
+    display:flex;align-items:center;gap:4px;
+  }
+  .mem-list-header::before{
+    content:'';width:3px;height:10px;border-radius:2px;
+  }
+  .panel-blue .mem-list-header::before{background:#3e97ff}
+  .mem-item{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:4px 6px;border-radius:6px;
+    background:#f8fafc;
+    border:1px solid #f1f5f9;
+  }
+  .mem-item-left{display:flex;align-items:center;gap:5px}
+  .mem-avatar{
+    width:16px;height:16px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:6.5px;font-weight:700;color:#fff;
+  }
+  .mem-name{font-size:8px;font-weight:600;color:#334155}
+  .mem-plan{font-size:6.5px;color:#94a3b8;font-weight:500}
+  .mem-badge{
+    font-size:7px;font-weight:700;
+    padding:2px 6px;border-radius:4px;
+    white-space:nowrap;
+  }
+  .badge-danger{background:#fef2f2;color:#dc2626}
+  .badge-warning{background:#fffbeb;color:#d97706}
+  .badge-ok{background:#f0fdf4;color:#16a34a}
+
+  /* Calendar mockup */
+  .cal-section{margin-bottom:6px}
+  .emp-tabs{display:flex;gap:3px;margin-bottom:6px}
+  .emp-tab{
+    font-size:7px;font-weight:700;
+    padding:3px 7px;border-radius:5px;
+    display:flex;align-items:center;gap:3px;
+  }
+  .emp-tab.active{background:linear-gradient(135deg,#8b5cf6,#a855f7);color:#fff}
+  .emp-tab.inactive{background:#f1f5f9;color:#94a3b8}
+  .emp-dot{width:4px;height:4px;border-radius:50%;background:currentColor}
+
+  .cal-grid{
+    display:grid;grid-template-columns:repeat(7,1fr);
+    gap:2px;margin-bottom:6px;
+  }
+  .cal-head{
+    font-size:6px;font-weight:700;color:#94a3b8;
+    text-align:center;padding:2px 0;
+    text-transform:uppercase;
+  }
+  .cal-day{
+    text-align:center;padding:3px 0 4px;
+    font-size:7.5px;font-weight:500;color:#475569;
+    border-radius:4px;
+    position:relative;
+  }
+  .cal-day.today{
+    background:linear-gradient(135deg,#8b5cf6,#a855f7);
+    color:#fff;font-weight:700;
+  }
+  .cal-day .dots{
+    display:flex;gap:1.5px;justify-content:center;
+    margin-top:1px;
+  }
+  .cal-day .dots span{width:3px;height:3px;border-radius:50%}
+  .dot-purple{background:#8b5cf6}
+  .dot-green{background:#50cd89}
+  .dot-blue{background:#3e97ff}
+  .dot-pink{background:#f1416c}
+
+  /* Appointments list */
+  .appt-list{display:flex;flex-direction:column;gap:3px}
+  .appt-header{
+    font-size:7.5px;font-weight:700;color:#64748b;
+    text-transform:uppercase;letter-spacing:0.6px;
+    margin-bottom:2px;
+    display:flex;align-items:center;gap:4px;
+  }
+  .appt-header::before{
+    content:'';width:3px;height:10px;border-radius:2px;
+    background:#8b5cf6;
+  }
+  .appt-item{
+    display:flex;align-items:center;gap:6px;
+    padding:4px 6px;border-radius:6px;
+    background:#f8fafc;border:1px solid #f1f5f9;
+  }
+  .appt-time{
+    font-size:7.5px;font-weight:700;color:#7c3aed;
+    min-width:30px;
+  }
+  .appt-color{width:3px;height:18px;border-radius:2px}
+  .appt-info .appt-name{font-size:8px;font-weight:600;color:#334155}
+  .appt-info .appt-service{font-size:6.5px;color:#94a3b8;font-weight:500}
+
+  /* === SHARED FEATURES === */
+  .shared{
+    margin:14px 22px 0;
+    padding:12px 16px;
+    background:linear-gradient(135deg,#f8fafc,#f1f5f9);
+    border-radius:12px;
+    border:1px solid #e2e8f0;
+    text-align:center;
+  }
+  .shared-title{
+    font-size:10px;font-weight:800;color:#6366f1;
+    text-transform:uppercase;letter-spacing:1.2px;
+    margin-bottom:8px;
+  }
+  .shared-grid{
+    display:flex;justify-content:center;gap:8px;
+    flex-wrap:wrap;
+  }
+  .shared-item{
+    display:flex;align-items:center;gap:4px;
+    font-size:9.5px;font-weight:600;color:#475569;
+    background:#fff;
+    padding:5px 10px;border-radius:8px;
+    border:1px solid #e2e8f0;
+    box-shadow:0 1px 3px rgba(0,0,0,.04);
+  }
+  .shared-item .si-icon{font-size:11px}
+
+  /* === SOCIAL PROOF === */
+  .proof{
+    display:flex;align-items:center;justify-content:center;gap:24px;
+    margin:12px 22px 0;
+    padding:9px 0;
+  }
+  .proof-item{text-align:center}
+  .proof-num{
+    font-size:18px;font-weight:900;
+    background:linear-gradient(135deg,#6366f1,#8b5cf6);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;
+    line-height:1.1;
+  }
+  .proof-lbl{font-size:8px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px}
+  .proof-divider{width:1px;height:28px;background:#e2e8f0}
+
+  /* === TESTIMONIAL === */
+  .testimonial{
+    margin:10px 22px 0;
+    padding:10px 16px;
+    background:#fafafe;
+    border-radius:10px;
+    border-left:3px solid #6366f1;
+    position:relative;
+  }
+  .testimonial .quote-mark{
+    position:absolute;top:4px;left:10px;
+    font-size:24px;font-weight:900;color:#6366f1;opacity:.12;
+    line-height:1;
+  }
+  .testimonial p{
+    font-size:9px;font-weight:500;color:#475569;
+    font-style:italic;line-height:1.45;
+    margin-left:4px;
+  }
+  .testimonial .author{
+    font-size:8px;font-weight:700;color:#6366f1;
+    margin-top:3px;margin-left:4px;
+    font-style:normal;
+  }
+
+  /* === PRICING === */
+  .pricing-section{
+    margin:12px 22px 0;
+    padding:14px 16px;
+    background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#a855f7 100%);
+    border-radius:14px;
+    position:relative;
+    overflow:hidden;
+  }
+  .pricing-section::before{
+    content:'';position:absolute;top:-40px;right:-40px;
+    width:120px;height:120px;border-radius:50%;
+    background:rgba(255,255,255,.06);
+  }
+  .pricing-section::after{
+    content:'';position:absolute;bottom:-30px;left:-20px;
+    width:80px;height:80px;border-radius:50%;
+    background:rgba(255,255,255,.04);
+  }
+  .pricing-title{
+    text-align:center;
+    font-size:12px;font-weight:800;color:#fff;
+    margin-bottom:10px;
+    letter-spacing:0.3px;
+  }
+  .pricing-cards{
+    display:flex;gap:8px;
+    position:relative;z-index:2;
+  }
+  .price-card{
+    flex:1;
+    background:rgba(255,255,255,.12);
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.2);
+    border-radius:10px;
+    padding:10px 8px;
+    text-align:center;
+    color:#fff;
+    position:relative;
+    transition:transform .2s;
+  }
+  .price-card.popular{
+    background:rgba(255,255,255,.96);
+    color:#1e1b4b;
+    border:2px solid #ffc700;
+    transform:scale(1.04);
+    box-shadow:0 4px 20px rgba(0,0,0,.2);
+  }
+  .popular-badge{
+    position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+    background:linear-gradient(135deg,#ffc700,#f59e0b);
+    color:#1e1b4b;font-size:6.5px;font-weight:800;
+    padding:2px 10px;border-radius:10px;
+    text-transform:uppercase;letter-spacing:0.8px;
+    white-space:nowrap;
+  }
+  .price-card .plan-name{
+    font-size:9px;font-weight:700;
+    text-transform:uppercase;letter-spacing:0.8px;
+    margin-bottom:4px;
+    opacity:.85;
+  }
+  .price-card.popular .plan-name{color:#6366f1;opacity:1}
+  .price-card .plan-old{
+    font-size:9px;font-weight:500;
+    text-decoration:line-through;
+    opacity:.5;
+  }
+  .price-card.popular .plan-old{color:#94a3b8}
+  .price-card .plan-price{
+    font-size:24px;font-weight:900;
+    line-height:1;margin:2px 0;
+  }
+  .price-card.popular .plan-price{
+    background:linear-gradient(135deg,#6366f1,#8b5cf6);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .price-card .plan-period{
+    font-size:8px;font-weight:500;opacity:.7;
+  }
+  .price-card.popular .plan-period{color:#64748b}
+  .price-card .plan-desc{
+    font-size:7px;font-weight:500;
+    margin-top:3px;opacity:.7;
+    line-height:1.3;
+  }
+  .price-card.popular .plan-desc{color:#64748b}
+
+  /* === CTA === */
+  .cta-row{
+    display:flex;align-items:center;justify-content:center;
+    gap:6px;
+    margin-top:10px;
+    position:relative;z-index:2;
+  }
+  .cta-btn{
+    background:#fff;color:#6366f1;
+    font-size:11px;font-weight:800;
+    padding:8px 20px;border-radius:8px;
+    display:inline-flex;align-items:center;gap:5px;
+    box-shadow:0 3px 12px rgba(0,0,0,.15);
+    letter-spacing:0.3px;
+  }
+  .cta-free{
+    font-size:9px;font-weight:600;color:rgba(255,255,255,.85);
+  }
+
+  /* === BOTTOM CONTACT === */
+  .contact-bar{
+    margin:12px 22px 0;
+    display:flex;align-items:center;justify-content:center;
+    gap:20px;
+    padding:8px 0;
+  }
+  .contact-item{
+    display:flex;align-items:center;gap:5px;
+    font-size:8.5px;font-weight:600;color:#64748b;
+  }
+  .contact-icon{
+    width:20px;height:20px;border-radius:6px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;
+    background:linear-gradient(135deg,#6366f1,#8b5cf6);
+    color:#fff;
+  }
+
+  /* === BRAND FOOTER === */
+  .brand-footer{
+    text-align:center;
+    padding:4px 0 10px;
+  }
+  .brand-footer span{
+    font-size:9px;font-weight:700;color:#cbd5e1;
+    letter-spacing:1px;
+  }
+</style>
+</head>
+<body>
+
+<!-- CORNER RIBBON -->
+<div class="ribbon">50% OFF</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">MN</div>
+  <h1>Elige cómo funciona tu negocio</h1>
+  <div class="subtitle">Dos modelos. <span>Una plataforma.</span></div>
+  <div class="badge-eliges">&#x2728; Tú eliges</div>
+</div>
+
+<!-- TWO PANELS -->
+<div class="panels">
+
+  <!-- LEFT: MEMBRESIAS -->
+  <div class="panel panel-blue">
+    <div class="panel-icon">📋</div>
+    <div class="panel-title">Membresías</div>
+    <div class="panel-tagline">Clientes recurrentes con planes</div>
+
+    <div class="industries">
+      <span class="industry">💪 Gimnasios</span>
+      <span class="industry">🧘 Yoga / Pilates</span>
+      <span class="industry">🥊 CrossFit / MMA</span>
+      <span class="industry">🏊 Piscinas</span>
+      <span class="industry">🎓 Academias</span>
+      <span class="industry">🏃 Box de entrenamiento</span>
+    </div>
+
+    <div class="features-label">Funciones clave</div>
+    <div class="feature-pills">
+      <span class="fpill">✓ Control de planes</span>
+      <span class="fpill">✓ Alertas de vencimiento</span>
+      <span class="fpill">✓ Renovaciones</span>
+      <span class="fpill">✓ Control de pagos</span>
+    </div>
+
+    <!-- Mini Dashboard Mockup -->
+    <div class="mockup">
+      <div class="mockup-bar">
+        <span class="mockup-dot r"></span>
+        <span class="mockup-dot y"></span>
+        <span class="mockup-dot g"></span>
+        <span class="mockup-title-bar">Dashboard — Membresías</span>
+      </div>
+
+      <div class="stat-cards">
+        <div class="stat-card sc-blue">
+          <div class="num">127</div>
+          <div class="lbl">Activos</div>
+        </div>
+        <div class="stat-card sc-green">
+          <div class="num">$2.4k</div>
+          <div class="lbl">Ingresos</div>
+        </div>
+        <div class="stat-card sc-red">
+          <div class="num">8</div>
+          <div class="lbl">Vencidos</div>
+        </div>
+      </div>
+
+      <div class="mem-list">
+        <div class="mem-list-header">Próximos a Vencer</div>
+        <div class="mem-item">
+          <div class="mem-item-left">
+            <div class="mem-avatar" style="background:#3e97ff">CM</div>
+            <div>
+              <div class="mem-name">Carlos Mendoza</div>
+              <div class="mem-plan">Plan Mensual</div>
+            </div>
+          </div>
+          <span class="mem-badge badge-danger">1 día</span>
+        </div>
+        <div class="mem-item">
+          <div class="mem-item-left">
+            <div class="mem-avatar" style="background:#f1416c">LP</div>
+            <div>
+              <div class="mem-name">Laura Paredes</div>
+              <div class="mem-plan">Plan Trimestral</div>
+            </div>
+          </div>
+          <span class="mem-badge badge-warning">3 días</span>
+        </div>
+        <div class="mem-item">
+          <div class="mem-item-left">
+            <div class="mem-avatar" style="background:#50cd89">JR</div>
+            <div>
+              <div class="mem-name">José Ramírez</div>
+              <div class="mem-plan">Plan Mensual</div>
+            </div>
+          </div>
+          <span class="mem-badge badge-ok">5 días</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: CITAS -->
+  <div class="panel panel-purple">
+    <div class="panel-icon">📅</div>
+    <div class="panel-title">Citas / Reservaciones</div>
+    <div class="panel-tagline">Agenda y empleados</div>
+
+    <div class="industries">
+      <span class="industry">✂️ Barberías</span>
+      <span class="industry">💅 Salones de Belleza</span>
+      <span class="industry">💆 Spas</span>
+      <span class="industry">🎨 Tattoo Studios</span>
+      <span class="industry">🦷 Clínicas</span>
+      <span class="industry">🐾 Veterinarias</span>
+    </div>
+
+    <div class="features-label">Funciones clave</div>
+    <div class="feature-pills">
+      <span class="fpill">✓ Agenda por empleado</span>
+      <span class="fpill">✓ Catálogo de servicios</span>
+      <span class="fpill">✓ Calendario visual</span>
+      <span class="fpill">✓ Recordatorios</span>
+    </div>
+
+    <!-- Mini Dashboard Mockup -->
+    <div class="mockup">
+      <div class="mockup-bar">
+        <span class="mockup-dot r"></span>
+        <span class="mockup-dot y"></span>
+        <span class="mockup-dot g"></span>
+        <span class="mockup-title-bar">Dashboard — Citas</span>
+      </div>
+
+      <!-- Employee tabs -->
+      <div class="emp-tabs">
+        <div class="emp-tab active"><span class="emp-dot"></span> María</div>
+        <div class="emp-tab inactive"><span class="emp-dot"></span> Daniel</div>
+        <div class="emp-tab inactive"><span class="emp-dot"></span> Sofia</div>
+      </div>
+
+      <!-- Calendar grid -->
+      <div class="cal-section">
+        <div class="cal-grid">
+          <div class="cal-head">Lu</div><div class="cal-head">Ma</div><div class="cal-head">Mi</div>
+          <div class="cal-head">Ju</div><div class="cal-head">Vi</div><div class="cal-head">Sa</div><div class="cal-head">Do</div>
+          <div class="cal-day">16</div>
+          <div class="cal-day">17<div class="dots"><span class="dot-purple"></span></div></div>
+          <div class="cal-day today">18<div class="dots"><span class="dot-green"></span><span class="dot-purple"></span></div></div>
+          <div class="cal-day">19<div class="dots"><span class="dot-blue"></span></div></div>
+          <div class="cal-day">20<div class="dots"><span class="dot-purple"></span><span class="dot-pink"></span></div></div>
+          <div class="cal-day">21<div class="dots"><span class="dot-green"></span></div></div>
+          <div class="cal-day">22</div>
+        </div>
+      </div>
+
+      <!-- Appointments list -->
+      <div class="appt-list">
+        <div class="appt-header">Próximas Citas — Hoy</div>
+        <div class="appt-item">
+          <div class="appt-time">10:00</div>
+          <div class="appt-color" style="background:#8b5cf6"></div>
+          <div class="appt-info">
+            <div class="appt-name">Ana Gutiérrez</div>
+            <div class="appt-service">Corte + Tinte — María</div>
+          </div>
+        </div>
+        <div class="appt-item">
+          <div class="appt-time">11:30</div>
+          <div class="appt-color" style="background:#50cd89"></div>
+          <div class="appt-info">
+            <div class="appt-name">Roberto Salas</div>
+            <div class="appt-service">Barba Clásica — Daniel</div>
+          </div>
+        </div>
+        <div class="appt-item">
+          <div class="appt-time">14:00</div>
+          <div class="appt-color" style="background:#3e97ff"></div>
+          <div class="appt-info">
+            <div class="appt-name">Camila Flores</div>
+            <div class="appt-service">Manicure Gel — Sofia</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHARED FEATURES -->
+<div class="shared">
+  <div class="shared-title">Ambos modelos incluyen</div>
+  <div class="shared-grid">
+    <div class="shared-item"><span class="si-icon">👥</span> Clientes</div>
+    <div class="shared-item"><span class="si-icon">💰</span> Ventas</div>
+    <div class="shared-item"><span class="si-icon">📦</span> Inventario</div>
+    <div class="shared-item"><span class="si-icon">💬</span> WhatsApp</div>
+    <div class="shared-item"><span class="si-icon">📊</span> Reportes</div>
+    <div class="shared-item"><span class="si-icon">📑</span> Excel</div>
+  </div>
+</div>
+
+<!-- SOCIAL PROOF -->
+<div class="proof">
+  <div class="proof-item">
+    <div class="proof-num">500+</div>
+    <div class="proof-lbl">Negocios</div>
+  </div>
+  <div class="proof-divider"></div>
+  <div class="proof-item">
+    <div class="proof-num">15,000+</div>
+    <div class="proof-lbl">Clientes Gestionados</div>
+  </div>
+  <div class="proof-divider"></div>
+  <div class="proof-item">
+    <div class="proof-num">98%</div>
+    <div class="proof-lbl">Satisfacción</div>
+  </div>
+</div>
+
+<!-- TESTIMONIAL -->
+<div class="testimonial">
+  <div class="quote-mark">"</div>
+  <p>"Dejamos el Excel y ahora sé quién debe, quién renueva y cuánto vendimos hoy."</p>
+  <div class="author">— Andrea M., Gimnasio FitZone</div>
+</div>
+
+<!-- PRICING -->
+<div class="pricing-section">
+  <div class="pricing-title">Planes simples. Resultados reales.</div>
+  <div class="pricing-cards">
+    <div class="price-card">
+      <div class="plan-name">Sistema</div>
+      <div class="plan-old">$30/mes</div>
+      <div class="plan-price">$15</div>
+      <div class="plan-period">/mes</div>
+      <div class="plan-desc">Gestión completa de<br>tu negocio</div>
+    </div>
+    <div class="price-card popular">
+      <div class="popular-badge">Más popular</div>
+      <div class="plan-name">Sistema + Web</div>
+      <div class="plan-old">$50/mes</div>
+      <div class="plan-price">$25</div>
+      <div class="plan-period">/mes</div>
+      <div class="plan-desc">Sistema + página web<br>de reservas</div>
+    </div>
+    <div class="price-card">
+      <div class="plan-name">Plan Completo</div>
+      <div class="plan-old"></div>
+      <div class="plan-price" style="font-size:14px;margin-top:8px">A medida</div>
+      <div class="plan-period">personalizado</div>
+      <div class="plan-desc">Funciones avanzadas<br>y personalización</div>
+    </div>
+  </div>
+  <div class="cta-row">
+    <div class="cta-btn">Empieza GRATIS 7 días</div>
+    <div class="cta-free">Sin tarjeta requerida</div>
+  </div>
+</div>
+
+<!-- CONTACT -->
+<div class="contact-bar">
+  <div class="contact-item">
+    <div class="contact-icon">🌐</div>
+    www.mynegocio.com
+  </div>
+  <div class="contact-item">
+    <div class="contact-icon">✉</div>
+    mynegociooficiall@gmail.com
+  </div>
+  <div class="contact-item">
+    <div class="contact-icon">📱</div>
+    +593 99 714 3142
+  </div>
+</div>
+
+<!-- BRAND FOOTER -->
+<div class="brand-footer">
+  <span>MY-NEGOCIO &nbsp;·&nbsp; Tu negocio, simplificado.</span>
+</div>
+
+</body>
+</html>

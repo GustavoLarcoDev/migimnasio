@@ -1,7 +1,25 @@
 // ═══════════════════════════════════════════════════════════
 // AppointmentReminderService.cs — Servicio de fondo para recordatorios de citas
-// Se ejecuta cada 5 minutos y envía recordatorios por WhatsApp
-// a clientes y dueños de negocios con citas en los próximos 35 min.
+//
+// FUNCIÓN: Envía recordatorios de cita por WhatsApp a dos destinatarios:
+//   1. Al CLIENTE: "Tienes cita en {negocio} con {empleado} a las {hora}"
+//   2. Al DUEÑO del negocio: "Tienes cita para {servicio} a las {hora}"
+//
+// HORARIO: A diferencia de los otros servicios (que corren una vez al día),
+// este se ejecuta CADA 5 MINUTOS. Esto es necesario porque las citas
+// pueden ocurrir a cualquier hora del día con precisión de minutos.
+//
+// VENTANA DE TIEMPO: Busca citas que ocurren en los próximos 35 minutos.
+// Con el intervalo de 5 minutos, esto garantiza que toda cita recibe
+// su recordatorio entre 30 y 35 minutos antes de comenzar.
+//
+// PREVENCIÓN DE DUPLICADOS: El campo RecordatorioEnviado (bool) en la
+// tabla Citas evita que el mismo recordatorio se envíe más de una vez,
+// incluso si el servicio se reinicia.
+//
+// MODELO ARTESANAL: Este servicio aplica SOLO a negocios de tipo "artesanal"
+// (peluquerías, spas, etc.) que manejan citas con empleados y servicios.
+// Los negocios de membresías usan MembershipReminderService.
 // ═══════════════════════════════════════════════════════════
 
 using Gimnasio.Data;
@@ -10,15 +28,25 @@ using Microsoft.EntityFrameworkCore;
 namespace Gimnasio.Services;
 
 /// <summary>
-/// Servicio de fondo que envía recordatorios de citas via WhatsApp.
-/// Se ejecuta cada 5 minutos. Busca citas en los próximos 35 minutos
-/// que aún no tienen recordatorio enviado.
+/// Servicio de fondo (BackgroundService) que envía recordatorios de citas
+/// por WhatsApp al cliente y al dueño del negocio.
+///
+/// Se ejecuta cada 5 minutos y busca citas en los próximos 35 minutos
+/// que aún no tienen recordatorio enviado (RecordatorioEnviado = false).
+///
+/// Para agregar al contenedor de DI, se registra en
+/// <see cref="BackgroundServicesRegistration.AddBackgroundServices"/>.
 /// </summary>
 public class AppointmentReminderService : BackgroundService
 {
+    // IServiceScopeFactory: necesario porque un BackgroundService es singleton
+    // y no puede recibir DbContext (scoped) directamente en el constructor.
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ILogger<AppointmentReminderService> _logger;
 
+    /// <summary>
+    /// Constructor: recibe las dependencias por inyección de dependencias.
+    /// </summary>
     public AppointmentReminderService(
         IServiceScopeFactory scopeFactory,
         ILogger<AppointmentReminderService> logger)
@@ -28,9 +56,23 @@ public class AppointmentReminderService : BackgroundService
     }
 
     // ═══════════════════════════════════════════════════════════
-    // BUCLE PRINCIPAL — Ejecuta cada 5 minutos
+    // BUCLE PRINCIPAL
     // ═══════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// Punto de entrada del servicio de fondo. Se ejecuta al iniciar la app
+    /// y corre en un bucle infinito hasta que la app se apaga (stoppingToken).
+    ///
+    /// Patrón de ejecución: ejecutar → esperar 5 minutos → ejecutar → ...
+    ///
+    /// A diferencia de DailyReportService y MembershipReminderService que
+    /// calculan una hora específica del día, este servicio simplemente duerme
+    /// 5 minutos entre cada ejecución porque las citas pueden ocurrir a
+    /// cualquier hora.
+    ///
+    /// TaskCanceledException se captura silenciosamente — es la señal
+    /// normal de apagado, no un error.
+    /// </summary>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("AppointmentReminderService iniciado");
@@ -39,25 +81,45 @@ public class AppointmentReminderService : BackgroundService
         {
             while (!stoppingToken.IsCancellationRequested)
             {
+                // Ejecutar primero, luego esperar.
+                // Esto garantiza que el servicio procese citas inmediatamente
+                // al arrancar la app, sin esperar 5 minutos.
                 await EnviarRecordatoriosCitasAsync(stoppingToken);
+
+                // Esperar 5 minutos antes del siguiente ciclo.
+                // TimeSpan.FromMinutes(5) = 300,000 ms.
+                // stoppingToken cancela el delay si la app se apaga.
                 await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
             }
         }
-        catch (TaskCanceledException) { /* Apagado normal */ }
+        catch (TaskCanceledException)
+        {
+            // Apagado normal de la aplicación. No es un error.
+        }
 
         _logger.LogInformation("AppointmentReminderService detenido");
     }
 
     // ═══════════════════════════════════════════════════════════
-    // LÓGICA DE ENVÍO — Busca citas próximas y notifica
+    // LÓGICA DE ENVÍO
     // ═══════════════════════════════════════════════════════════
 
     /// <summary>
-    /// Busca citas en los próximos 35 minutos sin recordatorio enviado
-    /// y envía notificación por WhatsApp al cliente y al dueño del negocio
+    /// Busca citas que ocurren en los próximos 35 minutos con RecordatorioEnviado = false,
+    /// y envía notificaciones por WhatsApp tanto al cliente como al dueño del negocio.
+    ///
+    /// Después de enviar, marca la cita con RecordatorioEnviado = true para que
+    /// en el próximo ciclo (5 minutos después) no se vuelva a procesar.
+    ///
+    /// La cita solo se marca como enviada si AMBOS envíos fueron exitosos.
+    /// Si alguno falla, se reintentará en el próximo ciclo de 5 minutos.
+    ///
+    /// Citas canceladas o completadas se excluyen de la búsqueda.
     /// </summary>
     private async Task EnviarRecordatoriosCitasAsync(CancellationToken stoppingToken)
     {
+        // Crear scope de DI para acceder a DbContext y WhatsAppService.
+        // El using libera el scope y la conexión a la DB al finalizar.
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var whatsAppService = scope.ServiceProvider.GetRequiredService<IWhatsAppService>();
@@ -65,28 +127,32 @@ public class AppointmentReminderService : BackgroundService
         try
         {
             var ahora = TimeHelper.Now;
+            // Ventana de 35 minutos hacia el futuro: buscar citas que empiezan
+            // entre ahora y 35 minutos después.
             var en35Min = ahora.AddMinutes(35);
 
-            // Buscar citas próximas sin recordatorio
+            // Buscar citas pendientes en la ventana de tiempo.
+            // Se excluyen citas canceladas y completadas — no tienen sentido recordarlas.
             var citas = await context.Citas
-                .Where(c => !c.RecordatorioEnviado
-                    && c.Estado != "cancelada"
-                    && c.Estado != "completada"
-                    && c.FechaHoraInicio >= ahora
-                    && c.FechaHoraInicio <= en35Min)
+                .Where(c => !c.RecordatorioEnviado          // No enviado aún
+                    && c.Estado != "cancelada"              // Excluir canceladas
+                    && c.Estado != "completada"             // Excluir completadas
+                    && c.FechaHoraInicio >= ahora           // No pasadas
+                    && c.FechaHoraInicio <= en35Min)        // Dentro de 35 minutos
                 .ToListAsync(stoppingToken);
 
+            // Si no hay citas próximas, no hacer nada (ocurre la mayoría de los ciclos)
             if (citas.Count == 0) return;
 
             _logger.LogInformation("Encontradas {Count} citas para recordatorio", citas.Count);
 
-            // Obtener datos de negocios para los recordatorios
+            // Cargar datos de negocios y clientes en una sola consulta cada uno,
+            // en lugar de consultar la DB por cada cita (mucho más eficiente).
             var negocioIds = citas.Select(c => c.NegocioId).Distinct().ToList();
             var negocios = await context.Negocios
                 .Where(n => negocioIds.Contains(n.NegocioId))
                 .ToDictionaryAsync(n => n.NegocioId, stoppingToken);
 
-            // Obtener datos de clientes para teléfonos
             var clienteIds = citas.Select(c => c.ClienteId).Distinct().ToList();
             var clientes = await context.Clientes
                 .Where(c => clienteIds.Contains(c.ClienteId))
@@ -94,38 +160,49 @@ public class AppointmentReminderService : BackgroundService
 
             foreach (var cita in citas)
             {
+                // Respetar señal de apagado para salir limpiamente
                 if (stoppingToken.IsCancellationRequested) break;
 
                 try
                 {
+                    // Si no se encuentran los datos del negocio o cliente, omitir la cita
                     var negocio = negocios.GetValueOrDefault(cita.NegocioId);
                     var cliente = clientes.GetValueOrDefault(cita.ClienteId);
 
                     if (negocio == null || cliente == null) continue;
 
+                    // Formatear la hora en formato "12:30 PM" (AmPm, invariant culture)
                     var hora = cita.FechaHoraInicio.ToString("hh:mm tt", System.Globalization.CultureInfo.InvariantCulture);
 
+                    // Asumir éxito hasta que alguno falle
                     var envioExitoso = true;
 
-                    // Enviar al cliente
+                    // ENVÍO 1: Al cliente — le recuerda su cita en el negocio
                     if (!string.IsNullOrWhiteSpace(cliente.Telefono))
                     {
                         var resultCliente = await whatsAppService.EnviarRecordatorioCitaClienteAsync(
-                            cliente.Telefono, cita.NombreCliente,
-                            negocio.NegocioNombre, cita.NombreEmpleado, hora);
+                            cliente.Telefono,
+                            cita.NombreCliente,
+                            negocio.NegocioNombre,
+                            cita.NombreEmpleado,
+                            hora);
                         if (!resultCliente) envioExitoso = false;
                     }
 
-                    // Enviar al dueño del negocio
+                    // ENVÍO 2: Al dueño del negocio — le recuerda que tiene una cita entrante
                     if (!string.IsNullOrWhiteSpace(negocio.Telefono))
                     {
                         var resultNegocio = await whatsAppService.EnviarRecordatorioCitaNegocioAsync(
-                            negocio.Telefono, negocio.DuenoNegocio,
-                            cita.NombreServicio, hora, cita.NombreEmpleado);
+                            negocio.Telefono,
+                            negocio.DuenoNegocio,
+                            cita.NombreServicio,
+                            hora,
+                            cita.NombreEmpleado);
                         if (!resultNegocio) envioExitoso = false;
                     }
 
-                    // Solo marcar si al menos un envio fue exitoso
+                    // Marcar como enviada solo si ambos envíos fueron exitosos.
+                    // Si alguno falló, se reintentará en el próximo ciclo de 5 minutos.
                     if (envioExitoso)
                         cita.RecordatorioEnviado = true;
 
@@ -136,9 +213,13 @@ public class AppointmentReminderService : BackgroundService
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error al enviar recordatorio de cita {CitaId}", cita.CitaId);
+                    // El error se registra pero no interrumpe el bucle —
+                    // las demás citas siguen siendo procesadas.
                 }
             }
 
+            // Guardar los cambios de RecordatorioEnviado en la base de datos
+            // de una sola vez para todas las citas procesadas (más eficiente).
             await context.SaveChangesAsync(stoppingToken);
         }
         catch (Exception ex)

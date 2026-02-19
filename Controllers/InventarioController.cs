@@ -30,9 +30,9 @@ public class InventarioController : Controller
             var productos = await _inventarioService.GetProductosAsync(negocioId);
             return Ok(productos);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -58,9 +58,9 @@ public class InventarioController : Controller
                 producto.StockMinimo
             });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -80,9 +80,9 @@ public class InventarioController : Controller
 
             return Ok(new { success = true, message });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -102,9 +102,9 @@ public class InventarioController : Controller
 
             return Ok(new { success = true, message });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -124,9 +124,9 @@ public class InventarioController : Controller
 
             return Ok(new { success = true, message });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -146,9 +146,9 @@ public class InventarioController : Controller
 
             return Ok(new { success = true, message });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -168,9 +168,9 @@ public class InventarioController : Controller
 
             return Ok(new { success = true, message });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -190,9 +190,9 @@ public class InventarioController : Controller
 
             return Ok(new { success = true, message });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -212,9 +212,9 @@ public class InventarioController : Controller
 
             return Ok(new { success = true, message });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -230,9 +230,9 @@ public class InventarioController : Controller
             var movimientos = await _inventarioService.GetMovimientosAsync(negocioId);
             return Ok(movimientos);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -248,9 +248,9 @@ public class InventarioController : Controller
             var stats = await _inventarioService.GetInventarioStatsAsync(negocioId);
             return Ok(stats);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -268,9 +268,9 @@ public class InventarioController : Controller
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 $"Inventario_{TimeHelper.Now:yyyyMMdd}.xlsx");
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 }

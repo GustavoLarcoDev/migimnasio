@@ -328,8 +328,9 @@
 
 @section Scripts {
 <script>
-const negocioId = '@negocioId';
-const negocioNombre = '@ViewData["NegocioNombre"]';
+// SEGURIDAD: Json.Serialize escapa correctamente para contexto JavaScript
+const negocioId = @Json.Serialize(negocioId.ToString());
+const negocioNombre = @Json.Serialize(ViewData["NegocioNombre"] as string ?? "");
 let tablaClientes, tablaLogs, tablaUsuariosDiarios, tablaMovimientos;
 let modoEdicion = false;
 const swalMG = Swal.mixin({ confirmButtonColor: '#3E97FF', cancelButtonColor: '#E4E6EF', cancelButtonText: 'Cancelar', reverseButtons: true, customClass: { popup: 'mg-swal-popup', confirmButton: 'mg-swal-confirm', cancelButton: 'mg-swal-cancel' } });
@@ -339,6 +340,9 @@ function escHtml(str) {
     if (!str) return '';
     return $('<span>').text(str).html();
 }
+// SEGURIDAD: escAttr escapa para uso dentro de atributos HTML (onclick, title, etc.)
+// Necesario porque escHtml no escapa comillas simples que rompen contexto JavaScript
+function escAttr(str) { if (!str) return ''; return escHtml(str).replace(/'/g, '&#39;'); }
 
 $(document).ready(function () {
     cargarResumen();
@@ -1138,12 +1142,12 @@ function cargarProductosGrid() {
                 '<div class="inv-card" data-id="' + p.productoId + '">' +
                     '<div class="inv-card-actions">' +
                         '<button class="inv-card-action-btn" onclick="editarProducto(\'' + p.productoId + '\')" title="Editar"><i class="bi bi-pencil"></i></button>' +
-                        '<button class="inv-card-action-btn inv-card-action-delete" onclick="eliminarProducto(\'' + p.productoId + '\',\'' + escHtml(p.nombre) + '\')" title="Eliminar"><i class="bi bi-trash"></i></button>' +
+                        '<button class="inv-card-action-btn inv-card-action-delete" onclick="eliminarProducto(\'' + p.productoId + '\',\'' + escAttr(p.nombre) + '\')" title="Eliminar"><i class="bi bi-trash"></i></button>' +
                     '</div>' +
                     '<div class="inv-card-name">' + escHtml(p.nombre) + '</div>' +
                     '<div class="inv-card-price">$' + p.precioVenta.toFixed(2) + '</div>' +
                     '<div class="inv-card-stock-row">' +
-                        '<button class="inv-arrow inv-arrow-up" onclick="accionSubir(\'' + p.productoId + '\',\'' + escHtml(p.nombre) + '\',' + p.precioVenta + ',' + p.stock + ')" title="Devolver o actualizar"><i class="bi bi-caret-up-fill"></i></button>' +
+                        '<button class="inv-arrow inv-arrow-up" onclick="accionSubir(\'' + p.productoId + '\',\'' + escAttr(p.nombre) + '\',' + p.precioVenta + ',' + p.stock + ')" title="Devolver o actualizar"><i class="bi bi-caret-up-fill"></i></button>' +
                         '<span class="inv-card-stock ' + stockClass + '" id="stock-' + p.productoId + '">' + p.stock + '</span>' +
                         '<button class="inv-arrow inv-arrow-down' + (p.stock <= 0 ? ' disabled' : '') + '" onclick="venderRapido(\'' + p.productoId + '\')" title="Vender 1 unidad"><i class="bi bi-caret-down-fill"></i></button>' +
                     '</div>' +

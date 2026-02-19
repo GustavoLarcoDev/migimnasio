@@ -1,0 +1,1621 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=874">
+<title>My-Negocio - Flyer Dashboard Hero</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  @page { size: 148mm 210mm; margin: 0; }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    width: 874px;
+    height: 1240px;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+    position: relative;
+    background: #ffffff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ===== 50% OFF CORNER RIBBON ===== */
+  .ribbon {
+    position: absolute;
+    top: 28px;
+    left: -36px;
+    z-index: 100;
+    width: 180px;
+    text-align: center;
+    padding: 7px 0;
+    background: #f1416c;
+    color: #fff;
+    font-weight: 900;
+    font-size: 15px;
+    letter-spacing: 1.5px;
+    transform: rotate(-45deg);
+    box-shadow: 0 4px 16px rgba(241,65,108,0.45);
+    text-transform: uppercase;
+  }
+  .ribbon::before, .ribbon::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    border: 3px solid #c4113e;
+    border-bottom-color: transparent;
+  }
+  .ribbon::before { left: 0; border-left-color: transparent; }
+  .ribbon::after { right: 0; border-right-color: transparent; }
+
+  /* ===== TOP SECTION ===== */
+  .top-section {
+    position: relative;
+    padding: 30px 40px 0 40px;
+    background: linear-gradient(180deg, #f8f9ff 0%, #ffffff 100%);
+  }
+
+  /* Logo + Brand */
+  .brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .logo-box {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-weight: 900; font-size: 16px;
+    letter-spacing: -0.5px;
+    box-shadow: 0 3px 12px rgba(99,102,241,0.35);
+    flex-shrink: 0;
+  }
+  .brand-name {
+    font-size: 20px; font-weight: 800;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Headline */
+  .headline {
+    text-align: center;
+    margin-bottom: 6px;
+  }
+  .headline h1 {
+    font-size: 30px;
+    font-weight: 900;
+    color: #1a1a2e;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+  }
+  .headline h1 span {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .headline p {
+    font-size: 13px;
+    color: #6b7280;
+    margin-top: 4px;
+    font-weight: 400;
+  }
+
+  /* Social proof strip */
+  .social-proof {
+    display: flex;
+    justify-content: center;
+    gap: 28px;
+    margin: 12px 0 18px 0;
+  }
+  .proof-item {
+    text-align: center;
+  }
+  .proof-item .num {
+    font-size: 16px;
+    font-weight: 800;
+    color: #6366f1;
+  }
+  .proof-item .lbl {
+    font-size: 9px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+
+  /* ===== DEVICES SECTION ===== */
+  .devices-section {
+    position: relative;
+    width: 100%;
+    height: 440px;
+    margin-top: 2px;
+  }
+
+  /* LAPTOP MOCKUP */
+  .laptop {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 0;
+    width: 680px;
+  }
+  .laptop-screen {
+    width: 620px;
+    height: 370px;
+    margin: 0 auto;
+    border-radius: 8px 8px 0 0;
+    border: 3px solid #2d2d3a;
+    border-bottom: none;
+    background: #1e1e2d;
+    overflow: hidden;
+    display: flex;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.25);
+  }
+  .laptop-base {
+    width: 680px;
+    height: 14px;
+    background: linear-gradient(180deg, #c0c0c8 0%, #a8a8b4 100%);
+    border-radius: 0 0 6px 6px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .laptop-base::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%; transform: translateX(-50%);
+    width: 120px; height: 4px;
+    background: #9898a4;
+    border-radius: 0 0 4px 4px;
+  }
+  .laptop-notch {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #3a3a4a;
+    position: absolute;
+    top: -377px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 5;
+  }
+
+  /* Dashboard sidebar inside laptop */
+  .dash-sidebar {
+    width: 58px;
+    background: #1a1a2d;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0;
+    gap: 3px;
+    flex-shrink: 0;
+    border-right: 1px solid rgba(255,255,255,0.06);
+  }
+  .dash-sidebar .sb-logo {
+    width: 30px; height: 30px;
+    border-radius: 7px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 10px; font-weight: 900;
+    margin-bottom: 12px;
+    letter-spacing: -0.3px;
+  }
+  .sb-item {
+    width: 36px; height: 30px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 1px 0;
+  }
+  .sb-item.active {
+    background: rgba(99,102,241,0.2);
+  }
+  .sb-icon {
+    width: 16px; height: 16px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.12);
+  }
+  .sb-item.active .sb-icon {
+    background: #6366f1;
+  }
+
+  /* Dashboard content inside laptop */
+  .dash-content {
+    flex: 1;
+    padding: 10px 12px;
+    overflow: hidden;
+    background: #1e1e2d;
+  }
+
+  /* Dashboard top bar */
+  .dash-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .dash-greeting {
+    font-size: 10px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .dash-greeting small {
+    display: block;
+    font-size: 7px;
+    color: rgba(255,255,255,0.4);
+    font-weight: 400;
+  }
+  .dash-pills {
+    display: flex;
+    gap: 3px;
+  }
+  .dash-pill {
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 6.5px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.05);
+  }
+  .dash-pill.active {
+    background: #6366f1;
+    color: #fff;
+  }
+
+  /* Gradient stat cards */
+  .stat-cards-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .gradient-card {
+    flex: 1;
+    border-radius: 8px;
+    padding: 8px 10px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+  }
+  .gradient-card.green { background: linear-gradient(135deg, #50cd89 0%, #0bb783 100%); }
+  .gradient-card.red { background: linear-gradient(135deg, #f1416c 0%, #d9214e 100%); }
+  .gradient-card.purple { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); }
+  .gradient-card .gc-label {
+    font-size: 6px;
+    opacity: 0.8;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .gradient-card .gc-value {
+    font-size: 16px;
+    font-weight: 800;
+    margin-top: 1px;
+  }
+  .gradient-card .gc-icon {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 22px;
+    opacity: 0.25;
+  }
+
+  /* Mini stat cards */
+  .mini-stats-row {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 8px;
+  }
+  .mini-stat {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 6px;
+    padding: 6px 7px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .mini-stat-icon {
+    width: 22px; height: 22px;
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .mini-stat-icon.primary { background: rgba(99,102,241,0.15); }
+  .mini-stat-icon.success { background: rgba(80,205,137,0.15); }
+  .mini-stat-icon.danger { background: rgba(241,65,108,0.15); }
+  .mini-stat-icon.info { background: rgba(62,151,255,0.15); }
+  .mini-stat-icon-dot {
+    width: 8px; height: 8px; border-radius: 2px;
+  }
+  .mini-stat-icon-dot.primary { background: #6366f1; }
+  .mini-stat-icon-dot.success { background: #50cd89; }
+  .mini-stat-icon-dot.danger { background: #f1416c; }
+  .mini-stat-icon-dot.info { background: #3e97ff; }
+  .ms-label {
+    font-size: 5.5px;
+    color: rgba(255,255,255,0.45);
+    font-weight: 500;
+  }
+  .ms-value {
+    font-size: 10px;
+    color: #fff;
+    font-weight: 700;
+  }
+
+  /* Charts row */
+  .charts-row {
+    display: flex;
+    gap: 6px;
+  }
+  .chart-card {
+    border-radius: 6px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    overflow: hidden;
+  }
+  .chart-card-left { flex: 3; }
+  .chart-card-right { flex: 2; }
+  .chart-header {
+    padding: 6px 8px 2px 8px;
+    font-size: 7px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .chart-body {
+    padding: 4px 8px 6px 8px;
+  }
+
+  /* Bar chart CSS */
+  .bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 80px;
+    padding-top: 4px;
+  }
+  .bar-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+  .bar-pair {
+    display: flex;
+    gap: 2px;
+    align-items: flex-end;
+    width: 100%;
+    justify-content: center;
+  }
+  .bar {
+    width: 6px;
+    border-radius: 2px 2px 0 0;
+    min-height: 3px;
+  }
+  .bar.income { background: #50cd89; }
+  .bar.expense { background: #f1416c; }
+  .bar-label {
+    font-size: 5px;
+    color: rgba(255,255,255,0.3);
+    font-weight: 500;
+    margin-top: 2px;
+  }
+
+  /* Donut chart CSS */
+  .donut-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 0;
+  }
+  .donut-chart {
+    width: 62px; height: 62px;
+    border-radius: 50%;
+    background: conic-gradient(
+      #50cd89 0deg 150deg,
+      #f1416c 150deg 210deg,
+      #3e97ff 210deg 280deg,
+      #ffc700 280deg 330deg,
+      #7239ea 330deg 360deg
+    );
+    position: relative;
+    flex-shrink: 0;
+  }
+  .donut-chart::after {
+    content: '';
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: rgba(30,30,45,1);
+  }
+  .donut-chart .donut-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    text-align: center;
+  }
+  .donut-center .dc-val {
+    font-size: 10px;
+    font-weight: 800;
+    color: #fff;
+    display: block;
+    line-height: 1;
+  }
+  .donut-center .dc-lbl {
+    font-size: 4.5px;
+    color: rgba(255,255,255,0.5);
+  }
+  .donut-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .donut-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .dl-dot {
+    width: 5px; height: 5px; border-radius: 1.5px; flex-shrink: 0;
+  }
+  .dl-text {
+    font-size: 5.5px;
+    color: rgba(255,255,255,0.5);
+    font-weight: 500;
+  }
+  .dl-val {
+    font-size: 5.5px;
+    color: #fff;
+    font-weight: 700;
+    margin-left: auto;
+  }
+
+  /* Proximos a vencer list */
+  .vencer-section {
+    margin-top: 6px;
+  }
+  .vencer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .vencer-title {
+    font-size: 7px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .vencer-badge {
+    font-size: 5.5px;
+    background: #ffc700;
+    color: #1a1a2e;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-weight: 700;
+  }
+  .vencer-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .vencer-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 4px;
+    padding: 3px 6px;
+  }
+  .vencer-avatar {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 6px; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+  }
+  .vencer-name {
+    font-size: 6px;
+    color: rgba(255,255,255,0.7);
+    font-weight: 500;
+    flex: 1;
+  }
+  .vencer-days {
+    font-size: 5.5px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+  .vencer-days.warn { background: rgba(255,199,0,0.15); color: #ffc700; }
+  .vencer-days.danger { background: rgba(241,65,108,0.15); color: #f1416c; }
+
+  /* ===== PHONE MOCKUP ===== */
+  .phone {
+    position: absolute;
+    right: 28px;
+    bottom: 0px;
+    width: 180px;
+    z-index: 20;
+    filter: drop-shadow(0 12px 32px rgba(0,0,0,0.3));
+  }
+  .phone-frame {
+    width: 180px;
+    height: 340px;
+    border-radius: 20px;
+    border: 3px solid #2d2d3a;
+    background: #1e1e2d;
+    overflow: hidden;
+    position: relative;
+  }
+  .phone-notch {
+    width: 60px; height: 12px;
+    background: #2d2d3a;
+    border-radius: 0 0 10px 10px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 2;
+  }
+  .phone-content {
+    padding: 4px 8px;
+    overflow: hidden;
+  }
+
+  /* Phone dashboard - Citas */
+  .phone-stat-row {
+    display: flex;
+    gap: 3px;
+    margin-bottom: 5px;
+    flex-wrap: wrap;
+  }
+  .phone-stat {
+    flex: 1;
+    min-width: calc(50% - 3px);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 5px;
+    padding: 4px 5px;
+  }
+  .phone-stat .ps-label {
+    font-size: 4.5px;
+    color: rgba(255,255,255,0.4);
+    font-weight: 500;
+  }
+  .phone-stat .ps-value {
+    font-size: 9px;
+    color: #fff;
+    font-weight: 800;
+  }
+  .phone-stat .ps-value.green { color: #50cd89; }
+  .phone-stat .ps-value.red { color: #f1416c; }
+  .phone-stat .ps-icon {
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    float: right;
+    margin-top: 2px;
+  }
+
+  /* Employee tabs on phone */
+  .phone-emp-tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 5px;
+    overflow: hidden;
+  }
+  .phone-emp-tab {
+    padding: 2.5px 6px;
+    border-radius: 4px;
+    font-size: 5px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.4);
+    background: rgba(255,255,255,0.04);
+    white-space: nowrap;
+  }
+  .phone-emp-tab.active {
+    background: #6366f1;
+    color: #fff;
+  }
+  .phone-emp-tab .tab-dot {
+    display: inline-block;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    margin-right: 2px;
+    vertical-align: middle;
+  }
+
+  /* Phone calendar grid */
+  .phone-calendar {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 5px;
+    padding: 4px;
+    margin-bottom: 5px;
+  }
+  .cal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  .cal-month {
+    font-size: 6px;
+    font-weight: 700;
+    color: #fff;
+  }
+  .cal-nav {
+    display: flex;
+    gap: 3px;
+  }
+  .cal-nav-btn {
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.06);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cal-nav-arrow {
+    width: 0; height: 0;
+    border-style: solid;
+  }
+  .cal-nav-arrow.left {
+    border-width: 2.5px 3.5px 2.5px 0;
+    border-color: transparent rgba(255,255,255,0.4) transparent transparent;
+  }
+  .cal-nav-arrow.right {
+    border-width: 2.5px 0 2.5px 3.5px;
+    border-color: transparent transparent transparent rgba(255,255,255,0.4);
+  }
+  .cal-days-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    margin-bottom: 2px;
+  }
+  .cal-day-h {
+    font-size: 4.5px;
+    color: rgba(255,255,255,0.3);
+    text-align: center;
+    font-weight: 600;
+  }
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+  }
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 5px;
+    color: rgba(255,255,255,0.5);
+    border-radius: 3px;
+    position: relative;
+    font-weight: 500;
+  }
+  .cal-day.today {
+    background: #6366f1;
+    color: #fff;
+    font-weight: 700;
+  }
+  .cal-day .cal-dots {
+    display: flex;
+    gap: 1px;
+    margin-top: 1px;
+    position: absolute;
+    bottom: 1px;
+  }
+  .cal-dot {
+    width: 2.5px; height: 2.5px;
+    border-radius: 50%;
+  }
+
+  /* Phone appointment list */
+  .phone-apt-list {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .phone-apt {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 4px;
+    padding: 3px 5px;
+    border-left: 2px solid;
+  }
+  .phone-apt .apt-time {
+    font-size: 5px;
+    color: rgba(255,255,255,0.4);
+    font-weight: 600;
+    width: 22px;
+    flex-shrink: 0;
+  }
+  .phone-apt .apt-name {
+    font-size: 5.5px;
+    color: rgba(255,255,255,0.7);
+    font-weight: 500;
+    flex: 1;
+  }
+  .phone-apt .apt-service {
+    font-size: 4.5px;
+    color: rgba(255,255,255,0.3);
+  }
+  .phone-apt .apt-badge {
+    font-size: 4px;
+    padding: 1px 4px;
+    border-radius: 2px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  /* "Para cualquier tipo de negocio" floating label */
+  .device-label-left {
+    position: absolute;
+    left: 12px;
+    top: 56px;
+    z-index: 10;
+  }
+  .device-label-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 4px 10px;
+    font-size: 7.5px;
+    font-weight: 600;
+    color: #374151;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .device-label-tag .tag-icon {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 7px;
+  }
+
+  .device-label-right {
+    position: absolute;
+    right: 8px;
+    bottom: 24px;
+    z-index: 30;
+  }
+  .device-label-phone {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 4px 10px;
+    font-size: 7px;
+    font-weight: 600;
+    color: #374151;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+
+  /* ===== FEATURES BAR ===== */
+  .features-bar {
+    position: relative;
+    padding: 10px 30px;
+    background: #fff;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 14px;
+  }
+  .feature-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 8px;
+    color: #4b5563;
+    font-weight: 500;
+  }
+  .feature-chip .fc-check {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .fc-check-mark {
+    width: 5px; height: 5px;
+    border-bottom: 1.5px solid #fff;
+    border-right: 1.5px solid #fff;
+    transform: rotate(45deg);
+    margin-top: -1px;
+  }
+
+  /* ===== BOTTOM GRADIENT SECTION ===== */
+  .bottom-section {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 348px;
+    background: linear-gradient(165deg, #6366f1 0%, #7c3aed 40%, #8b5cf6 100%);
+    overflow: hidden;
+  }
+
+  /* Wave separator */
+  .wave-svg {
+    position: absolute;
+    top: -30px;
+    left: 0;
+    width: 100%;
+    height: 35px;
+  }
+
+  /* Decorative circles */
+  .bottom-section::before {
+    content: '';
+    position: absolute;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+    top: -80px;
+    right: -60px;
+  }
+  .bottom-section::after {
+    content: '';
+    position: absolute;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.03);
+    bottom: -40px;
+    left: -40px;
+  }
+
+  .bottom-content {
+    position: relative;
+    z-index: 2;
+    padding: 12px 36px 16px 36px;
+  }
+
+  /* Pricing section */
+  .pricing-title {
+    text-align: center;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    letter-spacing: -0.3px;
+  }
+  .pricing-title small {
+    display: block;
+    font-size: 10px;
+    font-weight: 400;
+    opacity: 0.7;
+    margin-top: 2px;
+  }
+
+  .pricing-cards {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .price-card {
+    flex: 1;
+    background: rgba(255,255,255,0.12);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 12px;
+    padding: 12px 10px;
+    text-align: center;
+    color: #fff;
+    position: relative;
+    transition: transform 0.2s;
+  }
+  .price-card.popular {
+    background: #fff;
+    color: #1a1a2e;
+    border: 2px solid #ffc700;
+    transform: scale(1.04);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  }
+  .popular-badge {
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ffc700;
+    color: #1a1a2e;
+    font-size: 6px;
+    font-weight: 800;
+    padding: 2px 10px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    white-space: nowrap;
+  }
+  .price-card .pc-name {
+    font-size: 10px;
+    font-weight: 700;
+    margin-bottom: 3px;
+  }
+  .price-card .pc-old {
+    font-size: 9px;
+    text-decoration: line-through;
+    opacity: 0.5;
+  }
+  .price-card.popular .pc-old {
+    color: #9ca3af;
+  }
+  .price-card .pc-price {
+    font-size: 26px;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .price-card .pc-price sup {
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .price-card .pc-period {
+    font-size: 8px;
+    opacity: 0.6;
+    margin-bottom: 6px;
+  }
+  .price-card.popular .pc-period {
+    color: #6b7280;
+  }
+  .price-card .pc-features {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .pc-feature {
+    font-size: 7px;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    opacity: 0.85;
+  }
+  .price-card.popular .pc-feature {
+    color: #4b5563;
+  }
+  .pc-feature-dot {
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.6;
+    flex-shrink: 0;
+  }
+  .pc-discount {
+    display: inline-block;
+    background: #f1416c;
+    color: #fff;
+    font-size: 6.5px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-top: 4px;
+  }
+  .price-card.popular .pc-highlight {
+    display: inline-block;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    font-size: 6.5px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-top: 4px;
+  }
+  .price-card .pc-custom {
+    font-size: 18px;
+    font-weight: 900;
+    margin: 4px 0;
+  }
+
+  /* CTA BUTTON */
+  .cta-row {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffc700;
+    color: #1a1a2e;
+    font-size: 15px;
+    font-weight: 800;
+    padding: 11px 36px;
+    border-radius: 50px;
+    text-decoration: none;
+    box-shadow: 0 6px 24px rgba(255,199,0,0.4);
+    letter-spacing: -0.3px;
+  }
+  .cta-btn .cta-arrow {
+    width: 22px; height: 22px;
+    background: rgba(26,26,46,0.12);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cta-arrow-icon {
+    width: 0; height: 0;
+    border-style: solid;
+    border-width: 4px 0 4px 6px;
+    border-color: transparent transparent transparent #1a1a2e;
+  }
+  .cta-sub {
+    text-align: center;
+    font-size: 9px;
+    color: rgba(255,255,255,0.65);
+    margin-top: 3px;
+    font-weight: 500;
+  }
+
+  /* Contact info */
+  .contact-row {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+    margin-top: 10px;
+  }
+  .contact-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: rgba(255,255,255,0.7);
+    font-size: 8px;
+    font-weight: 500;
+  }
+  .contact-icon {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.12);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .ci-globe {
+    width: 8px; height: 8px;
+    border: 1.2px solid rgba(255,255,255,0.7);
+    border-radius: 50%;
+    position: relative;
+  }
+  .ci-globe::before {
+    content: '';
+    position: absolute;
+    top: 50%; left: -0.5px; right: -0.5px;
+    height: 1px;
+    background: rgba(255,255,255,0.7);
+  }
+  .ci-globe::after {
+    content: '';
+    position: absolute;
+    left: 50%; top: -0.5px; bottom: -0.5px;
+    width: 1px;
+    background: rgba(255,255,255,0.7);
+  }
+  .ci-envelope {
+    width: 9px; height: 6px;
+    border: 1.2px solid rgba(255,255,255,0.7);
+    border-radius: 1px;
+    position: relative;
+  }
+  .ci-envelope::before {
+    content: '';
+    position: absolute;
+    top: -0.5px; left: 0; right: 0;
+    height: 3px;
+    border-left: 3.5px solid transparent;
+    border-right: 3.5px solid transparent;
+    border-top: 3px solid rgba(255,255,255,0.7);
+  }
+  .ci-whatsapp {
+    width: 9px; height: 9px;
+    border: 1.2px solid rgba(255,255,255,0.7);
+    border-radius: 50%;
+    position: relative;
+  }
+  .ci-whatsapp::before {
+    content: '';
+    position: absolute;
+    bottom: -2px; left: -1px;
+    width: 4px; height: 3px;
+    border-bottom-left-radius: 4px;
+    border-left: 1.2px solid rgba(255,255,255,0.7);
+    border-bottom: 1.2px solid rgba(255,255,255,0.7);
+  }
+
+  /* Social proof in bottom */
+  .bottom-social-proof {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 10px;
+  }
+  .bsp-item {
+    text-align: center;
+    color: #fff;
+  }
+  .bsp-num {
+    font-size: 14px;
+    font-weight: 900;
+    display: block;
+    line-height: 1.1;
+  }
+  .bsp-label {
+    font-size: 7px;
+    opacity: 0.6;
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+
+<!-- 50% OFF Corner Ribbon -->
+<div class="ribbon">50% OFF</div>
+
+<!-- ===== TOP SECTION ===== -->
+<div class="top-section">
+  <!-- Brand -->
+  <div class="brand-row">
+    <div class="logo-box">MN</div>
+    <div class="brand-name">My-Negocio</div>
+  </div>
+
+  <!-- Headline -->
+  <div class="headline">
+    <h1>Tu negocio bajo control.<br><span>Desde cualquier lugar.</span></h1>
+    <p>Sistema de gestion todo-en-uno para negocios de servicios y membresias</p>
+  </div>
+
+  <!-- Social proof -->
+  <div class="social-proof">
+    <div class="proof-item"><div class="num">500+</div><div class="lbl">Negocios</div></div>
+    <div class="proof-item"><div class="num">15,000+</div><div class="lbl">Clientes</div></div>
+    <div class="proof-item"><div class="num">98%</div><div class="lbl">Satisfaccion</div></div>
+    <div class="proof-item"><div class="num">24/7</div><div class="lbl">Soporte</div></div>
+  </div>
+</div>
+
+<!-- ===== DEVICES SECTION ===== -->
+<div class="devices-section">
+  <!-- Label: Membresias dashboard -->
+  <div class="device-label-left">
+    <div class="device-label-tag">
+      <div class="tag-icon" style="background: rgba(80,205,137,0.15);">
+        <svg width="8" height="8" viewBox="0 0 16 16" fill="#50cd89"><rect x="1" y="3" width="14" height="10" rx="2"/><rect x="3" y="1" width="3" height="4" rx="1"/><rect x="10" y="1" width="3" height="4" rx="1"/></svg>
+      </div>
+      Dashboard Membresias
+    </div>
+  </div>
+
+  <!-- LAPTOP -->
+  <div class="laptop">
+    <div class="laptop-screen">
+      <!-- Sidebar -->
+      <div class="dash-sidebar">
+        <div class="sb-logo">MN</div>
+        <div class="sb-item active"><div class="sb-icon"></div></div>
+        <div class="sb-item"><div class="sb-icon"></div></div>
+        <div class="sb-item"><div class="sb-icon"></div></div>
+        <div class="sb-item"><div class="sb-icon"></div></div>
+        <div class="sb-item"><div class="sb-icon"></div></div>
+        <div class="sb-item"><div class="sb-icon"></div></div>
+        <div class="sb-item"><div class="sb-icon"></div></div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="dash-content">
+        <!-- Top bar -->
+        <div class="dash-topbar">
+          <div class="dash-greeting">
+            Buenos dias, Carlos
+            <small>Resumen de tu negocio</small>
+          </div>
+          <div class="dash-pills">
+            <div class="dash-pill active">Hoy</div>
+            <div class="dash-pill">Semana</div>
+            <div class="dash-pill">Mes</div>
+          </div>
+        </div>
+
+        <!-- 3 Gradient stat cards -->
+        <div class="stat-cards-row">
+          <div class="gradient-card green">
+            <div class="gc-label">Ingresos</div>
+            <div class="gc-value">$2,450</div>
+            <div class="gc-icon">&#8593;</div>
+          </div>
+          <div class="gradient-card red">
+            <div class="gc-label">Gastos</div>
+            <div class="gc-value">$820</div>
+            <div class="gc-icon">&#8595;</div>
+          </div>
+          <div class="gradient-card purple">
+            <div class="gc-label">Ganancia Neta</div>
+            <div class="gc-value">$1,630</div>
+            <div class="gc-icon">$</div>
+          </div>
+        </div>
+
+        <!-- 4 Mini stat cards -->
+        <div class="mini-stats-row">
+          <div class="mini-stat">
+            <div class="mini-stat-icon primary"><div class="mini-stat-icon-dot primary"></div></div>
+            <div><div class="ms-label">Total Clientes</div><div class="ms-value">248</div></div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-icon success"><div class="mini-stat-icon-dot success"></div></div>
+            <div><div class="ms-label">Activos</div><div class="ms-value">186</div></div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-icon danger"><div class="mini-stat-icon-dot danger"></div></div>
+            <div><div class="ms-label">Vencidos</div><div class="ms-value">42</div></div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-stat-icon info"><div class="mini-stat-icon-dot info"></div></div>
+            <div><div class="ms-label">Nuevos Hoy</div><div class="ms-value">5</div></div>
+          </div>
+        </div>
+
+        <!-- Charts row -->
+        <div class="charts-row">
+          <!-- Bar chart: Ingresos vs Gastos -->
+          <div class="chart-card chart-card-left">
+            <div class="chart-header">Ingresos vs Gastos</div>
+            <div class="chart-body">
+              <div class="bar-chart">
+                <div class="bar-group">
+                  <div class="bar-pair">
+                    <div class="bar income" style="height: 42px;"></div>
+                    <div class="bar expense" style="height: 18px;"></div>
+                  </div>
+                  <div class="bar-label">Lun</div>
+                </div>
+                <div class="bar-group">
+                  <div class="bar-pair">
+                    <div class="bar income" style="height: 55px;"></div>
+                    <div class="bar expense" style="height: 22px;"></div>
+                  </div>
+                  <div class="bar-label">Mar</div>
+                </div>
+                <div class="bar-group">
+                  <div class="bar-pair">
+                    <div class="bar income" style="height: 38px;"></div>
+                    <div class="bar expense" style="height: 28px;"></div>
+                  </div>
+                  <div class="bar-label">Mie</div>
+                </div>
+                <div class="bar-group">
+                  <div class="bar-pair">
+                    <div class="bar income" style="height: 62px;"></div>
+                    <div class="bar expense" style="height: 15px;"></div>
+                  </div>
+                  <div class="bar-label">Jue</div>
+                </div>
+                <div class="bar-group">
+                  <div class="bar-pair">
+                    <div class="bar income" style="height: 48px;"></div>
+                    <div class="bar expense" style="height: 20px;"></div>
+                  </div>
+                  <div class="bar-label">Vie</div>
+                </div>
+                <div class="bar-group">
+                  <div class="bar-pair">
+                    <div class="bar income" style="height: 70px;"></div>
+                    <div class="bar expense" style="height: 25px;"></div>
+                  </div>
+                  <div class="bar-label">Sab</div>
+                </div>
+                <div class="bar-group">
+                  <div class="bar-pair">
+                    <div class="bar income" style="height: 30px;"></div>
+                    <div class="bar expense" style="height: 12px;"></div>
+                  </div>
+                  <div class="bar-label">Dom</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Donut chart: Resumen del Dia + Proximos a Vencer -->
+          <div class="chart-card chart-card-right">
+            <div class="chart-header">Resumen del Dia</div>
+            <div class="chart-body">
+              <div class="donut-container">
+                <div class="donut-chart">
+                  <div class="donut-center">
+                    <span class="dc-val">$2,450</span>
+                    <span class="dc-lbl">TOTAL</span>
+                  </div>
+                </div>
+                <div class="donut-legend">
+                  <div class="donut-legend-item"><div class="dl-dot" style="background:#50cd89;"></div><span class="dl-text">Membresias</span><span class="dl-val">$1,450</span></div>
+                  <div class="donut-legend-item"><div class="dl-dot" style="background:#f1416c;"></div><span class="dl-text">Diarios</span><span class="dl-val">$380</span></div>
+                  <div class="donut-legend-item"><div class="dl-dot" style="background:#3e97ff;"></div><span class="dl-text">Productos</span><span class="dl-val">$340</span></div>
+                  <div class="donut-legend-item"><div class="dl-dot" style="background:#ffc700;"></div><span class="dl-text">Servicios</span><span class="dl-val">$180</span></div>
+                  <div class="donut-legend-item"><div class="dl-dot" style="background:#7239ea;"></div><span class="dl-text">Otros</span><span class="dl-val">$100</span></div>
+                </div>
+              </div>
+            </div>
+            <!-- Proximos a Vencer -->
+            <div style="padding: 0 8px 6px 8px;">
+              <div class="vencer-header">
+                <span class="vencer-title">Proximos a Vencer</span>
+                <span class="vencer-badge">4</span>
+              </div>
+              <div class="vencer-list">
+                <div class="vencer-item">
+                  <div class="vencer-avatar" style="background: #6366f1;">M</div>
+                  <span class="vencer-name">Maria Lopez</span>
+                  <span class="vencer-days warn">2 dias</span>
+                </div>
+                <div class="vencer-item">
+                  <div class="vencer-avatar" style="background: #f1416c;">J</div>
+                  <span class="vencer-name">Juan Perez</span>
+                  <span class="vencer-days danger">1 dia</span>
+                </div>
+                <div class="vencer-item">
+                  <div class="vencer-avatar" style="background: #3e97ff;">A</div>
+                  <span class="vencer-name">Ana Torres</span>
+                  <span class="vencer-days warn">3 dias</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="laptop-base"></div>
+  </div>
+
+  <!-- PHONE overlapping -->
+  <div class="phone">
+    <div class="phone-frame">
+      <div class="phone-notch"></div>
+      <div class="phone-content">
+        <!-- Phone title -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 5px;">
+          <div style="font-size: 7px; font-weight: 800; color: #fff;">Agenda de Citas</div>
+          <div style="background: #6366f1; padding: 2px 6px; border-radius: 4px; font-size: 5px; color: #fff; font-weight: 700;">+ Nueva</div>
+        </div>
+
+        <!-- 4 Stat cards -->
+        <div class="phone-stat-row">
+          <div class="phone-stat">
+            <div class="ps-label">Citas Hoy</div>
+            <div class="ps-value">12</div>
+          </div>
+          <div class="phone-stat">
+            <div class="ps-label">Ingresos</div>
+            <div class="ps-value green">$385</div>
+          </div>
+          <div class="phone-stat">
+            <div class="ps-label">Completadas</div>
+            <div class="ps-value">8</div>
+          </div>
+          <div class="phone-stat">
+            <div class="ps-label">Canceladas</div>
+            <div class="ps-value red">1</div>
+          </div>
+        </div>
+
+        <!-- Employee tabs -->
+        <div class="phone-emp-tabs">
+          <div class="phone-emp-tab active"><span class="tab-dot" style="background: #fff;"></span>Todos</div>
+          <div class="phone-emp-tab"><span class="tab-dot" style="background: #f1416c;"></span>Sofia</div>
+          <div class="phone-emp-tab"><span class="tab-dot" style="background: #3e97ff;"></span>Andrea</div>
+          <div class="phone-emp-tab"><span class="tab-dot" style="background: #50cd89;"></span>Carlos</div>
+        </div>
+
+        <!-- Calendar -->
+        <div class="phone-calendar">
+          <div class="cal-header">
+            <span class="cal-month">Febrero 2026</span>
+            <div class="cal-nav">
+              <div class="cal-nav-btn"><div class="cal-nav-arrow left"></div></div>
+              <div class="cal-nav-btn"><div class="cal-nav-arrow right"></div></div>
+            </div>
+          </div>
+          <div class="cal-days-header">
+            <div class="cal-day-h">Lu</div><div class="cal-day-h">Ma</div><div class="cal-day-h">Mi</div>
+            <div class="cal-day-h">Ju</div><div class="cal-day-h">Vi</div><div class="cal-day-h">Sa</div><div class="cal-day-h">Do</div>
+          </div>
+          <div class="cal-grid">
+            <div class="cal-day" style="opacity:0.25;">26</div>
+            <div class="cal-day" style="opacity:0.25;">27</div>
+            <div class="cal-day" style="opacity:0.25;">28</div>
+            <div class="cal-day" style="opacity:0.25;">29</div>
+            <div class="cal-day" style="opacity:0.25;">30</div>
+            <div class="cal-day" style="opacity:0.25;">31</div>
+            <div class="cal-day">1</div>
+
+            <div class="cal-day">2<div class="cal-dots"><div class="cal-dot" style="background:#f1416c;"></div></div></div>
+            <div class="cal-day">3<div class="cal-dots"><div class="cal-dot" style="background:#50cd89;"></div><div class="cal-dot" style="background:#3e97ff;"></div></div></div>
+            <div class="cal-day">4</div>
+            <div class="cal-day">5<div class="cal-dots"><div class="cal-dot" style="background:#f1416c;"></div></div></div>
+            <div class="cal-day">6<div class="cal-dots"><div class="cal-dot" style="background:#50cd89;"></div></div></div>
+            <div class="cal-day">7<div class="cal-dots"><div class="cal-dot" style="background:#ffc700;"></div><div class="cal-dot" style="background:#3e97ff;"></div></div></div>
+            <div class="cal-day">8</div>
+
+            <div class="cal-day">9<div class="cal-dots"><div class="cal-dot" style="background:#3e97ff;"></div></div></div>
+            <div class="cal-day">10<div class="cal-dots"><div class="cal-dot" style="background:#f1416c;"></div><div class="cal-dot" style="background:#50cd89;"></div></div></div>
+            <div class="cal-day">11</div>
+            <div class="cal-day">12<div class="cal-dots"><div class="cal-dot" style="background:#50cd89;"></div></div></div>
+            <div class="cal-day">13</div>
+            <div class="cal-day">14<div class="cal-dots"><div class="cal-dot" style="background:#ffc700;"></div></div></div>
+            <div class="cal-day">15</div>
+
+            <div class="cal-day">16<div class="cal-dots"><div class="cal-dot" style="background:#3e97ff;"></div></div></div>
+            <div class="cal-day">17<div class="cal-dots"><div class="cal-dot" style="background:#f1416c;"></div></div></div>
+            <div class="cal-day today">18<div class="cal-dots"><div class="cal-dot" style="background:#fff;"></div><div class="cal-dot" style="background:#ffc700;"></div><div class="cal-dot" style="background:#50cd89;"></div></div></div>
+            <div class="cal-day">19</div>
+            <div class="cal-day">20<div class="cal-dots"><div class="cal-dot" style="background:#50cd89;"></div></div></div>
+            <div class="cal-day">21</div>
+            <div class="cal-day">22</div>
+
+            <div class="cal-day">23</div>
+            <div class="cal-day">24</div>
+            <div class="cal-day">25</div>
+            <div class="cal-day">26</div>
+            <div class="cal-day">27</div>
+            <div class="cal-day">28</div>
+            <div class="cal-day" style="opacity:0.25;">1</div>
+          </div>
+        </div>
+
+        <!-- Upcoming appointments -->
+        <div style="font-size: 6px; font-weight: 700; color: #fff; margin-bottom: 3px;">Proximas Citas</div>
+        <div class="phone-apt-list">
+          <div class="phone-apt" style="border-left-color: #f1416c;">
+            <span class="apt-time">09:00</span>
+            <div style="flex:1;"><span class="apt-name">Laura G.</span><br><span class="apt-service">Corte + Color</span></div>
+            <span class="apt-badge" style="background: rgba(80,205,137,0.15); color: #50cd89;">Confirmada</span>
+          </div>
+          <div class="phone-apt" style="border-left-color: #3e97ff;">
+            <span class="apt-time">10:30</span>
+            <div style="flex:1;"><span class="apt-name">Pedro M.</span><br><span class="apt-service">Barba</span></div>
+            <span class="apt-badge" style="background: rgba(62,151,255,0.15); color: #3e97ff;">Pendiente</span>
+          </div>
+          <div class="phone-apt" style="border-left-color: #50cd89;">
+            <span class="apt-time">11:00</span>
+            <div style="flex:1;"><span class="apt-name">Sofia R.</span><br><span class="apt-service">Unas + Manicure</span></div>
+            <span class="apt-badge" style="background: rgba(80,205,137,0.15); color: #50cd89;">Confirmada</span>
+          </div>
+          <div class="phone-apt" style="border-left-color: #ffc700;">
+            <span class="apt-time">12:00</span>
+            <div style="flex:1;"><span class="apt-name">Carlos V.</span><br><span class="apt-service">Corte Clasico</span></div>
+            <span class="apt-badge" style="background: rgba(255,199,0,0.15); color: #ffc700;">En Espera</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Label: Citas dashboard -->
+  <div class="device-label-right">
+    <div class="device-label-phone">
+      <div class="tag-icon" style="background: rgba(99,102,241,0.15); width:14px; height:14px; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+        <svg width="7" height="7" viewBox="0 0 16 16" fill="#6366f1"><rect x="3" y="1" width="10" height="14" rx="2"/></svg>
+      </div>
+      Agenda de Citas
+    </div>
+  </div>
+</div>
+
+<!-- ===== FEATURES BAR ===== -->
+<div class="features-bar">
+  <div class="feature-chip"><div class="fc-check"><div class="fc-check-mark"></div></div>Clientes ilimitados</div>
+  <div class="feature-chip"><div class="fc-check"><div class="fc-check-mark"></div></div>Ventas y gastos</div>
+  <div class="feature-chip"><div class="fc-check"><div class="fc-check-mark"></div></div>Agenda de citas</div>
+  <div class="feature-chip"><div class="fc-check"><div class="fc-check-mark"></div></div>Inventario</div>
+  <div class="feature-chip"><div class="fc-check"><div class="fc-check-mark"></div></div>WhatsApp auto</div>
+  <div class="feature-chip"><div class="fc-check"><div class="fc-check-mark"></div></div>Reportes</div>
+  <div class="feature-chip"><div class="fc-check"><div class="fc-check-mark"></div></div>Excel</div>
+  <div class="feature-chip"><div class="fc-check"><div class="fc-check-mark"></div></div>Multi-dispositivo</div>
+</div>
+
+<!-- ===== BOTTOM GRADIENT SECTION ===== -->
+<div class="bottom-section">
+  <!-- Wave -->
+  <svg class="wave-svg" viewBox="0 0 874 35" preserveAspectRatio="none">
+    <path d="M0,35 C200,0 400,30 500,12 C600,-6 750,25 874,8 L874,35 Z" fill="#6366f1"/>
+  </svg>
+
+  <div class="bottom-content">
+    <!-- Pricing title -->
+    <div class="pricing-title">
+      Planes que se adaptan a tu negocio
+      <small>Sin contratos. Cancela cuando quieras.</small>
+    </div>
+
+    <!-- Pricing cards -->
+    <div class="pricing-cards">
+      <!-- Plan Sistema -->
+      <div class="price-card">
+        <div class="pc-name">Sistema</div>
+        <div class="pc-old">$30/mes</div>
+        <div class="pc-price"><sup>$</sup>15<span style="font-size:11px; font-weight:500;">/mes</span></div>
+        <div class="pc-period">Negocios de membresias</div>
+        <div class="pc-features">
+          <div class="pc-feature"><div class="pc-feature-dot"></div>Clientes ilimitados</div>
+          <div class="pc-feature"><div class="pc-feature-dot"></div>Control de ventas</div>
+          <div class="pc-feature"><div class="pc-feature-dot"></div>Reportes y dashboards</div>
+          <div class="pc-feature"><div class="pc-feature-dot"></div>Notificaciones WhatsApp</div>
+          <div class="pc-feature"><div class="pc-feature-dot"></div>Exportar a Excel</div>
+        </div>
+        <div class="pc-discount">50% OFF por 3 meses</div>
+      </div>
+
+      <!-- Plan Sistema + Web -->
+      <div class="price-card popular">
+        <div class="popular-badge">MAS POPULAR</div>
+        <div class="pc-name">Sistema + Web</div>
+        <div class="pc-old">$50/mes</div>
+        <div class="pc-price" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"><sup>$</sup>25<span style="font-size:11px; font-weight:500; -webkit-text-fill-color: #6b7280;">/mes</span></div>
+        <div class="pc-period">Todo lo anterior, mas:</div>
+        <div class="pc-features">
+          <div class="pc-feature"><div class="pc-feature-dot"></div>Pagina web profesional</div>
+          <div class="pc-feature"><div class="pc-feature-dot"></div>Agenda en linea</div>
+          <div class="pc-feature"><div class="pc-feature-dot"></div>Dominio personalizado</div>
+          <div class="pc-feature"><div class="pc-feature-dot"></div>SEO optimizado</div>
+          <div class="pc-feature"><div class="pc-feature-dot"></div>Soporte prioritario</div>
+        </div>
+        <div class="pc-highlight">Incluye sitio web</div>
+      </div>
+
+      <!-- Plan Completo -->
+      <div class="price-card">
+        <div class="pc-name">Plan Completo</div>
+        <div class="pc-custom">A medida</div>
+        <div class="pc-period">Para negocios grandes</div>
+        <div class="pc-features">
+          <div class="pc-feature"><div class="pc-feature-dot"></div>Todo incluido</div>
+          <div class="pc-feature"><div class="pc-feature-dot"></div>Pagos con tarjeta</div>
+          <div class="pc-feature"><div class="pc-feature-dot"></div>Integraciones custom</div>
+          <div class="pc-feature"><div class="pc-feature-dot"></div>Multiples sucursales</div>
+          <div class="pc-feature"><div class="pc-feature-dot"></div>Onboarding dedicado</div>
+        </div>
+        <div class="pc-discount" style="background: #7239ea;">Personalizado</div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="cta-row">
+      <a href="#" class="cta-btn">
+        Probar Gratis 7 Dias
+        <div class="cta-arrow"><div class="cta-arrow-icon"></div></div>
+      </a>
+      <div class="cta-sub">Sin tarjeta de credito requerida &middot; Configuracion en 2 minutos</div>
+    </div>
+
+    <!-- Contact -->
+    <div class="contact-row">
+      <div class="contact-item">
+        <div class="contact-icon"><div class="ci-globe"></div></div>
+        www.mynegocio.com
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon"><div class="ci-envelope"></div></div>
+        mynegociooficiall@gmail.com
+      </div>
+      <div class="contact-item">
+        <div class="contact-icon"><div class="ci-whatsapp"></div></div>
+        +593 99 714 3142
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

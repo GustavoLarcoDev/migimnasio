@@ -42,9 +42,9 @@ public class NotificacionesController : Controller
             var notificaciones = await _notificationService.GetNotificacionesAsync(negocioId);
             return Ok(notificaciones);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -63,9 +63,9 @@ public class NotificacionesController : Controller
             var count = await _notificationService.GetNotificacionesCountAsync(negocioId);
             return Ok(new { count });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -91,9 +91,9 @@ public class NotificacionesController : Controller
 
             return Ok(new { success = true, message });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -112,9 +112,9 @@ public class NotificacionesController : Controller
             var (success, message) = await _notificationService.MarcarTodasLeidasAsync(negocioId);
             return Ok(new { success = true, message });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 
@@ -135,9 +135,9 @@ public class NotificacionesController : Controller
             var (success, message, count) = await _notificationService.GenerarNotificacionesAsync(negocioId);
             return Ok(new { success = true, message, count });
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            return StatusCode(500, new { success = false, message = ex.Message });
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
 }

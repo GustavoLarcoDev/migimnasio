@@ -491,7 +491,8 @@
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@@fullcalendar/core@6.1.11/locales/es.global.min.js"></script>
 <script>
-const negocioId = '@negocioId';
+// SEGURIDAD: Json.Serialize escapa correctamente para contexto JavaScript
+const negocioId = @Json.Serialize(negocioId.ToString());
 let calendar, tablaLogs, tablaClientesArt, tablaMovimientos;
 let serviciosCache = [], empleadosCache = [], clientesCache = [];
 let empleadosDisponibilidad = [];
@@ -979,8 +980,10 @@ $('#btnGuardarCitaRapida').on('click', function() {
 // ═══════════════ DETALLE CITA ═══════════════
 function abrirDetalleCita(citaId) {
     $.get('/Negocios/GetCita', { citaId, negocioId }, function(d) {
+        // SEGURIDAD: Escapar d.estado y d.pago.metodoPago para prevenir XSS
+        var estadoSafe = escHtml(d.estado);
         var body = `
-            <div class="mb-3"><span class="mg-estado-badge mg-estado-${d.estado}">${d.estado.replace('_',' ')}</span></div>
+            <div class="mb-3"><span class="mg-estado-badge mg-estado-${estadoSafe}">${estadoSafe.replace('_',' ')}</span></div>
             <p><strong>Servicio:</strong> ${escHtml(d.nombreServicio)}</p>
             <p><strong>Cliente:</strong> ${escHtml(d.nombreCliente)}</p>
             <p><strong>Empleado:</strong> ${escHtml(d.nombreEmpleado)}</p>
@@ -988,7 +991,7 @@ function abrirDetalleCita(citaId) {
             <p><strong>Precio:</strong> $${d.precioServicio.toFixed(2)}</p>`;
         if (d.motivoCancelacion) body += `<p class="text-danger"><strong>Motivo cancelacion:</strong> ${escHtml(d.motivoCancelacion)}</p>`;
         if (d.tienePago && d.pago) {
-            body += `<hr><h6 class="fw-bold">Pago</h6><p>Total: <strong>$${d.pago.total.toFixed(2)}</strong> (${d.pago.metodoPago})</p>`;
+            body += `<hr><h6 class="fw-bold">Pago</h6><p>Total: <strong>$${d.pago.total.toFixed(2)}</strong> (${escHtml(d.pago.metodoPago)})</p>`;
             if (d.pago.esRegalo) body += `<p class="text-info">Regalo: ${escHtml(d.pago.motivoRegalo)}</p>`;
         }
         $('#citaDetalleBody').html(body);
@@ -1311,7 +1314,7 @@ function cargarVentasStats() {
 
 function cargarCharts() {
     $.get('/Negocios/GetLogs', { negocioId }, function(logs) {
-        // Bar chart
+        // Bar chart — últimos 6 meses
         var meses = [], ingArr = [], gasArr = [];
         for (var i = 5; i >= 0; i--) {
             var d = new Date(); d.setMonth(d.getMonth() - i);
@@ -1327,19 +1330,47 @@ function cargarCharts() {
         });
         chartBarVentas.render();
 
-        // Donut
-        var hoy = logs.filter(l => new Date(l.fecha).toDateString() === new Date().toDateString());
-        var ing = hoy.filter(l => l.monto > 0).reduce((s,l) => s + l.monto, 0);
-        var gas = Math.abs(hoy.filter(l => l.monto < 0).reduce((s,l) => s + l.monto, 0));
-        if (chartResumen) chartResumen.destroy();
-        chartResumen = new ApexCharts(document.querySelector('#chartResumen'), {
-            chart: { type: 'donut', height: 300 }, series: [ing, gas], labels: ['Ingresos','Gastos'], colors: ['#50CD89','#F1416C']
-        });
-        chartResumen.render();
+        // Donut — sincronizado con el periodo seleccionado
+        actualizarDonut(logs);
     });
 }
 
-$('#ventasPeriodPills').on('click', '.mg-pill', function() { $('#ventasPeriodPills .mg-pill').removeClass('active'); $(this).addClass('active'); cargarVentasStats(); });
+function actualizarDonut(logs) {
+    var periodo = $('#ventasPeriodPills .mg-pill.active').data('periodo');
+    var now = new Date(), filtered;
+    if (periodo === 'dia') { filtered = logs.filter(l => new Date(l.fecha).toDateString() === now.toDateString()); }
+    else if (periodo === 'semana') { var w = new Date(now); w.setDate(w.getDate() - 7); filtered = logs.filter(l => new Date(l.fecha) >= w); }
+    else { filtered = logs.filter(l => new Date(l.fecha).getMonth() === now.getMonth() && new Date(l.fecha).getFullYear() === now.getFullYear()); }
+
+    var ing = filtered.filter(l => l.monto > 0).reduce((s,l) => s + l.monto, 0);
+    var gas = Math.abs(filtered.filter(l => l.monto < 0).reduce((s,l) => s + l.monto, 0));
+    var labels = {dia:'del Dia', semana:'de la Semana', mes:'del Mes'};
+    $('#chartResumenTitle').text('Resumen ' + labels[periodo]);
+
+    if (chartResumen) chartResumen.destroy();
+    $('#chartResumen').empty();
+    if (ing === 0 && gas === 0) {
+        $('#chartResumen').html('<div class="text-center py-5 text-muted"><i class="bi bi-pie-chart fs-1 d-block mb-2"></i>Sin datos para este periodo</div>');
+        chartResumen = null;
+        return;
+    }
+    chartResumen = new ApexCharts(document.querySelector('#chartResumen'), {
+        chart: { type: 'donut', height: 300 },
+        series: [ing, gas],
+        labels: ['Ingresos','Gastos'],
+        colors: ['#50CD89','#F1416C'],
+        plotOptions: { pie: { donut: { labels: { show: true, total: { show: true, label: 'Ganancia', formatter: function() { return '$' + (ing - gas).toFixed(2); } } } } } }
+    });
+    chartResumen.render();
+}
+
+$('#ventasPeriodPills').on('click', '.mg-pill', function() {
+    $('#ventasPeriodPills .mg-pill').removeClass('active');
+    $(this).addClass('active');
+    cargarVentasStats();
+    // Re-cargar donut con el periodo actualizado
+    $.get('/Negocios/GetLogs', { negocioId }, function(logs) { actualizarDonut(logs); });
+});
 
 // ═══════════════ INVENTARIO (reutilizado) ═══════════════
 function cargarProductosGrid() {
@@ -1406,7 +1437,8 @@ $('#btnToggleMovimientos').on('click', function() {
                 { data: 'fecha', render: function(d) { return new Date(d).toLocaleDateString('es-MX'); } },
                 { data: 'nombreProducto' }, { data: 'tipo' }, { data: 'cantidad' },
                 { data: 'total', render: function(d) { return '$' + (d || 0).toFixed(2); } },
-                { data: 'stockResultante' }, { data: 'nota', render: function(d) { return escHtml(d || '-'); } }
+                { data: null, render: function(d, t, r) { return r.stockAnterior + ' → ' + r.stockNuevo; } },
+                { data: 'nota', render: function(d) { return escHtml(d || '-'); } }
             ], order: [[0, 'desc']]
         });
     }

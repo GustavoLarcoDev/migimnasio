@@ -109,54 +109,137 @@ echo "  appsettings.Production.json creado"
 echo "[6/9] Creando script de deploy..."
 cat > /opt/myapp/deploy.sh << 'DEPLOY'
 #!/bin/bash
+# ═══════════════════════════════════════════════════════════
+# deploy.sh — Script de deploy con rollback automático
+#
+# FLUJO:
+#   1. Backup de la base de datos (si falla → aborta el deploy)
+#   2. Copiar archivos del nuevo release
+#   3. Swap atómico del symlink
+#   4. Restart del servicio
+#   5. Verificar que arrancó (systemctl is-active)
+#   6. Health check HTTP (/health endpoint)
+#   7. Si alguna verificación falla → ROLLBACK automático
+#
+# El rollback restaura el symlink al release anterior y
+# reinicia el servicio, todo en menos de 10 segundos.
+# ═══════════════════════════════════════════════════════════
 set -euo pipefail
 
 RELEASE_DIR="/opt/myapp/releases/$(date +%Y%m%d_%H%M%S)"
 CURRENT_LINK="/opt/myapp/current"
 DEPLOY_SOURCE="/tmp/myapp-deploy"
+BACKUP_DIR="/opt/myapp/backups"
 
-echo "Deploying to $RELEASE_DIR..."
+# Guardar el release anterior para poder hacer rollback
+PREVIOUS_RELEASE=$(readlink -f "$CURRENT_LINK" 2>/dev/null || echo "")
 
-# Copiar archivos publicados
+echo "══════════════════════════════════════════"
+echo " Deploy iniciado"
+echo " Nuevo release: $RELEASE_DIR"
+echo " Release anterior: $PREVIOUS_RELEASE"
+echo "══════════════════════════════════════════"
+
+# ── Función de rollback automático ──
+# Se llama si el health check falla después del swap de symlink.
+# Restaura el symlink al release anterior y reinicia el servicio.
+rollback() {
+    echo "" >&2
+    echo "══════════════════════════════════════════" >&2
+    echo " ROLLBACK AUTOMÁTICO INICIADO" >&2
+    echo "══════════════════════════════════════════" >&2
+    if [ -n "$PREVIOUS_RELEASE" ] && [ -d "$PREVIOUS_RELEASE" ]; then
+        ln -sfn "$PREVIOUS_RELEASE" "${CURRENT_LINK}.tmp"
+        mv -Tf "${CURRENT_LINK}.tmp" "$CURRENT_LINK"
+        systemctl restart myapp
+        sleep 5
+        if systemctl is-active --quiet myapp; then
+            echo "Rollback exitoso a: $PREVIOUS_RELEASE" >&2
+        else
+            echo "CRÍTICO: El rollback también falló. Intervención manual requerida." >&2
+            echo "  Revisa: sudo journalctl -u myapp -n 50" >&2
+        fi
+    else
+        echo "No hay release anterior disponible para rollback." >&2
+    fi
+    exit 1
+}
+
+# ── PASO 1: Backup de la base de datos ANTES del deploy ──
+# Si la migración falla o el deploy rompe algo, siempre tenemos
+# una copia de los datos del momento previo al deploy.
+echo "[1/6] Creando backup pre-deploy de la base de datos..."
+DB_PASSWORD=$(grep -oP '(?<=Password=)[^;]+' /opt/myapp/appsettings.Production.json | head -1)
+BACKUP_FILE="$BACKUP_DIR/pre_deploy_$(date +%Y%m%d_%H%M%S).bak"
+if /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$DB_PASSWORD" -C \
+  -Q "BACKUP DATABASE GimnasioDb TO DISK = '$BACKUP_FILE' WITH COMPRESSION;" 2>/dev/null; then
+    echo "  Backup exitoso: $BACKUP_FILE"
+else
+    echo "ERROR: Backup de BD falló. Abortando deploy por seguridad." >&2
+    exit 1
+fi
+
+# ── PASO 2: Copiar archivos publicados ──
+echo "[2/6] Copiando archivos del nuevo release..."
 cp -r "$DEPLOY_SOURCE" "$RELEASE_DIR"
 
-# Verificar que el DLL existe
+# Verificar que el DLL principal existe
 if [ ! -f "$RELEASE_DIR/Gimnasio.dll" ]; then
     echo "ERROR: Gimnasio.dll no encontrado en el release!" >&2
     rm -rf "$RELEASE_DIR"
     exit 1
 fi
 
-# Copiar appsettings.Production.json (secretos del servidor)
+# Copiar appsettings.Production.json (secretos del servidor, no viajan en el artefacto)
 cp /opt/myapp/appsettings.Production.json "$RELEASE_DIR/appsettings.Production.json"
 
-# Permisos para www-data
+# Permisos para el usuario de la app (www-data)
 chown -R www-data:www-data "$RELEASE_DIR"
 
-# Swap symlink (atómico)
+# ── PASO 3: Swap atómico del symlink ──
+echo "[3/6] Cambiando symlink al nuevo release..."
 ln -sfn "$RELEASE_DIR" "${CURRENT_LINK}.tmp"
 mv -Tf "${CURRENT_LINK}.tmp" "$CURRENT_LINK"
 
-# Restart app
+# ── PASO 4: Restart del servicio ──
+echo "[4/6] Reiniciando servicio..."
 systemctl restart myapp
 
-# Esperar 3 segundos y verificar que arrancó
-sleep 3
-if systemctl is-active --quiet myapp; then
-    echo "App arrancó correctamente"
-else
-    echo "ERROR: App no arrancó. Revisa: sudo journalctl -u myapp -n 50" >&2
-    exit 1
+# ── PASO 5: Verificar que el servicio arrancó ──
+echo "[5/6] Verificando que el servicio arrancó..."
+sleep 5
+if ! systemctl is-active --quiet myapp; then
+    echo "FALLO: El servicio no arrancó después del deploy." >&2
+    rollback
 fi
 
-# Limpiar releases viejos (mantener últimos 5)
+# ── PASO 6: Health check HTTP ──
+# Verificamos que la app responde HTTP y que la BD está sincronizada.
+# El endpoint /health verifica conexión a BD y migraciones pendientes.
+echo "[6/6] Ejecutando health check HTTP..."
+sleep 3
+if ! curl -sf --max-time 10 http://localhost:5000/health > /dev/null 2>&1; then
+    echo "FALLO: Health check HTTP no respondió correctamente." >&2
+    echo "  La app arrancó pero no responde a /health" >&2
+    rollback
+fi
+
+# ── Limpieza ──
+# Mantener últimos 5 releases para rollback manual si es necesario
 cd /opt/myapp/releases
 ls -dt */ | tail -n +6 | xargs -r rm -rf
+
+# Mantener últimos 10 backups pre-deploy
+ls -dt "$BACKUP_DIR"/pre_deploy_*.bak 2>/dev/null | tail -n +11 | xargs -r rm -f
 
 # Limpiar temp
 rm -rf "$DEPLOY_SOURCE"
 
-echo "Deploy completado: $RELEASE_DIR"
+echo ""
+echo "══════════════════════════════════════════"
+echo " Deploy completado exitosamente"
+echo " Release: $RELEASE_DIR"
+echo "══════════════════════════════════════════"
 DEPLOY
 
 chmod +x /opt/myapp/deploy.sh

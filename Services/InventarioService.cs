@@ -1,9 +1,27 @@
-// ═══════════════════════════════════════════════════════════
-// InventarioService.cs — Servicio de gestión de inventario
-// Maneja CRUD de productos, movimientos (ventas, devoluciones,
-// restock, ajustes), estadísticas y exportación Excel.
-// Cada movimiento genera un log inmutable para tracking financiero.
-// ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════
+// InventarioService.cs — Implementación del servicio de gestión de inventario
+//
+// RESPONSABILIDADES:
+//   - CRUD de productos (alta, consulta, edición, baja lógica)
+//   - Cuatro tipos de movimiento de stock:
+//       "venta"      → reduce stock, registra ingreso financiero
+//       "devolucion" → incrementa stock, registra gasto (devolución de dinero al cliente)
+//       "restock"    → incrementa stock, registra gasto (compra a proveedor)
+//       "ajuste"     → corrige stock sin impacto financiero (conteo físico)
+//   - Estadísticas del dashboard (totales del día)
+//   - Exportación a Excel de dos hojas (ClosedXML)
+//
+// CONCURRENCIA:
+//   Todos los métodos que modifican stock capturan DbUpdateConcurrencyException.
+//   Esto protege contra el escenario donde dos empleados venden el mismo
+//   producto al mismo tiempo y el stock quedaría negativo sin esta protección.
+//
+// TRAZABILIDAD:
+//   Cada operación de stock genera dos registros:
+//     1. Un MovimientoInventario (tabla permanente para consulta de historial)
+//     2. Un Log (tabla de auditoría general del negocio con el monto financiero)
+//   Esto crea un rastro inmutable: nunca se borra, solo se agrega.
+// ═══════════════════════════════════════════════════════════════════════════
 
 using ClosedXML.Excel;
 using Gimnasio.Data;
@@ -13,23 +31,36 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Gimnasio.Services;
 
+/// <summary>
+/// Servicio de gestión de inventario de productos.
+/// Maneja el ciclo de vida completo de un producto: desde su alta hasta
+/// cada movimiento de stock que afecta la cantidad disponible.
+/// </summary>
 public class InventarioService : IInventarioService
 {
     private readonly ApplicationDbContext _context;
     private readonly ILogService _logService;
 
+    /// <summary>
+    /// El constructor recibe los servicios por inyección de dependencia.
+    /// <paramref name="context"/> es el acceso a la base de datos (EF Core).
+    /// <paramref name="logService"/> registra eventos de auditoría del negocio.
+    /// </summary>
     public InventarioService(ApplicationDbContext context, ILogService logService)
     {
         _context = context;
         _logService = logService;
     }
 
-    // ═══════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════
     // CRUD DE PRODUCTOS
-    // ═══════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// Obtiene todos los productos activos con margen unitario y alerta de stock bajo
+    /// Obtiene todos los productos activos del negocio con campos calculados.
+    /// Se proyecta a tipo anónimo en lugar de devolver la entidad completa para:
+    ///   - Evitar serializar propiedades innecesarias al JSON
+    ///   - Calcular MargenUnitario y StockBajo directamente en la consulta SQL
     /// </summary>
     public async Task<object> GetProductosAsync(Guid negocioId)
     {
@@ -45,14 +76,19 @@ public class InventarioService : IInventarioService
                 p.Stock,
                 p.StockMinimo,
                 p.FechaCreacion,
+                // MargenUnitario: cuánto gana el negocio por cada unidad vendida
                 MargenUnitario = p.PrecioVenta - p.CostoCompra,
+                // StockBajo: true cuando hay que reordenar mercancía (llega al límite mínimo)
                 StockBajo = p.Stock <= p.StockMinimo
             })
             .ToListAsync();
     }
 
     /// <summary>
-    /// Obtiene un producto específico por su ID dentro de un negocio
+    /// Obtiene un producto específico por su ID.
+    /// El filtro doble (ProductoId + NegocioId + IsActive) garantiza que:
+    ///   1. El producto pertenezca al negocio del usuario autenticado (seguridad)
+    ///   2. No se devuelvan productos eliminados lógicamente
     /// </summary>
     public async Task<Producto> GetProductoAsync(Guid id, Guid negocioId)
     {
@@ -61,10 +97,14 @@ public class InventarioService : IInventarioService
     }
 
     /// <summary>
-    /// Crea un nuevo producto con validación de nombre, precios y stock
+    /// Crea un nuevo producto con validación exhaustiva de todos sus campos.
+    /// Las validaciones se hacen en el servicio (no solo en el modelo) para
+    /// que los mensajes de error lleguen exactamente como están escritos aquí
+    /// al usuario final sin necesidad de configurar atributos de anotación de datos.
     /// </summary>
     public async Task<(bool success, string message)> CrearProductoAsync(ProductoCreateDto model)
     {
+        // Validaciones de negocio — no dependen de la base de datos, son rápidas
         if (string.IsNullOrWhiteSpace(model.Nombre))
             return (false, "El nombre del producto es obligatorio");
         if (model.PrecioVenta <= 0)
@@ -76,20 +116,22 @@ public class InventarioService : IInventarioService
 
         var producto = new Producto
         {
-            ProductoId = Guid.NewGuid(),
-            NegocioId = model.NegocioId,
-            Nombre = model.Nombre,
-            PrecioVenta = model.PrecioVenta,
-            CostoCompra = model.CostoCompra,
-            Stock = model.Stock,
-            StockMinimo = model.StockMinimo,
-            FechaCreacion = TimeHelper.Now,
+            ProductoId        = Guid.NewGuid(),
+            NegocioId         = model.NegocioId,
+            Nombre            = model.Nombre,
+            PrecioVenta       = model.PrecioVenta,
+            CostoCompra       = model.CostoCompra,
+            Stock             = model.Stock,
+            StockMinimo       = model.StockMinimo,
+            FechaCreacion     = TimeHelper.Now,
             FechaDeActualizacion = TimeHelper.Now
         };
 
         _context.Productos.Add(producto);
         await _context.SaveChangesAsync();
 
+        // Log con monto = 0 porque crear un producto no es un ingreso/gasto en sí,
+        // el gasto ocurrirá cuando se haga el primer restock
         await _logService.CreateLogAsync(model.NegocioId, "producto_creado",
             $"Producto creado: {model.Nombre}, stock inicial: {model.Stock}, precio: ${model.PrecioVenta:F2}, costo: ${model.CostoCompra:F2}",
             0);
@@ -98,7 +140,15 @@ public class InventarioService : IInventarioService
     }
 
     /// <summary>
-    /// Edita un producto existente y registra cambios detectados en logs
+    /// Edita los metadatos de un producto existente (nombre, precios, stock mínimo).
+    /// IMPORTANTE: El stock actual NUNCA se modifica aquí — cualquier cambio de
+    /// cantidad debe hacerse a través de VenderProductoAsync, RestockAsync, etc.
+    /// Esto mantiene el historial de movimientos íntegro.
+    ///
+    /// El sistema de diff detecta exactamente qué cambió para escribir un log
+    /// legible: "precio venta: $10.00 → $12.00, stock mínimo: 5 → 10".
+    /// Si nada cambió, se retorna error temprano para no hacer una escritura
+    /// innecesaria a la base de datos.
     /// </summary>
     public async Task<(bool success, string message)> EditarProductoAsync(ProductoCreateDto model)
     {
@@ -108,6 +158,7 @@ public class InventarioService : IInventarioService
         if (producto == null)
             return (false, "Producto no encontrado");
 
+        // Detectar qué campos cambiaron para el log de auditoría
         var cambios = new List<string>();
         if (producto.Nombre != model.Nombre)
             cambios.Add($"nombre: {producto.Nombre} → {model.Nombre}");
@@ -118,19 +169,23 @@ public class InventarioService : IInventarioService
         if (producto.StockMinimo != model.StockMinimo)
             cambios.Add($"stock mínimo: {producto.StockMinimo} → {model.StockMinimo}");
 
+        // Si no hubo cambios reales, no vale la pena escribir en la base de datos
         if (cambios.Count == 0)
             return (false, "No se detectaron cambios");
 
+        // Guardamos el nombre anterior para el log (puede haber cambiado)
         var nombreAnterior = producto.Nombre;
-        producto.Nombre = model.Nombre;
-        producto.PrecioVenta = model.PrecioVenta;
-        producto.CostoCompra = model.CostoCompra;
-        producto.StockMinimo = model.StockMinimo;
+
+        producto.Nombre              = model.Nombre;
+        producto.PrecioVenta         = model.PrecioVenta;
+        producto.CostoCompra         = model.CostoCompra;
+        producto.StockMinimo         = model.StockMinimo;
         producto.FechaDeActualizacion = TimeHelper.Now;
 
         _context.Update(producto);
         await _context.SaveChangesAsync();
 
+        // El log usa el nombre anterior para que sea legible incluso si el nombre cambió
         await _logService.CreateLogAsync(model.NegocioId, "producto_editado",
             $"Producto {nombreAnterior} actualizado: {string.Join(", ", cambios)}", 0);
 
@@ -138,7 +193,16 @@ public class InventarioService : IInventarioService
     }
 
     /// <summary>
-    /// Elimina un producto de forma lógica (IsActive = false)
+    /// Elimina un producto de forma LÓGICA estableciendo IsActive = false.
+    ///
+    /// Por qué no se elimina físicamente (DELETE):
+    ///   - Los movimientos históricos (ventas, restocks, etc.) referencian el producto
+    ///   - Borrar el producto rompería la integridad referencial de los reportes pasados
+    ///   - Se mantiene el nombre del producto en MovimientoInventario.NombreProducto
+    ///     como snapshot para que los reportes históricos sigan siendo legibles
+    ///
+    /// El log incluye el stock restante para documentar cuántas unidades quedaron
+    /// en bodega al momento de dar de baja el producto.
     /// </summary>
     public async Task<(bool success, string message)> EliminarProductoAsync(Guid id, Guid negocioId)
     {
@@ -148,7 +212,8 @@ public class InventarioService : IInventarioService
         if (producto == null)
             return (false, "Producto no encontrado");
 
-        producto.IsActive = false;
+        // Baja lógica: el registro queda en la base de datos pero invisible en listados
+        producto.IsActive             = false;
         producto.FechaDeActualizacion = TimeHelper.Now;
 
         _context.Update(producto);
@@ -160,12 +225,30 @@ public class InventarioService : IInventarioService
         return (true, "Producto eliminado exitosamente");
     }
 
-    // ═══════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════
     // MOVIMIENTOS DE INVENTARIO
-    // ═══════════════════════════════════════════════════════════
+    //
+    // PATRÓN COMPARTIDO DE LOS CUATRO MÉTODOS:
+    //   1. Validar parámetros de entrada
+    //   2. Buscar el producto (con filtro de negocioId para seguridad)
+    //   3. Calcular el nuevo stock (suma o resta según el tipo)
+    //   4. Insertar un MovimientoInventario con snapshot del estado antes/después
+    //   5. Guardar cambios dentro de un try/catch de concurrencia
+    //   6. Registrar un log financiero (positivo=ingreso, negativo=gasto)
+    // ═══════════════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// Registra la venta de unidades, reduce stock y genera log de ingreso
+    /// Registra la venta de unidades de un producto al público.
+    /// El stock se REDUCE. El log registra un ingreso positivo.
+    ///
+    /// Validación de stock antes de la venta:
+    ///   Si Stock &lt; cantidad → error inmediato. No se puede vender lo que no hay.
+    ///
+    /// Protección de concurrencia:
+    ///   Si dos empleados venden el mismo producto simultáneamente y EF Core
+    ///   detecta que la fila cambió desde que la leímos, lanza DbUpdateConcurrencyException.
+    ///   Capturamos esto y pedimos al usuario que recargue, en lugar de dejar que
+    ///   el stock quede en un valor incorrecto.
     /// </summary>
     public async Task<(bool success, string message)> VenderProductoAsync(Guid productoId, Guid negocioId, int cantidad)
     {
@@ -177,27 +260,31 @@ public class InventarioService : IInventarioService
 
         if (producto == null)
             return (false, "Producto no encontrado");
+
+        // Verificar stock antes de comprometerse con la venta
         if (producto.Stock < cantidad)
             return (false, $"Stock insuficiente. Disponible: {producto.Stock}");
 
         var stockAnterior = producto.Stock;
-        producto.Stock -= cantidad;
+        producto.Stock -= cantidad;                   // Reducir stock
         producto.FechaDeActualizacion = TimeHelper.Now;
-        var total = cantidad * producto.PrecioVenta;
+        var total = cantidad * producto.PrecioVenta;  // Ingreso generado por esta venta
 
+        // Snapshot inmutable del movimiento: guarda los precios del MOMENTO de la venta,
+        // no una referencia al producto (cuyos precios podrían cambiar en el futuro)
         _context.MovimientosInventario.Add(new MovimientoInventario
         {
-            MovimientoId = Guid.NewGuid(),
-            NegocioId = negocioId,
-            ProductoId = productoId,
-            NombreProducto = producto.Nombre,
-            Tipo = "venta",
-            Cantidad = cantidad,
+            MovimientoId   = Guid.NewGuid(),
+            NegocioId      = negocioId,
+            ProductoId     = productoId,
+            NombreProducto = producto.Nombre,   // Snapshot del nombre en este momento
+            Tipo           = "venta",
+            Cantidad       = cantidad,
             PrecioUnitario = producto.PrecioVenta,
-            Total = total,
-            StockAnterior = stockAnterior,
-            StockNuevo = producto.Stock,
-            Fecha = TimeHelper.Now
+            Total          = total,
+            StockAnterior  = stockAnterior,
+            StockNuevo     = producto.Stock,
+            Fecha          = TimeHelper.Now
         });
 
         try
@@ -207,9 +294,12 @@ public class InventarioService : IInventarioService
         }
         catch (DbUpdateConcurrencyException)
         {
+            // Otro usuario modificó el stock entre que lo leímos y que intentamos guardarlo.
+            // Pedimos que recarguen para obtener el estado actual real.
             return (false, "El stock fue modificado por otro usuario. Recarga e intenta de nuevo.");
         }
 
+        // El total es positivo porque es un ingreso para el negocio
         await _logService.CreateLogAsync(negocioId, "venta_inventario",
             $"Venta inventario: {cantidad}x {producto.Nombre} @ ${producto.PrecioVenta:F2} = ${total:F2}",
             total);
@@ -218,12 +308,20 @@ public class InventarioService : IInventarioService
     }
 
     /// <summary>
-    /// Registra una devolución de producto, incrementa stock y genera log de gasto
+    /// Registra la devolución de productos por parte de un cliente.
+    /// El stock se INCREMENTA (las unidades regresan al inventario).
+    /// El log registra un gasto negativo (se devuelve dinero al cliente).
+    ///
+    /// La nota es obligatoria porque sin ella el historial de auditoría
+    /// queda incompleto: no sabremos si fue un producto dañado, un error
+    /// de cobro, o un cliente insatisfecho.
     /// </summary>
     public async Task<(bool success, string message)> DevolverProductoAsync(Guid productoId, Guid negocioId, int cantidad, string nota)
     {
         if (cantidad <= 0)
             return (false, "La cantidad debe ser mayor a 0");
+
+        // La nota es obligatoria para tener trazabilidad completa de por qué se devolvió
         if (string.IsNullOrWhiteSpace(nota))
             return (false, "La razón de la devolución es obligatoria");
 
@@ -234,24 +332,24 @@ public class InventarioService : IInventarioService
             return (false, "Producto no encontrado");
 
         var stockAnterior = producto.Stock;
-        producto.Stock += cantidad;
+        producto.Stock += cantidad;               // Las unidades regresan al inventario
         producto.FechaDeActualizacion = TimeHelper.Now;
         var total = cantidad * producto.PrecioVenta;
 
         _context.MovimientosInventario.Add(new MovimientoInventario
         {
-            MovimientoId = Guid.NewGuid(),
-            NegocioId = negocioId,
-            ProductoId = productoId,
+            MovimientoId   = Guid.NewGuid(),
+            NegocioId      = negocioId,
+            ProductoId     = productoId,
             NombreProducto = producto.Nombre,
-            Tipo = "devolucion",
-            Cantidad = cantidad,
+            Tipo           = "devolucion",
+            Cantidad       = cantidad,
             PrecioUnitario = producto.PrecioVenta,
-            Total = total,
-            StockAnterior = stockAnterior,
-            StockNuevo = producto.Stock,
-            Nota = nota,
-            Fecha = TimeHelper.Now
+            Total          = total,
+            StockAnterior  = stockAnterior,
+            StockNuevo     = producto.Stock,
+            Nota           = nota,  // Razón de la devolución (obligatoria)
+            Fecha          = TimeHelper.Now
         });
 
         try
@@ -264,6 +362,7 @@ public class InventarioService : IInventarioService
             return (false, "El stock fue modificado por otro usuario. Recarga e intenta de nuevo.");
         }
 
+        // El total es NEGATIVO porque es dinero que sale del negocio (se devuelve al cliente)
         await _logService.CreateLogAsync(negocioId, "devolucion_inventario",
             $"Devolución inventario: {cantidad}x {producto.Nombre}, ${total:F2}. Razón: {nota}",
             -total);
@@ -272,7 +371,15 @@ public class InventarioService : IInventarioService
     }
 
     /// <summary>
-    /// Registra un reabastecimiento de stock y genera log de gasto por el costo
+    /// Registra el reabastecimiento de stock por compra a proveedor.
+    /// El stock se INCREMENTA. El log registra un gasto (dinero que sale del negocio).
+    ///
+    /// El costoTotal es el precio pagado al proveedor por toda la remesa.
+    /// El costoUnitario se calcula dividiendo (costoTotal / cantidad) para almacenarlo
+    /// en PrecioUnitario del movimiento, facilitando análisis de costo promedio.
+    ///
+    /// El log usa -costoTotal (negativo) porque representa un egreso del negocio,
+    /// no un ingreso. Esto permite que los reportes financieros muestren el saldo neto.
     /// </summary>
     public async Task<(bool success, string message)> RestockAsync(Guid productoId, Guid negocioId, int cantidad, decimal costoTotal)
     {
@@ -288,23 +395,26 @@ public class InventarioService : IInventarioService
             return (false, "Producto no encontrado");
 
         var stockAnterior = producto.Stock;
-        producto.Stock += cantidad;
+        producto.Stock += cantidad;              // Las unidades nuevas entran al inventario
         producto.FechaDeActualizacion = TimeHelper.Now;
+
+        // Costo unitario calculado: si compramos 10 unidades por $50, cada una costó $5
         var costoUnitario = costoTotal / cantidad;
 
         _context.MovimientosInventario.Add(new MovimientoInventario
         {
-            MovimientoId = Guid.NewGuid(),
-            NegocioId = negocioId,
-            ProductoId = productoId,
+            MovimientoId   = Guid.NewGuid(),
+            NegocioId      = negocioId,
+            ProductoId     = productoId,
             NombreProducto = producto.Nombre,
-            Tipo = "restock",
-            Cantidad = cantidad,
-            PrecioUnitario = costoUnitario,
-            Total = costoTotal,
-            StockAnterior = stockAnterior,
-            StockNuevo = producto.Stock,
-            Fecha = TimeHelper.Now
+            Tipo           = "restock",
+            Cantidad       = cantidad,
+            PrecioUnitario = costoUnitario,  // Costo por unidad comprada al proveedor
+            Total          = costoTotal,     // Costo total de la compra
+            StockAnterior  = stockAnterior,
+            StockNuevo     = producto.Stock,
+            Fecha          = TimeHelper.Now
+            // Nota: no es obligatoria en restock (el proveedor y factura son la documentación)
         });
 
         try
@@ -317,6 +427,7 @@ public class InventarioService : IInventarioService
             return (false, "El stock fue modificado por otro usuario. Recarga e intenta de nuevo.");
         }
 
+        // Log con monto NEGATIVO: el negocio gastó dinero comprando mercancía
         await _logService.CreateLogAsync(negocioId, "restock_inventario",
             $"Restock inventario: +{cantidad} {producto.Nombre}, costo ${costoTotal:F2}",
             -costoTotal);
@@ -325,12 +436,26 @@ public class InventarioService : IInventarioService
     }
 
     /// <summary>
-    /// Ajusta el stock tras conteo físico y genera log de ajuste
+    /// Ajusta el stock del sistema para que coincida con el conteo físico real.
+    /// Se usa cuando hay discrepancias entre lo que dice el sistema y lo que hay
+    /// físicamente en bodega (por pérdidas, daños, hurto o errores de registro).
+    ///
+    /// A diferencia de los otros movimientos, el ajuste es financieramente neutro
+    /// (el log usa monto = 0) porque no es una venta ni una compra.
+    ///
+    /// El movimiento guarda Math.Abs(diferencia) como Cantidad porque siempre
+    /// es positivo; el signo de la diferencia se puede inferir comparando
+    /// StockAnterior vs StockNuevo.
+    ///
+    /// Formato especial del log: "{diferencia:+#;-#}" imprime "+5" o "-3"
+    /// con signo explícito para que sea claro si fue un incremento o reducción.
     /// </summary>
     public async Task<(bool success, string message)> AjustarStockAsync(Guid productoId, Guid negocioId, int stockReal, string nota)
     {
         if (stockReal < 0)
             return (false, "El stock real no puede ser negativo");
+
+        // La nota es obligatoria para explicar la razón del ajuste (ej. "producto caducado")
         if (string.IsNullOrWhiteSpace(nota))
             return (false, "La razón del ajuste es obligatoria");
 
@@ -340,28 +465,32 @@ public class InventarioService : IInventarioService
         if (producto == null)
             return (false, "Producto no encontrado");
 
+        // diferencia positiva = se encontraron más unidades de las que el sistema tenía
+        // diferencia negativa = hay menos unidades físicas que las que registra el sistema
         var diferencia = stockReal - producto.Stock;
+
+        // Si no hay diferencia, el sistema ya está correcto — no crear movimiento innecesario
         if (diferencia == 0)
             return (false, "El stock real es igual al stock actual, no hay ajuste necesario");
 
         var stockAnterior = producto.Stock;
-        producto.Stock = stockReal;
+        producto.Stock                = stockReal;  // Sobreescribir con el valor real contado
         producto.FechaDeActualizacion = TimeHelper.Now;
 
         _context.MovimientosInventario.Add(new MovimientoInventario
         {
-            MovimientoId = Guid.NewGuid(),
-            NegocioId = negocioId,
-            ProductoId = productoId,
+            MovimientoId   = Guid.NewGuid(),
+            NegocioId      = negocioId,
+            ProductoId     = productoId,
             NombreProducto = producto.Nombre,
-            Tipo = "ajuste",
-            Cantidad = Math.Abs(diferencia),
+            Tipo           = "ajuste",
+            Cantidad       = Math.Abs(diferencia),        // Siempre positivo; el signo está en StockAnterior vs StockNuevo
             PrecioUnitario = producto.PrecioVenta,
-            Total = Math.Abs(diferencia) * producto.PrecioVenta,
-            StockAnterior = stockAnterior,
-            StockNuevo = stockReal,
-            Nota = nota,
-            Fecha = TimeHelper.Now
+            Total          = Math.Abs(diferencia) * producto.PrecioVenta,  // Valor del ajuste en dinero (para reportes)
+            StockAnterior  = stockAnterior,
+            StockNuevo     = stockReal,
+            Nota           = nota,
+            Fecha          = TimeHelper.Now
         });
 
         try
@@ -374,7 +503,10 @@ public class InventarioService : IInventarioService
             return (false, "El stock fue modificado por otro usuario. Recarga e intenta de nuevo.");
         }
 
+        // Texto descriptivo del tipo de ajuste para el log
         var tipoAjuste = diferencia > 0 ? "incremento" : "reducción";
+
+        // El log financiero usa 0 porque un ajuste no es ni ingreso ni gasto
         await _logService.CreateLogAsync(negocioId, "ajuste_inventario",
             $"Ajuste inventario ({tipoAjuste}): {producto.Nombre}, {stockAnterior} → {stockReal} ({diferencia:+#;-#}). Razón: {nota}",
             0);
@@ -382,12 +514,14 @@ public class InventarioService : IInventarioService
         return (true, $"Stock ajustado: {producto.Nombre} ahora tiene {stockReal} unidades ({diferencia:+#;-#})");
     }
 
-    // ═══════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════
     // CONSULTAS
-    // ═══════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// Obtiene el historial de movimientos de inventario ordenados por fecha
+    /// Obtiene el historial completo de movimientos del negocio.
+    /// Ordenados del más reciente al más antiguo para que el usuario vea primero
+    /// lo que pasó hoy. Se proyecta a tipo anónimo para serialización eficiente.
     /// </summary>
     public async Task<object> GetMovimientosAsync(Guid negocioId)
     {
@@ -412,14 +546,25 @@ public class InventarioService : IInventarioService
     }
 
     /// <summary>
-    /// Calcula estadísticas de inventario: productos, stock bajo, ventas del día
+    /// Calcula estadísticas de inventario para los widgets del dashboard.
+    ///
+    /// Por qué cargamos todos los productos y movimientos en memoria:
+    ///   - Los productos son pocos (decenas a cientos), no miles
+    ///   - Necesitamos múltiples agregaciones sobre el mismo dataset
+    ///   - Es más eficiente una sola consulta + LINQ en memoria que
+    ///     múltiples consultas SQL con diferentes GROUP BY
+    ///
+    /// ingresosHoy = ventas − devoluciones (ingreso neto real del día)
+    /// valorInventario = suma(stock × costoCompra) — cuánto vale la bodega a precio de costo
     /// </summary>
     public async Task<object> GetInventarioStatsAsync(Guid negocioId)
     {
+        // Cargar todos los productos activos para calcular múltiples métricas sobre ellos
         var productos = await _context.Productos
             .Where(p => p.NegocioId == negocioId && p.IsActive)
             .ToListAsync();
 
+        // Solo los movimientos de hoy para las estadísticas diarias
         var hoy = TimeHelper.Now.Date;
         var movimientosHoy = await _context.MovimientosInventario
             .Where(m => m.NegocioId == negocioId && m.Fecha.Date == hoy)
@@ -427,25 +572,53 @@ public class InventarioService : IInventarioService
 
         return new
         {
+            // Cuántos productos distintos tiene el negocio
             totalProductos = productos.Count,
+
+            // Cuántos están en alerta de stock bajo (necesitan reabastecimiento urgente)
             stockBajo = productos.Count(p => p.Stock <= p.StockMinimo),
+
+            // Unidades físicas vendidas hoy (no en dinero, sino en piezas)
             ventasHoyUnidades = movimientosHoy.Where(m => m.Tipo == "venta").Sum(m => m.Cantidad),
+
+            // Ingreso neto: lo que entró por ventas menos lo que salió por devoluciones
             ingresosHoy = movimientosHoy.Where(m => m.Tipo == "venta").Sum(m => m.Total)
                          - movimientosHoy.Where(m => m.Tipo == "devolucion").Sum(m => m.Total),
+
+            // Monto total devuelto hoy (ayuda a detectar problemas de calidad o servicio)
             devolucionesHoy = movimientosHoy.Where(m => m.Tipo == "devolucion").Sum(m => m.Total),
+
+            // Valor de reposición del inventario: cuánto costaría reponer todo lo que hay
             valorInventario = productos.Sum(p => p.Stock * p.CostoCompra)
         };
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // EXPORTACION EXCEL
-    // ═══════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════════════════
+    // EXPORTACIÓN EXCEL
+    // ═══════════════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// Exporta productos y movimientos a un archivo Excel de dos hojas
+    /// Genera un archivo Excel en memoria con dos hojas de trabajo usando ClosedXML.
+    ///
+    /// Por qué ClosedXML en lugar de otras opciones:
+    ///   - No requiere Microsoft Office instalado en el servidor (a diferencia de Interop)
+    ///   - API fluida y legible (a diferencia del bajo nivel de OpenXML SDK)
+    ///   - Soporta estilos, colores y ajuste automático de columnas
+    ///
+    /// Hoja 1 "Productos":
+    ///   Lista de productos con precio, costo, stock y margen calculado.
+    ///   Los productos con stock bajo se marcan en ROJO para identificación rápida.
+    ///
+    /// Hoja 2 "Movimientos":
+    ///   Historial completo de todas las operaciones (venta, restock, devolución, ajuste).
+    ///   Útil para auditoría contable.
+    ///
+    /// El archivo se genera en un MemoryStream (sin tocar el disco del servidor) y
+    /// se devuelve como byte[] para que el controlador lo envíe como descarga HTTP.
     /// </summary>
     public async Task<byte[]> ExportInventarioExcelAsync(Guid negocioId)
     {
+        // Cargar datos ordenados para el Excel
         var productos = await _context.Productos
             .Where(p => p.NegocioId == negocioId && p.IsActive)
             .OrderBy(p => p.Nombre)
@@ -456,10 +629,13 @@ public class InventarioService : IInventarioService
             .OrderByDescending(m => m.Fecha)
             .ToListAsync();
 
+        // XLWorkbook es el libro de Excel; se destruye automáticamente con 'using'
         using var workbook = new XLWorkbook();
 
-        // Hoja 1: Productos
+        // ── Hoja 1: Productos ──────────────────────────────────────────────
         var wsProductos = workbook.Worksheets.Add("Productos");
+
+        // Encabezados de columna
         wsProductos.Cell(1, 1).Value = "Producto";
         wsProductos.Cell(1, 2).Value = "Precio Venta";
         wsProductos.Cell(1, 3).Value = "Costo";
@@ -467,6 +643,7 @@ public class InventarioService : IInventarioService
         wsProductos.Cell(1, 5).Value = "Stock Mínimo";
         wsProductos.Cell(1, 6).Value = "Margen";
 
+        // Estilo de encabezado: fondo azul con texto blanco en negrita
         var headerRange1 = wsProductos.Range(1, 1, 1, 6);
         headerRange1.Style.Font.Bold = true;
         headerRange1.Style.Fill.BackgroundColor = XLColor.FromHtml("#3b82f6");
@@ -482,15 +659,20 @@ public class InventarioService : IInventarioService
             wsProductos.Cell(row, 5).Value = p.StockMinimo;
             wsProductos.Cell(row, 6).Value = p.PrecioVenta - p.CostoCompra;
 
+            // Resaltar en rojo los productos que necesitan reabastecimiento urgente
             if (p.Stock <= p.StockMinimo)
                 wsProductos.Cell(row, 4).Style.Font.FontColor = XLColor.Red;
 
             row++;
         }
+
+        // Ajusta el ancho de cada columna al contenido más largo automáticamente
         wsProductos.Columns().AdjustToContents();
 
-        // Hoja 2: Movimientos
+        // ── Hoja 2: Movimientos ────────────────────────────────────────────
         var wsMov = workbook.Worksheets.Add("Movimientos");
+
+        // Encabezados de columna
         wsMov.Cell(1, 1).Value = "Fecha";
         wsMov.Cell(1, 2).Value = "Producto";
         wsMov.Cell(1, 3).Value = "Tipo";
@@ -501,6 +683,7 @@ public class InventarioService : IInventarioService
         wsMov.Cell(1, 8).Value = "Stock Después";
         wsMov.Cell(1, 9).Value = "Nota";
 
+        // Mismo estilo de encabezado que la hoja de productos
         var headerRange2 = wsMov.Range(1, 1, 1, 9);
         headerRange2.Style.Font.Bold = true;
         headerRange2.Style.Fill.BackgroundColor = XLColor.FromHtml("#3b82f6");
@@ -517,11 +700,13 @@ public class InventarioService : IInventarioService
             wsMov.Cell(row, 6).Value = m.Total;
             wsMov.Cell(row, 7).Value = m.StockAnterior;
             wsMov.Cell(row, 8).Value = m.StockNuevo;
-            wsMov.Cell(row, 9).Value = m.Nota ?? "";
+            wsMov.Cell(row, 9).Value = m.Nota ?? "";  // Nota puede ser null (ej. en ventas normales)
             row++;
         }
         wsMov.Columns().AdjustToContents();
 
+        // Serializar el workbook a un array de bytes en memoria
+        // Se usa 'using' para liberar el stream una vez que se copió el contenido
         using var stream = new MemoryStream();
         workbook.SaveAs(stream);
         return stream.ToArray();
