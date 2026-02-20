@@ -69,6 +69,9 @@ public class EmailService : IEmailService
     private async Task<bool> EnviarEmailAsync(string destinatario, string subject, string htmlBody,
         byte[]? attachmentBytes = null, string? attachmentFileName = null)
     {
+        if (string.IsNullOrWhiteSpace(destinatario))
+            return false;
+
         if (string.IsNullOrEmpty(_settings.Password) || _settings.Password.Contains("YOUR_"))
         {
             _logger.LogWarning("EmailService: No se ha configurado la App Password de Gmail. Correo no enviado.");
@@ -867,5 +870,60 @@ public class EmailService : IEmailService
 </div>";
 
         return await EnviarEmailAsync(destinatario, $"Recordatorio: tienes una cita en {nombreNegocio} en 30 minutos", body);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // CATÁLOGO DE LA TIENDA
+    // ═══════════════════════════════════════════════════════════
+
+    public async Task<bool> EnviarCatalogoTiendaAsync(string destinatario, string nombreNegocio, byte[] pdfBytes)
+    {
+        var body = $@"
+<div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>
+    <div style='background: linear-gradient(135deg, #ff6b35, #f7931e); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;'>
+        <h1 style='color: white; margin: 0; font-size: 26px;'>Nuestro Catalogo de Productos</h1>
+        <p style='color: rgba(255,255,255,0.9); margin: 8px 0 0; font-size: 15px;'>{nombreNegocio}</p>
+    </div>
+    <div style='background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; border-top: none;'>
+        <p style='color: #555; font-size: 16px; margin: 0 0 10px;'>Hola!</p>
+        <p style='color: #333; font-size: 16px; margin: 0 0 25px;'>
+            La tienda <strong>{nombreNegocio}</strong> te ha enviado su catalogo de productos.
+            Echale un ojo al documento adjunto y no dudes en contactarlos para cualquier pedido.
+        </p>
+
+        <p style='color: #999; font-size: 12px; margin: 20px 0 0; text-align: center;'>
+            Por favor, no respondas a este correo. Si deseas contactar con la tienda, 
+            hazlo a traves de sus canales de contacto habituales.
+        </p>
+    </div>
+    <div style='text-align: center; padding: 15px; color: #999; font-size: 12px; border-radius: 0 0 12px 12px;'>
+        Enviado a traves de My-Negocio
+    </div>
+</div>";
+
+        try 
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_settings.FromName, _settings.FromEmail));
+            message.To.Add(MailboxAddress.Parse(destinatario));
+            message.Subject = $"Catalogo de Productos - {nombreNegocio}";
+
+            var builder = new BodyBuilder { HtmlBody = body };
+            builder.Attachments.Add("Catalogo_Productos.pdf", pdfBytes, new ContentType("application", "pdf"));
+            message.Body = builder.ToMessageBody();
+
+            using var client = new MailKit.Net.Smtp.SmtpClient();
+            await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(_settings.FromEmail, _settings.Password);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+
+            return true;
+        } 
+        catch (Exception ex) 
+        {
+            _logger.LogError(ex, "Error enviando el catalogo en PDF a {Email}", destinatario);
+            return false;
+        }
     }
 }

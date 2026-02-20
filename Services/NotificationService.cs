@@ -194,63 +194,115 @@ public class NotificationService : INotificationService
     /// </summary>
     public async Task<(bool success, string message, int count)> GenerarNotificacionesAsync(Guid negocioId)
     {
-        // Guard: los negocios artesanales no tienen membresías — no hay nada que revisar
         var negocio = await _context.Negocios.FindAsync(negocioId);
-        if (negocio?.TipoNegocio == "artesanal")
-            return (true, "Negocio artesanal — sin notificaciones de membresía", 0);
+        if (negocio == null)
+            return (false, "Negocio no encontrado", 0);
 
-        // Definir la ventana de tiempo: desde hoy hasta 3 días en el futuro
-        var hoy     = TimeHelper.Now.Date;
-        var en3Dias = hoy.AddDays(3);
+        var hoy = TimeHelper.Now.Date;
+        int count = 0;
 
-        // Buscar todos los clientes cuya membresía vence dentro de la ventana
-        var clientesProximos = await _context.Clientes
-            .Where(c => c.NegocioId == negocioId
-                && c.FechaQueTermina.Date >= hoy     // Incluir los que vencen hoy
-                && c.FechaQueTermina.Date <= en3Dias) // Hasta 3 días en el futuro
+        // Pre-cargar notificaciones de hoy para anti-duplicado
+        var notificacionesHoy = await _context.Notificaciones
+            .Where(n => n.NegocioId == negocioId && n.FechaCreacion.Date == hoy)
+            .Select(n => new { n.ClienteId, n.Tipo, n.Mensaje })
             .ToListAsync();
 
-        // Pre-cargar ClienteIds ya notificados hoy (elimina N+1)
-        var notificadosHoy = (await _context.Notificaciones
-            .Where(n => n.NegocioId == negocioId && n.FechaCreacion.Date == hoy)
-            .Select(n => n.ClienteId)
-            .ToListAsync()).ToHashSet();
+        // ── Notificaciones de stock bajo (aplica a TODOS los tipos de negocio) ──
+        var productosStockBajo = await _context.Productos
+            .Where(p => p.NegocioId == negocioId && p.IsActive && p.Stock <= p.StockMinimo)
+            .Select(p => new { p.ProductoId, p.Nombre, p.Stock, p.StockMinimo })
+            .ToListAsync();
 
-        int count = 0;
-        foreach (var cliente in clientesProximos)
+        foreach (var prod in productosStockBajo)
         {
-            // Anti-duplicado: verificar si ya existe una notificación para este cliente HOY
-            // Un cliente puede aparecer varios días seguidos (ej. 3 días, luego 2, luego 1)
-            // pero solo generamos UNA notificación por día por cliente
-            if (notificadosHoy.Contains(cliente.ClienteId)) continue;  // Ya fue notificado hoy → skip
+            var mensajeStock = prod.Stock == 0
+                ? $"Sin stock: {prod.Nombre}"
+                : $"Stock bajo: {prod.Nombre} ({prod.Stock} unidades)";
 
-            // Calcular cuántos días exactos faltan para el vencimiento
-            var diasRestantes  = (cliente.FechaQueTermina.Date - hoy).Days;
-            var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
+            var yaNotificado = notificacionesHoy.Any(n => n.Tipo == "stock_bajo" && n.Mensaje == mensajeStock);
+            if (yaNotificado) continue;
 
-            // Construir el mensaje descriptivo según urgencia
-            // diasRestantes == 0 significa que vence HOY (el mismo día de la consulta)
-            var notificacion = new Notificacion
+            _context.Notificaciones.Add(new Notificacion
             {
-                Id            = Guid.NewGuid(),
-                NegocioId     = negocioId,
-                Mensaje       = diasRestantes == 0
-                    ? $"La membresía de {nombreCompleto} vence HOY"
-                    : $"La membresía de {nombreCompleto} vence en {diasRestantes} día(s)",
-                Tipo          = "vencimiento",  // Tipo para filtrado y estilos visuales en frontend
-                ClienteId     = cliente.ClienteId,
-                NombreCliente = nombreCompleto,   // Guardamos el nombre como snapshot (puede cambiar)
-                Leida         = false,            // Nueva → no leída → aparece en el badge
+                Id = Guid.NewGuid(),
+                NegocioId = negocioId,
+                Mensaje = mensajeStock,
+                Tipo = "stock_bajo",
+                Leida = false,
                 FechaCreacion = TimeHelper.Now
-            };
-
-            _context.Notificaciones.Add(notificacion);
+            });
             count++;
         }
 
-        // Guardar todas las nuevas notificaciones en una sola transacción
-        await _context.SaveChangesAsync();
+        // ── Notificaciones de citas canceladas hoy (negocios artesanales) ──
+        if (negocio.TipoNegocio == "artesanal")
+        {
+            var citasCanceladas = await _context.Citas
+                .Where(c => c.NegocioId == negocioId
+                    && c.Estado == "cancelada"
+                    && c.FechaHoraInicio.Date == hoy)
+                .Select(c => new { c.CitaId, c.NombreCliente, c.NombreServicio })
+                .ToListAsync();
 
+            foreach (var cita in citasCanceladas)
+            {
+                var mensajeCancelada = $"Cita cancelada: {cita.NombreServicio} - {cita.NombreCliente}";
+                var yaNotificado = notificacionesHoy.Any(n => n.Tipo == "cita_cancelada" && n.Mensaje == mensajeCancelada);
+                if (yaNotificado) continue;
+
+                _context.Notificaciones.Add(new Notificacion
+                {
+                    Id = Guid.NewGuid(),
+                    NegocioId = negocioId,
+                    Mensaje = mensajeCancelada,
+                    Tipo = "cita_cancelada",
+                    Leida = false,
+                    FechaCreacion = TimeHelper.Now
+                });
+                count++;
+            }
+        }
+
+        // ── Notificaciones de vencimiento de membresía (solo negocios de membresías) ──
+        if (negocio.TipoNegocio != "artesanal")
+        {
+            var en3Dias = hoy.AddDays(3);
+            var notificadosHoy = notificacionesHoy
+                .Where(n => n.Tipo == "vencimiento")
+                .Select(n => n.ClienteId)
+                .ToHashSet();
+
+            var clientesProximos = await _context.Clientes
+                .Where(c => c.NegocioId == negocioId
+                    && c.FechaQueTermina.Date >= hoy
+                    && c.FechaQueTermina.Date <= en3Dias)
+                .ToListAsync();
+
+            foreach (var cliente in clientesProximos)
+            {
+                if (notificadosHoy.Contains(cliente.ClienteId)) continue;
+
+                var diasRestantes = (cliente.FechaQueTermina.Date - hoy).Days;
+                var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
+
+                _context.Notificaciones.Add(new Notificacion
+                {
+                    Id = Guid.NewGuid(),
+                    NegocioId = negocioId,
+                    Mensaje = diasRestantes == 0
+                        ? $"La membresía de {nombreCompleto} vence HOY"
+                        : $"La membresía de {nombreCompleto} vence en {diasRestantes} día(s)",
+                    Tipo = "vencimiento",
+                    ClienteId = cliente.ClienteId,
+                    NombreCliente = nombreCompleto,
+                    Leida = false,
+                    FechaCreacion = TimeHelper.Now
+                });
+                count++;
+            }
+        }
+
+        await _context.SaveChangesAsync();
         return (true, $"Se generaron {count} notificaciones", count);
     }
 }

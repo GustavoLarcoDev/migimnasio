@@ -37,6 +37,7 @@ public class CitasController : Controller
     private readonly ApplicationDbContext _context;
     private readonly IEmailService _emailService;
     private readonly IReciboService _reciboService;
+    private readonly ILogger<CitasController> _logger;
 
     public CitasController(
         ICitaService citaService,
@@ -44,7 +45,8 @@ public class CitasController : Controller
         IAuthService authService,
         ApplicationDbContext context,
         IEmailService emailService,
-        IReciboService reciboService)
+        IReciboService reciboService,
+        ILogger<CitasController> logger)
     {
         _citaService = citaService;
         _clienteService = clienteService;
@@ -52,6 +54,7 @@ public class CitasController : Controller
         _context = context;
         _reciboService = reciboService;
         _emailService = emailService;
+        _logger = logger;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -538,24 +541,29 @@ public class CitasController : Controller
                 var pago = await _context.PagosCita
                     .FirstOrDefaultAsync(p => p.CitaId == dto.CitaId);
 
-                if (cliente != null && negocio != null && pago != null)
+                if (negocio != null && pago != null)
                 {
-                    var clienteEmail = cliente.Email;
-                    if (!string.IsNullOrWhiteSpace(clienteEmail))
+                    try
                     {
-                        try
-                        {
-                            var numRecibo = await _reciboService.ObtenerSiguienteNumeroAsync(dto.NegocioId);
-                            var concepto = $"Servicio: {cita.NombreServicio}";
-                            var (enviado, html) = await _emailService.EnviarReciboCitaCompletadaAsync(
-                                clienteEmail, cita.NombreCliente, negocio.NegocioNombre,
-                                cita.NombreServicio, cita.NombreEmpleado,
-                                pago.MontoServicio, pago.MontoExtra, pago.Propina, pago.Total,
-                                negocio.Email, negocio.Telefono, numRecibo);
-                            await _reciboService.CrearReciboAsync(dto.NegocioId, numRecibo, "pago_cita",
-                                clienteEmail, cita.NombreCliente, negocio.NegocioNombre, concepto, pago.Total, html);
-                        }
-                        catch { }
+                        var numRecibo = await _reciboService.ObtenerSiguienteNumeroAsync(dto.NegocioId);
+                        var concepto = $"Servicio: {cita.NombreServicio}";
+                        var clienteEmail = cliente?.Email ?? "";
+                        var clienteNombre = cita.NombreCliente ?? "Cliente";
+
+                        // Generar HTML del recibo y enviar email si hay correo del cliente
+                        var (enviado, html) = await _emailService.EnviarReciboCitaCompletadaAsync(
+                            clienteEmail, clienteNombre, negocio.NegocioNombre,
+                            cita.NombreServicio, cita.NombreEmpleado,
+                            pago.MontoServicio, pago.MontoExtra, pago.Propina, pago.Total,
+                            negocio.Email, negocio.Telefono, numRecibo);
+
+                        // Siempre almacenar el recibo en BD (aunque el email falle)
+                        await _reciboService.CrearReciboAsync(dto.NegocioId, numRecibo, "pago_cita",
+                            clienteEmail, clienteNombre, negocio.NegocioNombre, concepto, pago.Total, html);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error al generar recibo para cita {CitaId}", dto.CitaId);
                     }
                 }
             }

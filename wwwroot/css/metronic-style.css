@@ -1760,6 +1760,13 @@ body {
     padding: 0.35rem 0.75rem !important;
     border-radius: 0.475rem !important;
 }
+/* Fix FullCalendar nav icons (fallback when icon font fails) */
+.fc .fc-icon {
+    font-family: "bootstrap-icons" !important;
+    speak: none;
+}
+.fc .fc-icon-chevron-left::before { content: "\F284" !important; }
+.fc .fc-icon-chevron-right::before { content: "\F285" !important; }
 
 .fc .fc-button:hover {
     opacity: 0.85;

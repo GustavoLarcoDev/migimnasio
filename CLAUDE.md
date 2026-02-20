@@ -22,6 +22,9 @@
 - Never use `Task.Run` with scoped DbContext — query data first, then fire-and-forget only the email/notification call
 - Theme system uses `[data-theme]` attribute on `<html>` with CSS custom properties
 - Modals use `modal-fullscreen-sm-down` for mobile responsiveness
+- **NEVER add global ModelState validation filters** (like `ValidateModelStateAttribute`) — create/edit forms send empty-string Guid fields (`ClienteId=""`, `ProductoId=""`, etc.) that fail `Guid` model binding and cause 400 errors on ALL forms. Server-side validation must happen in each service's business logic, not as a global MVC filter.
+- **NEVER register services in Program.cs for code that isn't committed** — this breaks CI/CD builds. Only add `builder.Services.AddScoped<>()` lines when the corresponding service files are part of the same commit.
+- **NEVER use external CDN URLs for DataTables i18n language files** (`//cdn.datatables.net/plug-ins/.../i18n/es-ES.json`) — the CDN fails in production causing alert popups. Always use inline `language: { emptyTable: '...', info: '...', search: '...', paginate: {...} }` objects.
 
 ## Protocolo 001 — Intensive Production Audit
 
@@ -59,10 +62,12 @@ Report format: CRITICAL/HIGH/MEDIUM/LOW with file:line references and fixes.
 ```
 Read ALL 15 controllers. Audit:
 - Missing [Authorize], missing input validation
-- Missing null checks (404 vs 500), missing ModelState.IsValid
+- Missing null checks (404 vs 500)
+- FORBIDDEN: global ValidateModelStateAttribute or any global ModelState filter in Program.cs — forms send empty Guid fields for new entities and global filters reject them with 400. Flag as CRITICAL if found.
 - Inconsistent error responses, file upload security
 - Route conflicts, missing pagination, exception handling
 - HTTP method correctness, proper status codes
+- Verify Program.cs only registers services whose files exist in the committed codebase (no references to uncommitted classes)
 Report format: CRITICAL/HIGH/MEDIUM/LOW with file:line references and fixes.
 ```
 
@@ -118,6 +123,8 @@ Read Program.cs, appsettings*.json, health check, middleware. Audit:
 - Custom error pages, HTTPS enforcement, CORS
 - Startup failure modes, graceful degradation
 - Dependency versions, known vulnerabilities
+- CRITICAL CHECK: Verify ALL services registered in Program.cs (AddScoped/AddSingleton/AddTransient) reference classes that exist in the committed codebase — missing classes break CI/CD builds
+- CRITICAL CHECK: No global ModelState validation filters in MVC options — these break all create forms that send empty Guid fields
 Report format: CRITICAL/HIGH/MEDIUM/LOW with file:line references and fixes.
 ```
 

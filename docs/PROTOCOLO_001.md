@@ -52,7 +52,8 @@ Claude will automatically launch all 8 agents in parallel. Each agent audits a s
 - Missing input validation on POST endpoints
 - Missing null checks on entity lookups (404 vs 500)
 - Inconsistent error responses (JSON vs redirect vs view)
-- Missing model validation (`ModelState.IsValid` checks)
+- **CRITICAL: NO global ModelState validation filters** (`ValidateModelStateAttribute` or similar) in Program.cs MVC options — create/edit forms send empty-string Guid fields (`ClienteId=""`, `ProductoId=""`, `EmpleadoId=""`) for new entity creation. Global ModelState filters reject these as invalid, returning 400 on ALL create forms. Validation must happen in each service's business logic, NEVER as a global MVC filter. Flag as CRITICAL if found.
+- **CRITICAL: Verify ALL services registered in Program.cs** (`AddScoped`/`AddSingleton`/`AddTransient`) reference classes that actually exist in the committed codebase. Uncommitted service registrations break CI/CD builds.
 - File upload security (Excel import)
 - AJAX endpoints returning sensitive data
 - HTTP method misuse (GET with side effects)
@@ -86,6 +87,7 @@ Claude will automatically launch all 8 agents in parallel. Each agent audits a s
 - Broken links or dead routes
 - Theme system consistency (all 4 themes render correctly)
 - DataTables configuration (pagination, search, export)
+- **CRITICAL: DataTables language config must use INLINE objects, never external CDN URLs** (`//cdn.datatables.net/plug-ins/...i18n/es-ES.json` causes alert popups in production). Use: `language: { emptyTable: '...', info: '...', search: '...', paginate: {...} }`
 - SweetAlert2 / Toastr proper usage
 - Accessibility (alt texts, aria labels, color contrast)
 - Asset loading (missing files, 404s)
@@ -133,6 +135,8 @@ Claude will automatically launch all 8 agents in parallel. Each agent audits a s
 - Graceful degradation (what if WhatsApp API is down?)
 - Docker/reverse proxy configuration
 - Dependency versions and known vulnerabilities
+- **CRITICAL: Verify ALL DI registrations in Program.cs point to classes that exist in committed code** — missing classes cause build failures in CI/CD
+- **CRITICAL: No global ModelState validation filters in MVC options** — these break all create forms that send empty Guid fields for new entities
 
 ## Output Format
 
