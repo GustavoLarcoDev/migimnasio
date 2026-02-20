@@ -1,6 +1,21 @@
-// ═══════════════════════════════════════════════════════════
-// CatalogoService.cs — Generador de Catálogos (Tienda)
-// ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════════════════════
+// CatalogoService.cs — Generador de catalogos HTML y PDF (modelo Tienda)
+//
+// RESPONSABILIDADES:
+//   - Generar catalogos HTML con productos agrupados por categoria
+//   - Soportar 5 estilos visuales: moderno, elegante, minimalista, vibrante, clasico
+//   - Generar catalogos PDF usando SelectPdf (conversion HTML -> PDF)
+//
+// FLUJO DE GENERACION:
+//   1. Cargar el negocio y sus categorias con productos activos
+//   2. Agrupar productos sin categoria en una seccion "Otros"
+//   3. Construir HTML con StringBuilder (portada, categorias, grid de productos, footer)
+//   4. Inyectar CSS segun el estilo elegido por el usuario
+//
+// El catalogo generado es una pagina HTML completa y autocontenida (CSS inline)
+// que puede ser visualizada en cualquier navegador, enviada por email como link,
+// o convertida a PDF para descarga/impresion.
+// ═══════════════════════════════════════════════════════════════════════════════
 
 using Gimnasio.Data;
 using Gimnasio.Models;
@@ -19,23 +34,34 @@ public class CatalogoService : ICatalogoService
         _context = context;
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // GENERACION DE CATALOGO HTML
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Genera el catalogo completo como HTML autocontenido.
+    /// Los productos se agrupan por categoria y se muestran en un grid responsive.
+    /// Los productos sin categoria se agrupan al final como "Otros / Sin Categorizar".
+    /// </summary>
     public async Task<string> GenerarCatalogoHtmlAsync(Guid negocioId, string estiloDiseño = "moderno")
     {
         var negocio = await _context.Negocios.FirstOrDefaultAsync(n => n.NegocioId == negocioId);
         if (negocio == null) return "<h1>Negocio no encontrado</h1>";
 
+        // Cargar categorias con sus productos activos, ordenadas por el campo Orden (drag & drop)
         var categorias = await _context.CategoriasProducto
             .Include(c => c.Productos.Where(p => p.IsActive))
             .Where(c => c.NegocioId == negocioId)
             .OrderBy(c => c.Orden)
             .ToListAsync();
 
+        // Buscar productos que no tienen categoria asignada
         var productosSinCategoria = await _context.Productos
             .Where(p => p.NegocioId == negocioId && p.IsActive && p.CategoriaProductoId == null)
             .OrderBy(p => p.Nombre)
             .ToListAsync();
 
-        // Si hay productos sin categoria, creamos una categoria "dummy" para mostrarlos al final
+        // Agregar una categoria virtual para productos sin clasificar
         if (productosSinCategoria.Any())
         {
             categorias.Add(new CategoriaProducto
@@ -47,38 +73,39 @@ public class CatalogoService : ICatalogoService
 
         var sb = new StringBuilder();
 
-        // Cabecera común obligatoria HTML5
+        // Cabecera HTML5 obligatoria
         sb.AppendLine("<!DOCTYPE html><html><head><meta charset=\"UTF-8\">");
         sb.AppendLine($"<title>Catálogo - {negocio.NegocioNombre}</title>");
-        
-        // CSS inyectado según el Estilo Elegido
+
+        // Inyectar CSS segun el estilo elegido por el usuario
         sb.AppendLine("<style>");
         sb.AppendLine(ObtenerCssPorEstilo(estiloDiseño));
         sb.AppendLine("</style>");
         sb.AppendLine("</head><body>");
 
-        // HERO SECTION (Portada)
+        // Seccion HERO (portada con nombre del negocio)
         sb.AppendLine("<div class='hero'>");
         sb.AppendLine($"  <h1>{negocio.NegocioNombre}</h1>");
         sb.AppendLine("  <p>Catálogo de Productos</p>");
         sb.AppendLine("</div>");
 
-        // BODY
+        // Contenido principal: categorias con sus productos en grid
         sb.AppendLine("<div class='container'>");
 
         foreach (var cat in categorias)
         {
-            if (!cat.Productos.Any()) continue; // No mostrar categorías vacías
+            if (!cat.Productos.Any()) continue; // Omitir categorias sin productos
 
             sb.AppendLine($"<h2 class='category-title'>{cat.Nombre}</h2>");
             sb.AppendLine("<div class='grid'>");
 
-            foreach(var prod in cat.Productos)
+            foreach (var prod in cat.Productos)
             {
                 sb.AppendLine("  <div class='card'>");
-                
-                string imagen = string.IsNullOrEmpty(prod.ImagenUrl) 
-                    ? "https://via.placeholder.com/300x300?text=Sin+Imagen" 
+
+                // Usar imagen placeholder si el producto no tiene foto
+                string imagen = string.IsNullOrEmpty(prod.ImagenUrl)
+                    ? "https://via.placeholder.com/300x300?text=Sin+Imagen"
                     : prod.ImagenUrl;
 
                 sb.AppendLine($"    <img src='{imagen}' alt='{prod.Nombre}' />");
@@ -94,7 +121,7 @@ public class CatalogoService : ICatalogoService
 
         sb.AppendLine("</div>"); // Fin container
 
-        // FOOTER
+        // Footer con copyright y creditos
         sb.AppendLine("<div class='footer'>");
         sb.AppendLine($"  <p>© {TimeHelper.Now.Year} {negocio.NegocioNombre}. Todos los derechos reservados.</p>");
         sb.AppendLine("  <p>Generado a través de My-Negocio</p>");
@@ -105,10 +132,19 @@ public class CatalogoService : ICatalogoService
         return sb.ToString();
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // GENERACION DE CATALOGO PDF
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Genera el catalogo como PDF usando SelectPdf (conversion HTML -> PDF).
+    /// Primero genera el HTML y luego lo convierte con margenes y formato A4.
+    /// </summary>
     public async Task<byte[]> GenerarCatalogoPdfAsync(Guid negocioId, string estiloDiseño = "moderno")
     {
         var htmlContent = await GenerarCatalogoHtmlAsync(negocioId, estiloDiseño);
 
+        // Configurar el convertidor HTML a PDF
         var converter = new HtmlToPdf();
         converter.Options.PdfPageSize = PdfPageSize.A4;
         converter.Options.PdfPageOrientation = PdfPageOrientation.Portrait;
@@ -118,11 +154,11 @@ public class CatalogoService : ICatalogoService
         converter.Options.MarginTop = 20;
         converter.Options.MarginBottom = 20;
 
-        // Necesario para cargar las imágenes desde URLs externas
-        converter.Options.MinPageLoadTime = 2; 
+        // Tiempo minimo de carga para que las imagenes externas se descarguen
+        converter.Options.MinPageLoadTime = 2;
 
         PdfDocument doc = converter.ConvertHtmlString(htmlContent);
-        
+
         using var stream = new MemoryStream();
         doc.Save(stream);
         doc.Close();
@@ -130,12 +166,25 @@ public class CatalogoService : ICatalogoService
         return stream.ToArray();
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SISTEMA DE ESTILOS CSS
+    // ═══════════════════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// Devuelve el CSS embebido para los 5 estilos (Moderno es el default).
+    /// Devuelve el CSS embebido para el estilo solicitado.
+    /// Hay un CSS base comun a todos los estilos (layout, grid, tipografia base)
+    /// y luego cada estilo agrega sus propios overrides (colores, fuentes, sombras).
+    ///
+    /// Estilos disponibles:
+    ///   - moderno: gradientes azules, bordes redondeados, sombras suaves (default)
+    ///   - elegante: serif, colores oscuros, lineas limpias
+    ///   - minimalista: blanco y negro, sin sombras, tipografia delgada
+    ///   - vibrante: gradientes coloridos, bordes gruesos, fuentes bold
+    ///   - clasico: tonos marron/cafe, serif, estilo tradicional
     /// </summary>
     private string ObtenerCssPorEstilo(string estilo)
     {
+        // CSS base compartido por todos los estilos
         var cssBase = @"
             body { margin: 0; padding: 0; background-color: #f9fafb; }
             .container { width: 100%; max-width: 1000px; margin: 0 auto; padding: 20px; }
@@ -152,7 +201,7 @@ public class CatalogoService : ICatalogoService
             .footer { text-align: center; padding: 30px; margin-top: 50px; color: #666; font-size: 14px; page-break-inside: avoid; }
         ";
 
-        // Variaciones de Diseño
+        // Overrides especificos de cada estilo
         string styleOverrides = estilo.ToLower() switch
         {
             "elegante" => @"

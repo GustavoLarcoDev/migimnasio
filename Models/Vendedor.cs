@@ -12,6 +12,8 @@
 //   4. El admin puede ver cuántos negocios creó cada vendedor (NegociosCreados).
 // ═══════════════════════════════════════════════════════════
 
+#nullable enable
+
 using System.ComponentModel.DataAnnotations;
 
 namespace Gimnasio.Models;
@@ -36,7 +38,7 @@ public class Vendedor
     /// </summary>
     [Required]
     [StringLength(100)]
-    public string Nombre { get; set; }
+    public string Nombre { get; set; } = null!;
 
     /// <summary>
     /// Apellido(s) del vendedor, por ejemplo: "Ramírez" o "Torres Vega".
@@ -45,7 +47,7 @@ public class Vendedor
     /// </summary>
     [Required]
     [StringLength(100)]
-    public string Apellido { get; set; }
+    public string Apellido { get; set; } = null!;
 
     /// <summary>
     /// Correo electrónico del vendedor. Se usa como nombre de usuario para el login.
@@ -56,7 +58,7 @@ public class Vendedor
     [Required]
     [EmailAddress]
     [StringLength(200)]
-    public string Correo { get; set; }
+    public string Correo { get; set; } = null!;
 
     /// <summary>
     /// Número de teléfono del vendedor (para contacto interno).
@@ -67,7 +69,7 @@ public class Vendedor
     [Required]
     [Phone]
     [StringLength(20)]
-    public string Telefono { get; set; }
+    public string Telefono { get; set; } = null!;
 
     /// <summary>
     /// Contraseña del vendedor para iniciar sesión, almacenada como hash BCrypt.
@@ -77,7 +79,7 @@ public class Vendedor
     /// </summary>
     [Required]
     [MaxLength(200)]
-    public string Password { get; set; }
+    public string Password { get; set; } = null!;
 
     /// <summary>
     /// Indica si el vendedor puede iniciar sesión y operar en la plataforma.

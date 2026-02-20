@@ -646,9 +646,17 @@ public class ClientesController : Controller
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
-    // SECCIÓN 7 — RECIBOS
+    // SECCION 7 — RECIBOS
+    //
+    // Los recibos se generan automaticamente al crear un cliente, renovar
+    // membresia o procesar una venta POS. Esta seccion permite consultarlos,
+    // buscarlos por numero, exportarlos a Excel y eliminar los antiguos.
+    // Cada recibo contiene el HTML completo que fue enviado por email.
     // ═══════════════════════════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// Obtiene todos los recibos del negocio, ordenados del mas reciente al mas antiguo.
+    /// </summary>
     [HttpGet("GetRecibos")]
     public async Task<IActionResult> GetRecibos(Guid negocioId)
     {
@@ -666,6 +674,9 @@ public class ClientesController : Controller
         }
     }
 
+    /// <summary>
+    /// Obtiene un recibo especifico por su ID. Incluye el contenido HTML completo.
+    /// </summary>
     [HttpGet("GetRecibo")]
     public async Task<IActionResult> GetRecibo(Guid reciboId, Guid negocioId)
     {
@@ -685,6 +696,10 @@ public class ClientesController : Controller
         }
     }
 
+    /// <summary>
+    /// Busca un recibo por su numero secuencial (ej: 000042).
+    /// Util para busqueda rapida desde el dashboard.
+    /// </summary>
     [HttpGet("BuscarRecibo")]
     public async Task<IActionResult> BuscarRecibo(int numero, Guid negocioId)
     {
@@ -702,6 +717,10 @@ public class ClientesController : Controller
         }
     }
 
+    /// <summary>
+    /// Exporta los recibos de un mes especifico a Excel (.xlsx).
+    /// Util para contabilidad mensual y declaracion de impuestos.
+    /// </summary>
     [HttpGet("ExportRecibosExcel")]
     public async Task<IActionResult> ExportRecibosExcel(Guid negocioId, int anio, int mes)
     {
@@ -721,6 +740,11 @@ public class ClientesController : Controller
         }
     }
 
+    /// <summary>
+    /// Obtiene la fecha del recibo mas antiguo del negocio.
+    /// Se usa en el frontend para definir el rango del selector de fechas
+    /// en la funcion de limpieza de recibos antiguos.
+    /// </summary>
     [HttpGet("GetFechaReciboMasAntiguo")]
     public async Task<IActionResult> GetFechaReciboMasAntiguo(Guid negocioId)
     {
@@ -738,6 +762,11 @@ public class ClientesController : Controller
         }
     }
 
+    /// <summary>
+    /// Elimina permanentemente todos los recibos anteriores a la fecha indicada.
+    /// Util para liberar espacio en BD cuando los recibos HTML se acumulan.
+    /// Devuelve la cantidad de recibos eliminados.
+    /// </summary>
     [HttpPost("EliminarRecibosAntiguos")]
     public async Task<IActionResult> EliminarRecibosAntiguos(Guid negocioId, DateTime anteriorA)
     {

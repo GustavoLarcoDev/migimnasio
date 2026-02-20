@@ -738,9 +738,17 @@ public class InventarioService : IInventarioService
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // GESTIÓN DE CATEGORÍAS (MODELO TIENDA)
+    // GESTION DE CATEGORIAS (exclusivo modelo Tienda)
+    //
+    // Las categorias permiten organizar productos en pestanas (tabs) dentro
+    // del catalogo y del POS. El orden se maneja via drag & drop.
+    // Al eliminar una categoria, los productos quedan sin categoria (null).
     // ═══════════════════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// Obtiene todas las categorias del negocio con sus productos activos.
+    /// Se usa para poblar las pestanas del inventario y del catalogo.
+    /// </summary>
     public async Task<List<CategoriaProducto>> GetCategoriasAsync(Guid negocioId)
     {
         return await _context.CategoriasProducto
@@ -750,10 +758,15 @@ public class InventarioService : IInventarioService
             .ToListAsync();
     }
 
+    /// <summary>
+    /// Crea una nueva categoria. El orden se asigna automaticamente al final
+    /// (maxOrden + 1) para que aparezca como la ultima pestana.
+    /// </summary>
     public async Task<(bool success, string message)> CrearCategoriaAsync(Guid negocioId, string nombre)
     {
         if (string.IsNullOrWhiteSpace(nombre)) return (false, "El nombre de la categoría es requerido.");
 
+        // Obtener el orden maximo actual para asignar el siguiente
         var currentMaxOrder = await _context.CategoriasProducto
             .Where(c => c.NegocioId == negocioId)
             .MaxAsync(c => (int?)c.Orden) ?? 0;
@@ -766,12 +779,16 @@ public class InventarioService : IInventarioService
             Orden = currentMaxOrder + 1,
             FechaCreacion = TimeHelper.Now
         };
-        
+
         _context.CategoriasProducto.Add(cat);
         await _context.SaveChangesAsync();
         return (true, "Categoría creada exitosamente");
     }
 
+    /// <summary>
+    /// Elimina una categoria y des-asigna sus productos (quedan con CategoriaProductoId = null).
+    /// Los productos NO se eliminan, solo pierden su agrupacion.
+    /// </summary>
     public async Task<(bool success, string message)> EliminarCategoriaAsync(Guid categoriaId, Guid negocioId)
     {
         var categoria = await _context.CategoriasProducto
@@ -780,6 +797,7 @@ public class InventarioService : IInventarioService
 
         if (categoria == null) return (false, "Categoría no encontrada.");
 
+        // Des-asignar productos antes de eliminar la categoria
         foreach (var prod in categoria.Productos)
         {
             prod.CategoriaProductoId = null;
@@ -790,6 +808,10 @@ public class InventarioService : IInventarioService
         return (true, "Categoría eliminada. Los productos han sido des-asignados.");
     }
 
+    /// <summary>
+    /// Reordena las categorias segun el orden de IDs recibido desde el frontend
+    /// (resultado de un drag & drop). La posicion en la lista = nuevo valor de Orden.
+    /// </summary>
     public async Task<(bool success, string message)> ReordenarCategoriasAsync(Guid negocioId, List<Guid> categoriasOrdenadasIds)
     {
         var categorias = await _context.CategoriasProducto
@@ -806,6 +828,10 @@ public class InventarioService : IInventarioService
         return (true, "Categorías re-ordenadas.");
     }
 
+    /// <summary>
+    /// Mueve un producto de una categoria a otra (o lo deja sin categoria si nuevaCategoriaId es null).
+    /// Valida que la categoria destino exista y pertenezca al mismo negocio.
+    /// </summary>
     public async Task<(bool success, string message)> MoverProductoDeCategoriaAsync(Guid productoId, Guid negocioId, Guid? nuevaCategoriaId)
     {
         var prod = await _context.Productos.FirstOrDefaultAsync(p => p.ProductoId == productoId && p.NegocioId == negocioId);
@@ -823,6 +849,10 @@ public class InventarioService : IInventarioService
         return (true, "Producto re-categorizado.");
     }
 
+    /// <summary>
+    /// Actualiza la URL de la imagen de un producto.
+    /// La imagen se sube al servidor en el controlador y aqui solo se guarda la ruta.
+    /// </summary>
     public async Task<(bool success, string message)> CambiarImagenProductoAsync(Guid productoId, Guid negocioId, string urlImagen)
     {
         var prod = await _context.Productos.FirstOrDefaultAsync(p => p.ProductoId == productoId && p.NegocioId == negocioId);
