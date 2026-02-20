@@ -201,9 +201,9 @@ public class DailyEmailReportService : BackgroundService
                             context, emailService, negocio.NegocioId, negocio.NegocioNombre,
                             negocio.DuenoNegocio, negocio.Email, hoy, stoppingToken);
                     }
-                    else if (negocio.TipoNegocio == "tienda")
+                    else if (negocio.TipoNegocio == "tienda" || negocio.TipoNegocio == "restaurante")
                     {
-                        // Tiendas reutilizan el formato de membresías (ingresos/gastos del día)
+                        // Tiendas y restaurantes reutilizan el formato de membresías (ingresos/gastos del día)
                         resultado = await EnviarReporteMembresiaAsync(
                             context, emailService, negocio.NegocioId, negocio.NegocioNombre,
                             negocio.DuenoNegocio, negocio.Email, hoy, stoppingToken);

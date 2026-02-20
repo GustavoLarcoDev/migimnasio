@@ -35,9 +35,34 @@ public class OrdenVenta
     /// </summary>
     public Guid? ReciboId { get; set; }
 
+    /// <summary>
+    /// Tipo de orden: "local", "para_llevar", "delivery".
+    /// Default "local" para retrocompatibilidad con Tienda.
+    /// </summary>
+    [StringLength(20)]
+    public string TipoOrden { get; set; } = "local";
+
+    /// <summary>
+    /// Mesa asignada si TipoOrden = "local" (solo restaurantes).
+    /// </summary>
+    public Guid? MesaId { get; set; }
+
+    /// <summary>
+    /// Repartidor asignado si TipoOrden = "delivery" (reutiliza modelo Empleado).
+    /// </summary>
+    public Guid? EmpleadoId { get; set; }
+
+    /// <summary>
+    /// Direccion de entrega si TipoOrden = "delivery".
+    /// </summary>
+    [StringLength(500)]
+    public string DireccionEntrega { get; set; }
+
     public DateTime FechaCreacion { get; set; } = TimeHelper.Now;
 
     public Gym Negocio { get; set; }
     public Recibo Recibo { get; set; }
+    public Mesa Mesa { get; set; }
+    public Empleado Repartidor { get; set; }
     public ICollection<DetalleOrdenVenta> Detalles { get; set; } = new List<DetalleOrdenVenta>();
 }

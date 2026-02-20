@@ -132,6 +132,54 @@
                     <span>Sugerencias</span>
                 </a>
             }
+            else if (ViewData["TipoNegocio"]?.ToString() == "restaurante")
+            {
+                <a href="#posTab" class="nav-link active" data-mg-tab="posTab">
+                    <i class="bi bi-cart-check"></i>
+                    <span>POS</span>
+                </a>
+                <a href="#mesasTab" class="nav-link" data-mg-tab="mesasTab">
+                    <i class="bi bi-grid-3x3"></i>
+                    <span>Mesas</span>
+                </a>
+                <a href="#menusTab" class="nav-link" data-mg-tab="menusTab">
+                    <i class="bi bi-journal-richtext"></i>
+                    <span>Menus</span>
+                </a>
+                <a href="#inventarioTab" class="nav-link" data-mg-tab="inventarioTab">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Inventario</span>
+                </a>
+                <a href="#proveedoresTab" class="nav-link" data-mg-tab="proveedoresTab">
+                    <i class="bi bi-truck"></i>
+                    <span>Distribuidores</span>
+                </a>
+                <a href="#repartidoresTab" class="nav-link" data-mg-tab="repartidoresTab">
+                    <i class="bi bi-bicycle"></i>
+                    <span>Repartidores</span>
+                </a>
+                <a href="#logsTab" class="nav-link" data-mg-tab="logsTab">
+                    <i class="bi bi-journal-text"></i>
+                    <span>Movimientos</span>
+                </a>
+                <a href="#ventasTab" class="nav-link" data-mg-tab="ventasTab">
+                    <i class="bi bi-graph-up"></i>
+                    <span>Reportes</span>
+                </a>
+                <a href="#recibosTab" class="nav-link" data-mg-tab="recibosTab">
+                    <i class="bi bi-receipt"></i>
+                    <span>Recibos</span>
+                </a>
+                <a href="#notificacionesTab" class="nav-link" data-mg-tab="notificacionesTab">
+                    <i class="bi bi-bell-fill"></i>
+                    <span>Notificaciones</span>
+                    <span class="badge bg-danger ms-auto d-none" id="sidebarNotifBadge">0</span>
+                </a>
+                <a href="#sugerenciasTab" class="nav-link" data-mg-tab="sugerenciasTab">
+                    <i class="bi bi-chat-left-text"></i>
+                    <span>Sugerencias</span>
+                </a>
+            }
             else if (ViewData["TipoNegocio"]?.ToString() == "tienda")
             {
                 <a href="#posTab" class="nav-link active" data-mg-tab="posTab">

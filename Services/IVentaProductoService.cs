@@ -15,7 +15,11 @@ public interface IVentaProductoService
         string emailCliente,
         List<DetalleOrdenVentaDto> items,
         decimal descuentoAdicional,
-        decimal porcentajeIva
+        decimal porcentajeIva,
+        string tipoOrden = "local",
+        Guid? mesaId = null,
+        Guid? empleadoId = null,
+        string direccionEntrega = null
     );
 
     Task<OrdenVenta> GetOrdenVentaAsync(Guid ordenVentaId, Guid negocioId);
@@ -36,4 +40,10 @@ public class OrdenVentaCreateRequest
     public decimal DescuentoAdicional { get; set; }
     public decimal PorcentajeIva { get; set; }
     public List<DetalleOrdenVentaDto> Items { get; set; }
+
+    // Campos adicionales para restaurante
+    public string TipoOrden { get; set; } = "local";
+    public Guid? MesaId { get; set; }
+    public Guid? EmpleadoId { get; set; }
+    public string DireccionEntrega { get; set; }
 }

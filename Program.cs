@@ -163,6 +163,11 @@ builder.Services.AddScoped<ICitaService, CitaService>();
 builder.Services.AddScoped<IVentaProductoService, VentaProductoService>();
 builder.Services.AddScoped<ICatalogoService, CatalogoService>();
 
+// ── Modelo Restaurante (Mesas / Menús) ──────────────────────
+// Gestión de mesas y menús digitales con 5 estilos visuales.
+builder.Services.AddScoped<IMesaService, MesaService>();
+builder.Services.AddScoped<IMenuRestauranteService, MenuRestauranteService>();
+
 // ═══════════════════════════════════════════════════════════
 // SECCIÓN 4 — CLIENTE HTTP (HttpClientFactory)
 //

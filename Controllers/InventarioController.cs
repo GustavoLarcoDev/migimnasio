@@ -511,7 +511,11 @@ public class InventarioController : Controller
                 request.EmailCliente,
                 request.Items,
                 request.DescuentoAdicional,
-                request.PorcentajeIva
+                request.PorcentajeIva,
+                request.TipoOrden,
+                request.MesaId,
+                request.EmpleadoId,
+                request.DireccionEntrega
             );
 
             return Json(new { success = res.success, message = res.message, ordenId = res.ordenId, reciboId = res.reciboId });
@@ -545,6 +549,7 @@ public class InventarioController : Controller
                 o.Total,
                 o.FechaCreacion,
                 o.ReciboId,
+                o.TipoOrden,
                 Items = o.Detalles.Count
             }));
         }

@@ -224,10 +224,11 @@ public class EmailService : IEmailService
     /// <summary>
     /// Envia el correo de bienvenida al dueno de un negocio con:
     /// - Sus credenciales de acceso (email, telefono, contrasena)
-    /// - Documento de guia para negocios (.docx) adjunto
+    /// - Documento de guia especializada por tipo de negocio (.docx) adjunto
+    /// - Seccion visual con mockup del dashboard correspondiente
     /// </summary>
     public async Task<bool> EnviarBienvenidaNegocioAsync(string destinatario, string nombreNegocio, string nombreDueno,
-        string emailNegocio, string passwordNegocio, string telefonoNegocio, string? nombreVendedor)
+        string emailNegocio, string passwordNegocio, string telefonoNegocio, string? nombreVendedor, string tipoNegocio = "membresias")
     {
         var frase = FrasesNegocio[Random.Shared.Next(FrasesNegocio.Length)];
         var creadoPorAdmin = string.IsNullOrEmpty(nombreVendedor);
@@ -274,11 +275,15 @@ public class EmailService : IEmailService
         </p>";
         }
 
+        // Generar seccion visual del dashboard segun tipo de negocio
+        var (tipoLabel, dashboardPreview) = GenerarDashboardPreviewHtml(tipoNegocio);
+
         var body = $@"
 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>
     <div style='background: linear-gradient(135deg, #ff6b35, #f7931e); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;'>
         <h1 style='color: white; margin: 0; font-size: 28px;'>Bienvenido a My-Negocio</h1>
         <p style='color: rgba(255,255,255,0.9); margin: 8px 0 0; font-size: 16px;'>{nombreNegocio}</p>
+        <p style='color: rgba(255,255,255,0.7); margin: 4px 0 0; font-size: 13px;'>Plan: {tipoLabel}</p>
     </div>
     <div style='background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; border-top: none;'>
         <h2 style='color: #333;'>{saludo}</h2>
@@ -308,6 +313,8 @@ public class EmailService : IEmailService
             </p>
         </div>
 
+        {dashboardPreview}
+
         <div style='background: #fff8f0; border-left: 4px solid #ff6b35; padding: 15px 20px; margin: 25px 0; border-radius: 0 8px 8px 0;'>
             <p style='color: #333; font-size: 16px; font-style: italic; margin: 0;'>
                 &ldquo;{frase}&rdquo;
@@ -315,7 +322,8 @@ public class EmailService : IEmailService
         </div>
 
         <p style='color: #555; font-size: 16px; line-height: 1.6;'>
-            Adjunto encontrara la <strong>Guia de Inicio</strong> con toda la informacion para comenzar a usar My-Negocio.
+            Adjunto encontrara la <strong>Guia de Inicio para {tipoLabel}</strong> con instrucciones
+            detalladas, un mapa visual de su dashboard y explicaciones paso a paso de cada funcion.
         </p>
 
         {despedida}
@@ -325,19 +333,214 @@ public class EmailService : IEmailService
     </div>
 </div>";
 
-        // Generar el documento Word de guia para negocios
+        // Generar el documento Word de guia especializada segun tipo de negocio
         byte[]? guideDoc = null;
         try
         {
-            guideDoc = GuideDocumentGenerator.GenerarGuiaNegocio(nombreNegocio, nombreDueno, emailNegocio, telefonoNegocio);
+            guideDoc = GuideDocumentGenerator.GenerarGuiaNegocio(nombreNegocio, nombreDueno, emailNegocio, telefonoNegocio, tipoNegocio);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Error generando guia Word para negocio. Se enviara email sin adjunto.");
+            _logger.LogWarning(ex, "Error generando guia Word para negocio ({TipoNegocio}). Se enviara email sin adjunto.", tipoNegocio);
         }
 
+        // Nombre del archivo refleja el tipo de negocio
+        var nombreArchivo = tipoNegocio switch
+        {
+            "artesanal" => "Guia_Artesanal_MyNegocio.docx",
+            "tienda" => "Guia_Tienda_MyNegocio.docx",
+            "restaurante" => "Guia_Restaurante_MyNegocio.docx",
+            _ => "Guia_Membresias_MyNegocio.docx",
+        };
+
         return await EnviarEmailAsync(destinatario, $"Bienvenido a My-Negocio, {nombreDueno}!",
-            body, guideDoc, $"Guia_Inicio_MyNegocio.docx");
+            body, guideDoc, nombreArchivo);
+    }
+
+    /// <summary>
+    /// Genera el HTML con la vista previa visual del dashboard segun el tipo de negocio.
+    /// Retorna una tupla con el label legible del tipo y el bloque HTML.
+    /// </summary>
+    private static (string tipoLabel, string html) GenerarDashboardPreviewHtml(string tipoNegocio)
+    {
+        return tipoNegocio switch
+        {
+            "artesanal" => ("Artesanal — Citas y Agenda", $@"
+        <div style='background: #f0f4ff; border: 1px solid #d0d8f0; border-radius: 8px; padding: 20px; margin: 25px 0;'>
+            <h3 style='color: #333; margin: 0 0 12px; font-size: 16px;'>Asi se ve su Dashboard Artesanal:</h3>
+            <table style='width: 100%; border-collapse: collapse; font-size: 13px;'>
+                <tr>
+                    <td style='width: 30%; vertical-align: top; padding-right: 12px;'>
+                        <div style='background: #1a1d2e; color: white; border-radius: 6px; padding: 10px; font-size: 12px;'>
+                            <div style='padding: 4px 0; font-weight: bold; color: #ff6b35;'>Menu</div>
+                            <div style='padding: 3px 0; color: #aaa;'>Agenda</div>
+                            <div style='padding: 3px 0; color: #aaa;'>Clientes</div>
+                            <div style='padding: 3px 0; color: #aaa;'>Servicios</div>
+                            <div style='padding: 3px 0; color: #aaa;'>Empleados</div>
+                            <div style='padding: 3px 0; color: #aaa;'>Inventario</div>
+                            <div style='padding: 3px 0; color: #aaa;'>Reportes</div>
+                        </div>
+                    </td>
+                    <td style='vertical-align: top;'>
+                        <table style='width: 100%; margin-bottom: 8px;'>
+                            <tr>
+                                <td style='background: #e3f2fd; border-radius: 4px; padding: 6px; text-align: center; width: 25%;'><strong style='color: #1565c0;'>Citas Hoy</strong><br><span style='font-size: 18px; color: #1565c0;'>8</span></td>
+                                <td style='width: 3%;'></td>
+                                <td style='background: #e8f5e9; border-radius: 4px; padding: 6px; text-align: center; width: 25%;'><strong style='color: #2e7d32;'>Ingresos</strong><br><span style='font-size: 18px; color: #2e7d32;'>$120</span></td>
+                                <td style='width: 3%;'></td>
+                                <td style='background: #fff3e0; border-radius: 4px; padding: 6px; text-align: center; width: 25%;'><strong style='color: #e65100;'>Completadas</strong><br><span style='font-size: 18px; color: #e65100;'>6</span></td>
+                                <td style='width: 3%;'></td>
+                                <td style='background: #fce4ec; border-radius: 4px; padding: 6px; text-align: center; width: 25%;'><strong style='color: #c62828;'>Canceladas</strong><br><span style='font-size: 18px; color: #c62828;'>1</span></td>
+                            </tr>
+                        </table>
+                        <div style='background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 8px; font-size: 11px;'>
+                            <div style='color: #666; margin-bottom: 4px;'><strong>Calendario de Citas</strong></div>
+                            <div style='background: #e3f2fd; padding: 3px 6px; border-radius: 3px; margin: 2px 0;'>09:00 — Corte (Ana)</div>
+                            <div style='background: #e8f5e9; padding: 3px 6px; border-radius: 3px; margin: 2px 0;'>10:00 — Manicure (Sofia)</div>
+                            <div style='background: #fff3e0; padding: 3px 6px; border-radius: 3px; margin: 2px 0;'>11:30 — Tinte (Juan)</div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>"),
+
+            "tienda" => ("Tienda — Punto de Venta", $@"
+        <div style='background: #f0f4ff; border: 1px solid #d0d8f0; border-radius: 8px; padding: 20px; margin: 25px 0;'>
+            <h3 style='color: #333; margin: 0 0 12px; font-size: 16px;'>Asi se ve su Punto de Venta (POS):</h3>
+            <table style='width: 100%; border-collapse: collapse; font-size: 13px;'>
+                <tr>
+                    <td style='width: 55%; vertical-align: top; padding-right: 12px;'>
+                        <div style='background: #f8f9fa; border: 1px solid #ddd; border-radius: 6px; padding: 10px;'>
+                            <div style='color: #666; margin-bottom: 6px; font-size: 11px;'><strong>Productos</strong> &nbsp; [Buscar...]</div>
+                            <div style='font-size: 10px; color: #888; margin-bottom: 6px;'>[Todos] [Bebidas] [Lacteos] [Licores]</div>
+                            <table style='width: 100%;'>
+                                <tr>
+                                    <td style='background: #fff; border: 1px solid #eee; border-radius: 4px; padding: 6px; text-align: center; width: 48%;'>
+                                        <div style='font-size: 20px;'>&#x1F95B;</div>
+                                        <div style='font-size: 11px; font-weight: bold;'>Leche</div>
+                                        <div style='font-size: 12px; color: #28a745;'>$1.50</div>
+                                        <div style='font-size: 10px; color: #888;'>Stock: 24</div>
+                                    </td>
+                                    <td style='width: 4%;'></td>
+                                    <td style='background: #fff; border: 1px solid #eee; border-radius: 4px; padding: 6px; text-align: center; width: 48%;'>
+                                        <div style='font-size: 20px;'>&#x1F9C0;</div>
+                                        <div style='font-size: 11px; font-weight: bold;'>Queso</div>
+                                        <div style='font-size: 12px; color: #28a745;'>$2.25</div>
+                                        <div style='font-size: 10px; color: #888;'>Stock: 12</div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </td>
+                    <td style='vertical-align: top;'>
+                        <div style='background: #fff; border: 2px solid #ff6b35; border-radius: 6px; padding: 10px;'>
+                            <div style='color: #ff6b35; font-weight: bold; font-size: 13px; margin-bottom: 8px;'>Factura</div>
+                            <div style='font-size: 11px; border-bottom: 1px solid #eee; padding: 3px 0;'>Leche x2 <span style='float: right;'>$3.00</span></div>
+                            <div style='font-size: 11px; border-bottom: 1px solid #eee; padding: 3px 0;'>Queso x1 <span style='float: right;'>$2.25</span></div>
+                            <div style='margin-top: 8px; padding-top: 6px; border-top: 2px solid #333;'>
+                                <div style='font-size: 11px; color: #666;'>Subtotal: <span style='float: right;'>$5.25</span></div>
+                                <div style='font-size: 14px; font-weight: bold; color: #333; margin-top: 4px;'>TOTAL: <span style='float: right;'>$5.25</span></div>
+                            </div>
+                            <div style='background: #28a745; color: white; text-align: center; padding: 6px; border-radius: 4px; margin-top: 8px; font-weight: bold; font-size: 13px;'>COBRAR</div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>"),
+
+            "restaurante" => ("Restaurante — POS y Mesas", $@"
+        <div style='background: #f0f4ff; border: 1px solid #d0d8f0; border-radius: 8px; padding: 20px; margin: 25px 0;'>
+            <h3 style='color: #333; margin: 0 0 12px; font-size: 16px;'>Asi se ve su POS de Restaurante:</h3>
+            <table style='width: 100%; border-collapse: collapse; font-size: 13px;'>
+                <tr>
+                    <td style='width: 55%; vertical-align: top; padding-right: 12px;'>
+                        <div style='background: #f8f9fa; border: 1px solid #ddd; border-radius: 6px; padding: 10px;'>
+                            <div style='color: #666; margin-bottom: 6px; font-size: 11px;'><strong>Platos</strong> &nbsp; [Buscar...]</div>
+                            <div style='font-size: 10px; color: #888; margin-bottom: 6px;'>[Todos] [Entradas] [P. Fuertes] [Bebidas]</div>
+                            <table style='width: 100%;'>
+                                <tr>
+                                    <td style='background: #fff; border: 1px solid #eee; border-radius: 4px; padding: 6px; text-align: center; width: 48%;'>
+                                        <div style='font-size: 20px;'>&#x1F372;</div>
+                                        <div style='font-size: 11px; font-weight: bold;'>Sopa del dia</div>
+                                        <div style='font-size: 12px; color: #28a745;'>$4.50</div>
+                                    </td>
+                                    <td style='width: 4%;'></td>
+                                    <td style='background: #fff; border: 1px solid #eee; border-radius: 4px; padding: 6px; text-align: center; width: 48%;'>
+                                        <div style='font-size: 20px;'>&#x1F35B;</div>
+                                        <div style='font-size: 11px; font-weight: bold;'>Arroz con pollo</div>
+                                        <div style='font-size: 12px; color: #28a745;'>$7.50</div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div style='margin-top: 8px; font-size: 11px;'>
+                            <strong>Mesas:</strong>
+                            <span style='display: inline-block; background: #28a745; color: white; padding: 2px 8px; border-radius: 3px; margin: 0 2px;'>Mesa 1 Libre</span>
+                            <span style='display: inline-block; background: #dc3545; color: white; padding: 2px 8px; border-radius: 3px; margin: 0 2px;'>Mesa 2 Ocupada</span>
+                            <span style='display: inline-block; background: #ffc107; color: #333; padding: 2px 8px; border-radius: 3px; margin: 0 2px;'>Mesa 3 Reservada</span>
+                        </div>
+                    </td>
+                    <td style='vertical-align: top;'>
+                        <div style='background: #fff; border: 2px solid #ff6b35; border-radius: 6px; padding: 10px;'>
+                            <div style='color: #ff6b35; font-weight: bold; font-size: 13px; margin-bottom: 4px;'>Factura</div>
+                            <div style='font-size: 10px; color: #888; margin-bottom: 6px;'>[Local] [Llevar] [Delivery]</div>
+                            <div style='font-size: 11px; border-bottom: 1px solid #eee; padding: 3px 0;'>Sopa x1 <span style='float: right;'>$4.50</span></div>
+                            <div style='font-size: 11px; border-bottom: 1px solid #eee; padding: 3px 0;'>Jugo x2 <span style='float: right;'>$5.00</span></div>
+                            <div style='margin-top: 8px; padding-top: 6px; border-top: 2px solid #333;'>
+                                <div style='font-size: 11px; color: #666;'>IVA 12%: <span style='float: right;'>$1.14</span></div>
+                                <div style='font-size: 14px; font-weight: bold; color: #333; margin-top: 4px;'>TOTAL: <span style='float: right;'>$10.64</span></div>
+                            </div>
+                            <div style='background: #28a745; color: white; text-align: center; padding: 6px; border-radius: 4px; margin-top: 8px; font-weight: bold; font-size: 13px;'>COBRAR</div>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>"),
+
+            // Membresias (default)
+            _ => ("Membresias — Control de Clientes", $@"
+        <div style='background: #f0f4ff; border: 1px solid #d0d8f0; border-radius: 8px; padding: 20px; margin: 25px 0;'>
+            <h3 style='color: #333; margin: 0 0 12px; font-size: 16px;'>Asi se ve su Dashboard de Membresias:</h3>
+            <table style='width: 100%; border-collapse: collapse; font-size: 13px;'>
+                <tr>
+                    <td style='width: 30%; vertical-align: top; padding-right: 12px;'>
+                        <div style='background: #1a1d2e; color: white; border-radius: 6px; padding: 10px; font-size: 12px;'>
+                            <div style='padding: 4px 0; font-weight: bold; color: #ff6b35;'>Menu</div>
+                            <div style='padding: 3px 0; color: #aaa;'>Resumen</div>
+                            <div style='padding: 3px 0; color: #aaa;'>Clientes</div>
+                            <div style='padding: 3px 0; color: #aaa;'>Movimientos</div>
+                            <div style='padding: 3px 0; color: #aaa;'>Reportes</div>
+                            <div style='padding: 3px 0; color: #aaa;'>Inventario</div>
+                            <div style='padding: 3px 0; color: #aaa;'>Notificaciones</div>
+                        </div>
+                    </td>
+                    <td style='vertical-align: top;'>
+                        <div style='font-size: 10px; color: #888; margin-bottom: 6px;'>[Hoy] [Semana] [Mes]</div>
+                        <table style='width: 100%; margin-bottom: 8px;'>
+                            <tr>
+                                <td style='background: #e8f5e9; border-radius: 4px; padding: 6px; text-align: center; width: 32%;'><strong style='color: #2e7d32;'>Ingresos</strong><br><span style='font-size: 18px; color: #2e7d32;'>$850</span></td>
+                                <td style='width: 2%;'></td>
+                                <td style='background: #fce4ec; border-radius: 4px; padding: 6px; text-align: center; width: 32%;'><strong style='color: #c62828;'>Gastos</strong><br><span style='font-size: 18px; color: #c62828;'>$120</span></td>
+                                <td style='width: 2%;'></td>
+                                <td style='background: #e3f2fd; border-radius: 4px; padding: 6px; text-align: center; width: 32%;'><strong style='color: #1565c0;'>Ganancia</strong><br><span style='font-size: 18px; color: #1565c0;'>$730</span></td>
+                            </tr>
+                        </table>
+                        <table style='width: 100%;'>
+                            <tr>
+                                <td style='background: #fff; border: 1px solid #eee; border-radius: 4px; padding: 4px; text-align: center; width: 24%; font-size: 11px;'>Total<br><strong>45</strong></td>
+                                <td style='width: 1%;'></td>
+                                <td style='background: #fff; border: 1px solid #eee; border-radius: 4px; padding: 4px; text-align: center; width: 24%; font-size: 11px;'>Activos<br><strong style='color: #28a745;'>38</strong></td>
+                                <td style='width: 1%;'></td>
+                                <td style='background: #fff; border: 1px solid #eee; border-radius: 4px; padding: 4px; text-align: center; width: 24%; font-size: 11px;'>Vencidos<br><strong style='color: #dc3545;'>5</strong></td>
+                                <td style='width: 1%;'></td>
+                                <td style='background: #fff; border: 1px solid #eee; border-radius: 4px; padding: 4px; text-align: center; width: 24%; font-size: 11px;'>Nuevos<br><strong style='color: #ff6b35;'>2</strong></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </div>"),
+        };
     }
 
     // ═══════════════════════════════════════════════════════════

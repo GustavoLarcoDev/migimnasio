@@ -97,4 +97,11 @@ public class ProductoCreateDto
     /// Null o Guid.Empty = Sin categoría.
     /// </summary>
     public Guid? CategoriaProductoId { get; set; }
+
+    /// <summary>
+    /// Receta o ingredientes del producto. Opcional.
+    /// Usado en negocios tipo restaurante para documentar la preparación del plato.
+    /// </summary>
+    [StringLength(4000)]
+    public string Receta { get; set; }
 }

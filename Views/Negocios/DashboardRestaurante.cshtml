@@ -1,0 +1,1237 @@
+@model Gimnasio.Models.Gym
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "Dashboard - " + Model.NegocioNombre;
+    ViewData["NegocioId"] = Model.NegocioId;
+    ViewData["NegocioNombre"] = Model.NegocioNombre;
+    ViewData["DuenoNombre"] = Model.DuenoNegocio;
+    ViewData["TipoNegocio"] = "restaurante";
+    var negocioId = Model.NegocioId;
+}
+
+@if (Model.EsPrueba)
+{
+    <div class="alert border-0 d-flex align-items-center gap-3 mb-4 shadow-sm" id="trialBanner"
+         style="background: linear-gradient(135deg, #FFF8DD 0%, #FFF3CD 100%); border-left: 4px solid #FFC700 !important;">
+        <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+             style="width: 42px; height: 42px; background: rgba(255, 199, 0, 0.2);">
+            <i class="bi bi-hourglass-split text-warning fs-5"></i>
+        </div>
+        <div class="flex-grow-1">
+            <strong class="text-dark">Periodo de prueba</strong>
+            <span class="d-block d-sm-inline text-muted ms-sm-1" id="trialDaysText">Cargando...</span>
+        </div>
+        <a href="https://wa.me/593997143142?text=Hola%2C%20quiero%20activar%20mi%20plan%20de%20pago%20en%20Mi%20Negocio" target="_blank" rel="noopener"
+           class="btn btn-warning btn-sm fw-bold flex-shrink-0">
+            <i class="bi bi-whatsapp me-1"></i>Activar Plan
+        </a>
+    </div>
+}
+
+<div class="tab-content" id="dashboardTabsContent">
+
+    <!-- ═══════════════ TAB POS ═══════════════ -->
+    <div class="tab-pane fade show active" id="posTab" role="tabpanel">
+        <div class="row g-3 mb-4">
+            <div class="col-xl-3 col-md-6 col-6">
+                <div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Ventas Hoy</div><div class="stat-value" id="posVentasHoy">0</div></div><div class="stat-icon bg-light-primary"><i class="bi bi-cart-check text-primary"></i></div></div></div>
+            </div>
+            <div class="col-xl-3 col-md-6 col-6">
+                <div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Ingresos Hoy</div><div class="stat-value text-success" id="posIngresosHoy">$0</div></div><div class="stat-icon bg-light-success"><i class="bi bi-currency-dollar text-success"></i></div></div></div>
+            </div>
+            <div class="col-xl-3 col-md-6 col-6">
+                <div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Platos</div><div class="stat-value" id="posTotalProductos">0</div></div><div class="stat-icon bg-light-info"><i class="bi bi-cup-hot text-info"></i></div></div></div>
+            </div>
+            <div class="col-xl-3 col-md-6 col-6">
+                <div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Stock Bajo</div><div class="stat-value text-danger" id="posStockBajo">0</div></div><div class="stat-icon bg-light-danger"><i class="bi bi-exclamation-triangle-fill text-danger"></i></div></div></div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <!-- Products/Platos panel -->
+            <div class="col-lg-7">
+                <div class="mg-card h-100">
+                    <div class="card-header border-0 pb-0">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                            <h5 class="fw-bold mb-0"><i class="bi bi-grid me-2"></i>Platos</h5>
+                            <div class="input-group" style="max-width: 250px;">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="posBuscar" placeholder="Buscar plato...">
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 mt-3" id="posCategoryTabs">
+                            <button class="mg-pill active" data-cat="">Todos</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2" id="posProductsGrid"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cart panel -->
+            <div class="col-lg-5">
+                <div class="mg-card h-100">
+                    <div class="card-header border-0">
+                        <h5 class="fw-bold mb-0"><i class="bi bi-receipt me-2"></i>Factura</h5>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <!-- Tipo de orden -->
+                        <div class="d-flex gap-2 mb-3" id="tipoOrdenPills">
+                            <button class="mg-pill active" data-tipo="local"><i class="bi bi-shop me-1"></i>Local</button>
+                            <button class="mg-pill" data-tipo="para_llevar"><i class="bi bi-bag me-1"></i>Para Llevar</button>
+                            <button class="mg-pill" data-tipo="delivery"><i class="bi bi-bicycle me-1"></i>Delivery</button>
+                        </div>
+
+                        <!-- Mesa selector (solo si tipo=local) -->
+                        <div class="mb-3" id="mesaSelector">
+                            <select class="form-select form-select-sm" id="posMesaId">
+                                <option value="">Sin mesa asignada</option>
+                            </select>
+                        </div>
+
+                        <!-- Delivery fields (solo si tipo=delivery) -->
+                        <div class="mb-3 d-none" id="deliveryFields">
+                            <select class="form-select form-select-sm mb-2" id="posRepartidorId">
+                                <option value="">Seleccionar repartidor...</option>
+                            </select>
+                            <input type="text" class="form-control form-control-sm" id="posDireccion" placeholder="Direccion de entrega">
+                        </div>
+
+                        <div class="mb-3">
+                            <input type="text" class="form-control" id="posNombreCliente" placeholder="Nombre del cliente (opcional)">
+                        </div>
+
+                        <div class="flex-grow-1" style="min-height: 200px; max-height: 400px; overflow-y: auto;" id="posCartItems">
+                            <div class="text-center py-5 text-muted" id="posCartEmpty">
+                                <i class="bi bi-cart3 fs-1 d-block mb-2 opacity-50"></i>
+                                <p>Selecciona platos para agregar</p>
+                            </div>
+                        </div>
+
+                        <hr>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Subtotal</span>
+                            <span class="fw-bold" id="posSubtotal">$0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="text-muted">IVA</span>
+                                <input type="number" class="form-control form-control-sm" id="posIva" value="0" min="0" max="100" step="1" style="width: 65px;">
+                                <span class="text-muted">%</span>
+                            </div>
+                            <span class="fw-bold" id="posIvaMonto">$0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="text-muted">Descuento</span>
+                                <input type="number" class="form-control form-control-sm" id="posDescuento" value="0" min="0" max="100" step="1" style="width: 65px;">
+                                <span class="text-muted">%</span>
+                            </div>
+                            <span class="fw-bold text-danger" id="posDescuentoDisplay">-$0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3 fs-5">
+                            <span class="fw-bolder">TOTAL</span>
+                            <span class="fw-bolder text-success" id="posTotal">$0.00</span>
+                        </div>
+                        <!-- Boton delivery WhatsApp -->
+                        <button class="btn btn-success mb-2 d-none" id="btnLlamarDelivery">
+                            <i class="bi bi-whatsapp me-2"></i>Llamar Delivery
+                        </button>
+                        <button class="btn btn-success btn-lg w-100" id="btnCobrar" disabled>
+                            <i class="bi bi-cash-stack me-2"></i>Cobrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent orders -->
+        <div class="mg-card mt-4">
+            <div class="card-header border-0">
+                <h5 class="fw-bold mb-0"><i class="bi bi-clock-history me-2"></i>Ventas Recientes</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="ordenesTable" class="table table-row-bordered align-middle gs-0 gy-3">
+                        <thead><tr class="fw-bold text-muted"><th>#</th><th>Cliente</th><th>Tipo</th><th>Items</th><th>Total</th><th>Fecha</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ TAB MESAS ═══════════════ -->
+    <div class="tab-pane fade" id="mesasTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+            <h4 class="fw-bold mb-0"><i class="bi bi-grid-3x3 me-2"></i>Mesas del Restaurante</h4>
+            <button class="btn btn-primary" id="btnNuevaMesa"><i class="bi bi-plus-circle me-2"></i>Nueva Mesa</button>
+        </div>
+        <div class="row g-3 mb-4">
+            <div class="col-auto"><span class="badge bg-success fs-6 px-3 py-2"><i class="bi bi-circle-fill me-1"></i>Libre</span></div>
+            <div class="col-auto"><span class="badge bg-danger fs-6 px-3 py-2"><i class="bi bi-circle-fill me-1"></i>Ocupada</span></div>
+            <div class="col-auto"><span class="badge bg-warning text-dark fs-6 px-3 py-2"><i class="bi bi-circle-fill me-1"></i>Reservada</span></div>
+        </div>
+        <div class="row g-3" id="mesasGrid"></div>
+    </div>
+
+    <!-- ═══════════════ TAB MENUS ═══════════════ -->
+    <div class="tab-pane fade" id="menusTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+            <h4 class="fw-bold mb-0"><i class="bi bi-journal-richtext me-2"></i>Menus del Restaurante</h4>
+            <button class="btn btn-primary" id="btnNuevoMenu"><i class="bi bi-plus-circle me-2"></i>Nuevo Menu</button>
+        </div>
+
+        <!-- Menu Builder -->
+        <div class="d-none" id="menuBuilderSection">
+            <div class="row g-3">
+                <!-- Platos disponibles -->
+                <div class="col-lg-5">
+                    <div class="mg-card h-100">
+                        <div class="card-header border-0">
+                            <h5 class="fw-bold mb-0"><i class="bi bi-cup-hot me-2"></i>Platos Disponibles</h5>
+                            <input type="text" class="form-control form-control-sm mt-2" id="menuBuscarPlato" placeholder="Buscar plato...">
+                        </div>
+                        <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                            <div id="menuPlatosDisponibles"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Builder area -->
+                <div class="col-lg-7">
+                    <div class="mg-card h-100">
+                        <div class="card-header border-0">
+                            <h5 class="fw-bold mb-0"><i class="bi bi-tools me-2"></i>Constructor de Menu</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" id="menuNombre" placeholder="Nombre del menu">
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex gap-2" id="menuTipoPills">
+                                        <button class="mg-pill active" data-tipo="general">General</button>
+                                        <button class="mg-pill" data-tipo="desayuno">Desayuno</button>
+                                        <button class="mg-pill" data-tipo="almuerzo">Almuerzo</button>
+                                        <button class="mg-pill" data-tipo="cena">Cena</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3 d-none" id="menuPrecioFijoGroup">
+                                <div class="input-group" style="max-width:200px;">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="menuPrecioFijo" placeholder="Precio fijo" step="0.01" min="0">
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2 mb-3">
+                                <button class="btn btn-sm btn-outline-primary" id="btnAgregarSeccion"><i class="bi bi-folder-plus me-1"></i>Agregar Seccion</button>
+                            </div>
+                            <div id="menuBuilderItems" style="min-height: 200px; max-height: 400px; overflow-y: auto;">
+                                <div class="text-center py-4 text-muted">Agrega secciones y platos para construir tu menu</div>
+                            </div>
+                            <hr>
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                <span class="text-muted me-2">Estilo:</span>
+                                <button class="mg-pill active menuEstiloBtn" data-style="moderno">Moderno</button>
+                                <button class="mg-pill menuEstiloBtn" data-style="elegante">Elegante</button>
+                                <button class="mg-pill menuEstiloBtn" data-style="minimalista">Minimalista</button>
+                                <button class="mg-pill menuEstiloBtn" data-style="vibrante">Vibrante</button>
+                                <button class="mg-pill menuEstiloBtn" data-style="clasico">Clasico</button>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2">
+                                <button class="btn btn-primary" id="btnGuardarMenu"><i class="bi bi-save me-1"></i>Guardar Menu</button>
+                                <button class="btn btn-outline-info" id="btnPreviewMenu"><i class="bi bi-eye me-1"></i>Vista Previa</button>
+                                <button class="btn btn-outline-secondary" id="btnCancelarMenu"><i class="bi bi-x me-1"></i>Cancelar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Saved menus table -->
+        <div id="menusSavedSection">
+            <div class="mg-card">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="menusTable" class="table table-row-bordered align-middle gs-0 gy-3">
+                            <thead><tr class="fw-bold text-muted"><th>Nombre</th><th>Tipo</th><th>Precio</th><th>Estilo</th><th>Fecha</th><th class="text-end">Acciones</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ TAB INVENTARIO (reutilizado de Tienda) ═══════════════ -->
+    <div class="tab-pane fade" id="inventarioTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+            <button id="btnCrearProducto" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>Nuevo Plato</button>
+            <button id="btnCrearCategoria" class="btn btn-outline-primary"><i class="bi bi-folder-plus me-2"></i>Nueva Categoria</button>
+            <button id="btnExportInventarioExcel" class="btn btn-success"><i class="bi bi-file-earmark-excel me-2"></i>Exportar</button>
+            <button id="btnToggleMovimientos" class="btn btn-outline-primary"><i class="bi bi-clock-history me-2"></i>Historial</button>
+        </div>
+        <div class="row g-3 mb-4">
+            <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Total Platos</div><div class="stat-value" id="invTotalProductos">0</div></div><div class="stat-icon bg-light-primary"><i class="bi bi-cup-hot text-primary"></i></div></div></div></div>
+            <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Stock Bajo</div><div class="stat-value text-warning" id="invStockBajo">0</div></div><div class="stat-icon bg-light-warning"><i class="bi bi-exclamation-triangle-fill text-warning"></i></div></div></div></div>
+            <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Ventas Hoy</div><div class="stat-value" id="invVentasHoy">0</div></div><div class="stat-icon bg-light-success"><i class="bi bi-cart-check-fill text-success"></i></div></div></div></div>
+            <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Ingresos Hoy</div><div class="stat-value text-success" id="invIngresosHoy">$0</div></div><div class="stat-icon bg-light-info"><i class="bi bi-currency-dollar text-info"></i></div></div></div></div>
+        </div>
+        <div class="d-flex align-items-center gap-2 mb-3 px-2 py-2 rounded-3" style="background: rgba(62,151,255,0.04); border: 1px dashed rgba(62,151,255,0.2);">
+            <i class="bi bi-arrows-move text-primary"></i>
+            <span class="text-muted small">Arrastra platos sobre las carpetas para organizarlos</span>
+        </div>
+        <div class="row g-3 mb-3" id="invCategoryFolders"></div>
+        <div class="row g-3 mb-4" id="productosGrid"></div>
+        <div id="movimientosSection" class="d-none">
+            <h5 class="fw-bold mb-3"><i class="bi bi-clock-history me-2"></i>Historial de Movimientos</h5>
+            <div class="mg-card"><div class="card-body"><div class="table-responsive"><table id="movimientosTable" class="table table-row-bordered align-middle gs-0 gy-3"><thead><tr class="fw-bold text-muted"><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Cant.</th><th>Total</th><th>Stock</th><th>Nota</th></tr></thead><tbody></tbody></table></div></div></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ TAB DISTRIBUIDORES (reutiliza proveedores/ClienteArtesanal) ═══════════════ -->
+    <div class="tab-pane fade" id="proveedoresTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <h4 class="fw-bold mb-0">Distribuidores</h4>
+            <button class="btn btn-primary" id="btnNuevoProveedor"><i class="bi bi-plus-circle me-2"></i>Nuevo Distribuidor</button>
+        </div>
+        <div class="mg-card"><div class="card-body"><div class="table-responsive">
+            <table id="proveedoresTable" class="table table-row-bordered align-middle gs-0 gy-3">
+                <thead><tr class="fw-bold text-muted"><th>Compania</th><th>Contacto</th><th>Telefono</th><th>Email</th><th class="text-end">Acciones</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div></div></div>
+    </div>
+
+    <!-- ═══════════════ TAB REPARTIDORES (reutiliza Empleado) ═══════════════ -->
+    <div class="tab-pane fade" id="repartidoresTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <h4 class="fw-bold mb-0">Repartidores</h4>
+            <button class="btn btn-primary" id="btnNuevoRepartidor"><i class="bi bi-plus-circle me-2"></i>Nuevo Repartidor</button>
+        </div>
+        <div class="mg-card"><div class="card-body"><div class="table-responsive">
+            <table id="repartidoresTable" class="table table-row-bordered align-middle gs-0 gy-3">
+                <thead><tr class="fw-bold text-muted"><th>Nombre</th><th>Apellido</th><th>Telefono</th><th>Email</th><th>Vehiculo</th><th class="text-end">Acciones</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div></div></div>
+    </div>
+
+    <!-- ═══════════════ TAB MOVIMIENTOS (reutilizado) ═══════════════ -->
+    <div class="tab-pane fade" id="logsTab" role="tabpanel">
+        <div class="mg-card mb-4"><div class="card-body"><h5 class="fw-bold mb-3"><i class="bi bi-plus-circle me-2"></i>Registrar Movimiento</h5><div class="row g-3 align-items-end"><div class="col-md-6"><label class="form-label">Descripcion</label><input type="text" class="form-control form-control-lg" id="logDescripcion" placeholder="Ej: Compra de ingredientes"></div><div class="col-md-3"><label class="form-label">Monto ($)</label><input type="number" step="0.01" class="form-control form-control-lg" id="logMonto" placeholder="4 o -15"></div><div class="col-md-3"><button id="btnRegistrarLog" class="btn btn-primary btn-lg w-100"><i class="bi bi-check-lg me-2"></i>Registrar</button></div></div><small class="text-muted mt-2 d-block">Usa valores positivos para ingresos y negativos para gastos</small></div></div>
+        <div class="d-flex flex-wrap gap-2 mb-3 align-items-center"><small class="text-muted"><i class="bi bi-shield-lock me-1"></i>Los registros son inmutables</small><div class="ms-auto d-flex gap-2"><button id="btnExportLogsExcel" class="btn btn-success"><i class="bi bi-file-earmark-excel me-2"></i>Exportar</button></div></div>
+        <div class="mg-card"><div class="card-body"><div class="table-responsive"><table id="logsTable" class="table table-row-bordered align-middle gs-0 gy-3"><thead><tr class="fw-bold text-muted"><th>Descripcion</th><th>Tipo</th><th>Cliente</th><th>Monto</th><th>Fecha</th></tr></thead><tbody></tbody></table></div></div></div>
+    </div>
+
+    <!-- ═══════════════ TAB REPORTES (reutilizado) ═══════════════ -->
+    <div class="tab-pane fade" id="ventasTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2"><div class="mg-period-pills" id="ventasPeriodPills"><button class="mg-pill active" data-periodo="dia">Dia</button><button class="mg-pill" data-periodo="semana">Semana</button><button class="mg-pill" data-periodo="mes">Mes</button></div></div>
+        <div class="row g-3 mb-4">
+            <div class="col-xl-4 col-md-6 col-12"><div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-primary) 0%, var(--mg-gradient-primary-end) 100%);"><div class="card-body text-white"><span class="d-block mb-2 opacity-75" id="ventasIngresosLabel">Ingresos del Dia</span><span class="fs-2x fw-bolder" id="ventasIngresos">$0</span></div></div></div>
+            <div class="col-xl-4 col-md-6 col-12"><div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-danger) 0%, var(--mg-gradient-danger-end) 100%);"><div class="card-body text-white"><span class="d-block mb-2 opacity-75" id="ventasGastosLabel">Gastos del Dia</span><span class="fs-2x fw-bolder" id="ventasGastos">$0</span></div></div></div>
+            <div class="col-xl-4 col-md-6 col-12"><div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-success) 0%, var(--mg-gradient-success-end) 100%);"><div class="card-body text-white"><span class="d-block mb-2 opacity-75" id="ventasGananciaLabel">Ganancia Neta</span><span class="fs-2x fw-bolder" id="ventasGanancia">$0</span></div></div></div>
+        </div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6"><div class="mg-card"><div class="card-header border-0"><h5 class="fw-bold mb-0">Ingresos vs Gastos</h5></div><div class="card-body"><div id="chartBarVentas"></div></div></div></div>
+            <div class="col-md-6"><div class="mg-card"><div class="card-header border-0"><h5 class="fw-bold mb-0" id="chartResumenTitle">Resumen del Dia</h5></div><div class="card-body"><div id="chartResumen"></div></div></div></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ TAB RECIBOS ═══════════════ -->
+    <div class="tab-pane fade" id="recibosTab" role="tabpanel">
+        <div id="recibosCleanupBanner" class="alert alert-warning d-none mb-3">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            Tienes recibos con mas de 30 dias. <button class="btn btn-sm btn-warning ms-2" id="btnExportarYLimpiar">Exportar y Limpiar</button>
+        </div>
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold mb-0">Recibos</h4>
+            <div class="d-flex gap-2 align-items-center">
+                <div class="input-group input-group-sm" style="width: 200px;">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="buscarReciboInput" placeholder="# Recibo...">
+                </div>
+                <button id="btnExportRecibos" class="btn btn-sm btn-success"><i class="bi bi-file-earmark-excel me-1"></i>Exportar</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table id="tablaRecibos" class="table table-row-bordered align-middle gs-0 gy-3">
+                <thead><tr class="fw-bold text-muted"><th>#Recibo</th><th>Destinatario</th><th>Concepto</th><th>Monto</th><th>Fecha</th><th>Acciones</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ═══════════════ TAB NOTIFICACIONES ═══════════════ -->
+    <div class="tab-pane fade" id="notificacionesTab" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-4"><h4 class="fw-bold mb-0">Notificaciones</h4><div class="d-flex gap-2"><button id="btnMarcarTodasLeidasTab" class="btn btn-outline-primary"><i class="bi bi-check-all me-2"></i>Marcar todas leidas</button></div></div>
+        <div id="notificacionesList" class="d-flex flex-column gap-2"><div class="text-center py-5 text-muted"><i class="bi bi-bell-slash fs-1 d-block mb-3"></i><p>No hay notificaciones.</p></div></div>
+    </div>
+
+    <!-- ═══════════════ TAB SUGERENCIAS ═══════════════ -->
+    <div class="tab-pane fade" id="sugerenciasTab" role="tabpanel">
+        <div class="row justify-content-center"><div class="col-lg-8"><div class="mg-card"><div class="card-header border-0"><h5 class="fw-bold mb-0"><i class="bi bi-chat-left-text me-2"></i>Enviar Sugerencia</h5></div><div class="card-body"><p class="text-muted mb-3">Ayudanos a mejorar. Escribe tu sugerencia, idea o comentario.</p><div class="mb-3"><textarea class="form-control form-control-lg" id="sugerenciaTexto" rows="5" maxlength="1000" placeholder="Escribe tu sugerencia aqui..."></textarea><div class="d-flex justify-content-between mt-1"><small class="text-muted">Maximo 1000 caracteres</small><small class="text-muted"><span id="sugerenciaCount">0</span>/1000</small></div></div><button id="btnEnviarSugerencia" class="btn btn-primary"><i class="bi bi-send me-2"></i>Enviar Sugerencia</button></div></div></div></div>
+    </div>
+
+</div>
+
+<!-- ═══════════════ MODALES ═══════════════ -->
+
+<!-- Modal Crear/Editar Producto (con campo Receta) -->
+<div class="modal fade modal-fullscreen-sm-down" id="productoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="productoModalTitle">Nuevo Plato</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <input type="hidden" id="prodEditId">
+        <div class="row g-3">
+            <div class="col-md-6"><label class="form-label">Nombre del plato *</label><input type="text" class="form-control" id="prodNombre" maxlength="200"></div>
+            <div class="col-md-3"><label class="form-label">Precio Venta *</label><input type="number" step="0.01" class="form-control" id="prodPrecio" min="0"></div>
+            <div class="col-md-3"><label class="form-label">Costo</label><input type="number" step="0.01" class="form-control" id="prodCosto" min="0" value="0"></div>
+            <div class="col-md-4"><label class="form-label">Stock</label><input type="number" class="form-control" id="prodStock" min="0" value="0"></div>
+            <div class="col-md-4"><label class="form-label">Stock Minimo</label><input type="number" class="form-control" id="prodStockMin" min="0" value="5"></div>
+            <div class="col-md-4"><label class="form-label">Categoria</label><select class="form-select" id="prodCategoria"><option value="">Sin categoria</option></select></div>
+            <div class="col-md-6"><label class="form-label"><i class="bi bi-camera me-1"></i>Foto del Plato</label><input type="file" class="form-control" id="prodImagen" accept=".jpg,.jpeg,.png,.webp"><div class="form-text">Opcional. JPG, PNG o WebP.</div><div id="prodImagenPreview" class="mt-2"></div></div>
+            <div class="col-12">
+                <a class="text-decoration-none" data-bs-toggle="collapse" href="#recetaCollapse"><i class="bi bi-journal-text me-1"></i>Receta / Ingredientes</a>
+                <div class="collapse mt-2" id="recetaCollapse">
+                    <textarea class="form-control" id="prodReceta" rows="4" maxlength="4000" placeholder="Ingredientes o instrucciones de preparacion..."></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="btnGuardarProducto">Guardar</button></div>
+    </div></div>
+</div>
+
+<!-- Modal Crear/Editar Mesa -->
+<div class="modal fade" id="mesaModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="mesaModalTitle">Nueva Mesa</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <input type="hidden" id="mesaEditId">
+        <div class="mb-3"><label class="form-label">Nombre *</label><input type="text" class="form-control" id="mesaNombre" maxlength="50" placeholder="Ej: Mesa 1, Terraza 2"></div>
+        <div class="row g-3">
+            <div class="col-6"><label class="form-label">Numero</label><input type="number" class="form-control" id="mesaNumero" min="1" value="1"></div>
+            <div class="col-6"><label class="form-label">Capacidad</label><input type="number" class="form-control" id="mesaCapacidad" min="1" value="4"></div>
+        </div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="btnGuardarMesa">Guardar</button></div>
+    </div></div>
+</div>
+
+<!-- Modal Crear/Editar Repartidor -->
+<div class="modal fade" id="repartidorModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="repartidorModalTitle">Nuevo Repartidor</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <input type="hidden" id="repEditId">
+        <div class="row g-3">
+            <div class="col-6"><label class="form-label">Nombre *</label><input type="text" class="form-control" id="repNombre" maxlength="100"></div>
+            <div class="col-6"><label class="form-label">Apellido *</label><input type="text" class="form-control" id="repApellido" maxlength="100"></div>
+            <div class="col-6"><label class="form-label">Telefono</label><input type="text" class="form-control" id="repTelefono" maxlength="20"></div>
+            <div class="col-6"><label class="form-label">Email</label><input type="email" class="form-control" id="repEmail" maxlength="200"></div>
+            <div class="col-12"><label class="form-label">Vehiculo</label><select class="form-select" id="repVehiculo"><option value="Moto">Moto</option><option value="Bicicleta">Bicicleta</option><option value="Auto">Auto</option><option value="A pie">A pie</option></select></div>
+        </div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="btnGuardarRepartidor">Guardar</button></div>
+    </div></div>
+</div>
+
+<!-- Modal Crear Categoria -->
+<div class="modal fade" id="categoriaModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nueva Categoria</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body"><label class="form-label">Nombre de la categoria</label><input type="text" class="form-control" id="catNombre" maxlength="100" placeholder="Ej: Entradas, Sopas, Bebidas..."></div>
+    <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="btnGuardarCategoria">Guardar</button></div>
+    </div></div>
+</div>
+
+<!-- Modal Recibo -->
+<div class="modal fade modal-fullscreen-sm-down" id="reciboModal" tabindex="-1">
+    <div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Recibo #<span id="reciboModalNumero"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body p-0"><iframe id="reciboIframe" style="width:100%;height:500px;border:none;" sandbox="allow-same-origin"></iframe></div>
+    <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button></div>
+    </div></div>
+</div>
+
+<!-- Modal Proveedor -->
+<div class="modal fade" id="proveedorModal" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="proveedorModalTitle">Nuevo Distribuidor</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <input type="hidden" id="provEditId">
+        <div class="row g-3">
+            <div class="col-12"><label class="form-label">Nombre de la compania *</label><input type="text" class="form-control" id="provCompania" maxlength="200"></div>
+            <div class="col-6"><label class="form-label">Contacto</label><input type="text" class="form-control" id="provContacto" maxlength="200"></div>
+            <div class="col-6"><label class="form-label">Telefono</label><input type="text" class="form-control" id="provTelefono" maxlength="20"></div>
+            <div class="col-12"><label class="form-label">Email</label><input type="email" class="form-control" id="provEmail" maxlength="200"></div>
+        </div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="btnGuardarProveedor">Guardar</button></div>
+    </div></div>
+</div>
+
+<!-- Modal Preview Menu -->
+<div class="modal fade modal-fullscreen-sm-down" id="menuPreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Vista Previa del Menu</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body p-0"><iframe id="menuPreviewIframe" style="width:100%;height:550px;border:none;" sandbox="allow-same-origin"></iframe></div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-primary" id="btnDescargarMenuPreview"><i class="bi bi-printer me-1"></i>Imprimir</button>
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+    </div>
+    </div></div>
+</div>
+
+<style>
+/* ── POS Category Pills ── */
+#posCategoryTabs .mg-pill,
+#tipoOrdenPills .mg-pill,
+#menuTipoPills .mg-pill,
+#menuEstiloPills .mg-pill {
+    padding: 0.45rem 1.1rem;
+    border: 1.5px solid var(--mg-border-color);
+    background: var(--mg-card-bg);
+    color: var(--mg-gray-600);
+    font-weight: 600;
+    font-size: 0.8rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(.4,0,.2,1);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+#posCategoryTabs .mg-pill:hover,
+#tipoOrdenPills .mg-pill:hover,
+#menuTipoPills .mg-pill:hover,
+#menuEstiloPills .mg-pill:hover {
+    border-color: var(--mg-primary);
+    color: var(--mg-primary);
+    background: rgba(62, 151, 255, 0.06);
+    transform: translateY(-1px);
+}
+#posCategoryTabs .mg-pill.active,
+#tipoOrdenPills .mg-pill.active,
+#menuTipoPills .mg-pill.active,
+#menuEstiloPills .mg-pill.active {
+    background: linear-gradient(135deg, var(--mg-primary), #1B74E4);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(62, 151, 255, 0.35);
+    transform: translateY(-1px);
+}
+#posCategoryTabs .mg-pill .pill-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 50px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: rgba(0,0,0,0.08);
+    line-height: 1;
+}
+#posCategoryTabs .mg-pill.active .pill-count {
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+}
+</style>
+
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+// ═══════════════════════════════════════════════════════════
+// JAVASCRIPT — Dashboard Restaurante
+// ═══════════════════════════════════════════════════════════
+
+const negocioId = @Json.Serialize(negocioId.ToString());
+const negocioNombre = @Json.Serialize(Model.NegocioNombre ?? "Restaurante");
+const negocioDireccion = @Json.Serialize(Model.Direccion ?? "");
+let tablaLogs, tablaMovimientos, tablaRecibos, tablaOrdenes, tablaProveedores, tablaMenus, tablaRepartidores;
+var modoEdicionProducto = false;
+var productosCache = [];
+var posCart = [];
+var categoriasCache = [];
+var mesasCache = [];
+var repartidoresCache = [];
+var currentTipoOrden = 'local';
+var menuBuilderSecciones = [];
+var menuEditId = null;
+var currentMenuEstilo = 'moderno';
+var currentMenuTipo = 'general';
+
+const swalMG = Swal.mixin({
+    customClass: { confirmButton: 'btn btn-primary me-2', cancelButton: 'btn btn-light' },
+    buttonsStyling: false
+});
+
+$.ajaxSetup({ cache: false });
+
+function escHtml(str) { return $('<span>').text(str || '').html(); }
+function escAttr(str) { return escHtml(str).replace(/'/g, '&#39;'); }
+
+const dtLang = { emptyTable: 'Sin datos', info: 'Mostrando _START_ a _END_ de _TOTAL_', infoEmpty: 'Sin registros', search: 'Buscar:', paginate: { first: 'Primera', last: 'Ultima', next: 'Sig.', previous: 'Ant.' }, lengthMenu: 'Mostrar _MENU_' };
+
+$(document).ready(function() {
+    cargarPOS();
+    verificarSuscripcion();
+    cargarNotificacionesCount();
+});
+
+// ═══════════════ SUSCRIPCION ═══════════════
+function verificarSuscripcion() {
+    $.get('/Negocios/GetSuscripcionStatus', { negocioId }, function(d) {
+        if (d && d.esPrueba) {
+            var dias = d.diasRestantes;
+            $('#trialDaysText').text(dias <= 0 ? 'Tu prueba ha expirado' : 'Te quedan ' + dias + ' dias de prueba');
+        }
+    });
+}
+
+// ═══════════════ POS ═══════════════
+function cargarPOS() {
+    $.get('/Negocios/GetCategorias', { negocioId }, function(cats) {
+        categoriasCache = cats;
+        renderCategoryTabs(cats, '#posCategoryTabs');
+    });
+    $.get('/Negocios/GetProductos', { negocioId }, function(productos) {
+        productosCache = productos;
+        renderPOSProducts(productos);
+    });
+    $.get('/Negocios/GetInventarioStats', { negocioId }, function(d) {
+        $('#posVentasHoy').text(d.ventasHoyUnidades);
+        $('#posIngresosHoy').text('$' + d.ingresosHoy.toFixed(2));
+        $('#posTotalProductos').text(d.totalProductos);
+        $('#posStockBajo').text(d.stockBajo);
+    });
+    cargarMesasParaPOS();
+    cargarRepartidoresParaPOS();
+    cargarOrdenesRecientes();
+}
+
+function cargarMesasParaPOS() {
+    $.get('/Negocios/GetMesas', { negocioId }, function(mesas) {
+        mesasCache = mesas;
+        var sel = $('#posMesaId');
+        sel.find('option:not(:first)').remove();
+        mesas.filter(function(m) { return m.estado === 'libre'; }).forEach(function(m) {
+            sel.append('<option value="' + m.mesaId + '">' + escHtml(m.nombre) + ' (' + m.capacidad + ' pers.)</option>');
+        });
+    });
+}
+
+function cargarRepartidoresParaPOS() {
+    $.get('/Negocios/GetEmpleados', { negocioId }, function(data) {
+        repartidoresCache = Array.isArray(data) ? data : (data.empleados || []);
+        var sel = $('#posRepartidorId');
+        sel.find('option:not(:first)').remove();
+        repartidoresCache.forEach(function(r) {
+            sel.append('<option value="' + r.empleadoId + '" data-tel="' + escAttr(r.telefono || '') + '">' + escHtml(r.nombre + ' ' + r.apellido) + ' (' + escHtml(r.especialidad || 'N/A') + ')</option>');
+        });
+    });
+}
+
+function renderCategoryTabs(cats, container) {
+    var $c = $(container);
+    $c.find('.mg-pill:not(:first)').remove();
+    $c.find('.mg-pill:first').html('Todos <span class="pill-count">' + productosCache.length + '</span>');
+    cats.forEach(function(cat) {
+        var count = productosCache.filter(function(p) { return p.categoriaProductoId === cat.categoriaId; }).length;
+        $c.append('<button class="mg-pill" data-cat="' + cat.categoriaId + '">' + escHtml(cat.nombre) + ' <span class="pill-count">' + count + '</span></button>');
+    });
+}
+
+function renderPOSProducts(productos, filter) {
+    var grid = $('#posProductsGrid'); grid.empty();
+    var filtered = filter ? productos.filter(function(p) { return p.categoriaProductoId === filter; }) : productos;
+    var search = ($('#posBuscar').val() || '').toLowerCase();
+    if (search) filtered = filtered.filter(function(p) { return p.nombre.toLowerCase().includes(search); });
+    if (!filtered.length) { grid.html('<div class="col-12 text-center py-5 text-muted"><i class="bi bi-cup-hot fs-1 d-block mb-3 opacity-50"></i><p>No hay platos</p></div>'); return; }
+    filtered.forEach(function(p) {
+        var imgHtml = p.imagenUrl ? '<img src="' + escAttr(p.imagenUrl) + '" class="pos-prod-img" alt="">' : '<div class="pos-prod-placeholder"><i class="bi bi-cup-hot"></i></div>';
+        grid.append('<div class="col-xl-3 col-lg-4 col-md-4 col-6"><div class="pos-product-card' + (p.stock <= 0 ? ' out-of-stock' : '') + '" data-id="' + p.productoId + '" onclick="agregarAlCarrito(\'' + p.productoId + '\')">' + imgHtml + '<div class="pos-prod-name" title="' + escAttr(p.nombre) + '">' + escHtml(p.nombre) + '</div><div class="pos-prod-price">$' + p.precioVenta.toFixed(2) + '</div><div class="pos-prod-stock">' + (p.stock <= 0 ? '<span class="text-danger">Agotado</span>' : 'Stock: ' + p.stock) + '</div></div></div>');
+    });
+}
+
+$(document).on('click', '#posCategoryTabs .mg-pill', function() {
+    $('#posCategoryTabs .mg-pill').removeClass('active'); $(this).addClass('active');
+    renderPOSProducts(productosCache, $(this).data('cat') || null);
+});
+$('#posBuscar').on('input', function() { renderPOSProducts(productosCache, $('#posCategoryTabs .mg-pill.active').data('cat') || null); });
+
+// Tipo orden pills
+$(document).on('click', '#tipoOrdenPills .mg-pill', function() {
+    $('#tipoOrdenPills .mg-pill').removeClass('active'); $(this).addClass('active');
+    currentTipoOrden = $(this).data('tipo');
+    $('#mesaSelector').toggleClass('d-none', currentTipoOrden !== 'local').toggle(currentTipoOrden === 'local');
+    $('#deliveryFields').toggleClass('d-none', currentTipoOrden !== 'delivery');
+    $('#btnLlamarDelivery').toggleClass('d-none', currentTipoOrden !== 'delivery');
+    if (currentTipoOrden === 'local') { $('#mesaSelector').removeClass('d-none'); }
+});
+
+// Llamar delivery WhatsApp
+$('#btnLlamarDelivery').on('click', function() {
+    var repOpt = $('#posRepartidorId option:selected');
+    var tel = repOpt.data('tel');
+    if (!tel) { toastr.warning('Selecciona un repartidor con telefono'); return; }
+    tel = tel.replace(/\D/g, '');
+    if (tel.startsWith('0')) tel = '593' + tel.substring(1);
+    if (!tel.startsWith('593')) tel = '593' + tel;
+    var dir = $('#posDireccion').val() || negocioDireccion;
+    var msg = encodeURIComponent('Hola ' + repOpt.text().split('(')[0].trim() + ', necesito un servicio de delivery para ' + negocioNombre + ', por favor venga a ' + dir);
+    window.open('https://wa.me/' + tel + '?text=' + msg, '_blank');
+});
+
+function agregarAlCarrito(productoId) {
+    var p = productosCache.find(function(x) { return x.productoId === productoId; });
+    if (!p || p.stock <= 0) return;
+    var ex = posCart.find(function(c) { return c.productoId === productoId; });
+    if (ex) { if (ex.cantidad >= p.stock) { toastr.warning('No hay mas stock de ' + p.nombre); return; } ex.cantidad++; }
+    else posCart.push({ productoId: p.productoId, nombre: p.nombre, precioVenta: p.precioVenta, cantidad: 1, stock: p.stock });
+    renderCart();
+}
+
+function renderCart() {
+    var c = $('#posCartItems'); c.empty();
+    if (!posCart.length) { c.html('<div class="text-center py-5 text-muted"><i class="bi bi-cart3 fs-1 d-block mb-2 opacity-50"></i><p>Selecciona platos para agregar</p></div>'); $('#btnCobrar').prop('disabled', true); calcularTotales(); return; }
+    posCart.forEach(function(item, i) {
+        c.append('<div class="pos-cart-item"><div class="pos-cart-name">' + escHtml(item.nombre) + '</div><div class="pos-cart-qty"><button class="btn btn-sm btn-outline-secondary" onclick="cambiarCantidad(' + i + ',-1)"><i class="bi bi-dash"></i></button><span class="fw-bold px-2">' + item.cantidad + '</span><button class="btn btn-sm btn-outline-secondary" onclick="cambiarCantidad(' + i + ',1)"><i class="bi bi-plus"></i></button></div><div class="pos-cart-subtotal">$' + (item.precioVenta * item.cantidad).toFixed(2) + '</div><button class="btn btn-sm btn-outline-danger" onclick="quitarDelCarrito(' + i + ')"><i class="bi bi-x"></i></button></div>');
+    });
+    $('#btnCobrar').prop('disabled', false); calcularTotales();
+}
+
+function cambiarCantidad(i, d) { var item = posCart[i]; if (!item) return; item.cantidad += d; if (item.cantidad <= 0) { quitarDelCarrito(i); return; } if (item.cantidad > item.stock) { item.cantidad = item.stock; toastr.warning('Stock maximo: ' + item.stock); } renderCart(); }
+function quitarDelCarrito(i) { posCart.splice(i, 1); renderCart(); }
+
+function calcularTotales() {
+    var sub = posCart.reduce(function(s, i) { return s + i.precioVenta * i.cantidad; }, 0);
+    var iva = parseFloat($('#posIva').val()) || 0, desc = parseFloat($('#posDescuento').val()) || 0;
+    var mIva = sub * iva / 100, mDesc = sub * desc / 100, total = Math.max(0, sub + mIva - mDesc);
+    $('#posSubtotal').text('$' + sub.toFixed(2)); $('#posIvaMonto').text('$' + mIva.toFixed(2));
+    $('#posDescuentoDisplay').text('-$' + mDesc.toFixed(2)); $('#posTotal').text('$' + total.toFixed(2));
+}
+$('#posIva, #posDescuento').on('input', calcularTotales);
+
+$('#btnCobrar').on('click', function() {
+    if (!posCart.length) return;
+    var total = parseFloat($('#posTotal').text().replace('$', ''));
+    swalMG.fire({ title: 'Confirmar Cobro', html: '<p class="fs-3 fw-bolder text-success mb-0">$' + total.toFixed(2) + '</p><p class="text-muted">' + posCart.length + ' plato(s) - ' + currentTipoOrden.replace('_', ' ') + '</p>', icon: 'question', showCancelButton: true, confirmButtonText: '<i class="bi bi-check-lg me-1"></i>Confirmar Pago', confirmButtonColor: '#50CD89' }).then(function(r) { if (r.isConfirmed) procesarVenta(); });
+});
+
+function procesarVenta() {
+    var btn = $('#btnCobrar'); btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Procesando...');
+    var sub = posCart.reduce(function(s, i) { return s + i.precioVenta * i.cantidad; }, 0);
+    var descPct = parseFloat($('#posDescuento').val()) || 0;
+    var payload = {
+        NombreCliente: $('#posNombreCliente').val() || 'Mostrador',
+        EmailCliente: '', DescuentoAdicional: sub * descPct / 100,
+        PorcentajeIva: parseFloat($('#posIva').val()) || 0,
+        Items: posCart.map(function(c) { return { ProductoId: c.productoId, Cantidad: c.cantidad }; }),
+        TipoOrden: currentTipoOrden,
+        MesaId: currentTipoOrden === 'local' ? ($('#posMesaId').val() || null) : null,
+        EmpleadoId: currentTipoOrden === 'delivery' ? ($('#posRepartidorId').val() || null) : null,
+        DireccionEntrega: currentTipoOrden === 'delivery' ? ($('#posDireccion').val() || '') : null
+    };
+    $.ajax({ url: '/Negocios/ProcesarVentaPOS', type: 'POST', contentType: 'application/json', data: JSON.stringify(payload),
+        success: function(r) {
+            if (r.success) { posCart = []; renderCart(); $('#posNombreCliente').val(''); $('#posDescuento').val(0); cargarPOS(); if (tablaLogs) tablaLogs.ajax.reload(); if (tablaRecibos) tablaRecibos.ajax.reload();
+                if (r.reciboId) mostrarReciboVenta(r.reciboId); else swalMG.fire({ title: 'Venta Exitosa!', icon: 'success' });
+            } else toastr.error(r.message);
+        },
+        error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al procesar venta'); },
+        complete: function() { btn.prop('disabled', false).html('<i class="bi bi-cash-stack me-2"></i>Cobrar'); }
+    });
+}
+
+function mostrarReciboVenta(reciboId) {
+    $.get('/Negocios/GetRecibo', { reciboId, negocioId }, function(r) {
+        if (!r) { swalMG.fire({ title: 'Venta Exitosa!', icon: 'success' }); return; }
+        $('#reciboModalNumero').text(r.numeroRecibo); document.getElementById('reciboIframe').srcdoc = r.contenidoHtml;
+        var footer = $('#reciboModal .modal-footer');
+        footer.html('<button type="button" class="btn btn-success" onclick="enviarReciboPOS(\'' + reciboId + '\',\'whatsapp\')"><i class="bi bi-whatsapp me-2"></i>WhatsApp</button><button type="button" class="btn btn-outline-info" onclick="enviarReciboPOS(\'' + reciboId + '\',\'email\')"><i class="bi bi-envelope me-2"></i>Email</button><button type="button" class="btn btn-outline-primary" onclick="imprimirRecibo()"><i class="bi bi-printer me-2"></i>Imprimir</button><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>');
+        new bootstrap.Modal('#reciboModal').show();
+    });
+}
+
+function enviarReciboPOS(reciboId, tipo) {
+    var m = bootstrap.Modal.getInstance(document.getElementById('reciboModal')); if (m) m.hide();
+    var isWA = tipo === 'whatsapp';
+    setTimeout(function() {
+        swalMG.fire({ title: 'Enviar Recibo', html: '<label class="form-label fw-semibold text-start d-block">' + (isWA ? 'Numero de WhatsApp' : 'Correo Electronico') + '</label><input type="' + (isWA ? 'tel' : 'email') + '" id="swalDestinoRecibo" class="form-control" placeholder="' + (isWA ? 'Ej: 0989799891' : 'Ej: cliente@email.com') + '">' + (isWA ? '<small class="text-muted d-block mt-1"><i class="bi bi-info-circle me-1"></i>El codigo de pais (+593) se agrega automaticamente</small>' : ''), showCancelButton: true, confirmButtonText: '<i class="bi bi-send me-1"></i>Enviar', didOpen: function() { document.getElementById('swalDestinoRecibo').focus(); }, preConfirm: function() { var d = document.getElementById('swalDestinoRecibo').value.trim(); if (!d) { Swal.showValidationMessage('Ingresa un destino'); return false; } return d; }
+        }).then(function(result) { if (result.isConfirmed) $.post('/Negocios/EnviarRecibo', { reciboId, negocioId, destino: result.value, tipo }, function(r) { if (r.success) toastr.success(r.message); else toastr.error(r.message); }).fail(function() { toastr.error('Error de conexion'); }); });
+    }, 300);
+}
+
+function imprimirRecibo() {
+    var html = document.getElementById('reciboIframe').srcdoc; if (!html) return;
+    var w = window.open('', '_blank', 'width=800,height=600'); w.document.write(html); w.document.close(); w.focus(); setTimeout(function() { w.print(); }, 400);
+}
+
+function cargarOrdenesRecientes() {
+    if (tablaOrdenes) { tablaOrdenes.ajax.reload(); return; }
+    tablaOrdenes = $('#ordenesTable').DataTable({ language: dtLang, ajax: { url: '/Negocios/GetOrdenesVenta', data: { negocioId }, dataSrc: '' },
+        columns: [
+            { data: 'numeroOrden', render: function(d) { return '<span class="badge bg-primary">#' + d + '</span>'; } },
+            { data: 'nombreCliente', render: function(d) { return escHtml(d || 'Mostrador'); } },
+            { data: 'tipoOrden', render: function(d) { var m = { local: 'Local', para_llevar: 'Para Llevar', delivery: 'Delivery' }; return '<span class="badge bg-' + (d === 'delivery' ? 'info' : d === 'para_llevar' ? 'warning text-dark' : 'success') + '">' + (m[d] || d || 'Local') + '</span>'; } },
+            { data: 'items' },
+            { data: 'total', render: function(d) { return '<span class="fw-bold text-success">$' + d.toFixed(2) + '</span>'; } },
+            { data: 'fechaCreacion', render: function(d) { return new Date(d).toLocaleString('es-EC'); } }
+        ], order: [[5, 'desc']], pageLength: 5
+    });
+}
+
+// ═══════════════ MESAS ═══════════════
+function cargarMesas() {
+    $.get('/Negocios/GetMesas', { negocioId }, function(mesas) {
+        mesasCache = mesas;
+        var grid = $('#mesasGrid'); grid.empty();
+        if (!mesas.length) { grid.html('<div class="col-12 text-center py-5 text-muted"><i class="bi bi-grid-3x3 fs-1 d-block mb-3 opacity-50"></i><p>No hay mesas. Crea la primera.</p></div>'); return; }
+        mesas.forEach(function(m) {
+            var color = m.estado === 'libre' ? 'success' : m.estado === 'ocupada' ? 'danger' : 'warning';
+            var textColor = m.estado === 'reservada' ? 'text-dark' : 'text-white';
+            grid.append('<div class="col-xl-2 col-lg-3 col-md-4 col-6"><div class="mg-card border-0 text-center cursor-pointer" style="background: var(--mg-' + color + '); border-radius: 12px;" onclick="mostrarOpcionesMesa(\'' + m.mesaId + '\')">' +
+                '<div class="card-body py-3 ' + textColor + '">' +
+                '<div class="fs-3 fw-bolder">' + m.numero + '</div>' +
+                '<div class="small fw-semibold">' + escHtml(m.nombre) + '</div>' +
+                '<div class="small opacity-75"><i class="bi bi-people me-1"></i>' + m.capacidad + '</div>' +
+                '<span class="badge bg-white bg-opacity-25 mt-1">' + m.estado + '</span>' +
+                '</div></div></div>');
+        });
+    });
+}
+
+function mostrarOpcionesMesa(mesaId) {
+    var m = mesasCache.find(function(x) { return x.mesaId === mesaId; });
+    if (!m) return;
+    swalMG.fire({ title: m.nombre, html: '<p>Estado: <strong>' + m.estado + '</strong></p><p>Capacidad: ' + m.capacidad + ' personas</p>', showDenyButton: true, showCancelButton: true, confirmButtonText: 'Cambiar Estado', denyButtonText: 'Editar', cancelButtonText: 'Cerrar'
+    }).then(function(r) {
+        if (r.isConfirmed) {
+            swalMG.fire({ title: 'Cambiar Estado', input: 'select', inputOptions: { libre: 'Libre', ocupada: 'Ocupada', reservada: 'Reservada' }, inputValue: m.estado, showCancelButton: true, confirmButtonText: 'Cambiar'
+            }).then(function(r2) { if (r2.isConfirmed) $.ajax({ url: '/Negocios/CambiarEstadoMesa', type: 'POST', contentType: 'application/json', data: JSON.stringify({ MesaId: mesaId, Estado: r2.value }), success: function(r3) { if (r3.success) { toastr.success(r3.message); cargarMesas(); cargarMesasParaPOS(); } else toastr.error(r3.message); } }); });
+        } else if (r.isDenied) {
+            $('#mesaEditId').val(mesaId); $('#mesaNombre').val(m.nombre); $('#mesaNumero').val(m.numero); $('#mesaCapacidad').val(m.capacidad); $('#mesaModalTitle').text('Editar Mesa'); new bootstrap.Modal('#mesaModal').show();
+        }
+    });
+}
+
+$('#btnNuevaMesa').on('click', function() { $('#mesaEditId').val(''); $('#mesaNombre').val(''); $('#mesaNumero').val(mesasCache.length + 1); $('#mesaCapacidad').val(4); $('#mesaModalTitle').text('Nueva Mesa'); new bootstrap.Modal('#mesaModal').show(); });
+
+$('#btnGuardarMesa').on('click', function() {
+    var id = $('#mesaEditId').val(), data = { Nombre: $('#mesaNombre').val(), Numero: parseInt($('#mesaNumero').val()) || 1, Capacidad: parseInt($('#mesaCapacidad').val()) || 4 };
+    if (!data.Nombre) { toastr.error('Nombre obligatorio'); return; }
+    var url = id ? '/Negocios/EditarMesa' : '/Negocios/CrearMesa';
+    if (id) data.MesaId = id;
+    $.ajax({ url: url, type: 'POST', contentType: 'application/json', data: JSON.stringify(data), success: function(r) { if (r.success) { toastr.success(r.message); bootstrap.Modal.getInstance(document.getElementById('mesaModal')).hide(); cargarMesas(); cargarMesasParaPOS(); } else toastr.error(r.message); } });
+});
+
+// ═══════════════ MENUS ═══════════════
+function cargarMenus() {
+    if (tablaMenus) { tablaMenus.ajax.reload(); return; }
+    tablaMenus = $('#menusTable').DataTable({ language: dtLang, ajax: { url: '/Negocios/GetMenus', data: { negocioId }, dataSrc: '' },
+        columns: [
+            { data: 'nombre', render: function(d) { return '<strong>' + escHtml(d) + '</strong>'; } },
+            { data: 'tipoMenu', render: function(d) { var colors = { desayuno: 'warning', almuerzo: 'primary', cena: 'info', general: 'secondary' }; return '<span class="badge bg-' + (colors[d] || 'secondary') + '">' + escHtml(d) + '</span>'; } },
+            { data: 'precioFijo', render: function(d) { return d ? '$' + d.toFixed(2) : '-'; } },
+            { data: 'estilo', render: function(d) { return escHtml(d || 'moderno'); } },
+            { data: 'fechaCreacion', render: function(d) { return new Date(d).toLocaleDateString('es-EC'); } },
+            { data: 'menuId', render: function(d) { return '<div class="d-flex gap-1 justify-content-end"><button class="btn btn-sm btn-outline-info" onclick="previewMenuGuardado(\'' + d + '\')"><i class="bi bi-eye"></i></button><button class="btn btn-sm btn-outline-primary" onclick="editarMenuGuardado(\'' + d + '\')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="eliminarMenu(\'' + d + '\')"><i class="bi bi-trash"></i></button></div>'; } }
+        ], order: [[4, 'desc']]
+    });
+}
+
+$('#btnNuevoMenu').on('click', function() { menuEditId = null; menuBuilderSecciones = []; currentMenuEstilo = 'moderno'; currentMenuTipo = 'general'; $('#menuNombre').val(''); $('#menuPrecioFijo').val(''); $('#menuPrecioFijoGroup').addClass('d-none'); $('#menuBuilderSection').removeClass('d-none'); $('#menusSavedSection').addClass('d-none'); renderMenuBuilder(); cargarPlatosParaMenu(); });
+$('#btnCancelarMenu').on('click', function() { $('#menuBuilderSection').addClass('d-none'); $('#menusSavedSection').removeClass('d-none'); });
+
+$(document).on('click', '#menuTipoPills .mg-pill', function() { $('#menuTipoPills .mg-pill').removeClass('active'); $(this).addClass('active'); currentMenuTipo = $(this).data('tipo'); $('#menuPrecioFijoGroup').toggleClass('d-none', currentMenuTipo !== 'almuerzo' && currentMenuTipo !== 'cena'); });
+$(document).on('click', '.menuEstiloBtn', function() { $('.menuEstiloBtn').removeClass('active'); $(this).addClass('active'); currentMenuEstilo = $(this).data('style'); });
+
+function cargarPlatosParaMenu() {
+    $.get('/Negocios/GetProductos', { negocioId }, function(prods) {
+        var container = $('#menuPlatosDisponibles'); container.empty();
+        prods.forEach(function(p) {
+            container.append('<div class="d-flex align-items-center justify-content-between p-2 border-bottom cursor-pointer menu-plato-item" data-id="' + p.productoId + '" data-nombre="' + escAttr(p.nombre) + '" data-precio="' + p.precioVenta + '"><div><strong>' + escHtml(p.nombre) + '</strong><br><small class="text-muted">$' + p.precioVenta.toFixed(2) + '</small></div><button class="btn btn-sm btn-outline-primary" onclick="agregarPlatoAlMenu(\'' + p.productoId + '\',\'' + escAttr(p.nombre) + '\',' + p.precioVenta + ')"><i class="bi bi-plus"></i></button></div>');
+        });
+    });
+}
+
+$('#menuBuscarPlato').on('input', function() { var q = $(this).val().toLowerCase(); $('.menu-plato-item').each(function() { $(this).toggle($(this).data('nombre').toLowerCase().includes(q)); }); });
+
+$('#btnAgregarSeccion').on('click', function() {
+    swalMG.fire({ title: 'Nueva Seccion', input: 'text', inputPlaceholder: 'Ej: Sopas, Platos Fuertes, Postres...', showCancelButton: true, confirmButtonText: 'Agregar'
+    }).then(function(r) { if (r.isConfirmed && r.value) { menuBuilderSecciones.push({ nombre: r.value, items: [] }); renderMenuBuilder(); } });
+});
+
+function agregarPlatoAlMenu(prodId, nombre, precio) {
+    if (!menuBuilderSecciones.length) { menuBuilderSecciones.push({ nombre: 'General', items: [] }); }
+    var lastSec = menuBuilderSecciones[menuBuilderSecciones.length - 1];
+    lastSec.items.push({ productoId: prodId, nombre: nombre, precio: precio });
+    renderMenuBuilder();
+    toastr.info(nombre + ' agregado');
+}
+
+function renderMenuBuilder() {
+    var c = $('#menuBuilderItems'); c.empty();
+    if (!menuBuilderSecciones.length) { c.html('<div class="text-center py-4 text-muted">Agrega secciones y platos para construir tu menu</div>'); return; }
+    menuBuilderSecciones.forEach(function(sec, si) {
+        var html = '<div class="mb-3 p-2 rounded" style="background: rgba(62,151,255,0.04); border: 1px solid rgba(62,151,255,0.15);">';
+        html += '<div class="d-flex justify-content-between align-items-center mb-2"><strong class="text-primary"><i class="bi bi-folder me-1"></i>' + escHtml(sec.nombre) + '</strong><button class="btn btn-sm btn-outline-danger" onclick="eliminarSeccion(' + si + ')"><i class="bi bi-x"></i></button></div>';
+        html += '<div class="menu-section-items" data-section="' + si + '">';
+        sec.items.forEach(function(item, ii) {
+            html += '<div class="d-flex align-items-center gap-2 p-1 mb-1 rounded bg-white" data-item="' + ii + '"><i class="bi bi-grip-vertical text-muted handle"></i><span class="flex-grow-1">' + escHtml(item.nombre) + '</span><span class="text-muted">$' + item.precio.toFixed(2) + '</span><button class="btn btn-sm text-danger p-0" onclick="quitarItemMenu(' + si + ',' + ii + ')"><i class="bi bi-x-circle"></i></button></div>';
+        });
+        html += '</div></div>';
+        c.append(html);
+    });
+    // Init Sortable for each section
+    document.querySelectorAll('.menu-section-items').forEach(function(el) {
+        new Sortable(el, { handle: '.handle', animation: 150, onEnd: function(evt) {
+            var si = parseInt(el.dataset.section);
+            var items = menuBuilderSecciones[si].items;
+            var moved = items.splice(evt.oldIndex, 1)[0];
+            items.splice(evt.newIndex, 0, moved);
+        }});
+    });
+}
+
+function eliminarSeccion(si) { menuBuilderSecciones.splice(si, 1); renderMenuBuilder(); }
+function quitarItemMenu(si, ii) { menuBuilderSecciones[si].items.splice(ii, 1); renderMenuBuilder(); }
+
+$('#btnGuardarMenu').on('click', function() {
+    var nombre = $('#menuNombre').val(); if (!nombre) { toastr.error('Nombre del menu obligatorio'); return; }
+    var precioFijo = (currentMenuTipo === 'almuerzo' || currentMenuTipo === 'cena') ? parseFloat($('#menuPrecioFijo').val()) || null : null;
+    var dto = { Nombre: nombre, TipoMenu: currentMenuTipo, PrecioFijo: precioFijo, ItemsJson: JSON.stringify(menuBuilderSecciones), Estilo: currentMenuEstilo };
+    if (menuEditId) dto.MenuId = menuEditId;
+    var url = menuEditId ? '/Negocios/EditarMenu' : '/Negocios/CrearMenu';
+    $.ajax({ url: url, type: 'POST', contentType: 'application/json', data: JSON.stringify(dto), success: function(r) { if (r.success) { toastr.success(r.message); $('#menuBuilderSection').addClass('d-none'); $('#menusSavedSection').removeClass('d-none'); cargarMenus(); } else toastr.error(r.message); } });
+});
+
+function previewMenuGuardado(menuId) {
+    $.get('/Negocios/PreviewMenu', { menuId }, function(html) { document.getElementById('menuPreviewIframe').srcdoc = html; new bootstrap.Modal('#menuPreviewModal').show(); }).fail(function() { toastr.error('Error al cargar preview'); });
+}
+
+$('#btnPreviewMenu').on('click', function() {
+    var nombre = $('#menuNombre').val() || 'Preview'; var precioFijo = (currentMenuTipo === 'almuerzo' || currentMenuTipo === 'cena') ? parseFloat($('#menuPrecioFijo').val()) || null : null;
+    var dto = { Nombre: nombre, TipoMenu: currentMenuTipo, PrecioFijo: precioFijo, ItemsJson: JSON.stringify(menuBuilderSecciones), Estilo: currentMenuEstilo };
+    // Save temp then preview
+    if (menuEditId) { dto.MenuId = menuEditId; $.ajax({ url: '/Negocios/EditarMenu', type: 'POST', contentType: 'application/json', data: JSON.stringify(dto), success: function(r) { if (r.success) previewMenuGuardado(menuEditId); else toastr.error(r.message); } }); }
+    else { $.ajax({ url: '/Negocios/CrearMenu', type: 'POST', contentType: 'application/json', data: JSON.stringify(dto), success: function(r) { if (r.success) { cargarMenus(); toastr.info('Menu guardado para preview'); } else toastr.error(r.message); } }); }
+});
+
+$('#btnDescargarMenuPreview').on('click', function() { var html = document.getElementById('menuPreviewIframe').srcdoc; if (!html) return; var w = window.open('', '_blank'); w.document.write(html); w.document.close(); w.focus(); setTimeout(function() { w.print(); }, 400); });
+
+function editarMenuGuardado(menuId) {
+    $.get('/Negocios/GetMenu', { menuId }, function(m) {
+        menuEditId = m.menuId; $('#menuNombre').val(m.nombre); currentMenuTipo = m.tipoMenu; currentMenuEstilo = m.estilo || 'moderno';
+        $('#menuTipoPills .mg-pill').removeClass('active').filter('[data-tipo="' + m.tipoMenu + '"]').addClass('active');
+        $('.menuEstiloBtn').removeClass('active').filter('[data-style="' + currentMenuEstilo + '"]').addClass('active');
+        $('#menuPrecioFijoGroup').toggleClass('d-none', m.tipoMenu !== 'almuerzo' && m.tipoMenu !== 'cena');
+        if (m.precioFijo) $('#menuPrecioFijo').val(m.precioFijo);
+        try { menuBuilderSecciones = JSON.parse(m.itemsJson || '[]'); } catch(e) { menuBuilderSecciones = []; }
+        $('#menuBuilderSection').removeClass('d-none'); $('#menusSavedSection').addClass('d-none');
+        renderMenuBuilder(); cargarPlatosParaMenu();
+    });
+}
+
+function eliminarMenu(menuId) {
+    swalMG.fire({ title: 'Eliminar menu?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Si, eliminar', confirmButtonColor: '#F1416C' }).then(function(r) {
+        if (r.isConfirmed) $.ajax({ url: '/Negocios/EliminarMenu', type: 'POST', contentType: 'application/json', data: JSON.stringify({ MenuId: menuId }), success: function(r) { if (r.success) { toastr.success(r.message); cargarMenus(); } else toastr.error(r.message); } });
+    });
+}
+
+// ═══════════════ REPARTIDORES (reutiliza Empleado) ═══════════════
+function cargarRepartidores() {
+    if (tablaRepartidores) { tablaRepartidores.ajax.reload(); return; }
+    tablaRepartidores = $('#repartidoresTable').DataTable({ language: dtLang, ajax: { url: '/Negocios/GetEmpleados', data: { negocioId }, dataSrc: function(d) { return Array.isArray(d) ? d : (d.empleados || d || []); } },
+        columns: [
+            { data: 'nombre', render: function(d) { return escHtml(d); } },
+            { data: 'apellido', render: function(d) { return escHtml(d); } },
+            { data: 'telefono', render: function(d) { return escHtml(d || '-'); } },
+            { data: 'email', render: function(d) { return escHtml(d || '-'); } },
+            { data: 'especialidad', render: function(d) { return escHtml(d || '-'); } },
+            { data: 'empleadoId', render: function(d, t, row) { return '<div class="d-flex gap-1 justify-content-end"><button class="btn btn-sm btn-outline-primary" onclick="editarRepartidor(\'' + d + '\')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="eliminarRepartidor(\'' + d + '\')"><i class="bi bi-trash"></i></button></div>'; } }
+        ]
+    });
+}
+
+$('#btnNuevoRepartidor').on('click', function() { $('#repEditId').val(''); $('#repNombre').val(''); $('#repApellido').val(''); $('#repTelefono').val(''); $('#repEmail').val(''); $('#repVehiculo').val('Moto'); $('#repartidorModalTitle').text('Nuevo Repartidor'); new bootstrap.Modal('#repartidorModal').show(); });
+
+$('#btnGuardarRepartidor').on('click', function() {
+    var id = $('#repEditId').val();
+    var data = { NegocioId: negocioId, Nombre: $('#repNombre').val(), Apellido: $('#repApellido').val(), Telefono: $('#repTelefono').val(), Email: $('#repEmail').val(), Especialidad: $('#repVehiculo').val() };
+    if (!data.Nombre || !data.Apellido) { toastr.error('Nombre y apellido obligatorios'); return; }
+    if (id) data.EmpleadoId = id;
+    var url = id ? '/Negocios/EditarEmpleado' : '/Negocios/CrearEmpleado';
+    $.ajax({ url: url, type: 'POST', contentType: 'application/json', data: JSON.stringify(data), success: function(r) { if (r.success) { toastr.success(r.message); bootstrap.Modal.getInstance(document.getElementById('repartidorModal')).hide(); cargarRepartidores(); cargarRepartidoresParaPOS(); } else toastr.error(r.message); } });
+});
+
+function editarRepartidor(id) {
+    $.get('/Negocios/GetEmpleado', { empleadoId: id, negocioId }, function(e) {
+        if (!e) { toastr.error('Repartidor no encontrado'); return; }
+        $('#repEditId').val(e.empleadoId); $('#repNombre').val(e.nombre); $('#repApellido').val(e.apellido); $('#repTelefono').val(e.telefono); $('#repEmail').val(e.email); $('#repVehiculo').val(e.especialidad || 'Moto'); $('#repartidorModalTitle').text('Editar Repartidor'); new bootstrap.Modal('#repartidorModal').show();
+    });
+}
+
+function eliminarRepartidor(id) {
+    swalMG.fire({ title: 'Eliminar repartidor?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Si, eliminar', confirmButtonColor: '#F1416C' }).then(function(r) {
+        if (r.isConfirmed) $.ajax({ url: '/Negocios/EliminarEmpleado', type: 'POST', contentType: 'application/json', data: JSON.stringify({ EmpleadoId: id, NegocioId: negocioId }), success: function(r) { if (r.success) { toastr.success(r.message); cargarRepartidores(); cargarRepartidoresParaPOS(); } else toastr.error(r.message); } });
+    });
+}
+
+// ═══════════════ INVENTARIO (reutilizado de Tienda) ═══════════════
+function cargarInventario() {
+    $.get('/Negocios/GetCategorias', { negocioId }, function(cats) {
+        categoriasCache = cats;
+        renderCategoryFolders(cats);
+        var sel = $('#prodCategoria'); sel.find('option:not(:first)').remove();
+        cats.forEach(function(c) { sel.append('<option value="' + c.categoriaId + '">' + escHtml(c.nombre) + '</option>'); });
+    });
+    $.get('/Negocios/GetProductos', { negocioId }, function(prods) {
+        productosCache = prods;
+        renderProductosGrid(prods);
+    });
+    $.get('/Negocios/GetInventarioStats', { negocioId }, function(d) {
+        $('#invTotalProductos').text(d.totalProductos); $('#invStockBajo').text(d.stockBajo);
+        $('#invVentasHoy').text(d.ventasHoyUnidades); $('#invIngresosHoy').text('$' + d.ingresosHoy.toFixed(2));
+    });
+}
+
+function renderCategoryFolders(cats) {
+    var c = $('#invCategoryFolders'); c.empty();
+    cats.forEach(function(cat) {
+        var count = productosCache.filter(function(p) { return p.categoriaProductoId === cat.categoriaId; }).length;
+        c.append('<div class="col-auto"><div class="mg-card px-3 py-2 d-flex align-items-center gap-2 cursor-pointer inv-folder" data-cat="' + cat.categoriaId + '" ondragover="event.preventDefault()" ondrop="dropProductoEnCategoria(event,\'' + cat.categoriaId + '\')"><i class="bi bi-folder-fill text-warning"></i><span class="fw-semibold">' + escHtml(cat.nombre) + '</span><span class="badge bg-primary">' + count + '</span></div></div>');
+    });
+}
+
+function renderProductosGrid(prods) {
+    var c = $('#productosGrid'); c.empty();
+    if (!prods.length) { c.html('<div class="col-12 text-center py-5 text-muted"><p>No hay platos en el inventario.</p></div>'); return; }
+    prods.forEach(function(p) {
+        var imgHtml = p.imagenUrl ? '<img src="' + escAttr(p.imagenUrl) + '" class="rounded mb-2" style="width:60px;height:60px;object-fit:cover;" alt="">' : '<div class="rounded mb-2 d-flex align-items-center justify-content-center bg-light" style="width:60px;height:60px;"><i class="bi bi-cup-hot text-muted fs-4"></i></div>';
+        c.append('<div class="col-xl-2 col-lg-3 col-md-4 col-6" draggable="true" ondragstart="event.dataTransfer.setData(\'text/plain\',\'' + p.productoId + '\')"><div class="mg-card text-center p-3 h-100">' + imgHtml + '<div class="fw-semibold small mb-1">' + escHtml(p.nombre) + '</div><div class="text-primary fw-bold">$' + p.precioVenta.toFixed(2) + '</div><div class="small text-muted">Stock: ' + p.stock + '</div><div class="d-flex gap-1 mt-2 justify-content-center"><button class="btn btn-sm btn-outline-success" onclick="venderProducto(\'' + p.productoId + '\')"><i class="bi bi-cart-dash"></i></button><button class="btn btn-sm btn-outline-primary" onclick="editarProducto(\'' + p.productoId + '\')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-info" onclick="restockProducto(\'' + p.productoId + '\')"><i class="bi bi-box-arrow-in-down"></i></button></div></div></div>');
+    });
+}
+
+function dropProductoEnCategoria(event, catId) { event.preventDefault(); var prodId = event.dataTransfer.getData('text/plain'); if (!prodId) return; $.ajax({ url: '/Negocios/CambiarCategoriaProducto', type: 'POST', contentType: 'application/json', data: JSON.stringify({ ProductoId: prodId, CategoriaProductoId: catId }), success: function(r) { if (r.success) { toastr.success('Plato movido'); cargarInventario(); cargarPOS(); } else toastr.error(r.message); } }); }
+
+$('#btnCrearProducto').on('click', function() { modoEdicionProducto = false; $('#prodEditId').val(''); $('#prodNombre').val(''); $('#prodPrecio').val(''); $('#prodCosto').val(0); $('#prodStock').val(0); $('#prodStockMin').val(5); $('#prodCategoria').val(''); $('#prodImagen').val(''); $('#prodImagenPreview').empty(); $('#prodReceta').val(''); $('#productoModalTitle').text('Nuevo Plato'); new bootstrap.Modal('#productoModal').show(); });
+
+// Preview de imagen al seleccionar archivo
+$('#prodImagen').on('change', function() {
+    var file = this.files[0];
+    if (file) {
+        var reader = new FileReader();
+        reader.onload = function(e) { $('#prodImagenPreview').html('<img src="' + e.target.result + '" class="rounded" style="max-height:120px;">'); };
+        reader.readAsDataURL(file);
+    } else { $('#prodImagenPreview').empty(); }
+});
+
+$('#btnGuardarProducto').on('click', function() {
+    var id = $('#prodEditId').val();
+    var data = { NegocioId: negocioId, Nombre: $('#prodNombre').val(), PrecioVenta: parseFloat($('#prodPrecio').val()) || 0, CostoCompra: parseFloat($('#prodCosto').val()) || 0, Stock: parseInt($('#prodStock').val()) || 0, StockMinimo: parseInt($('#prodStockMin').val()) || 5, CategoriaProductoId: $('#prodCategoria').val() || null, Receta: $('#prodReceta').val() || null };
+    if (!data.Nombre) { toastr.error('Nombre obligatorio'); return; }
+    if (id) { data.ProductoId = id; }
+    var url = id ? '/Negocios/EditarProducto' : '/Negocios/CrearProducto';
+    $.ajax({ url: url, type: 'POST', contentType: 'application/json', data: JSON.stringify(data), success: function(r) {
+        if (r.success) {
+            // Subir foto si se seleccionó una
+            var fileInput = document.getElementById('prodImagen');
+            var prodId = r.dataId || id;
+            if (fileInput.files.length > 0 && prodId) {
+                var fd = new FormData();
+                fd.append('productoId', prodId);
+                fd.append('negocioId', negocioId);
+                fd.append('imagen', fileInput.files[0]);
+                $.ajax({ url: '/Negocios/SubirImagenProducto', type: 'POST', data: fd, processData: false, contentType: false,
+                    complete: function() { toastr.success(r.message); bootstrap.Modal.getInstance(document.getElementById('productoModal')).hide(); cargarInventario(); cargarPOS(); }
+                });
+            } else {
+                toastr.success(r.message); bootstrap.Modal.getInstance(document.getElementById('productoModal')).hide(); cargarInventario(); cargarPOS();
+            }
+        } else toastr.error(r.message);
+    }});
+});
+
+function editarProducto(id) {
+    var p = productosCache.find(function(x) { return x.productoId === id; }); if (!p) return;
+    modoEdicionProducto = true; $('#prodEditId').val(id); $('#prodNombre').val(p.nombre); $('#prodPrecio').val(p.precioVenta); $('#prodCosto').val(p.costoCompra); $('#prodStock').val(p.stock); $('#prodStockMin').val(p.stockMinimo); $('#prodCategoria').val(p.categoriaProductoId || ''); $('#prodImagen').val('');
+    if (p.imagenUrl) { $('#prodImagenPreview').html('<img src="' + p.imagenUrl + '" class="rounded" style="max-height:120px;">'); } else { $('#prodImagenPreview').empty(); }
+    $('#prodReceta').val(p.receta || ''); $('#productoModalTitle').text('Editar Plato'); new bootstrap.Modal('#productoModal').show();
+}
+
+function venderProducto(id) { var p = productosCache.find(function(x) { return x.productoId === id; }); if (!p) return; swalMG.fire({ title: 'Vender ' + p.nombre, input: 'number', inputValue: 1, inputAttributes: { min: 1, max: p.stock }, showCancelButton: true, confirmButtonText: 'Vender' }).then(function(r) { if (r.isConfirmed) $.ajax({ url: '/Negocios/VenderProducto', type: 'POST', contentType: 'application/json', data: JSON.stringify({ ProductoId: id, NegocioId: negocioId, Cantidad: parseInt(r.value) }), success: function(r) { if (r.success) { toastr.success(r.message); cargarInventario(); cargarPOS(); } else toastr.error(r.message); } }); }); }
+
+function restockProducto(id) { swalMG.fire({ title: 'Restock', input: 'number', inputValue: 10, inputAttributes: { min: 1 }, showCancelButton: true, confirmButtonText: 'Agregar stock' }).then(function(r) { if (r.isConfirmed) $.ajax({ url: '/Negocios/RestockProducto', type: 'POST', contentType: 'application/json', data: JSON.stringify({ ProductoId: id, NegocioId: negocioId, Cantidad: parseInt(r.value) }), success: function(r) { if (r.success) { toastr.success(r.message); cargarInventario(); cargarPOS(); } else toastr.error(r.message); } }); }); }
+
+$('#btnCrearCategoria').on('click', function() { $('#catNombre').val(''); new bootstrap.Modal('#categoriaModal').show(); });
+$('#btnGuardarCategoria').on('click', function() { var n = $('#catNombre').val(); if (!n) { toastr.error('Nombre obligatorio'); return; } $.ajax({ url: '/Negocios/CrearCategoria', type: 'POST', contentType: 'application/json', data: JSON.stringify({ NegocioId: negocioId, Nombre: n }), success: function(r) { if (r.success) { toastr.success(r.message); bootstrap.Modal.getInstance(document.getElementById('categoriaModal')).hide(); cargarInventario(); cargarPOS(); } else toastr.error(r.message); } }); });
+
+$('#btnExportInventarioExcel').on('click', function() { window.location.href = '/Negocios/ExportInventarioExcel?negocioId=' + negocioId; });
+
+$('#btnToggleMovimientos').on('click', function() {
+    var sec = $('#movimientosSection'); sec.toggleClass('d-none');
+    if (!sec.hasClass('d-none') && !tablaMovimientos) {
+        tablaMovimientos = $('#movimientosTable').DataTable({ language: dtLang, ajax: { url: '/Negocios/GetMovimientos', data: { negocioId }, dataSrc: '' },
+            columns: [
+                { data: 'fecha', render: function(d) { return new Date(d).toLocaleString('es-EC'); } },
+                { data: 'nombreProducto', render: function(d) { return escHtml(d); } },
+                { data: 'tipo', render: function(d) { return escHtml(d); } },
+                { data: 'cantidad' },
+                { data: 'total', render: function(d) { return '$' + d.toFixed(2); } },
+                { data: null, render: function(d) { return d.stockAnterior + ' → ' + d.stockNuevo; } },
+                { data: 'nota', render: function(d) { return escHtml(d || '-'); } }
+            ], order: [[0, 'desc']]
+        });
+    }
+});
+
+// ═══════════════ PROVEEDORES/DISTRIBUIDORES (reutilizado de Tienda) ═══════════════
+function cargarProveedores() {
+    if (tablaProveedores) { tablaProveedores.ajax.reload(); return; }
+    tablaProveedores = $('#proveedoresTable').DataTable({ language: dtLang, ajax: { url: '/Negocios/GetClientesArtesanal', data: { negocioId }, dataSrc: '' },
+        columns: [
+            { data: 'nombre', render: function(d) { return '<strong>' + escHtml(d) + '</strong>'; } },
+            { data: 'apellido', render: function(d) { return escHtml(d || '-'); } },
+            { data: 'telefono', render: function(d) { return escHtml(d || '-'); } },
+            { data: 'email', render: function(d) { return escHtml(d || '-'); } },
+            { data: 'clienteArtesanalId', render: function(d) { return '<div class="d-flex gap-1 justify-content-end"><button class="btn btn-sm btn-outline-primary" onclick="editarProveedor(\'' + d + '\')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="eliminarProveedor(\'' + d + '\')"><i class="bi bi-trash"></i></button></div>'; } }
+        ]
+    });
+}
+
+$('#btnNuevoProveedor').on('click', function() { $('#provEditId').val(''); $('#provCompania').val(''); $('#provContacto').val(''); $('#provTelefono').val(''); $('#provEmail').val(''); $('#proveedorModalTitle').text('Nuevo Distribuidor'); new bootstrap.Modal('#proveedorModal').show(); });
+
+$('#btnGuardarProveedor').on('click', function() {
+    var id = $('#provEditId').val();
+    var data = { NegocioId: negocioId, Nombre: $('#provCompania').val(), Apellido: $('#provContacto').val(), Telefono: $('#provTelefono').val(), Email: $('#provEmail').val() };
+    if (!data.Nombre) { toastr.error('Nombre de compania obligatorio'); return; }
+    if (id) data.ClienteArtesanalId = id;
+    var url = id ? '/Negocios/EditarClienteArtesanal' : '/Negocios/CrearClienteArtesanal';
+    $.ajax({ url: url, type: 'POST', contentType: 'application/json', data: JSON.stringify(data), success: function(r) { if (r.success) { toastr.success(r.message); bootstrap.Modal.getInstance(document.getElementById('proveedorModal')).hide(); cargarProveedores(); } else toastr.error(r.message); } });
+});
+
+function editarProveedor(id) {
+    $.get('/Negocios/GetClienteArtesanal', { clienteId: id, negocioId }, function(c) {
+        if (!c) { toastr.error('Proveedor no encontrado'); return; }
+        $('#provEditId').val(c.clienteArtesanalId); $('#provCompania').val(c.nombre); $('#provContacto').val(c.apellido); $('#provTelefono').val(c.telefono); $('#provEmail').val(c.email); $('#proveedorModalTitle').text('Editar Distribuidor'); new bootstrap.Modal('#proveedorModal').show();
+    });
+}
+
+function eliminarProveedor(id) { swalMG.fire({ title: 'Eliminar distribuidor?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Si, eliminar', confirmButtonColor: '#F1416C' }).then(function(r) { if (r.isConfirmed) $.ajax({ url: '/Negocios/EliminarClienteArtesanal', type: 'POST', contentType: 'application/json', data: JSON.stringify({ ClienteArtesanalId: id, NegocioId: negocioId }), success: function(r) { if (r.success) { toastr.success(r.message); cargarProveedores(); } else toastr.error(r.message); } }); }); }
+
+// ═══════════════ LOGS/MOVIMIENTOS ═══════════════
+function cargarLogs() {
+    if (tablaLogs) { tablaLogs.ajax.reload(); return; }
+    tablaLogs = $('#logsTable').DataTable({ language: dtLang, ajax: { url: '/Negocios/GetLogs', data: { negocioId }, dataSrc: '' },
+        columns: [
+            { data: 'descripcion', render: function(d) { return escHtml(d); } },
+            { data: 'tipo', render: function(d) { var cls = (d || '').includes('ingreso') || (d || '').includes('venta') ? 'success' : 'danger'; return '<span class="badge bg-' + cls + '">' + escHtml(d) + '</span>'; } },
+            { data: 'clienteNombre', render: function(d) { return escHtml(d || '-'); } },
+            { data: 'monto', render: function(d) { return '<span class="fw-bold ' + (d >= 0 ? 'text-success' : 'text-danger') + '">$' + d.toFixed(2) + '</span>'; } },
+            { data: 'fecha', render: function(d) { return new Date(d).toLocaleString('es-EC'); } }
+        ], order: [[4, 'desc']]
+    });
+}
+
+$('#btnRegistrarLog').on('click', function() {
+    var desc = $('#logDescripcion').val(), monto = parseFloat($('#logMonto').val());
+    if (!desc || isNaN(monto)) { toastr.error('Completa los campos'); return; }
+    var tipo = monto >= 0 ? 'ingreso' : 'gasto';
+    $.post('/Negocios/CrearLog', { NegocioId: negocioId, Descripcion: desc, Tipo: tipo, Monto: Math.abs(monto) }, function(r) {
+        if (r.success) { toastr.success('Movimiento registrado'); $('#logDescripcion').val(''); $('#logMonto').val(''); if (tablaLogs) tablaLogs.ajax.reload(); } else toastr.error(r.message);
+    });
+});
+
+$('#btnExportLogsExcel').on('click', function() { window.location.href = '/Negocios/ExportLogsExcel?negocioId=' + negocioId; });
+
+// ═══════════════ REPORTES (reutilizado) ═══════════════
+var chartBar, chartResumen;
+function cargarReportes(periodo) {
+    periodo = periodo || 'dia';
+    $.get('/Negocios/GetVentasStats', { negocioId, periodo }, function(d) {
+        var labels = { dia: 'del Dia', semana: 'de la Semana', mes: 'del Mes' };
+        $('#ventasIngresosLabel').text('Ingresos ' + labels[periodo]); $('#ventasGastosLabel').text('Gastos ' + labels[periodo]); $('#ventasGananciaLabel').text('Ganancia ' + labels[periodo]);
+        $('#ventasIngresos').text('$' + (d.ingresos || 0).toFixed(2)); $('#ventasGastos').text('$' + (d.gastos || 0).toFixed(2)); $('#ventasGanancia').text('$' + (d.ganancia || 0).toFixed(2));
+        $('#chartResumenTitle').text('Resumen ' + labels[periodo]);
+    });
+    $.get('/Negocios/GetChartData', { negocioId, periodo }, function(d) {
+        if (chartBar) chartBar.destroy();
+        chartBar = new ApexCharts(document.querySelector('#chartBarVentas'), { chart: { type: 'bar', height: 300 }, series: [{ name: 'Ingresos', data: d.ingresos || [] }, { name: 'Gastos', data: d.gastos || [] }], xaxis: { categories: d.labels || [] }, colors: ['#50CD89', '#F1416C'], plotOptions: { bar: { borderRadius: 4 } } });
+        chartBar.render();
+        if (chartResumen) chartResumen.destroy();
+        $('#chartResumen').empty();
+        var totalIng = (d.ingresos || []).reduce(function(a, b) { return a + b; }, 0);
+        var totalGas = (d.gastos || []).reduce(function(a, b) { return a + b; }, 0);
+        if (totalIng === 0 && totalGas === 0) {
+            $('#chartResumen').html('<div class="text-center py-5 text-muted"><i class="bi bi-pie-chart fs-1 d-block mb-2"></i>Sin datos para este periodo</div>');
+            chartResumen = null;
+        } else {
+            chartResumen = new ApexCharts(document.querySelector('#chartResumen'), { chart: { type: 'donut', height: 300 }, series: [totalIng, totalGas], labels: ['Ingresos', 'Gastos'], colors: ['#50CD89', '#F1416C'], plotOptions: { pie: { donut: { labels: { show: true, total: { show: true, label: 'Ganancia', formatter: function() { return '$' + (totalIng - totalGas).toFixed(2); } } } } } } });
+            chartResumen.render();
+        }
+    });
+}
+
+$(document).on('click', '#ventasPeriodPills .mg-pill', function() { $('#ventasPeriodPills .mg-pill').removeClass('active'); $(this).addClass('active'); cargarReportes($(this).data('periodo')); });
+
+// ═══════════════ NOTIFICACIONES ═══════════════
+function cargarNotificaciones() {
+    $.get('/Negocios/GetNotificaciones', { negocioId }, function(notifs) {
+        var c = $('#notificacionesList'); c.empty();
+        if (!notifs || !notifs.length) { c.html('<div class="text-center py-5 text-muted"><i class="bi bi-bell-slash fs-1 d-block mb-3"></i><p>No hay notificaciones.</p></div>'); return; }
+        notifs.forEach(function(n) { c.append('<div class="mg-card p-3 ' + (n.leida ? 'opacity-50' : '') + '"><div class="d-flex justify-content-between"><div>' + escHtml(n.mensaje) + '</div><small class="text-muted">' + new Date(n.fechaCreacion).toLocaleDateString('es-EC') + '</small></div></div>'); });
+    });
+}
+function cargarNotificacionesCount() {
+    $.get('/Negocios/GetNotificacionesCount', { negocioId }, function(d) {
+        var badge = $('#sidebarNotifBadge'); if (d.count > 0) { badge.text(d.count).removeClass('d-none'); } else badge.addClass('d-none');
+    });
+}
+
+$('#btnMarcarTodasLeidasTab').on('click', function() { $.post('/Negocios/MarcarTodasNotificacionesLeidas', { NegocioId: negocioId }, function(r) { if (r.success) { toastr.success('Notificaciones marcadas como leidas'); cargarNotificaciones(); cargarNotificacionesCount(); } }); });
+
+// ═══════════════ SUGERENCIAS ═══════════════
+$('#sugerenciaTexto').on('input', function() { $('#sugerenciaCount').text($(this).val().length); });
+$('#btnEnviarSugerencia').on('click', function() {
+    var txt = $('#sugerenciaTexto').val(); if (!txt || txt.length < 10) { toastr.error('Escribe al menos 10 caracteres'); return; }
+    $.post('/Negocios/EnviarSugerencia', { NegocioId: negocioId, Texto: txt }, function(r) { if (r.success) { toastr.success('Sugerencia enviada!'); $('#sugerenciaTexto').val(''); $('#sugerenciaCount').text('0'); } else toastr.error(r.message); });
+});
+
+// ═══════════════ RECIBOS ═══════════════
+function cargarRecibos() {
+    if (tablaRecibos) { tablaRecibos.ajax.reload(); return; }
+    tablaRecibos = $('#tablaRecibos').DataTable({ language: dtLang, ajax: { url: '/Negocios/GetRecibos', data: { negocioId }, dataSrc: '' },
+        columns: [
+            { data: 'numeroRecibo', render: function(d) { return '<span class="badge bg-primary">#' + d + '</span>'; } },
+            { data: 'destinatarioNombre', render: function(d) { return escHtml(d || '-'); } },
+            { data: 'concepto', render: function(d) { return escHtml(d || '-'); } },
+            { data: 'monto', render: function(d) { return '<span class="fw-bold text-success">$' + d.toFixed(2) + '</span>'; } },
+            { data: 'fechaCreacion', render: function(d) { return new Date(d).toLocaleString('es-EC'); } },
+            { data: 'reciboId', render: function(d) { return '<button class="btn btn-sm btn-outline-info" onclick="verRecibo(\'' + d + '\')"><i class="bi bi-eye me-1"></i>Ver</button>'; } }
+        ], order: [[4, 'desc']]
+    });
+}
+
+function verRecibo(reciboId) { mostrarReciboVenta(reciboId); }
+
+$('#buscarReciboInput').on('input', function() { if (tablaRecibos) tablaRecibos.search($(this).val()).draw(); });
+$('#btnExportRecibos').on('click', function() { window.location.href = '/Negocios/ExportRecibosExcel?negocioId=' + negocioId; });
+
+// ═══════════════ TAB SWITCHING ═══════════════
+document.addEventListener('mg-tab-shown', function(e) {
+    var tab = e.detail.tab;
+    if (tab === 'posTab') cargarPOS();
+    else if (tab === 'mesasTab') cargarMesas();
+    else if (tab === 'menusTab') cargarMenus();
+    else if (tab === 'inventarioTab') cargarInventario();
+    else if (tab === 'proveedoresTab') cargarProveedores();
+    else if (tab === 'repartidoresTab') cargarRepartidores();
+    else if (tab === 'logsTab') cargarLogs();
+    else if (tab === 'ventasTab') cargarReportes();
+    else if (tab === 'recibosTab') cargarRecibos();
+    else if (tab === 'notificacionesTab') cargarNotificaciones();
+});
+</script>
+}

@@ -450,7 +450,7 @@ public class VendedorController : Controller
         // Enviar email de bienvenida en segundo plano
         _ = Task.Run(async () =>
         {
-            try { await _emailService.EnviarBienvenidaNegocioAsync(EmailNegocio, NombreNegocio, duenoNegocio, EmailNegocio, passwordNegocio, telefono, vendedorNombre); }
+            try { await _emailService.EnviarBienvenidaNegocioAsync(EmailNegocio, NombreNegocio, duenoNegocio, EmailNegocio, passwordNegocio, telefono, vendedorNombre, tipoNegocio); }
             catch { }
         });
 

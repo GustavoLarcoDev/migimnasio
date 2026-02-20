@@ -16,10 +16,10 @@ public interface IEmailService
 
     /// <summary>
     /// Envia correo de bienvenida al dueno de un negocio con sus credenciales
-    /// y el documento de guia para negocios adjunto (.docx).
+    /// y el documento de guia especializada adjunto (.docx) segun el tipo de negocio.
     /// Si nombreVendedor es null, el admin lo creo directamente.
     /// </summary>
-    Task<bool> EnviarBienvenidaNegocioAsync(string destinatario, string nombreNegocio, string nombreDueno, string emailNegocio, string passwordNegocio, string telefonoNegocio, string? nombreVendedor);
+    Task<bool> EnviarBienvenidaNegocioAsync(string destinatario, string nombreNegocio, string nombreDueno, string emailNegocio, string passwordNegocio, string telefonoNegocio, string? nombreVendedor, string tipoNegocio = "membresias");
 
     // Reporte diario para negocios de membresías (11 PM)
     Task<bool> EnviarReporteDiarioMembresiaAsync(string destinatario, string nombreNegocio, string nombreDueno,

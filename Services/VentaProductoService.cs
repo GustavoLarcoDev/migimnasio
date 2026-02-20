@@ -57,7 +57,8 @@ public class VentaProductoService : IVentaProductoService
     /// </summary>
     public async Task<(bool success, string message, Guid? ordenId, Guid? reciboId)> RegistrarVentaAsync(
         Guid negocioId, string nombreCliente, string emailCliente,
-        List<DetalleOrdenVentaDto> items, decimal descuentoAdicional, decimal porcentajeIva)
+        List<DetalleOrdenVentaDto> items, decimal descuentoAdicional, decimal porcentajeIva,
+        string tipoOrden = "local", Guid? mesaId = null, Guid? empleadoId = null, string direccionEntrega = null)
     {
         if (items == null || !items.Any()) return (false, "La orden no contiene productos", null, null);
 
@@ -81,6 +82,10 @@ public class VentaProductoService : IVentaProductoService
                 NumeroOrden = int.Parse(numReciboStr),
                 PorcentajeIva = porcentajeIva,
                 GastosAdicionales = 0,
+                TipoOrden = tipoOrden ?? "local",
+                MesaId = mesaId,
+                EmpleadoId = empleadoId,
+                DireccionEntrega = direccionEntrega,
                 Detalles = new List<DetalleOrdenVenta>()
             };
 
@@ -152,14 +157,26 @@ public class VentaProductoService : IVentaProductoService
             _context.OrdenesVenta.Add(orden);
             await _context.SaveChangesAsync();
 
+            // Si la orden tiene mesa asignada (restaurante local), marcarla como ocupada
+            if (orden.MesaId.HasValue)
+            {
+                var mesa = await _context.Mesas.FirstOrDefaultAsync(m => m.MesaId == orden.MesaId.Value && m.NegocioId == negocioId);
+                if (mesa != null)
+                {
+                    mesa.Estado = "ocupada";
+                    await _context.SaveChangesAsync();
+                }
+            }
+
             // Generar recibo HTML profesional y guardarlo en la BD
+            var esRestaurante = negocio.TipoNegocio == "restaurante";
             await _reciboService.CrearReciboAsync(
                 negocioId: negocioId,
                 numeroRecibo: numReciboStr,
-                tipoRecibo: "Venta Tienda",
+                tipoRecibo: esRestaurante ? "Venta Restaurante" : "Venta Tienda",
                 destinatarioEmail: emailCliente ?? "",
                 destinatarioNombre: nombreCliente ?? "Cliente de Mostrador",
-                negocioNombre: negocio.NegocioNombre ?? "Tienda",
+                negocioNombre: negocio.NegocioNombre ?? (esRestaurante ? "Restaurante" : "Tienda"),
                 concepto: $"Venta POS - Orden #{orden.NumeroOrden}",
                 monto: orden.Total,
                 contenidoHtml: GenerarHtmlReciboTienda(orden, negocio, productos, descuentoAdicional)

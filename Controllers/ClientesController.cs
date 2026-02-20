@@ -98,6 +98,8 @@ public class ClientesController : Controller
                 return View("~/Views/Negocios/DashboardArtesanal.cshtml", negocio);
             if (negocio.TipoNegocio == "tienda")
                 return View("~/Views/Negocios/DashboardTienda.cshtml", negocio);
+            if (negocio.TipoNegocio == "restaurante")
+                return View("~/Views/Negocios/DashboardRestaurante.cshtml", negocio);
 
             return View("~/Views/Negocios/Dashboard.cshtml", negocio);
         }

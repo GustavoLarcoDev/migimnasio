@@ -118,6 +118,13 @@ public class Gym
     [MaxLength(20)]
     public string TipoNegocio { get; set; } = "membresias";
 
+    /// <summary>
+    /// Dirección física del negocio. Opcional.
+    /// Usado en restaurantes para delivery y en recibos.
+    /// </summary>
+    [MaxLength(500)]
+    public string Direccion { get; set; }
+
     // ═══════════════════════════════════════════════════════════
     // FECHAS
     // ═══════════════════════════════════════════════════════════

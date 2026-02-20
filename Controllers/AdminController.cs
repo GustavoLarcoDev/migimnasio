@@ -275,7 +275,7 @@ public class AdminController : Controller
             // Enviar correo de bienvenida en segundo plano
             _ = Task.Run(async () =>
             {
-                try { await _emailService.EnviarBienvenidaNegocioAsync(EmailNegocio, NombreNegocio, duenoNegocio, EmailNegocio, passwordNegocio, telefono, null); }
+                try { await _emailService.EnviarBienvenidaNegocioAsync(EmailNegocio, NombreNegocio, duenoNegocio, EmailNegocio, passwordNegocio, telefono, null, tipoNegocio); }
                 catch { }
             });
 

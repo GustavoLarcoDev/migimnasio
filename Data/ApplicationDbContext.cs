@@ -152,6 +152,21 @@ public class ApplicationDbContext : DbContext
     public DbSet<DetalleOrdenVenta> DetallesOrdenVenta { get; set; }
 
     // ═══════════════════════════════════════════════════════════
+    // TABLAS DEL MODELO RESTAURANTE
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Mesas fisicas del restaurante con estado visual (libre/ocupada/reservada).
+    /// </summary>
+    public DbSet<Mesa> Mesas { get; set; }
+
+    /// <summary>
+    /// Menus guardados por el restaurante (desayuno, almuerzo, cena, general)
+    /// con HTML renderizado y JSON de items para edicion.
+    /// </summary>
+    public DbSet<MenuRestaurante> MenusRestaurante { get; set; }
+
+    // ═══════════════════════════════════════════════════════════
     // TABLAS DEL MODELO ARTESANAL
     //
     // El "modelo artesanal" es la modalidad para negocios basados
@@ -442,6 +457,43 @@ public class ApplicationDbContext : DbContext
             entity.HasOne(d => d.Producto)
                 .WithMany()
                 .HasForeignKey(d => d.ProductoId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // ── Configuración Restaurante (Mesas y Menús) ──
+        modelBuilder.Entity<Mesa>(entity =>
+        {
+            entity.HasIndex(m => m.NegocioId)
+                .HasDatabaseName("IX_Mesas_NegocioId");
+
+            entity.HasOne(m => m.Negocio)
+                .WithMany()
+                .HasForeignKey(m => m.NegocioId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<MenuRestaurante>(entity =>
+        {
+            entity.HasIndex(m => m.NegocioId)
+                .HasDatabaseName("IX_MenusRestaurante_NegocioId");
+
+            entity.HasOne(m => m.Negocio)
+                .WithMany()
+                .HasForeignKey(m => m.NegocioId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // OrdenVenta → Mesa (nullable FK, NoAction para evitar multiple cascade)
+        modelBuilder.Entity<OrdenVenta>(entity =>
+        {
+            entity.HasOne(o => o.Mesa)
+                .WithMany()
+                .HasForeignKey(o => o.MesaId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(o => o.Repartidor)
+                .WithMany()
+                .HasForeignKey(o => o.EmpleadoId)
                 .OnDelete(DeleteBehavior.NoAction);
         });
 

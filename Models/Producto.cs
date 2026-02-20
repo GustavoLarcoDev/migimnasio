@@ -133,6 +133,13 @@ public class Producto
     public string ImagenUrl { get; set; }
 
     /// <summary>
+    /// Receta o lista de ingredientes del producto (uso principal en restaurantes).
+    /// Opcional — colapsable en el modal de crear/editar producto.
+    /// </summary>
+    [StringLength(4000)]
+    public string Receta { get; set; }
+
+    /// <summary>
     /// ID de la categoría a la que pertenece este producto (agrupación visual en tab).
     /// Opcional (nullable) para negocios antiguos o productos sin catalogar.
     /// </summary>

@@ -81,7 +81,8 @@ public class InventarioService : IInventarioService
                 // StockBajo: true cuando hay que reordenar mercancía (llega al límite mínimo)
                 StockBajo = p.Stock <= p.StockMinimo,
                 CategoriaProductoId = p.CategoriaProductoId,
-                p.ImagenUrl
+                p.ImagenUrl,
+                p.Receta
             })
             .ToListAsync();
     }
@@ -128,7 +129,8 @@ public class InventarioService : IInventarioService
             FechaCreacion     = TimeHelper.Now,
             FechaDeActualizacion = TimeHelper.Now,
             CategoriaProductoId = model.CategoriaProductoId == Guid.Empty ? null : model.CategoriaProductoId,
-            ImagenUrl = null
+            ImagenUrl = null,
+            Receta = model.Receta
         };
 
         _context.Productos.Add(producto);
@@ -176,6 +178,8 @@ public class InventarioService : IInventarioService
         var nuevaCat = model.CategoriaProductoId == Guid.Empty ? null : model.CategoriaProductoId;
         if (producto.CategoriaProductoId != nuevaCat)
             cambios.Add("categoría actualizada");
+        if (producto.Receta != model.Receta)
+            cambios.Add("receta actualizada");
 
         // Si no hubo cambios reales, no vale la pena escribir en la base de datos
         if (cambios.Count == 0)
@@ -189,6 +193,7 @@ public class InventarioService : IInventarioService
         producto.CostoCompra         = model.CostoCompra;
         producto.StockMinimo         = model.StockMinimo;
         producto.CategoriaProductoId = nuevaCat;
+        producto.Receta              = model.Receta;
         producto.FechaDeActualizacion = TimeHelper.Now;
 
         _context.Update(producto);
