@@ -264,7 +264,7 @@ public class NotificationService : INotificationService
         }
 
         // ── Notificaciones de vencimiento de membresía (solo negocios de membresías) ──
-        if (negocio.TipoNegocio != "artesanal")
+        if (negocio.TipoNegocio == "membresias")
         {
             var en3Dias = hoy.AddDays(3);
             var notificadosHoy = notificacionesHoy

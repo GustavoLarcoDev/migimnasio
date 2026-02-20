@@ -926,4 +926,33 @@ public class EmailService : IEmailService
             return false;
         }
     }
+
+    // ═══════════════════════════════════════════════════════════
+    // ENVÍO GENÉRICO DE RECIBO HTML (Tienda POS)
+    // ═══════════════════════════════════════════════════════════
+
+    public async Task<bool> EnviarReciboPorEmailGenericoAsync(string destinatario, string asunto, string contenidoHtml)
+    {
+        try
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_settings.FromName, _settings.FromEmail));
+            message.To.Add(MailboxAddress.Parse(destinatario));
+            message.Subject = asunto;
+            message.Body = new TextPart("html") { Text = contenidoHtml };
+
+            using var client = new MailKit.Net.Smtp.SmtpClient();
+            await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(_settings.FromEmail, _settings.Password);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error enviando recibo por email a {Email}", destinatario);
+            return false;
+        }
+    }
 }

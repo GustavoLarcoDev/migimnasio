@@ -96,6 +96,8 @@ public class ClientesController : Controller
             //   - (cualquier otro): vista estándar de gimnasio/membresías
             if (negocio.TipoNegocio == "artesanal")
                 return View("~/Views/Negocios/DashboardArtesanal.cshtml", negocio);
+            if (negocio.TipoNegocio == "tienda")
+                return View("~/Views/Negocios/DashboardTienda.cshtml", negocio);
 
             return View("~/Views/Negocios/Dashboard.cshtml", negocio);
         }

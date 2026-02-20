@@ -132,6 +132,46 @@
                     <span>Sugerencias</span>
                 </a>
             }
+            else if (ViewData["TipoNegocio"]?.ToString() == "tienda")
+            {
+                <a href="#posTab" class="nav-link active" data-mg-tab="posTab">
+                    <i class="bi bi-cart-check"></i>
+                    <span>POS</span>
+                </a>
+                <a href="#inventarioTab" class="nav-link" data-mg-tab="inventarioTab">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Inventario</span>
+                </a>
+                <a href="#proveedoresTab" class="nav-link" data-mg-tab="proveedoresTab">
+                    <i class="bi bi-truck"></i>
+                    <span>Proveedores</span>
+                </a>
+                <a href="#catalogoTab" class="nav-link" data-mg-tab="catalogoTab">
+                    <i class="bi bi-book"></i>
+                    <span>Catálogo</span>
+                </a>
+                <a href="#logsTab" class="nav-link" data-mg-tab="logsTab">
+                    <i class="bi bi-journal-text"></i>
+                    <span>Movimientos</span>
+                </a>
+                <a href="#ventasTab" class="nav-link" data-mg-tab="ventasTab">
+                    <i class="bi bi-graph-up"></i>
+                    <span>Reportes</span>
+                </a>
+                <a href="#recibosTab" class="nav-link" data-mg-tab="recibosTab">
+                    <i class="bi bi-receipt"></i>
+                    <span>Recibos</span>
+                </a>
+                <a href="#notificacionesTab" class="nav-link" data-mg-tab="notificacionesTab">
+                    <i class="bi bi-bell-fill"></i>
+                    <span>Notificaciones</span>
+                    <span class="badge bg-danger ms-auto d-none" id="sidebarNotifBadge">0</span>
+                </a>
+                <a href="#sugerenciasTab" class="nav-link" data-mg-tab="sugerenciasTab">
+                    <i class="bi bi-chat-left-text"></i>
+                    <span>Sugerencias</span>
+                </a>
+            }
             else
             {
                 <a href="#resumenTab" class="nav-link active" data-mg-tab="resumenTab">
@@ -289,6 +329,7 @@
     <script>toastr.options.escapeHtml = true;</script>
     <script src="https://cdn.datatables.net/2.3.6/js/dataTables.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 
     <script>
     $.extend(true, $.fn.dataTable.defaults, {

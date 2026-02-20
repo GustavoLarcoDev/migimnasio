@@ -135,6 +135,22 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<Recibo> Recibos { get; set; }
 
+    /// <summary>
+    /// Categorías para agrupar productos en la interfaz "Tienda" (agrupación visual en pestañas).
+    /// </summary>
+    public DbSet<CategoriaProducto> CategoriasProducto { get; set; }
+
+    /// <summary>
+    /// Órdenes de Venta desde el Punto de Venta.
+    /// Registra el proceso de venta con los totales y opcionalmente asocia un recibo.
+    /// </summary>
+    public DbSet<OrdenVenta> OrdenesVenta { get; set; }
+
+    /// <summary>
+    /// Lista de productos vendidos en cada Orden de Venta.
+    /// </summary>
+    public DbSet<DetalleOrdenVenta> DetallesOrdenVenta { get; set; }
+
     // ═══════════════════════════════════════════════════════════
     // TABLAS DEL MODELO ARTESANAL
     //
@@ -390,6 +406,43 @@ public class ApplicationDbContext : DbContext
 
             entity.HasIndex(r => new { r.NegocioId, r.FechaCreacion })
                 .HasDatabaseName("IX_Recibos_NegocioId_FechaCreacion");
+        });
+
+        // ── Configuración Tienda y OrdenVenta ──
+        modelBuilder.Entity<CategoriaProducto>(entity =>
+        {
+            entity.HasOne(c => c.Negocio)
+                .WithMany()
+                .HasForeignKey(c => c.NegocioId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<OrdenVenta>(entity =>
+        {
+            entity.HasOne(o => o.Negocio)
+                .WithMany()
+                .HasForeignKey(o => o.NegocioId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(o => o.Recibo)
+                .WithMany()
+                .HasForeignKey(o => o.ReciboId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<DetalleOrdenVenta>(entity =>
+        {
+            entity.HasOne(d => d.OrdenVenta)
+                .WithMany(o => o.Detalles)
+                .HasForeignKey(d => d.OrdenVentaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // Si borramos un producto de inventario (IsActive = false - Soft Delete), 
+            // el detalle de la orden igual no debe romperse a nivel BD si llegara a borrarse (DeleteBehavior.NoAction).
+            entity.HasOne(d => d.Producto)
+                .WithMany()
+                .HasForeignKey(d => d.ProductoId)
+                .OnDelete(DeleteBehavior.NoAction);
         });
 
         // ═══════════════════════════════════════════════════════════

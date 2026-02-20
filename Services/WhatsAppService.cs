@@ -234,6 +234,22 @@ public class WhatsAppService : IWhatsAppService
         return await EnviarMensajeTextoAsync(telefono, mensaje);
     }
 
+    /// <summary>
+    /// Envía el link del Catálogo de la Tienda al cliente vía WhatsApp.
+    /// El mensaje es amigable y va directo al grano con la URL.
+    /// </summary>
+    public async Task<bool> EnviarLinkCatalogoTiendaAsync(
+        string telefono, string nombreNegocio, string linkCatalogo)
+    {
+        var mensaje = $"Hola👋 Somos *{nombreNegocio}*.\n\n" +
+                      $"Te compartimos nuestro *Catálogo de Productos* actualizado.\n" +
+                      $"Puedes verlo (y descargarlo) directamente en el siguiente enlace:\n" +
+                      $"{linkCatalogo}\n\n" +
+                      $"¡Cualquier pedido o consulta, escríbenos por aquí mismo! 🛍️✨";
+
+        return await EnviarMensajeTextoAsync(telefono, mensaje);
+    }
+
     // ═══════════════════════════════════════════════════════════════════════
     // MÉTODOS PRIVADOS — COMUNICACIÓN HTTP CON META API
     // ═══════════════════════════════════════════════════════════════════════

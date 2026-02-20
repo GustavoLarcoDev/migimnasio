@@ -149,7 +149,7 @@ public class MembershipReminderService : BackgroundService
             // Obtener solo negocios activos de tipo membresias.
             // Los artesanales no tienen membresías — usan citas (AppointmentReminderService).
             var negociosActivos = await context.Negocios
-                .Where(n => n.IsActive && n.TipoNegocio != "artesanal")
+                .Where(n => n.IsActive && n.TipoNegocio == "membresias")
                 .Select(n => new { n.NegocioId, n.NegocioNombre })
                 .ToListAsync(stoppingToken);
 

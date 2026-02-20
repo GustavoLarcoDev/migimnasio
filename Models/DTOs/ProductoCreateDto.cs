@@ -91,4 +91,10 @@ public class ProductoCreateDto
     /// </summary>
     [Range(0, int.MaxValue)]
     public int StockMinimo { get; set; } = 5;
+
+    /// <summary>
+    /// Categoría a la que pertenece el producto. Opcional.
+    /// Null o Guid.Empty = Sin categoría.
+    /// </summary>
+    public Guid? CategoriaProductoId { get; set; }
 }

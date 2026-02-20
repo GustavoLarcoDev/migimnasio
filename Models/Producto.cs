@@ -125,6 +125,24 @@ public class Producto
     /// SQL Server actualiza este campo automáticamente en cada UPDATE.
     /// El código de la aplicación no necesita manejarlo directamente.
     /// </summary>
+    /// <summary>
+    /// URL o nombre de archivo de la imagen visual del producto para tiendas/catálogos.
+    /// Para mantener retrocompatibilidad (membresias/artesanal) es opcional (nullable).
+    /// </summary>
+    [StringLength(1000)]
+    public string ImagenUrl { get; set; }
+
+    /// <summary>
+    /// ID de la categoría a la que pertenece este producto (agrupación visual en tab).
+    /// Opcional (nullable) para negocios antiguos o productos sin catalogar.
+    /// </summary>
+    public Guid? CategoriaProductoId { get; set; }
+
+    /// <summary>
+    /// Categoría padre de este producto si fuera asignado.
+    /// </summary>
+    public CategoriaProducto Categoria { get; set; }
+
     [Timestamp]
     public byte[] RowVersion { get; set; }
 }

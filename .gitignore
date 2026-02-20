@@ -96,5 +96,11 @@ Controllers/TestAgentController.cs
 # Excel templates
 *.xlsx
 
+# Node modules (QR code CLI tool, etc.)
+node_modules/
+
+# User-uploaded files (product images, etc.)
+wwwroot/uploads/
+
 # Misc
 *.DS_Store

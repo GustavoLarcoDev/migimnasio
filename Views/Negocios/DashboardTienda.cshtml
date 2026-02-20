@@ -1,0 +1,1906 @@
+@model Gimnasio.Models.Gym
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "Dashboard - " + Model.NegocioNombre;
+    ViewData["NegocioId"] = Model.NegocioId;
+    ViewData["NegocioNombre"] = Model.NegocioNombre;
+    ViewData["DuenoNombre"] = Model.DuenoNegocio;
+    ViewData["TipoNegocio"] = "tienda";
+    var negocioId = Model.NegocioId;
+}
+
+@if (Model.EsPrueba)
+{
+    <div class="alert border-0 d-flex align-items-center gap-3 mb-4 shadow-sm" id="trialBanner"
+         style="background: linear-gradient(135deg, #FFF8DD 0%, #FFF3CD 100%); border-left: 4px solid #FFC700 !important;">
+        <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+             style="width: 42px; height: 42px; background: rgba(255, 199, 0, 0.2);">
+            <i class="bi bi-hourglass-split text-warning fs-5"></i>
+        </div>
+        <div class="flex-grow-1">
+            <strong class="text-dark">Periodo de prueba</strong>
+            <span class="d-block d-sm-inline text-muted ms-sm-1" id="trialDaysText">Cargando...</span>
+        </div>
+        <a href="https://wa.me/593997143142?text=Hola%2C%20quiero%20activar%20mi%20plan%20de%20pago%20en%20Mi%20Negocio" target="_blank" rel="noopener"
+           class="btn btn-warning btn-sm fw-bold flex-shrink-0">
+            <i class="bi bi-whatsapp me-1"></i>Activar Plan
+        </a>
+    </div>
+}
+
+<div class="tab-content" id="dashboardTabsContent">
+
+    <!-- ═══════════════ TAB POS ═══════════════ -->
+    <div class="tab-pane fade show active" id="posTab" role="tabpanel">
+        <div class="row g-3 mb-4">
+            <div class="col-xl-3 col-md-6 col-6">
+                <div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Ventas Hoy</div><div class="stat-value" id="posVentasHoy">0</div></div><div class="stat-icon bg-light-primary"><i class="bi bi-cart-check text-primary"></i></div></div></div>
+            </div>
+            <div class="col-xl-3 col-md-6 col-6">
+                <div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Ingresos Hoy</div><div class="stat-value text-success" id="posIngresosHoy">$0</div></div><div class="stat-icon bg-light-success"><i class="bi bi-currency-dollar text-success"></i></div></div></div>
+            </div>
+            <div class="col-xl-3 col-md-6 col-6">
+                <div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Productos</div><div class="stat-value" id="posTotalProductos">0</div></div><div class="stat-icon bg-light-info"><i class="bi bi-box-seam text-info"></i></div></div></div>
+            </div>
+            <div class="col-xl-3 col-md-6 col-6">
+                <div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Stock Bajo</div><div class="stat-value text-danger" id="posStockBajo">0</div></div><div class="stat-icon bg-light-danger"><i class="bi bi-exclamation-triangle-fill text-danger"></i></div></div></div>
+            </div>
+        </div>
+
+        <div class="row g-3">
+            <!-- Products panel -->
+            <div class="col-lg-7">
+                <div class="mg-card h-100">
+                    <div class="card-header border-0 pb-0">
+                        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                            <h5 class="fw-bold mb-0"><i class="bi bi-grid me-2"></i>Productos</h5>
+                            <div class="input-group" style="max-width: 250px;">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="posBuscar" placeholder="Buscar producto...">
+                            </div>
+                        </div>
+                        <!-- Category tabs -->
+                        <div class="d-flex flex-wrap gap-2 mt-3" id="posCategoryTabs">
+                            <button class="mg-pill active" data-cat="">Todos</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-2" id="posProductsGrid"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cart panel -->
+            <div class="col-lg-5">
+                <div class="mg-card h-100">
+                    <div class="card-header border-0">
+                        <h5 class="fw-bold mb-0"><i class="bi bi-receipt me-2"></i>Factura</h5>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="mb-3">
+                            <input type="text" class="form-control" id="posNombreCliente" placeholder="Nombre del cliente (opcional)">
+                        </div>
+
+                        <div class="flex-grow-1" style="min-height: 200px; max-height: 400px; overflow-y: auto;" id="posCartItems">
+                            <div class="text-center py-5 text-muted" id="posCartEmpty">
+                                <i class="bi bi-cart3 fs-1 d-block mb-2 opacity-50"></i>
+                                <p>Selecciona productos para agregar</p>
+                            </div>
+                        </div>
+
+                        <hr>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span class="text-muted">Subtotal</span>
+                            <span class="fw-bold" id="posSubtotal">$0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="text-muted">IVA</span>
+                                <input type="number" class="form-control form-control-sm" id="posIva" value="0" min="0" max="100" step="1" style="width: 65px;">
+                                <span class="text-muted">%</span>
+                            </div>
+                            <span class="fw-bold" id="posIvaMonto">$0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="text-muted">Descuento</span>
+                                <input type="number" class="form-control form-control-sm" id="posDescuento" value="0" min="0" max="100" step="1" style="width: 65px;">
+                                <span class="text-muted">%</span>
+                            </div>
+                            <span class="fw-bold text-danger" id="posDescuentoDisplay">-$0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3 fs-5">
+                            <span class="fw-bolder">TOTAL</span>
+                            <span class="fw-bolder text-success" id="posTotal">$0.00</span>
+                        </div>
+                        <button class="btn btn-success btn-lg w-100" id="btnCobrar" disabled>
+                            <i class="bi bi-cash-stack me-2"></i>Cobrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent orders -->
+        <div class="mg-card mt-4">
+            <div class="card-header border-0">
+                <h5 class="fw-bold mb-0"><i class="bi bi-clock-history me-2"></i>Ventas Recientes</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table id="ordenesTable" class="table table-row-bordered align-middle gs-0 gy-3">
+                        <thead><tr class="fw-bold text-muted"><th>#</th><th>Cliente</th><th>Items</th><th>Total</th><th>Fecha</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ TAB INVENTARIO ═══════════════ -->
+    <div class="tab-pane fade" id="inventarioTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+            <button id="btnCrearProducto" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>Nuevo Producto</button>
+            <button id="btnCrearCategoria" class="btn btn-outline-primary"><i class="bi bi-folder-plus me-2"></i>Nueva Categoria</button>
+            <button id="btnExportInventarioExcel" class="btn btn-success"><i class="bi bi-file-earmark-excel me-2"></i>Exportar</button>
+            <button id="btnToggleMovimientos" class="btn btn-outline-primary"><i class="bi bi-clock-history me-2"></i>Historial</button>
+        </div>
+        <div class="row g-3 mb-4">
+            <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Total Productos</div><div class="stat-value" id="invTotalProductos">0</div></div><div class="stat-icon bg-light-primary"><i class="bi bi-box-seam text-primary"></i></div></div></div></div>
+            <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Stock Bajo</div><div class="stat-value text-warning" id="invStockBajo">0</div></div><div class="stat-icon bg-light-warning"><i class="bi bi-exclamation-triangle-fill text-warning"></i></div></div></div></div>
+            <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Ventas Hoy</div><div class="stat-value" id="invVentasHoy">0</div></div><div class="stat-icon bg-light-success"><i class="bi bi-cart-check-fill text-success"></i></div></div></div></div>
+            <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Ingresos Hoy</div><div class="stat-value text-success" id="invIngresosHoy">$0</div></div><div class="stat-icon bg-light-info"><i class="bi bi-currency-dollar text-info"></i></div></div></div></div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 mb-3 px-2 py-2 rounded-3" style="background: rgba(62,151,255,0.04); border: 1px dashed rgba(62,151,255,0.2);">
+            <i class="bi bi-arrows-move text-primary"></i>
+            <span class="text-muted small">Arrastra productos sobre las carpetas para organizarlos, o usa el boton <i class="bi bi-folder-symlink"></i></span>
+        </div>
+
+        <!-- Category folders + products grid -->
+        <div class="row g-3 mb-3" id="invCategoryFolders"></div>
+        <div class="row g-3 mb-4" id="productosGrid"></div>
+
+        <div id="movimientosSection" class="d-none">
+            <h5 class="fw-bold mb-3"><i class="bi bi-clock-history me-2"></i>Historial de Movimientos</h5>
+            <div class="mg-card"><div class="card-body"><div class="table-responsive"><table id="movimientosTable" class="table table-row-bordered align-middle gs-0 gy-3"><thead><tr class="fw-bold text-muted"><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Cant.</th><th>Total</th><th>Stock</th><th>Nota</th></tr></thead><tbody></tbody></table></div></div></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ TAB PROVEEDORES ═══════════════ -->
+    <div class="tab-pane fade" id="proveedoresTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <h4 class="fw-bold mb-0">Proveedores</h4>
+            <button class="btn btn-primary" id="btnNuevoProveedor"><i class="bi bi-plus-circle me-2"></i>Nuevo Proveedor</button>
+        </div>
+        <div class="mg-card"><div class="card-body"><div class="table-responsive">
+            <table id="proveedoresTable" class="table table-row-bordered align-middle gs-0 gy-3">
+                <thead><tr class="fw-bold text-muted"><th>Compania</th><th>Contacto</th><th>Telefono</th><th>Email</th><th class="text-end">Acciones</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div></div></div>
+    </div>
+
+    <!-- ═══════════════ TAB CATALOGO ═══════════════ -->
+    <div class="tab-pane fade" id="catalogoTab" role="tabpanel">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="mg-card mb-4">
+                    <div class="card-header border-0">
+                        <h5 class="fw-bold mb-0"><i class="bi bi-book me-2"></i>Mi Catalogo Online</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <button class="mg-pill active catEstiloBtn" data-style="moderno">Moderno</button>
+                            <button class="mg-pill catEstiloBtn" data-style="elegante">Elegante</button>
+                            <button class="mg-pill catEstiloBtn" data-style="minimalista">Minimalista</button>
+                            <button class="mg-pill catEstiloBtn" data-style="vibrante">Vibrante</button>
+                            <button class="mg-pill catEstiloBtn" data-style="clasico">Clasico</button>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <a id="catDescargarPdf" class="btn btn-primary" target="_blank"><i class="bi bi-download me-2"></i>Descargar PDF</a>
+                            <a id="catAbrirLink" class="btn btn-outline-primary" target="_blank"><i class="bi bi-link-45deg me-2"></i>Abrir Link Publico</a>
+                            <button class="btn btn-success" id="btnEnviarCatWhatsapp"><i class="bi bi-whatsapp me-2"></i>Enviar por WhatsApp</button>
+                            <button class="btn btn-outline-info" id="btnEnviarCatEmail"><i class="bi bi-envelope me-2"></i>Enviar por Email</button>
+                        </div>
+                        <div class="border rounded overflow-hidden" style="height: 600px;">
+                            <iframe id="catPreviewIframe" style="width:100%;height:100%;border:none;"></iframe>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ TAB MOVIMIENTOS (reutilizado) ═══════════════ -->
+    <div class="tab-pane fade" id="logsTab" role="tabpanel">
+        <div class="mg-card mb-4"><div class="card-body"><h5 class="fw-bold mb-3"><i class="bi bi-plus-circle me-2"></i>Registrar Movimiento</h5><div class="row g-3 align-items-end"><div class="col-md-6"><label class="form-label">Descripcion</label><input type="text" class="form-control form-control-lg" id="logDescripcion" placeholder="Ej: Compra de mercaderia"></div><div class="col-md-3"><label class="form-label">Monto ($)</label><input type="number" step="0.01" class="form-control form-control-lg" id="logMonto" placeholder="4 o -15"></div><div class="col-md-3"><button id="btnRegistrarLog" class="btn btn-primary btn-lg w-100"><i class="bi bi-check-lg me-2"></i>Registrar</button></div></div><small class="text-muted mt-2 d-block">Usa valores positivos para ingresos y negativos para gastos</small></div></div>
+        <div class="d-flex flex-wrap gap-2 mb-3 align-items-center"><small class="text-muted"><i class="bi bi-shield-lock me-1"></i>Los registros son inmutables</small><div class="ms-auto d-flex gap-2"><button id="btnExportLogsExcel" class="btn btn-success"><i class="bi bi-file-earmark-excel me-2"></i>Exportar</button></div></div>
+        <div class="mg-card"><div class="card-body"><div class="table-responsive"><table id="logsTable" class="table table-row-bordered align-middle gs-0 gy-3"><thead><tr class="fw-bold text-muted"><th>Descripcion</th><th>Tipo</th><th>Cliente</th><th>Monto</th><th>Fecha</th></tr></thead><tbody></tbody></table></div></div></div>
+    </div>
+
+    <!-- ═══════════════ TAB REPORTES (reutilizado) ═══════════════ -->
+    <div class="tab-pane fade" id="ventasTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2"><div class="mg-period-pills" id="ventasPeriodPills"><button class="mg-pill active" data-periodo="dia">Dia</button><button class="mg-pill" data-periodo="semana">Semana</button><button class="mg-pill" data-periodo="mes">Mes</button></div></div>
+        <div class="row g-3 mb-4">
+            <div class="col-xl-4 col-md-6 col-12"><div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-primary) 0%, var(--mg-gradient-primary-end) 100%);"><div class="card-body text-white"><span class="d-block mb-2 opacity-75" id="ventasIngresosLabel">Ingresos del Dia</span><span class="fs-2x fw-bolder" id="ventasIngresos">$0</span></div></div></div>
+            <div class="col-xl-4 col-md-6 col-12"><div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-danger) 0%, var(--mg-gradient-danger-end) 100%);"><div class="card-body text-white"><span class="d-block mb-2 opacity-75" id="ventasGastosLabel">Gastos del Dia</span><span class="fs-2x fw-bolder" id="ventasGastos">$0</span></div></div></div>
+            <div class="col-xl-4 col-md-6 col-12"><div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-success) 0%, var(--mg-gradient-success-end) 100%);"><div class="card-body text-white"><span class="d-block mb-2 opacity-75" id="ventasGananciaLabel">Ganancia Neta</span><span class="fs-2x fw-bolder" id="ventasGanancia">$0</span></div></div></div>
+        </div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6"><div class="mg-card"><div class="card-header border-0"><h5 class="fw-bold mb-0">Ingresos vs Gastos</h5></div><div class="card-body"><div id="chartBarVentas"></div></div></div></div>
+            <div class="col-md-6"><div class="mg-card"><div class="card-header border-0"><h5 class="fw-bold mb-0" id="chartResumenTitle">Resumen del Dia</h5></div><div class="card-body"><div id="chartResumen"></div></div></div></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ TAB RECIBOS ═══════════════ -->
+    <div class="tab-pane fade" id="recibosTab" role="tabpanel">
+        <div id="recibosCleanupBanner" class="alert alert-warning d-none mb-3">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            Tienes recibos con mas de 30 dias. <button class="btn btn-sm btn-warning ms-2" id="btnExportarYLimpiar">Exportar y Limpiar</button>
+        </div>
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold mb-0">Recibos</h4>
+            <div class="d-flex gap-2 align-items-center">
+                <div class="input-group input-group-sm" style="width: 200px;">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="buscarReciboInput" placeholder="# Recibo...">
+                </div>
+                <button id="btnExportRecibos" class="btn btn-sm btn-success"><i class="bi bi-file-earmark-excel me-1"></i>Exportar</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table id="tablaRecibos" class="table table-row-bordered align-middle gs-0 gy-3">
+                <thead><tr class="fw-bold text-muted"><th>#Recibo</th><th>Destinatario</th><th>Concepto</th><th>Monto</th><th>Fecha</th><th>Acciones</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ═══════════════ TAB NOTIFICACIONES ═══════════════ -->
+    <div class="tab-pane fade" id="notificacionesTab" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-4"><h4 class="fw-bold mb-0">Notificaciones</h4><div class="d-flex gap-2"><button id="btnMarcarTodasLeidasTab" class="btn btn-outline-primary"><i class="bi bi-check-all me-2"></i>Marcar todas leidas</button></div></div>
+        <div id="notificacionesList" class="d-flex flex-column gap-2"><div class="text-center py-5 text-muted"><i class="bi bi-bell-slash fs-1 d-block mb-3"></i><p>No hay notificaciones.</p></div></div>
+    </div>
+
+    <!-- ═══════════════ TAB SUGERENCIAS ═══════════════ -->
+    <div class="tab-pane fade" id="sugerenciasTab" role="tabpanel">
+        <div class="row justify-content-center"><div class="col-lg-8"><div class="mg-card"><div class="card-header border-0"><h5 class="fw-bold mb-0"><i class="bi bi-chat-left-text me-2"></i>Enviar Sugerencia</h5></div><div class="card-body"><p class="text-muted mb-3">Ayudanos a mejorar. Escribe tu sugerencia, idea o comentario.</p><div class="mb-3"><textarea class="form-control form-control-lg" id="sugerenciaTexto" rows="5" maxlength="1000" placeholder="Escribe tu sugerencia aqui..."></textarea><div class="d-flex justify-content-between mt-1"><small class="text-muted">Maximo 1000 caracteres</small><small class="text-muted"><span id="sugerenciaCount">0</span>/1000</small></div></div><button id="btnEnviarSugerencia" class="btn btn-primary"><i class="bi bi-send me-2"></i>Enviar Sugerencia</button></div></div></div></div>
+    </div>
+
+</div><!-- /tab-content -->
+
+<!-- Modal Ver Recibo -->
+<div class="modal fade" id="reciboModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down"><div class="modal-content"><div class="modal-header bg-light"><h3 class="modal-title fw-bolder"><i class="bi bi-receipt me-2"></i>Recibo #<span id="reciboModalNumero"></span></h3><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><iframe id="reciboIframe" sandbox style="width:100%;height:500px;border:none;"></iframe></div><div class="modal-footer bg-light"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button></div></div></div></div>
+
+<!-- Modal Crear/Editar Producto -->
+<div class="modal fade" id="productoModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h3 class="modal-title fw-bolder" id="productoModalTitle">Nuevo Producto</h3>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="productoForm">
+                    <input type="hidden" id="prodId" name="ProductoId" />
+                    <input type="hidden" name="NegocioId" value="@negocioId" />
+                    <div class="row">
+                        <div class="col-12 mb-3">
+                            <label class="form-label fw-semibold required">Nombre del Producto</label>
+                            <input type="text" class="form-control" name="Nombre" id="prodNombre" placeholder="Ej: Shampoo 500ml" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold required">Precio de Venta ($)</label>
+                            <input type="number" step="0.01" min="0.01" class="form-control" name="PrecioVenta" id="prodPrecioVenta" placeholder="1.00" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold required">Costo de Compra ($)</label>
+                            <input type="number" step="0.01" min="0.01" class="form-control" name="CostoCompra" id="prodCostoCompra" placeholder="0.50" required />
+                            <div class="form-text" id="prodMargenText"></div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold required">Stock Inicial</label>
+                            <input type="number" min="0" class="form-control" name="Stock" id="prodStock" placeholder="50" required />
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Stock Minimo (alerta)</label>
+                            <input type="number" min="0" class="form-control" name="StockMinimo" id="prodStockMinimo" value="5" />
+                            <div class="form-text">Se alerta cuando el stock baje de este numero</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold"><i class="bi bi-folder me-1"></i>Categoria</label>
+                            <select class="form-select" name="CategoriaProductoId" id="prodCategoria">
+                                <option value="">Sin Categoria</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3" id="prodImagenGroup">
+                            <label class="form-label fw-semibold"><i class="bi bi-camera me-1"></i>Foto del Producto</label>
+                            <input type="file" class="form-control" id="prodImagen" accept=".jpg,.jpeg,.png,.webp" />
+                            <div class="form-text">Opcional. Se agrega despues desde el boton de camara.</div>
+                            <div id="prodImagenPreview" class="mt-2"></div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" id="btnGuardarProducto" class="btn btn-primary"><i class="bi bi-save me-2"></i>Guardar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Proveedor -->
+<div class="modal fade" id="proveedorModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down"><div class="modal-content"><div class="modal-header bg-light"><h3 class="modal-title fw-bolder" id="proveedorModalTitle">Nuevo Proveedor</h3><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+    <form id="proveedorForm">
+        <input type="hidden" id="provId" name="ClienteId" />
+        <input type="hidden" name="NegocioId" value="@negocioId" />
+        <div class="row">
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold required">Compania</label><input type="text" class="form-control" name="Nombre" id="provNombre" required placeholder="Ej: Pepsi" /></div>
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold">Contacto</label><input type="text" class="form-control" name="Apellido" id="provApellido" placeholder="Ej: Armando Lopez" /></div>
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold">Telefono</label><input type="tel" class="form-control" name="Telefono" id="provTelefono" /></div>
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold">Email</label><input type="email" class="form-control" name="Email" id="provEmail" /></div>
+        </div>
+    </form>
+</div><div class="modal-footer bg-light"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="button" id="btnGuardarProveedor" class="btn btn-primary"><i class="bi bi-save me-2"></i>Guardar</button></div></div></div></div>
+
+<!-- Modal Enviar Catalogo -->
+<div class="modal fade" id="catEnviarModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down"><div class="modal-content"><div class="modal-header bg-light"><h3 class="modal-title fw-bolder" id="catEnviarTitle">Enviar Catalogo</h3><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
+    <form id="catEnviarForm">
+        <input type="hidden" id="catEnviarTipo" value="" />
+        <div class="mb-3">
+            <label class="form-label fw-semibold required" id="catDestinoLabel">Destino</label>
+            <input type="text" class="form-control" id="catDestinoInput" required />
+        </div>
+    </form>
+</div><div class="modal-footer bg-light"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="button" id="btnConfirmarEnviarCat" class="btn btn-primary"><i class="bi bi-send me-2"></i>Enviar</button></div></div></div></div>
+
+@section Styles {
+<style>
+/* POS Product Cards */
+.pos-product-card {
+    cursor: pointer;
+    border: 2px solid var(--mg-border-color);
+    border-radius: var(--mg-border-radius);
+    padding: 0.75rem;
+    text-align: center;
+    transition: all 0.15s ease;
+    background: var(--mg-card-bg);
+    height: 100%;
+}
+.pos-product-card:hover {
+    border-color: var(--mg-primary);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+}
+.pos-product-card.out-of-stock {
+    opacity: 0.5;
+    pointer-events: none;
+}
+.pos-product-card .pos-prod-img {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+.pos-product-card .pos-prod-placeholder {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    background: var(--mg-gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.5rem;
+    font-size: 1.5rem;
+    color: var(--mg-gray-400);
+}
+.pos-product-card .pos-prod-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.pos-product-card .pos-prod-price {
+    font-weight: 700;
+    color: var(--mg-success);
+    font-size: 1rem;
+}
+.pos-product-card .pos-prod-stock {
+    font-size: 0.75rem;
+    color: var(--mg-gray-500);
+}
+
+/* ── POS Category Pills ── */
+#posCategoryTabs .mg-pill {
+    padding: 0.45rem 1.1rem;
+    border: 1.5px solid var(--mg-border-color);
+    background: var(--mg-card-bg);
+    color: var(--mg-gray-600);
+    font-weight: 600;
+    font-size: 0.8rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(.4,0,.2,1);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+#posCategoryTabs .mg-pill:hover {
+    border-color: var(--mg-primary);
+    color: var(--mg-primary);
+    background: rgba(62, 151, 255, 0.06);
+    transform: translateY(-1px);
+}
+#posCategoryTabs .mg-pill.active {
+    background: linear-gradient(135deg, var(--mg-primary), #1B74E4);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(62, 151, 255, 0.35);
+    transform: translateY(-1px);
+}
+#posCategoryTabs .mg-pill .pill-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 50px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: rgba(0,0,0,0.08);
+    line-height: 1;
+}
+#posCategoryTabs .mg-pill.active .pill-count {
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+}
+
+/* Catalog style pills */
+.catEstiloBtn.mg-pill {
+    padding: 0.45rem 1.1rem;
+    border: 1.5px solid var(--mg-border-color);
+    background: var(--mg-card-bg);
+    color: var(--mg-gray-600);
+    font-weight: 600;
+    font-size: 0.8rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(.4,0,.2,1);
+}
+.catEstiloBtn.mg-pill:hover {
+    border-color: var(--mg-primary);
+    color: var(--mg-primary);
+}
+.catEstiloBtn.mg-pill.active {
+    background: linear-gradient(135deg, var(--mg-primary), #1B74E4);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(62, 151, 255, 0.35);
+}
+
+/* ── Inventory Category Folders ── */
+.inv-folder {
+    cursor: pointer;
+    border: 1.5px solid var(--mg-border-color);
+    border-radius: 12px;
+    padding: 1.1rem 0.75rem 0.9rem;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(.4,0,.2,1);
+    background: var(--mg-card-bg);
+    min-height: 100px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.inv-folder:hover {
+    border-color: var(--mg-primary);
+    background: rgba(62, 151, 255, 0.03);
+    box-shadow: 0 4px 12px rgba(62, 151, 255, 0.1);
+    transform: translateY(-2px);
+}
+.inv-folder.active {
+    border-color: var(--mg-primary);
+    background: linear-gradient(135deg, rgba(62,151,255,0.06), rgba(27,116,228,0.03));
+    box-shadow: 0 4px 16px rgba(62, 151, 255, 0.18);
+}
+.inv-folder.active .inv-folder-icon-wrap { background: linear-gradient(135deg, var(--mg-primary), #1B74E4); }
+.inv-folder.active .inv-folder-icon-wrap i { color: #fff; }
+
+/* Drag-over: green glow + pulse */
+.inv-folder.drag-over {
+    border-color: var(--mg-success);
+    border-style: dashed;
+    border-width: 2.5px;
+    background: rgba(80, 205, 137, 0.08);
+    box-shadow: 0 0 0 4px rgba(80, 205, 137, 0.15), 0 8px 24px rgba(80, 205, 137, 0.2);
+    transform: scale(1.04);
+}
+.inv-folder.drag-over .inv-folder-icon-wrap { background: var(--mg-success); }
+.inv-folder.drag-over .inv-folder-icon-wrap i { color: #fff; }
+@@keyframes folderPulse { 0%,100%{box-shadow:0 0 0 4px rgba(80,205,137,0.15)} 50%{box-shadow:0 0 0 8px rgba(80,205,137,0.25)} }
+.inv-folder.drag-over { animation: folderPulse 1.2s ease-in-out infinite; }
+
+.inv-folder-icon-wrap {
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(62, 151, 255, 0.1);
+    transition: all 0.3s ease;
+    margin-bottom: 0.2rem;
+}
+.inv-folder-icon-wrap i {
+    font-size: 1.25rem;
+    color: var(--mg-primary);
+    transition: color 0.3s;
+}
+.inv-folder-icon-wrap.muted { background: rgba(0,0,0,0.05); }
+.inv-folder-icon-wrap.muted i { color: var(--mg-gray-400); }
+
+.inv-folder-name {
+    font-weight: 700;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    color: var(--mg-gray-800);
+}
+.inv-folder-count {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--mg-gray-400);
+}
+.inv-folder-delete {
+    position: absolute;
+    top: 6px; right: 6px;
+    opacity: 0;
+    width: 22px; height: 22px;
+    padding: 0;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    border: none;
+    background: rgba(241, 65, 108, 0.1);
+    color: #F1416C;
+    font-size: 0.65rem;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+.inv-folder-delete:hover { background: #F1416C; color: #fff; }
+.inv-folder:hover .inv-folder-delete { opacity: 1; }
+
+/* Draggable products */
+.inv-card[draggable="true"] { cursor: grab; transition: all 0.25s ease; }
+.inv-card[draggable="true"]:active { cursor: grabbing; }
+.inv-card.drag-ghost { opacity: 0.3; transform: scale(0.92); filter: grayscale(0.5); }
+.inv-card.drag-chosen { box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+
+/* Cart Items */
+.pos-cart-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--mg-border-color);
+}
+.pos-cart-item .pos-cart-name {
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+.pos-cart-item .pos-cart-qty {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.pos-cart-item .pos-cart-qty button {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 0.75rem;
+}
+.pos-cart-item .pos-cart-subtotal {
+    font-weight: 700;
+    min-width: 60px;
+    text-align: right;
+}
+</style>
+}
+
+@section Scripts {
+<script>
+const negocioId = @Json.Serialize(negocioId.ToString());
+let tablaLogs, tablaMovimientos, tablaRecibos, tablaOrdenes, tablaProveedores;
+var modoEdicionProducto = false;
+var productosCache = [];
+var posCart = []; // { productoId, nombre, precioVenta, cantidad, stock }
+var categoriasCache = [];
+
+const swalMG = Swal.mixin({ confirmButtonColor: '#3E97FF', cancelButtonColor: '#E4E6EF', cancelButtonText: 'Cancelar', reverseButtons: true });
+
+// Prevent browser caching of GET responses (critical for drag-and-drop refresh)
+$.ajaxSetup({ cache: false });
+
+function escHtml(str) { if (!str) return ''; return $('<span>').text(str).html(); }
+function escAttr(str) { if (!str) return ''; return escHtml(str).replace(/'/g, '&#39;'); }
+
+// ═══════════════ INIT ═══════════════
+$(document).ready(function() {
+    cargarPOS();
+    verificarSuscripcion();
+    cargarNotificacionesCount();
+});
+
+function verificarSuscripcion() {
+    $.get('/Negocios/GetSuscripcionStatus', { negocioId }, function(d) {
+        var t = document.getElementById('trialDaysText');
+        if (t && d.diasRestantes !== null) {
+            if (d.porEmpezar) t.innerHTML = '- <span class="badge bg-secondary">Por empezar</span>';
+            else if (d.diasRestantes <= 0) t.innerHTML = '<span class="badge bg-danger">Expirado</span>';
+            else t.innerHTML = '- Te quedan <strong>' + d.diasRestantes + ' dias</strong>';
+        }
+    });
+}
+
+// ═══════════════ POS ═══════════════
+function cargarPOS() {
+    // Load categories
+    $.get('/Negocios/GetCategorias', { negocioId }, function(cats) {
+        categoriasCache = cats;
+        renderCategoryTabs(cats, '#posCategoryTabs');
+    });
+
+    // Load products
+    $.get('/Negocios/GetProductos', { negocioId }, function(productos) {
+        productosCache = productos;
+        renderPOSProducts(productos);
+    });
+
+    // Load stats
+    $.get('/Negocios/GetInventarioStats', { negocioId }, function(d) {
+        $('#posVentasHoy').text(d.ventasHoyUnidades);
+        $('#posIngresosHoy').text('$' + d.ingresosHoy.toFixed(2));
+        $('#posTotalProductos').text(d.totalProductos);
+        $('#posStockBajo').text(d.stockBajo);
+    });
+
+    cargarOrdenesRecientes();
+}
+
+function renderCategoryTabs(cats, container) {
+    var $c = $(container);
+    $c.find('.mg-pill:not(:first)').remove();
+    // Update "Todos" count
+    $c.find('.mg-pill:first').html('Todos <span class="pill-count">' + productosCache.length + '</span>');
+    cats.forEach(function(cat) {
+        var count = productosCache.filter(function(p) { return p.categoriaProductoId === cat.categoriaId; }).length;
+        $c.append('<button class="mg-pill" data-cat="' + cat.categoriaId + '">' + escHtml(cat.nombre) + ' <span class="pill-count">' + count + '</span></button>');
+    });
+}
+
+function renderPOSProducts(productos, filter) {
+    var grid = $('#posProductsGrid');
+    grid.empty();
+
+    var filtered = productos;
+    if (filter) {
+        filtered = productos.filter(function(p) { return p.categoriaProductoId === filter; });
+    }
+
+    var search = ($('#posBuscar').val() || '').toLowerCase();
+    if (search) {
+        filtered = filtered.filter(function(p) { return p.nombre.toLowerCase().includes(search); });
+    }
+
+    if (!filtered.length) {
+        grid.html('<div class="col-12 text-center py-5 text-muted"><i class="bi bi-box-seam fs-1 d-block mb-3 opacity-50"></i><p>No hay productos</p></div>');
+        return;
+    }
+
+    filtered.forEach(function(p) {
+        var imgHtml = p.imagenUrl
+            ? '<img src="' + escAttr(p.imagenUrl) + '" class="pos-prod-img" alt="">'
+            : '<div class="pos-prod-placeholder"><i class="bi bi-box"></i></div>';
+
+        var card = '<div class="col-xl-3 col-lg-4 col-md-4 col-6">' +
+            '<div class="pos-product-card' + (p.stock <= 0 ? ' out-of-stock' : '') + '" data-id="' + p.productoId + '" onclick="agregarAlCarrito(\'' + p.productoId + '\')">' +
+                imgHtml +
+                '<div class="pos-prod-name" title="' + escAttr(p.nombre) + '">' + escHtml(p.nombre) + '</div>' +
+                '<div class="pos-prod-price">$' + p.precioVenta.toFixed(2) + '</div>' +
+                '<div class="pos-prod-stock">' + (p.stock <= 0 ? '<span class="text-danger">Agotado</span>' : 'Stock: ' + p.stock) + '</div>' +
+            '</div>' +
+        '</div>';
+        grid.append(card);
+    });
+}
+
+// POS category filter
+$(document).on('click', '#posCategoryTabs .mg-pill', function() {
+    $('#posCategoryTabs .mg-pill').removeClass('active');
+    $(this).addClass('active');
+    var catId = $(this).data('cat');
+    renderPOSProducts(productosCache, catId || null);
+});
+
+// POS search
+$('#posBuscar').on('input', function() {
+    var catId = $('#posCategoryTabs .mg-pill.active').data('cat');
+    renderPOSProducts(productosCache, catId || null);
+});
+
+function agregarAlCarrito(productoId) {
+    var producto = productosCache.find(function(p) { return p.productoId === productoId; });
+    if (!producto || producto.stock <= 0) return;
+
+    var existing = posCart.find(function(c) { return c.productoId === productoId; });
+    if (existing) {
+        if (existing.cantidad >= producto.stock) {
+            toastr.warning('No hay mas stock de ' + producto.nombre);
+            return;
+        }
+        existing.cantidad++;
+    } else {
+        posCart.push({
+            productoId: producto.productoId,
+            nombre: producto.nombre,
+            precioVenta: producto.precioVenta,
+            cantidad: 1,
+            stock: producto.stock
+        });
+    }
+    renderCart();
+}
+
+function renderCart() {
+    var container = $('#posCartItems');
+    container.empty();
+
+    if (!posCart.length) {
+        container.html('<div class="text-center py-5 text-muted" id="posCartEmpty"><i class="bi bi-cart3 fs-1 d-block mb-2 opacity-50"></i><p>Selecciona productos para agregar</p></div>');
+        $('#btnCobrar').prop('disabled', true);
+        calcularTotales();
+        return;
+    }
+
+    posCart.forEach(function(item, i) {
+        container.append(
+            '<div class="pos-cart-item">' +
+                '<div class="pos-cart-name">' + escHtml(item.nombre) + '</div>' +
+                '<div class="pos-cart-qty">' +
+                    '<button class="btn btn-sm btn-outline-secondary" onclick="cambiarCantidad(' + i + ', -1)"><i class="bi bi-dash"></i></button>' +
+                    '<span class="fw-bold px-2">' + item.cantidad + '</span>' +
+                    '<button class="btn btn-sm btn-outline-secondary" onclick="cambiarCantidad(' + i + ', 1)"><i class="bi bi-plus"></i></button>' +
+                '</div>' +
+                '<div class="pos-cart-subtotal">$' + (item.precioVenta * item.cantidad).toFixed(2) + '</div>' +
+                '<button class="btn btn-sm btn-outline-danger" onclick="quitarDelCarrito(' + i + ')"><i class="bi bi-x"></i></button>' +
+            '</div>'
+        );
+    });
+
+    $('#btnCobrar').prop('disabled', false);
+    calcularTotales();
+}
+
+function cambiarCantidad(index, delta) {
+    var item = posCart[index];
+    if (!item) return;
+    item.cantidad += delta;
+    if (item.cantidad <= 0) {
+        quitarDelCarrito(index);
+        return;
+    }
+    if (item.cantidad > item.stock) {
+        item.cantidad = item.stock;
+        toastr.warning('Stock maximo: ' + item.stock);
+    }
+    renderCart();
+}
+
+function quitarDelCarrito(index) {
+    var item = posCart[index];
+    swalMG.fire({
+        title: 'Quitar producto',
+        text: 'Quitar "' + item.nombre + '" del carrito?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Si, quitar',
+        confirmButtonColor: '#F1416C'
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            posCart.splice(index, 1);
+            renderCart();
+        }
+    });
+}
+
+function calcularTotales() {
+    var subtotal = posCart.reduce(function(s, item) { return s + (item.precioVenta * item.cantidad); }, 0);
+    var ivaPct = parseFloat($('#posIva').val()) || 0;
+    var descPct = parseFloat($('#posDescuento').val()) || 0;
+    var montoIva = subtotal * (ivaPct / 100);
+    var montoDescuento = subtotal * (descPct / 100);
+    var total = subtotal + montoIva - montoDescuento;
+    if (total < 0) total = 0;
+
+    $('#posSubtotal').text('$' + subtotal.toFixed(2));
+    $('#posIvaMonto').text('$' + montoIva.toFixed(2));
+    $('#posDescuentoDisplay').text('-$' + montoDescuento.toFixed(2));
+    $('#posTotal').text('$' + total.toFixed(2));
+}
+
+$('#posIva, #posDescuento').on('input', calcularTotales);
+
+// Cobrar
+$('#btnCobrar').on('click', function() {
+    if (!posCart.length) return;
+    var total = parseFloat($('#posTotal').text().replace('$', ''));
+
+    swalMG.fire({
+        title: 'Confirmar Cobro',
+        html: '<p class="fs-3 fw-bolder text-success mb-0">$' + total.toFixed(2) + '</p><p class="text-muted">' + posCart.length + ' producto(s)</p>',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-check-lg me-1"></i>Confirmar Pago',
+        confirmButtonColor: '#50CD89'
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            procesarVenta();
+        }
+    });
+});
+
+function procesarVenta() {
+    var btn = $('#btnCobrar');
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Procesando...');
+
+    var subtotal = posCart.reduce(function(s, item) { return s + (item.precioVenta * item.cantidad); }, 0);
+    var descPct = parseFloat($('#posDescuento').val()) || 0;
+    var montoDescuento = subtotal * (descPct / 100);
+
+    var payload = {
+        NombreCliente: $('#posNombreCliente').val() || 'Mostrador',
+        EmailCliente: '',
+        DescuentoAdicional: montoDescuento,
+        PorcentajeIva: parseFloat($('#posIva').val()) || 0,
+        Items: posCart.map(function(c) { return { ProductoId: c.productoId, Cantidad: c.cantidad }; })
+    };
+
+    $.ajax({
+        url: '/Negocios/ProcesarVentaPOS',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+        success: function(r) {
+            if (r.success) {
+                // Reset cart
+                posCart = [];
+                renderCart();
+                $('#posNombreCliente').val('');
+                $('#posDescuento').val(0);
+                cargarPOS();
+                if (tablaLogs) tablaLogs.ajax.reload();
+                if (tablaRecibos) tablaRecibos.ajax.reload();
+
+                // Show receipt
+                if (r.reciboId) {
+                    mostrarReciboVenta(r.reciboId);
+                } else {
+                    swalMG.fire({ title: 'Venta Exitosa!', text: 'Pago procesado. Recibo guardado.', icon: 'success' });
+                }
+            } else {
+                toastr.error(r.message);
+            }
+        },
+        error: function(xhr) {
+            toastr.error(xhr.responseJSON?.message || 'Error al procesar venta');
+        },
+        complete: function() {
+            btn.prop('disabled', false).html('<i class="bi bi-cash-stack me-2"></i>Cobrar');
+        }
+    });
+}
+
+function mostrarReciboVenta(reciboId) {
+    $.get('/Negocios/GetRecibo', { reciboId, negocioId }, function(r) {
+        if (!r) { swalMG.fire({ title: 'Venta Exitosa!', text: 'Pago procesado.', icon: 'success' }); return; }
+        $('#reciboModalNumero').text(r.numeroRecibo);
+        document.getElementById('reciboIframe').srcdoc = r.contenidoHtml;
+
+        // Replace modal footer with send options
+        var footer = $('#reciboModal .modal-footer');
+        footer.html(
+            '<button type="button" class="btn btn-success" onclick="enviarReciboPOS(\'' + reciboId + '\',\'whatsapp\')"><i class="bi bi-whatsapp me-2"></i>WhatsApp</button>' +
+            '<button type="button" class="btn btn-outline-info" onclick="enviarReciboPOS(\'' + reciboId + '\',\'email\')"><i class="bi bi-envelope me-2"></i>Email</button>' +
+            '<button type="button" class="btn btn-outline-primary" onclick="imprimirRecibo()"><i class="bi bi-printer me-2"></i>Imprimir</button>' +
+            '<button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>'
+        );
+        new bootstrap.Modal('#reciboModal').show();
+    });
+}
+
+function enviarReciboPOS(reciboId, tipo) {
+    // Close the Bootstrap modal first so SweetAlert input is not blocked by focus trap
+    var reciboModalEl = document.getElementById('reciboModal');
+    var bsModal = bootstrap.Modal.getInstance(reciboModalEl);
+    if (bsModal) bsModal.hide();
+
+    var isWA = tipo === 'whatsapp';
+    var label = isWA ? 'Numero de WhatsApp' : 'Correo Electronico';
+    var placeholder = isWA ? 'Ej: 0989799891' : 'Ej: cliente@email.com';
+    var hint = isWA ? '<small class="text-muted d-block mt-1"><i class="bi bi-info-circle me-1"></i>El codigo de pais (+593) se agrega automaticamente</small>' : '';
+    var inputType = isWA ? 'tel' : 'email';
+
+    setTimeout(function() {
+        swalMG.fire({
+            title: 'Enviar Recibo',
+            html: '<label class="form-label fw-semibold text-start d-block">' + label + '</label>' +
+                  '<input type="' + inputType + '" id="swalDestinoRecibo" class="form-control" placeholder="' + placeholder + '">' + hint,
+            showCancelButton: true,
+            confirmButtonText: '<i class="bi bi-send me-1"></i>Enviar',
+            didOpen: function() { document.getElementById('swalDestinoRecibo').focus(); },
+            preConfirm: function() {
+                var dest = document.getElementById('swalDestinoRecibo').value.trim();
+                if (!dest) { Swal.showValidationMessage('Ingresa un destino'); return false; }
+                return dest;
+            }
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                $.post('/Negocios/EnviarRecibo', { reciboId: reciboId, negocioId: negocioId, destino: result.value, tipo: tipo }, function(r) {
+                    if (r.success) toastr.success(r.message || 'Recibo enviado');
+                    else toastr.error(r.message || 'Error al enviar');
+                }).fail(function() { toastr.error('Error de conexion'); });
+            }
+        });
+    }, 300); // Small delay to let Bootstrap modal fully close
+}
+
+function imprimirRecibo() {
+    var iframe = document.getElementById('reciboIframe');
+    var htmlContent = iframe.srcdoc || iframe.getAttribute('srcdoc');
+    if (!htmlContent) { toastr.error('No hay recibo para imprimir'); return; }
+    var printWin = window.open('', '_blank', 'width=800,height=600');
+    printWin.document.write(htmlContent);
+    printWin.document.close();
+    printWin.focus();
+    setTimeout(function() { printWin.print(); }, 400);
+}
+
+function cargarOrdenesRecientes() {
+    if (tablaOrdenes) { tablaOrdenes.ajax.reload(); return; }
+    tablaOrdenes = $('#ordenesTable').DataTable({
+        ajax: { url: '/Negocios/GetOrdenesVenta', data: { negocioId }, dataSrc: '' },
+        columns: [
+            { data: 'numeroOrden', render: function(d) { return '<span class="badge bg-primary">#' + d + '</span>'; } },
+            { data: 'nombreCliente', render: function(d) { return escHtml(d || 'Mostrador'); } },
+            { data: 'items' },
+            { data: 'total', render: function(d) { return '<span class="fw-bold text-success">$' + d.toFixed(2) + '</span>'; } },
+            { data: 'fechaCreacion', render: function(d) { return new Date(d).toLocaleString('es-EC'); } }
+        ],
+        order: [[4, 'desc']],
+        pageLength: 5
+    });
+}
+
+// ═══════════════ INVENTARIO ═══════════════
+
+function cargarInventarioStats() {
+    $.get('/Negocios/GetInventarioStats', { negocioId }, function(d) {
+        $('#invTotalProductos').text(d.totalProductos);
+        $('#invStockBajo').text(d.stockBajo);
+        $('#invVentasHoy').text(d.ventasHoyUnidades);
+        $('#invIngresosHoy').text('$' + d.ingresosHoy.toFixed(2));
+    });
+}
+
+function cargarInventarioCategorias() {
+    $.get('/Negocios/GetCategorias', { negocioId }, function(cats) {
+        categoriasCache = cats;
+        renderCategoryFolders();
+    });
+}
+
+const tipoMovBadges = { 'venta': 'bg-success', 'venta_tienda': 'bg-success', 'devolucion': 'bg-warning text-dark', 'restock': 'bg-info', 'ajuste': 'bg-danger' };
+const tipoMovLabels = { 'venta': 'Venta', 'venta_tienda': 'Venta POS', 'devolucion': 'Devolucion', 'restock': 'Restock', 'ajuste': 'Ajuste' };
+
+function cargarProductosGrid() {
+    var activeCat = $('#invCategoryFolders .inv-folder.active').data('cat');
+    $.get('/Negocios/GetProductos', { negocioId }, function(productos) {
+        productosCache = productos;
+        var grid = $('#productosGrid');
+        grid.empty();
+
+        var filtered = productos;
+        if (activeCat === 'none') {
+            filtered = productos.filter(function(p) { return !p.categoriaProductoId; });
+        } else if (activeCat) {
+            filtered = productos.filter(function(p) { return p.categoriaProductoId === activeCat; });
+        }
+
+        if (!filtered.length) {
+            grid.html('<div class="col-12 text-center py-5 text-muted"><i class="bi bi-box-seam fs-1 d-block mb-3 opacity-50"></i><p class="fs-5">No hay productos en el inventario</p><p>Haz clic en <strong>"Nuevo Producto"</strong> para agregar el primero</p></div>');
+            renderCategoryFolders();
+            return;
+        }
+
+        filtered.forEach(function(p) {
+            var stockClass = p.stockBajo ? 'text-danger' : 'text-success';
+            var catLabel = '';
+            if (!activeCat && p.categoriaProductoId) {
+                var cat = categoriasCache.find(function(c) { return c.categoriaId === p.categoriaProductoId; });
+                if (cat) catLabel = '<small class="d-block text-muted" style="font-size:0.7rem"><i class="bi bi-folder-fill me-1"></i>' + escHtml(cat.nombre) + '</small>';
+            }
+            var imgHtml = p.imagenUrl
+                ? '<img src="' + escAttr(p.imagenUrl) + '" class="inv-card-img" style="width:48px;height:48px;object-fit:cover;border-radius:6px;margin-bottom:4px;" />'
+                : '';
+
+            var card = '<div class="col-xl-2 col-lg-3 col-md-4 col-6">' +
+                '<div class="inv-card" data-id="' + p.productoId + '" draggable="true">' +
+                    '<div class="inv-card-actions">' +
+                        '<button class="inv-card-action-btn" onclick="editarProducto(\'' + p.productoId + '\')" title="Editar"><i class="bi bi-pencil"></i></button>' +
+                        '<button class="inv-card-action-btn" onclick="cambiarCategoriaProducto(\'' + p.productoId + '\',\'' + escAttr(p.nombre) + '\',\'' + (p.categoriaProductoId || '') + '\')" title="Mover a categoria"><i class="bi bi-folder-symlink"></i></button>' +
+                        '<button class="inv-card-action-btn" onclick="subirImagenProducto(\'' + p.productoId + '\')" title="Foto"><i class="bi bi-camera"></i></button>' +
+                        '<button class="inv-card-action-btn inv-card-action-delete" onclick="eliminarProducto(\'' + p.productoId + '\',\'' + escAttr(p.nombre) + '\')" title="Eliminar"><i class="bi bi-trash"></i></button>' +
+                    '</div>' +
+                    imgHtml +
+                    '<div class="inv-card-name">' + escHtml(p.nombre) + '</div>' +
+                    catLabel +
+                    '<div class="inv-card-price">$' + p.precioVenta.toFixed(2) + '</div>' +
+                    '<div class="inv-card-stock-row">' +
+                        '<button class="inv-arrow inv-arrow-up" onclick="accionSubir(\'' + p.productoId + '\',\'' + escAttr(p.nombre) + '\',' + p.precioVenta + ',' + p.stock + ')" title="Devolver o actualizar"><i class="bi bi-caret-up-fill"></i></button>' +
+                        '<span class="inv-card-stock ' + stockClass + '" id="stock-' + p.productoId + '">' + p.stock + '</span>' +
+                        '<button class="inv-arrow inv-arrow-down' + (p.stock <= 0 ? ' disabled' : '') + '" onclick="venderRapido(\'' + p.productoId + '\')" title="Vender 1 unidad"><i class="bi bi-caret-down-fill"></i></button>' +
+                    '</div>' +
+                    (p.stockBajo ? '<small class="inv-card-alert"><i class="bi bi-exclamation-triangle-fill me-1"></i>Stock bajo</small>' : '') +
+                '</div>' +
+            '</div>';
+            grid.append(card);
+        });
+
+        initProductDrag();
+        renderCategoryFolders();
+    }).fail(function() { toastr.error('Error al cargar productos'); });
+}
+
+// Folder click = filter by category
+$(document).on('click', '#invCategoryFolders .inv-folder', function() {
+    $('#invCategoryFolders .inv-folder').removeClass('active');
+    $(this).addClass('active');
+    cargarProductosGrid();
+});
+
+// ── Category folder rendering ──
+function renderCategoryFolders() {
+    var container = $('#invCategoryFolders');
+    var activeVal = container.find('.inv-folder.active').data('cat');
+    container.empty();
+
+    var countMap = {}, uncategorized = 0;
+    productosCache.forEach(function(p) {
+        if (p.categoriaProductoId) countMap[p.categoriaProductoId] = (countMap[p.categoriaProductoId] || 0) + 1;
+        else uncategorized++;
+    });
+
+    var total = productosCache.length;
+
+    // "Todos" folder
+    container.append(
+        '<div class="col-xl-2 col-lg-3 col-md-4 col-6">' +
+            '<div class="inv-folder' + (!activeVal && activeVal !== 'none' ? ' active' : '') + '" data-cat="" data-folder>' +
+                '<div class="inv-folder-icon-wrap">' +
+                    '<i class="bi bi-grid-3x3-gap-fill"></i>' +
+                '</div>' +
+                '<div class="inv-folder-name">Todos</div>' +
+                '<div class="inv-folder-count">' + total + ' producto' + (total !== 1 ? 's' : '') + '</div>' +
+            '</div>' +
+        '</div>'
+    );
+
+    categoriasCache.forEach(function(cat) {
+        var count = countMap[cat.categoriaId] || 0;
+        container.append(
+            '<div class="col-xl-2 col-lg-3 col-md-4 col-6">' +
+                '<div class="inv-folder' + (activeVal === cat.categoriaId ? ' active' : '') + '" data-cat="' + cat.categoriaId + '" data-folder>' +
+                    '<button class="inv-folder-delete" onclick="event.stopPropagation();eliminarCategoria(\'' + cat.categoriaId + '\',\'' + escAttr(cat.nombre) + '\')" title="Eliminar">' +
+                        '<i class="bi bi-x"></i>' +
+                    '</button>' +
+                    '<div class="inv-folder-icon-wrap">' +
+                        '<i class="bi bi-folder-fill"></i>' +
+                    '</div>' +
+                    '<div class="inv-folder-name">' + escHtml(cat.nombre) + '</div>' +
+                    '<div class="inv-folder-count">' + count + ' producto' + (count !== 1 ? 's' : '') + '</div>' +
+                '</div>' +
+            '</div>'
+        );
+    });
+
+    if (uncategorized > 0) {
+        container.append(
+            '<div class="col-xl-2 col-lg-3 col-md-4 col-6">' +
+                '<div class="inv-folder' + (activeVal === 'none' ? ' active' : '') + '" data-cat="none" data-folder>' +
+                    '<div class="inv-folder-icon-wrap muted">' +
+                        '<i class="bi bi-inbox"></i>' +
+                    '</div>' +
+                    '<div class="inv-folder-name">Sin Categoria</div>' +
+                    '<div class="inv-folder-count">' + uncategorized + ' producto' + (uncategorized !== 1 ? 's' : '') + '</div>' +
+                '</div>' +
+            '</div>'
+        );
+    }
+
+    initFolderDropZones();
+}
+
+// ── Drag-and-drop: products → folders ──
+function initProductDrag() {
+    document.querySelectorAll('#productosGrid .inv-card[draggable]').forEach(function(card) {
+        card.addEventListener('dragstart', function(e) {
+            e.dataTransfer.setData('text/plain', card.dataset.id);
+            e.dataTransfer.effectAllowed = 'move';
+            setTimeout(function() { card.classList.add('drag-ghost'); }, 0);
+        });
+        card.addEventListener('dragend', function() {
+            card.classList.remove('drag-ghost');
+            document.querySelectorAll('.inv-folder.drag-over').forEach(function(f) { f.classList.remove('drag-over'); });
+        });
+    });
+}
+
+function initFolderDropZones() {
+    document.querySelectorAll('#invCategoryFolders [data-folder]').forEach(function(folder) {
+        folder.addEventListener('dragenter', function(e) { e.preventDefault(); folder.classList.add('drag-over'); });
+        folder.addEventListener('dragover', function(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+        folder.addEventListener('dragleave', function(e) {
+            if (!folder.contains(e.relatedTarget)) folder.classList.remove('drag-over');
+        });
+        folder.addEventListener('drop', function(e) {
+            e.preventDefault();
+            folder.classList.remove('drag-over');
+            var productoId = e.dataTransfer.getData('text/plain');
+            if (!productoId) return;
+            var catId = folder.dataset.cat;
+            moverProductoACategoria(productoId, catId === '' || catId === 'none' ? null : catId);
+        });
+    });
+}
+
+// ── Cambiar categoria via selección (fallback para móvil) ──
+function cambiarCategoriaProducto(productoId, nombre, categoriaActualId) {
+    var opciones = { '': 'Sin Categoria' };
+    categoriasCache.forEach(function(c) { opciones[c.categoriaId] = c.nombre; });
+
+    var htmlOptions = '';
+    Object.keys(opciones).forEach(function(key) {
+        var selected = (key === categoriaActualId) ? ' selected' : '';
+        htmlOptions += '<option value="' + key + '"' + selected + '>' + escHtml(opciones[key]) + '</option>';
+    });
+
+    swalMG.fire({
+        title: 'Mover "' + escHtml(nombre) + '"',
+        html: '<label class="form-label fw-semibold text-start d-block">Selecciona la categoria</label>' +
+              '<select id="swalCatSelect" class="form-select">' + htmlOptions + '</select>',
+        showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-folder-symlink me-1"></i>Mover',
+        preConfirm: function() {
+            return document.getElementById('swalCatSelect').value;
+        }
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            var nuevaCat = result.value;
+            if (nuevaCat === categoriaActualId) { toastr.info('El producto ya esta en esa categoria'); return; }
+            moverProductoACategoria(productoId, nuevaCat || null);
+        }
+    });
+}
+
+function moverProductoACategoria(productoId, categoriaId) {
+    $.ajax({
+        url: '/Negocios/MoverProductoDeCategoria',
+        type: 'POST',
+        data: { productoId: productoId, negocioId: negocioId, categoriaId: categoriaId || '' },
+        success: function(r) {
+            if (r.success) {
+                toastr.success(r.message || 'Producto movido');
+                // Refresh all views sequentially to ensure fresh data
+                $.get('/Negocios/GetProductos', { negocioId: negocioId }, function(prods) {
+                    productosCache = prods;
+                    cargarInventarioCategorias();
+                    cargarProductosGrid();
+                    cargarPOS();
+                });
+            } else {
+                toastr.error(r.message || 'Error al mover producto');
+            }
+        },
+        error: function(xhr) {
+            console.error('MoverProducto failed:', xhr.status, xhr.responseText);
+            toastr.error('Error al mover producto');
+        }
+    });
+}
+
+function eliminarCategoria(id, nombre) {
+    swalMG.fire({
+        title: 'Eliminar categoria?',
+        text: 'Se eliminara "' + nombre + '". Los productos se moveran a "Sin Categoria".',
+        icon: 'warning', showCancelButton: true, confirmButtonColor: '#F1416C', confirmButtonText: 'Si, eliminar'
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            $.post('/Negocios/EliminarCategoria', { id, negocioId }, function(r) {
+                if (r.success) { toastr.success(r.message); cargarProductosGrid(); cargarInventarioCategorias(); cargarPOS(); }
+                else toastr.error(r.message);
+            }).fail(function() { toastr.error('Error al eliminar categoria'); });
+        }
+    });
+}
+
+function subirImagenProducto(productoId) {
+    var input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.jpg,.jpeg,.png,.webp';
+    input.onchange = function() {
+        if (!input.files[0]) return;
+        var formData = new FormData();
+        formData.append('productoId', productoId);
+        formData.append('negocioId', negocioId);
+        formData.append('imagen', input.files[0]);
+        $.ajax({
+            url: '/Negocios/SubirImagenProducto',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+            success: function(r) {
+                if (r.success) { toastr.success('Imagen subida'); cargarProductosGrid(); cargarPOS(); }
+                else toastr.error(r.message);
+            },
+            error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al subir imagen'); }
+        });
+    };
+    input.click();
+}
+
+function venderRapido(productoId) {
+    var stockEl = $('#stock-' + productoId);
+    var stockActual = parseInt(stockEl.text());
+    if (stockActual <= 0) { toastr.warning('No hay stock disponible'); return; }
+    var cardEl = stockEl.closest('.inv-card');
+    cardEl.addClass('inv-card-selling');
+    stockEl.text(parseInt(stockEl.text()) - 1);
+    $.post('/Negocios/VenderProducto', { productoId, negocioId, cantidad: 1 }, function(r) {
+        if (r.success) {
+            toastr.success(r.message);
+            cargarInventarioStats();
+            if (tablaMovimientos) tablaMovimientos.ajax.reload();
+            if (tablaLogs) tablaLogs.ajax.reload();
+            setTimeout(function() { cargarProductosGrid(); }, 300);
+        } else { toastr.error(r.message); cargarProductosGrid(); }
+    }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al vender'); cargarProductosGrid(); })
+      .always(function() { setTimeout(function() { cardEl.removeClass('inv-card-selling'); }, 300); });
+}
+
+function accionSubir(productoId, nombre, precio, stockActual) {
+    swalMG.fire({
+        title: escHtml(nombre),
+        html: '<p class="text-muted mb-0">Stock actual: <strong>' + stockActual + '</strong> | Precio: <strong>$' + precio.toFixed(2) + '</strong></p>',
+        icon: 'question', showCancelButton: true, showDenyButton: true,
+        confirmButtonText: '<i class="bi bi-arrow-return-left me-1"></i>Devolver Producto',
+        denyButtonText: '<i class="bi bi-pencil-square me-1"></i>Actualizar Inventario',
+        confirmButtonColor: '#FFC700', denyButtonColor: '#3E97FF'
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            swalMG.fire({
+                title: 'Devolver: ' + escHtml(nombre),
+                html: '<div class="text-start"><div class="mb-3"><label class="form-label fw-semibold">Cantidad a devolver</label><input type="number" id="swalDevCant" class="form-control" value="1" min="1"></div><div class="mb-3"><label class="form-label fw-semibold">Razon de la devolucion</label><textarea id="swalDevNota" class="form-control" rows="2" placeholder="Ej: Cliente cambio de opinion"></textarea></div></div>',
+                showCancelButton: true, confirmButtonText: '<i class="bi bi-check-lg me-1"></i>Confirmar Devolucion', confirmButtonColor: '#FFC700',
+                preConfirm: function() {
+                    var cant = parseInt(document.getElementById('swalDevCant').value);
+                    var nota = document.getElementById('swalDevNota').value.trim();
+                    if (!cant || cant <= 0) { Swal.showValidationMessage('Cantidad invalida'); return false; }
+                    if (!nota) { Swal.showValidationMessage('La razon es obligatoria'); return false; }
+                    return { cantidad: cant, nota: nota };
+                }
+            }).then(function(res) {
+                if (res.isConfirmed) {
+                    $.post('/Negocios/DevolverProducto', { productoId, negocioId, cantidad: res.value.cantidad, nota: res.value.nota }, function(r) {
+                        if (r.success) { toastr.success(r.message); cargarProductosGrid(); cargarInventarioStats(); if (tablaMovimientos) tablaMovimientos.ajax.reload(); if (tablaLogs) tablaLogs.ajax.reload(); }
+                        else { toastr.error(r.message); }
+                    }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al devolver'); });
+                }
+            });
+        } else if (result.isDenied) {
+            swalMG.fire({
+                title: 'Actualizar: ' + escHtml(nombre),
+                html: '<div class="text-start"><p class="text-muted">Stock en sistema: <strong>' + stockActual + '</strong></p><div class="mb-3"><label class="form-label fw-semibold">Stock real (contado)</label><input type="number" id="swalAjusteStock" class="form-control" min="0" placeholder="Cuantos tienes realmente?"></div><div class="mb-3"><label class="form-label fw-semibold">Nota</label><textarea id="swalAjusteNota" class="form-control" rows="2" placeholder="Ej: Reabastecimiento, conteo fisico"></textarea></div><div id="swalAjusteDiff"></div></div>',
+                showCancelButton: true, confirmButtonText: '<i class="bi bi-check-lg me-1"></i>Actualizar Stock',
+                didOpen: function() {
+                    document.getElementById('swalAjusteStock').addEventListener('input', function() {
+                        var real = parseInt(this.value), diffDiv = document.getElementById('swalAjusteDiff');
+                        if (isNaN(real)) { diffDiv.innerHTML = ''; return; }
+                        var diff = real - stockActual;
+                        if (diff === 0) diffDiv.innerHTML = '<div class="p-2 rounded bg-light text-center"><span class="text-muted fw-bold">Sin cambio</span></div>';
+                        else if (diff > 0) diffDiv.innerHTML = '<div class="p-2 rounded text-center" style="background:#E8FFF3"><span class="text-success fw-bold">+' + diff + ' unidades</span></div>';
+                        else diffDiv.innerHTML = '<div class="p-2 rounded text-center" style="background:#FFF5F8"><span class="text-danger fw-bold">' + diff + ' unidades (posible perdida)</span></div>';
+                    });
+                },
+                preConfirm: function() {
+                    var stockReal = parseInt(document.getElementById('swalAjusteStock').value);
+                    var nota = document.getElementById('swalAjusteNota').value.trim();
+                    if (isNaN(stockReal) || stockReal < 0) { Swal.showValidationMessage('Ingrese un stock valido'); return false; }
+                    if (!nota) { Swal.showValidationMessage('La nota es obligatoria'); return false; }
+                    if (stockReal === stockActual) { Swal.showValidationMessage('El stock es igual, no hay cambio'); return false; }
+                    return { stockReal: stockReal, nota: nota };
+                }
+            }).then(function(res) {
+                if (res.isConfirmed) {
+                    $.post('/Negocios/AjustarStock', { productoId, negocioId, stockReal: res.value.stockReal, nota: res.value.nota }, function(r) {
+                        if (r.success) { toastr.success(r.message); cargarProductosGrid(); cargarInventarioStats(); if (tablaMovimientos) tablaMovimientos.ajax.reload(); if (tablaLogs) tablaLogs.ajax.reload(); }
+                        else { toastr.error(r.message); }
+                    }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al ajustar'); });
+                }
+            });
+        }
+    });
+}
+
+function cargarTablaMovimientos() {
+    if (tablaMovimientos) tablaMovimientos.destroy();
+    tablaMovimientos = $('#movimientosTable').DataTable({
+        ajax: { url: '/Negocios/GetMovimientos', data: { negocioId }, dataSrc: '' },
+        columns: [
+            { data: 'fecha', render: function(d, type) { if (type === 'sort') return d; return new Date(d).toLocaleString('es-EC'); } },
+            { data: 'nombreProducto', render: function(d) { return escHtml(d); } },
+            { data: 'tipo', render: function(d) { return '<span class="badge ' + (tipoMovBadges[d] || 'bg-secondary') + '">' + (tipoMovLabels[d] || d) + '</span>'; } },
+            { data: 'cantidad' },
+            { data: 'total', render: function(d) { return '$' + d.toFixed(2); } },
+            { data: null, render: function(d, t, r) { return r.stockAnterior + ' -> ' + r.stockNuevo; } },
+            { data: 'nota', render: function(d) { return d ? '<small>' + escHtml(d) + '</small>' : '<span class="text-muted">-</span>'; } }
+        ],
+        order: [[0, 'desc']]
+    });
+}
+
+$('#btnToggleMovimientos').click(function() {
+    var section = $('#movimientosSection');
+    if (section.hasClass('d-none')) {
+        section.removeClass('d-none');
+        $(this).html('<i class="bi bi-clock-history me-2"></i>Ocultar Historial').removeClass('btn-outline-primary').addClass('btn-primary');
+        if (!tablaMovimientos) cargarTablaMovimientos();
+        else tablaMovimientos.ajax.reload();
+    } else {
+        section.addClass('d-none');
+        $(this).html('<i class="bi bi-clock-history me-2"></i>Historial').removeClass('btn-primary').addClass('btn-outline-primary');
+    }
+});
+
+$('#btnExportInventarioExcel').click(function() { window.location.href = '/Negocios/ExportInventarioExcel?negocioId=' + negocioId; });
+
+function poblarSelectCategorias(selectedId) {
+    var sel = $('#prodCategoria');
+    sel.empty().append('<option value="">Sin Categoria</option>');
+    categoriasCache.forEach(function(c) {
+        sel.append('<option value="' + c.categoriaId + '"' + (c.categoriaId === selectedId ? ' selected' : '') + '>' + escHtml(c.nombre) + '</option>');
+    });
+}
+
+$('#btnCrearProducto').click(function() {
+    modoEdicionProducto = false;
+    $('#productoModalTitle').text('Nuevo Producto');
+    $('#productoForm')[0].reset();
+    $('#prodId').val('');
+    $('#prodStockMinimo').val(5);
+    $('#prodStock').prop('readonly', false);
+    $('#prodMargenText').text('');
+    $('#prodImagen').val('');
+    $('#prodImagenPreview').empty();
+    $('#prodImagenGroup').show();
+    poblarSelectCategorias(null);
+    $('#productoModal').modal('show');
+});
+
+$('#prodPrecioVenta, #prodCostoCompra').on('input', function() {
+    var venta = parseFloat($('#prodPrecioVenta').val()) || 0;
+    var costo = parseFloat($('#prodCostoCompra').val()) || 0;
+    if (venta > 0 && costo > 0) {
+        var margen = venta - costo;
+        $('#prodMargenText').html('Margen por unidad: <strong class="' + (margen > 0 ? 'text-success' : 'text-danger') + '">$' + margen.toFixed(2) + '</strong>');
+    } else { $('#prodMargenText').text(''); }
+});
+
+function editarProducto(id) {
+    $.get('/Negocios/GetProducto', { id, negocioId }, function(data) {
+        modoEdicionProducto = true;
+        $('#productoModalTitle').text('Editar Producto');
+        $('#prodId').val(data.productoId);
+        $('#prodNombre').val(data.nombre);
+        $('#prodPrecioVenta').val(data.precioVenta);
+        $('#prodCostoCompra').val(data.costoCompra);
+        $('#prodStock').val(data.stock).prop('readonly', true);
+        $('#prodStockMinimo').val(data.stockMinimo);
+        $('#prodPrecioVenta').trigger('input');
+        $('#prodImagenGroup').hide();
+        $('#prodImagen').val('');
+        $('#prodImagenPreview').empty();
+        poblarSelectCategorias(data.categoriaProductoId);
+        $('#productoModal').modal('show');
+    }).fail(function() { toastr.error('Error al cargar producto'); });
+}
+
+$('#prodImagen').on('change', function() {
+    var file = this.files[0];
+    var preview = $('#prodImagenPreview');
+    preview.empty();
+    if (file) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            preview.html('<img src="' + e.target.result + '" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:2px solid var(--mg-border-color);">');
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+$('#btnGuardarProducto').click(function() {
+    if (!$('#productoForm')[0].checkValidity()) { $('#productoForm')[0].reportValidity(); return; }
+    var url = modoEdicionProducto ? '/Negocios/EditarProducto' : '/Negocios/CrearProducto';
+    var btn = $(this);
+    var originalHtml = btn.html();
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...');
+    $.post(url, $('#productoForm').serialize(), function(r) {
+        if (r.success) {
+            // If there's a new image and product was just created, upload it
+            var imageFile = document.getElementById('prodImagen').files[0];
+            var prodIdForImage = r.dataId || $('#prodId').val();
+            if (imageFile && prodIdForImage && !modoEdicionProducto) {
+                var formData = new FormData();
+                formData.append('productoId', prodIdForImage);
+                formData.append('negocioId', negocioId);
+                formData.append('imagen', imageFile);
+                $.ajax({
+                    url: '/Negocios/SubirImagenProducto',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+                    complete: function() {
+                        $('#productoModal').modal('hide');
+                        cargarProductosGrid(); cargarInventarioStats(); cargarPOS();
+                        if (tablaLogs) tablaLogs.ajax.reload();
+                        toastr.success(r.message);
+                    }
+                });
+            } else {
+                $('#productoModal').modal('hide');
+                cargarProductosGrid(); cargarInventarioStats(); cargarPOS();
+                if (tablaLogs) tablaLogs.ajax.reload();
+                toastr.success(r.message);
+            }
+        } else { toastr.error(r.message || 'Error al guardar'); }
+    }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al guardar producto'); })
+      .always(function() { btn.prop('disabled', false).html(originalHtml); });
+});
+
+function eliminarProducto(id, nombre) {
+    swalMG.fire({
+        title: 'Eliminar producto?', text: 'Se eliminara "' + nombre + '" del inventario.',
+        icon: 'warning', showCancelButton: true, confirmButtonColor: '#F1416C', confirmButtonText: 'Si, eliminar'
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            $.post('/Negocios/EliminarProducto', { id, negocioId }, function(r) {
+                if (r.success) { cargarProductosGrid(); cargarInventarioStats(); cargarPOS(); if (tablaLogs) tablaLogs.ajax.reload(); swalMG.fire('Eliminado', r.message, 'success'); }
+                else { swalMG.fire('Error', r.message, 'error'); }
+            }).fail(function(xhr) { swalMG.fire('Error', xhr.responseJSON?.message || 'Error', 'error'); });
+        }
+    });
+}
+
+// Categories management
+$('#btnCrearCategoria').on('click', function() {
+    swalMG.fire({
+        title: 'Nueva Categoria',
+        input: 'text',
+        inputPlaceholder: 'Nombre de la categoria',
+        showCancelButton: true,
+        confirmButtonText: 'Crear',
+        preConfirm: function(nombre) {
+            if (!nombre || !nombre.trim()) { Swal.showValidationMessage('El nombre es obligatorio'); return false; }
+            return nombre.trim();
+        }
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            $.post('/Negocios/CrearCategoria', { negocioId, nombre: result.value }, function(r) {
+                if (r.success) { toastr.success(r.message); cargarInventarioCategorias(); cargarPOS(); }
+                else toastr.error(r.message);
+            }).fail(function() { toastr.error('Error al crear categoria'); });
+        }
+    });
+});
+
+// ═══════════════ PROVEEDORES ═══════════════
+
+function cargarProveedores() {
+    if (tablaProveedores) { tablaProveedores.ajax.reload(); return; }
+    tablaProveedores = $('#proveedoresTable').DataTable({
+        ajax: { url: '/Negocios/GetClientesArtesanal', data: { negocioId }, dataSrc: '' },
+        columns: [
+            { data: 'nombre', render: function(d) { return '<strong>' + escHtml(d) + '</strong>'; } },
+            { data: 'apellido', render: function(d) { return escHtml(d || '-'); } },
+            { data: 'telefono', render: function(d) {
+                if (!d) return '<span class="text-muted">-</span>';
+                return escHtml(d) + ' <a href="https://wa.me/' + d.replace(/[^0-9]/g, '') + '" target="_blank" class="text-success ms-1" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>';
+            }},
+            { data: 'email', render: function(d) {
+                if (!d) return '<span class="text-muted">-</span>';
+                return '<a href="mailto:' + escAttr(d) + '">' + escHtml(d) + '</a>';
+            }},
+            { data: null, orderable: false, className: 'text-end', render: function(d, t, r) {
+                return '<button class="btn btn-sm btn-outline-primary me-1" onclick="editarProveedor(\'' + r.clienteId + '\')"><i class="bi bi-pencil"></i></button>' +
+                       '<button class="btn btn-sm btn-outline-danger" onclick="eliminarProveedor(\'' + r.clienteId + '\',\'' + escAttr(r.nombre) + '\')"><i class="bi bi-trash"></i></button>';
+            }}
+        ]
+    });
+}
+
+$('#btnNuevoProveedor').on('click', function() {
+    $('#proveedorModalTitle').text('Nuevo Proveedor');
+    $('#proveedorForm')[0].reset();
+    $('#provId').val('');
+    new bootstrap.Modal('#proveedorModal').show();
+});
+
+function editarProveedor(id) {
+    $.get('/Negocios/GetClienteArtesanal', { clienteId: id, negocioId }, function(data) {
+        $('#proveedorModalTitle').text('Editar Proveedor');
+        $('#provId').val(data.clienteId);
+        $('#provNombre').val(data.nombre);
+        $('#provApellido').val(data.apellido);
+        $('#provTelefono').val(data.telefono);
+        $('#provEmail').val(data.email);
+        new bootstrap.Modal('#proveedorModal').show();
+    }).fail(function() { toastr.error('Error al cargar proveedor'); });
+}
+
+$('#btnGuardarProveedor').on('click', function() {
+    var id = $('#provId').val();
+    var url = id ? '/Negocios/EditarClienteArtesanal' : '/Negocios/CrearClienteArtesanal';
+    var btn = $(this);
+    var originalHtml = btn.html();
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...');
+    $.post(url, $('#proveedorForm').serialize(), function(r) {
+        if (r.success) {
+            bootstrap.Modal.getInstance(document.getElementById('proveedorModal')).hide();
+            if (tablaProveedores) tablaProveedores.ajax.reload();
+            toastr.success(r.message || 'Proveedor guardado');
+        } else { toastr.error(r.message || 'Error al guardar'); }
+    }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al guardar proveedor'); })
+      .always(function() { btn.prop('disabled', false).html(originalHtml); });
+});
+
+function eliminarProveedor(id, nombre) {
+    swalMG.fire({
+        title: 'Eliminar proveedor?', text: 'Se eliminara "' + nombre + '".',
+        icon: 'warning', showCancelButton: true, confirmButtonColor: '#F1416C', confirmButtonText: 'Si, eliminar'
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            $.post('/Negocios/EliminarCliente', { id, negocioId }, function(r) {
+                if (r.success) { if (tablaProveedores) tablaProveedores.ajax.reload(); toastr.success('Proveedor eliminado'); }
+                else toastr.error(r.message);
+            }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error'); });
+        }
+    });
+}
+
+// ═══════════════ CATALOGO ═══════════════
+var currentCatEstilo = 'moderno';
+
+function cargarCatalogo() {
+    var url = '/Tienda/VerCatalogo?negocioId=' + negocioId + '&estilo=' + currentCatEstilo;
+    $('#catPreviewIframe').attr('src', url);
+    $('#catDescargarPdf').attr('href', '/Tienda/DescargarCatalogo?estilo=' + currentCatEstilo).attr('target', '_blank');
+    $('#catAbrirLink').attr('href', url);
+}
+
+$('.catEstiloBtn').on('click', function() {
+    $('.catEstiloBtn').removeClass('active');
+    $(this).addClass('active');
+    currentCatEstilo = $(this).data('style');
+    cargarCatalogo();
+});
+
+$('#btnEnviarCatWhatsapp').on('click', function() {
+    $('#catEnviarTitle').text('Enviar por WhatsApp');
+    $('#catDestinoLabel').html('Numero de WhatsApp <small class="text-muted fw-normal">(+593 automatico)</small>');
+    $('#catDestinoInput').attr('placeholder', 'Ej: 0989799891').attr('type', 'tel');
+    $('#catEnviarTipo').val('whatsapp');
+    new bootstrap.Modal('#catEnviarModal').show();
+});
+
+$('#btnEnviarCatEmail').on('click', function() {
+    $('#catEnviarTitle').text('Enviar por Email');
+    $('#catDestinoLabel').text('Correo Electronico');
+    $('#catDestinoInput').attr('placeholder', 'Ej: cliente@email.com').attr('type', 'email');
+    $('#catEnviarTipo').val('email');
+    new bootstrap.Modal('#catEnviarModal').show();
+});
+
+$('#btnConfirmarEnviarCat').on('click', function() {
+    var destino = $('#catDestinoInput').val().trim();
+    var tipo = $('#catEnviarTipo').val();
+    if (!destino) { toastr.warning('Ingresa un destino'); return; }
+    var btn = $(this);
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Enviando...');
+    $.post('/Tienda/EnviarCatalogo', { destino, tipo, estilo: currentCatEstilo }, function(r) {
+        if (r.success) {
+            bootstrap.Modal.getInstance(document.getElementById('catEnviarModal')).hide();
+            toastr.success(r.message);
+        } else toastr.error(r.message);
+    }).fail(function() { toastr.error('Error al enviar catalogo'); })
+      .always(function() { btn.prop('disabled', false).html('<i class="bi bi-send me-2"></i>Enviar'); });
+});
+
+// ═══════════════ LOGS (MOVIMIENTOS) ═══════════════
+function cargarTablaLogs() {
+    tablaLogs = $('#logsTable').DataTable({
+        ajax: { url: '/Negocios/GetLogs', data: { negocioId }, dataSrc: '' },
+        columns: [
+            { data: 'message', render: function(d) { return '<span class="text-truncate d-inline-block" style="max-width:250px" title="' + escHtml(d) + '">' + escHtml(d) + '</span>'; } },
+            { data: 'tipo', render: function(d) {
+                var cls = d === 'ingreso' || d === 'venta_tienda_pos' ? 'success' : d === 'gasto' ? 'danger' : 'info';
+                return '<span class="badge bg-light-' + cls + ' text-' + cls + '">' + escHtml(d) + '</span>';
+            }},
+            { data: 'nombreCliente', render: function(d) { return escHtml(d || '-'); } },
+            { data: 'monto', render: function(d) { return d >= 0 ? '<span class="text-success fw-bold">$' + d.toFixed(2) + '</span>' : '<span class="text-danger fw-bold">-$' + Math.abs(d).toFixed(2) + '</span>'; } },
+            { data: 'fecha', render: function(d) { return d ? new Date(d).toLocaleDateString('es-EC') + ' ' + new Date(d).toLocaleTimeString('es-EC', {hour:'2-digit',minute:'2-digit'}) : '-'; } }
+        ],
+        order: [[4, 'desc']]
+    });
+}
+
+$('#btnRegistrarLog').on('click', function() {
+    var desc = $('#logDescripcion').val(), monto = parseFloat($('#logMonto').val());
+    if (!desc || isNaN(monto)) { toastr.warning('Completa todos los campos'); return; }
+    $.post('/Negocios/CrearLog', { negocioId, message: desc, monto }, function(r) {
+        if (r.success) { toastr.success('Movimiento registrado'); $('#logDescripcion').val(''); $('#logMonto').val(''); tablaLogs.ajax.reload(); }
+        else toastr.error(r.message);
+    }).fail(function() { toastr.error('Error de conexion'); });
+});
+
+$('#btnExportLogsExcel').on('click', function() { window.location.href = '/Negocios/ExportLogsExcel?negocioId=' + negocioId; });
+
+// ═══════════════ VENTAS/REPORTES ═══════════════
+let chartBarVentas, chartResumen;
+
+function cargarVentasStats() {
+    $.get('/Negocios/GetLogs', { negocioId }, function(logs) {
+        var periodo = $('#ventasPeriodPills .mg-pill.active').data('periodo');
+        var now = new Date(), filtered;
+        if (periodo === 'dia') { filtered = logs.filter(function(l) { return new Date(l.fecha).toDateString() === now.toDateString(); }); }
+        else if (periodo === 'semana') { var w = new Date(now); w.setDate(w.getDate() - 7); filtered = logs.filter(function(l) { return new Date(l.fecha) >= w; }); }
+        else { filtered = logs.filter(function(l) { return new Date(l.fecha).getMonth() === now.getMonth() && new Date(l.fecha).getFullYear() === now.getFullYear(); }); }
+
+        var ingresos = filtered.filter(function(l) { return l.monto > 0; }).reduce(function(s,l) { return s + l.monto; }, 0);
+        var gastos = Math.abs(filtered.filter(function(l) { return l.monto < 0; }).reduce(function(s,l) { return s + l.monto; }, 0));
+        $('#ventasIngresos').text('$' + ingresos.toFixed(2));
+        $('#ventasGastos').text('$' + gastos.toFixed(2));
+        $('#ventasGanancia').text('$' + (ingresos - gastos).toFixed(2));
+
+        var labels = {dia:'del Dia', semana:'de la Semana', mes:'del Mes'};
+        $('#ventasIngresosLabel').text('Ingresos ' + labels[periodo]);
+        $('#ventasGastosLabel').text('Gastos ' + labels[periodo]);
+        $('#ventasGananciaLabel').text('Ganancia ' + labels[periodo]);
+    });
+}
+
+function cargarCharts() {
+    $.get('/Negocios/GetLogs', { negocioId }, function(logs) {
+        var meses = [], ingArr = [], gasArr = [];
+        for (var i = 5; i >= 0; i--) {
+            var d = new Date(); d.setMonth(d.getMonth() - i);
+            var m = d.toLocaleDateString('es-EC', {month:'short'}); meses.push(m);
+            var ml = logs.filter(function(l) { var ld = new Date(l.fecha); return ld.getMonth() === d.getMonth() && ld.getFullYear() === d.getFullYear(); });
+            ingArr.push(ml.filter(function(l) { return l.monto > 0; }).reduce(function(s,l) { return s + l.monto; }, 0));
+            gasArr.push(Math.abs(ml.filter(function(l) { return l.monto < 0; }).reduce(function(s,l) { return s + l.monto; }, 0)));
+        }
+        if (chartBarVentas) chartBarVentas.destroy();
+        chartBarVentas = new ApexCharts(document.querySelector('#chartBarVentas'), {
+            chart: { type: 'bar', height: 300 }, series: [{ name: 'Ingresos', data: ingArr },{ name: 'Gastos', data: gasArr }],
+            xaxis: { categories: meses }, colors: ['#50CD89','#F1416C'], plotOptions: { bar: { borderRadius: 4 } }
+        });
+        chartBarVentas.render();
+        actualizarDonut(logs);
+    });
+}
+
+function actualizarDonut(logs) {
+    var periodo = $('#ventasPeriodPills .mg-pill.active').data('periodo');
+    var now = new Date(), filtered;
+    if (periodo === 'dia') { filtered = logs.filter(function(l) { return new Date(l.fecha).toDateString() === now.toDateString(); }); }
+    else if (periodo === 'semana') { var w = new Date(now); w.setDate(w.getDate() - 7); filtered = logs.filter(function(l) { return new Date(l.fecha) >= w; }); }
+    else { filtered = logs.filter(function(l) { return new Date(l.fecha).getMonth() === now.getMonth() && new Date(l.fecha).getFullYear() === now.getFullYear(); }); }
+
+    var ing = filtered.filter(function(l) { return l.monto > 0; }).reduce(function(s,l) { return s + l.monto; }, 0);
+    var gas = Math.abs(filtered.filter(function(l) { return l.monto < 0; }).reduce(function(s,l) { return s + l.monto; }, 0));
+    var labels = {dia:'del Dia', semana:'de la Semana', mes:'del Mes'};
+    $('#chartResumenTitle').text('Resumen ' + labels[periodo]);
+
+    if (chartResumen) chartResumen.destroy();
+    $('#chartResumen').empty();
+    if (ing === 0 && gas === 0) {
+        $('#chartResumen').html('<div class="text-center py-5 text-muted"><i class="bi bi-pie-chart fs-1 d-block mb-2"></i>Sin datos para este periodo</div>');
+        chartResumen = null;
+        return;
+    }
+    chartResumen = new ApexCharts(document.querySelector('#chartResumen'), {
+        chart: { type: 'donut', height: 300 },
+        series: [ing, gas],
+        labels: ['Ingresos','Gastos'],
+        colors: ['#50CD89','#F1416C'],
+        plotOptions: { pie: { donut: { labels: { show: true, total: { show: true, label: 'Ganancia', formatter: function() { return '$' + (ing - gas).toFixed(2); } } } } } }
+    });
+    chartResumen.render();
+}
+
+$('#ventasPeriodPills').on('click', '.mg-pill', function() {
+    $('#ventasPeriodPills .mg-pill').removeClass('active');
+    $(this).addClass('active');
+    cargarVentasStats();
+    $.get('/Negocios/GetLogs', { negocioId }, function(logs) { actualizarDonut(logs); });
+});
+
+// ═══════════════ NOTIFICACIONES ═══════════════
+function cargarNotificacionesCount() {
+    $.get('/Negocios/GetNotificacionesCount', { negocioId }, function(d) {
+        var count = d.count || d;
+        if (count > 0) { $('#sidebarNotifBadge, #topbarNotifBadge').text(count).removeClass('d-none'); }
+        else { $('#sidebarNotifBadge, #topbarNotifBadge').addClass('d-none'); }
+    });
+}
+
+function cargarNotificacionesTab() {
+    $.get('/Negocios/GetNotificaciones', { negocioId }, function(data) {
+        var list = $('#notificacionesList');
+        list.empty();
+        if (!data.length) { list.html('<div class="text-center py-5 text-muted"><i class="bi bi-bell-slash fs-1 d-block mb-3"></i><p>No hay notificaciones</p></div>'); return; }
+        data.forEach(function(n) {
+            list.append('<div class="mg-card ' + (n.leida ? 'opacity-50' : '') + '"><div class="card-body py-2 d-flex align-items-center gap-3">' +
+                '<i class="bi bi-bell' + (n.leida ? '' : '-fill') + ' ' + (n.leida ? 'text-muted' : 'text-warning') + '"></i>' +
+                '<div class="flex-grow-1"><p class="mb-0 small">' + escHtml(n.mensaje) + '</p><small class="text-muted">' + new Date(n.fechaCreacion).toLocaleDateString('es-EC') + '</small></div>' +
+                (!n.leida ? '<button class="btn btn-sm btn-outline-primary" onclick="marcarLeida(\'' + n.id + '\')"><i class="bi bi-check"></i></button>' : '') +
+            '</div></div>');
+        });
+    });
+}
+
+function marcarLeida(id) {
+    $.post('/Negocios/MarcarNotificacionLeida', { id, negocioId }, function() { cargarNotificacionesTab(); cargarNotificacionesCount(); });
+}
+
+$('#btnMarcarTodasLeidasTab').on('click', function() {
+    $.post('/Negocios/MarcarTodasNotificacionesLeidas', { negocioId }, function() { cargarNotificacionesTab(); cargarNotificacionesCount(); toastr.success('Todas marcadas como leidas'); });
+});
+
+// ═══════════════ SUGERENCIAS ═══════════════
+$('#sugerenciaTexto').on('input', function() { $('#sugerenciaCount').text($(this).val().length); });
+$('#btnEnviarSugerencia').on('click', function() {
+    var texto = $('#sugerenciaTexto').val();
+    if (!texto) { toastr.warning('Escribe una sugerencia'); return; }
+    $.post('/Negocios/EnviarSugerencia', { negocioId, mensaje: texto }, function(r) {
+        if (r.success) { toastr.success('Sugerencia enviada'); $('#sugerenciaTexto').val(''); $('#sugerenciaCount').text('0'); }
+        else toastr.error(r.message);
+    }).fail(function() { toastr.error('Error de conexion'); });
+});
+
+// ═══════════════ RECIBOS ═══════════════
+function cargarRecibos() {
+    if (tablaRecibos) { tablaRecibos.ajax.reload(); return; }
+    tablaRecibos = $('#tablaRecibos').DataTable({
+        ajax: { url: '/Negocios/GetRecibos', data: { negocioId }, dataSrc: '' },
+        columns: [
+            { data: 'numeroRecibo', render: function(d) { return '<span class="badge bg-primary">#' + d + '</span>'; } },
+            { data: 'destinatarioNombre' },
+            { data: 'concepto', render: function(d) { return d && d.length > 40 ? d.substring(0,40)+'...' : d; } },
+            { data: 'monto', render: function(d) { return '$' + parseFloat(d).toFixed(2); } },
+            { data: 'fechaCreacion', render: function(d) { return new Date(d).toLocaleDateString('es-EC'); } },
+            { data: null, orderable: false, render: function(d,t,r) { return '<button class="btn btn-sm btn-outline-primary" onclick="verRecibo(\'' + r.reciboId + '\')"><i class="bi bi-eye"></i></button>'; } }
+        ],
+        order: [[4, 'desc']],
+        responsive: true
+    });
+}
+
+function verRecibo(reciboId) {
+    $.get('/Negocios/GetRecibo', { reciboId, negocioId }, function(r) {
+        if (r) {
+            $('#reciboModalNumero').text(r.numeroRecibo);
+            document.getElementById('reciboIframe').srcdoc = r.contenidoHtml;
+            new bootstrap.Modal('#reciboModal').show();
+        }
+    });
+}
+
+$('#buscarReciboInput').on('keypress', function(e) {
+    if (e.which === 13) {
+        var num = parseInt($(this).val());
+        if (!num || num < 1) return;
+        $.get('/Negocios/BuscarRecibo', { numero: num, negocioId }, function(r) {
+            if (r) {
+                $('#reciboModalNumero').text(r.numeroRecibo);
+                document.getElementById('reciboIframe').srcdoc = r.contenidoHtml;
+                new bootstrap.Modal('#reciboModal').show();
+            } else { toastr.warning('No se encontro el recibo #' + num); }
+        });
+    }
+});
+
+$('#btnExportRecibos').on('click', function() {
+    var now = new Date();
+    window.location.href = '/Negocios/ExportRecibosExcel?negocioId=' + negocioId + '&anio=' + now.getFullYear() + '&mes=' + (now.getMonth()+1);
+});
+
+function verificarCleanupRecibos() {
+    $.get('/Negocios/GetFechaReciboMasAntiguo', { negocioId }, function(r) {
+        if (r.fecha) {
+            var dias = Math.floor((new Date() - new Date(r.fecha)) / (1000*60*60*24));
+            if (dias > 30) { $('#recibosCleanupBanner').removeClass('d-none'); }
+            else { $('#recibosCleanupBanner').addClass('d-none'); }
+        }
+    });
+}
+
+$('#btnExportarYLimpiar').on('click', function() {
+    swalMG.fire({
+        title: 'Exportar y limpiar recibos',
+        text: 'Se exportaran los recibos del mes y se eliminaran los mayores a 30 dias.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Si, exportar y limpiar'
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            var now = new Date();
+            window.location.href = '/Negocios/ExportRecibosExcel?negocioId=' + negocioId + '&anio=' + now.getFullYear() + '&mes=' + (now.getMonth()+1);
+            var hace30 = new Date();
+            hace30.setDate(hace30.getDate() - 30);
+            setTimeout(function() {
+                $.post('/Negocios/EliminarRecibosAntiguos', { negocioId, anteriorA: hace30.toISOString() }, function(r) {
+                    if (r.success) {
+                        toastr.success(r.eliminados + ' recibos antiguos eliminados');
+                        if (tablaRecibos) tablaRecibos.ajax.reload();
+                        $('#recibosCleanupBanner').addClass('d-none');
+                    }
+                });
+            }, 2000);
+        }
+    });
+});
+
+// ═══════════════ TAB SWITCHING ═══════════════
+document.addEventListener('mg-tab-shown', function(e) {
+    var tab = e.detail.tab;
+    if (tab === 'posTab') { cargarPOS(); }
+    else if (tab === 'inventarioTab') { cargarInventarioCategorias(); cargarProductosGrid(); cargarInventarioStats(); }
+    else if (tab === 'proveedoresTab') { cargarProveedores(); }
+    else if (tab === 'catalogoTab') { cargarCatalogo(); }
+    else if (tab === 'logsTab') { if (!tablaLogs) cargarTablaLogs(); }
+    else if (tab === 'ventasTab') { cargarVentasStats(); cargarCharts(); }
+    else if (tab === 'recibosTab') { cargarRecibos(); verificarCleanupRecibos(); }
+    else if (tab === 'notificacionesTab') { cargarNotificacionesTab(); }
+});
+
+</script>
+}

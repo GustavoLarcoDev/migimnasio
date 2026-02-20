@@ -62,4 +62,10 @@ public interface IEmailService
     Task<bool> EnviarRecordatorioCitaEmpleadoAsync(string destinatario, string nombreEmpleado,
         string nombreCliente, string nombreNegocio, string nombreServicio, DateTime fechaHora,
         string? emailNegocio, string? telefonoNegocio);
+
+    // Envío del Catálogo de la Tienda (por email)
+    Task<bool> EnviarCatalogoTiendaAsync(string destinatario, string nombreNegocio, byte[] pdfBytes);
+
+    // Envío genérico de recibo HTML (Tienda POS)
+    Task<bool> EnviarReciboPorEmailGenericoAsync(string destinatario, string asunto, string contenidoHtml);
 }

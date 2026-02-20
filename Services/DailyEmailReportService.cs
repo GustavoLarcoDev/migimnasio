@@ -201,9 +201,15 @@ public class DailyEmailReportService : BackgroundService
                             context, emailService, negocio.NegocioId, negocio.NegocioNombre,
                             negocio.DuenoNegocio, negocio.Email, hoy, stoppingToken);
                     }
+                    else if (negocio.TipoNegocio == "tienda")
+                    {
+                        // Tiendas reutilizan el formato de membresías (ingresos/gastos del día)
+                        resultado = await EnviarReporteMembresiaAsync(
+                            context, emailService, negocio.NegocioId, negocio.NegocioNombre,
+                            negocio.DuenoNegocio, negocio.Email, hoy, stoppingToken);
+                    }
                     else
                     {
-                        // Default: tipo "membresias"
                         resultado = await EnviarReporteMembresiaAsync(
                             context, emailService, negocio.NegocioId, negocio.NegocioNombre,
                             negocio.DuenoNegocio, negocio.Email, hoy, stoppingToken);

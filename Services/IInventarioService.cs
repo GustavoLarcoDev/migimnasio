@@ -55,7 +55,7 @@ public interface IInventarioService
     ///   - El stock inicial no puede ser negativo
     /// Registra un log de tipo "producto_creado" al finalizar.
     /// </summary>
-    Task<(bool success, string message)> CrearProductoAsync(ProductoCreateDto model);
+    Task<(bool success, string message, Guid? dataId)> CrearProductoAsync(ProductoCreateDto model);
 
     /// <summary>
     /// Edita un producto existente.
@@ -74,6 +74,42 @@ public interface IInventarioService
     /// Registra un log con el stock restante al momento de la eliminación.
     /// </summary>
     Task<(bool success, string message)> EliminarProductoAsync(Guid id, Guid negocioId);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // GESTIÓN DE CATEGORÍAS (MODELO TIENDA)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Obtiene las categorías de un negocio ordenadas según el campo Orden.
+    /// Incluye los productos activos asociados a cada categoría para pintar las Pestañas (Tabs).
+    /// </summary>
+    Task<List<CategoriaProducto>> GetCategoriasAsync(Guid negocioId);
+
+    /// <summary>
+    /// Crea una nueva categoría.
+    /// </summary>
+    Task<(bool success, string message)> CrearCategoriaAsync(Guid negocioId, string nombre);
+
+    /// <summary>
+    /// Elimina una categoría. Sus productos quedan huérfanos (CategoriaProductoId = null) pero no se eliminan.
+    /// </summary>
+    Task<(bool success, string message)> EliminarCategoriaAsync(Guid categoriaId, Guid negocioId);
+
+    /// <summary>
+    /// Reordena de forma masiva las categorías basándose en un array de IDs en un nuevo orden.
+    /// Utilizado en Drag And Drop de "Tabs".
+    /// </summary>
+    Task<(bool success, string message)> ReordenarCategoriasAsync(Guid negocioId, List<Guid> categoriasOrdenadasIds);
+
+    /// <summary>
+    /// Mueve un producto específico a una categoría nueva o a los productos "Sin Categorizar" (null).
+    /// </summary>
+    Task<(bool success, string message)> MoverProductoDeCategoriaAsync(Guid productoId, Guid negocioId, Guid? nuevaCategoriaId);
+
+    /// <summary>
+    /// Actualiza la ImagenUrl de un Producto.
+    /// </summary>
+    Task<(bool success, string message)> CambiarImagenProductoAsync(Guid productoId, Guid negocioId, string urlImagen);
 
     // ═══════════════════════════════════════════════════════════════════════
     // MOVIMIENTOS DE INVENTARIO

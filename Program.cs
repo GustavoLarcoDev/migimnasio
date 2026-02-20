@@ -158,6 +158,11 @@ builder.Services.AddScoped<IEmpleadoService, EmpleadoService>();
 // Agenda de citas: crear, mover, cancelar, confirmar, cobrar
 builder.Services.AddScoped<ICitaService, CitaService>();
 
+// ── Modelo Tienda (POS / Catálogo) ──────────────────────────
+// Punto de venta con órdenes, detalles, recibos y catálogo público.
+builder.Services.AddScoped<IVentaProductoService, VentaProductoService>();
+builder.Services.AddScoped<ICatalogoService, CatalogoService>();
+
 // ═══════════════════════════════════════════════════════════
 // SECCIÓN 4 — CLIENTE HTTP (HttpClientFactory)
 //
@@ -209,6 +214,11 @@ builder.Services.AddControllersWithViews(options =>
     // deje los endpoints sin protección. Usar [IgnoreAntiforgeryToken]
     // en endpoints específicos si es necesario para testing.
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+}).AddJsonOptions(jsonOpts =>
+{
+    // Evitar errores 500 por referencias circulares en navigation properties
+    // (ej: CategoriaProducto → Productos → Producto.Categoria → ciclo infinito)
+    jsonOpts.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -442,7 +452,7 @@ app.Use(async (context, next) =>
 
     // Impide que la app se incruste en un <iframe> de otro
     // sitio, previniendo ataques de clickjacking
-    context.Response.Headers["X-Frame-Options"] = "DENY";
+    context.Response.Headers["X-Frame-Options"] = "SAMEORIGIN";
 
     // Activa el filtro XSS del browser (modo bloqueo).
     // Principalmente para browsers antiguos; los modernos
@@ -483,8 +493,8 @@ app.Use(async (context, next) =>
         // Fetch/XHR: self + CDNs de DataTables (para carga lazy de datos)
         "connect-src 'self' https://cdn.datatables.net https://cdn.jsdelivr.net; " +
 
-        // Nadie puede incrustar esta app en un frame (refuerza X-Frame-Options)
-        "frame-ancestors 'none';";
+        // Solo el propio dominio puede incrustar la app en iframes (catálogo, recibos)
+        "frame-ancestors 'self';";
 
     // Pasar el control al siguiente middleware en el pipeline
     await next();

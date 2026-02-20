@@ -79,7 +79,9 @@ public class InventarioService : IInventarioService
                 // MargenUnitario: cuánto gana el negocio por cada unidad vendida
                 MargenUnitario = p.PrecioVenta - p.CostoCompra,
                 // StockBajo: true cuando hay que reordenar mercancía (llega al límite mínimo)
-                StockBajo = p.Stock <= p.StockMinimo
+                StockBajo = p.Stock <= p.StockMinimo,
+                CategoriaProductoId = p.CategoriaProductoId,
+                p.ImagenUrl
             })
             .ToListAsync();
     }
@@ -102,17 +104,17 @@ public class InventarioService : IInventarioService
     /// que los mensajes de error lleguen exactamente como están escritos aquí
     /// al usuario final sin necesidad de configurar atributos de anotación de datos.
     /// </summary>
-    public async Task<(bool success, string message)> CrearProductoAsync(ProductoCreateDto model)
+    public async Task<(bool success, string message, Guid? dataId)> CrearProductoAsync(ProductoCreateDto model)
     {
         // Validaciones de negocio — no dependen de la base de datos, son rápidas
         if (string.IsNullOrWhiteSpace(model.Nombre))
-            return (false, "El nombre del producto es obligatorio");
+            return (false, "El nombre del producto es obligatorio", null);
         if (model.PrecioVenta <= 0)
-            return (false, "El precio de venta debe ser mayor a 0");
+            return (false, "El precio de venta debe ser mayor a 0", null);
         if (model.CostoCompra <= 0)
-            return (false, "El costo de compra debe ser mayor a 0");
+            return (false, "El costo de compra debe ser mayor a 0", null);
         if (model.Stock < 0)
-            return (false, "El stock no puede ser negativo");
+            return (false, "El stock no puede ser negativo", null);
 
         var producto = new Producto
         {
@@ -124,7 +126,9 @@ public class InventarioService : IInventarioService
             Stock             = model.Stock,
             StockMinimo       = model.StockMinimo,
             FechaCreacion     = TimeHelper.Now,
-            FechaDeActualizacion = TimeHelper.Now
+            FechaDeActualizacion = TimeHelper.Now,
+            CategoriaProductoId = model.CategoriaProductoId == Guid.Empty ? null : model.CategoriaProductoId,
+            ImagenUrl = null
         };
 
         _context.Productos.Add(producto);
@@ -136,7 +140,7 @@ public class InventarioService : IInventarioService
             $"Producto creado: {model.Nombre}, stock inicial: {model.Stock}, precio: ${model.PrecioVenta:F2}, costo: ${model.CostoCompra:F2}",
             0);
 
-        return (true, "Producto creado exitosamente");
+        return (true, "Producto creado exitosamente", producto.ProductoId);
     }
 
     /// <summary>
@@ -169,6 +173,10 @@ public class InventarioService : IInventarioService
         if (producto.StockMinimo != model.StockMinimo)
             cambios.Add($"stock mínimo: {producto.StockMinimo} → {model.StockMinimo}");
 
+        var nuevaCat = model.CategoriaProductoId == Guid.Empty ? null : model.CategoriaProductoId;
+        if (producto.CategoriaProductoId != nuevaCat)
+            cambios.Add("categoría actualizada");
+
         // Si no hubo cambios reales, no vale la pena escribir en la base de datos
         if (cambios.Count == 0)
             return (false, "No se detectaron cambios");
@@ -180,6 +188,7 @@ public class InventarioService : IInventarioService
         producto.PrecioVenta         = model.PrecioVenta;
         producto.CostoCompra         = model.CostoCompra;
         producto.StockMinimo         = model.StockMinimo;
+        producto.CategoriaProductoId = nuevaCat;
         producto.FechaDeActualizacion = TimeHelper.Now;
 
         _context.Update(producto);
@@ -726,5 +735,102 @@ public class InventarioService : IInventarioService
         using var stream = new MemoryStream();
         workbook.SaveAs(stream);
         return stream.ToArray();
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // GESTIÓN DE CATEGORÍAS (MODELO TIENDA)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    public async Task<List<CategoriaProducto>> GetCategoriasAsync(Guid negocioId)
+    {
+        return await _context.CategoriasProducto
+            .Include(c => c.Productos.Where(p => p.IsActive))
+            .Where(c => c.NegocioId == negocioId)
+            .OrderBy(c => c.Orden)
+            .ToListAsync();
+    }
+
+    public async Task<(bool success, string message)> CrearCategoriaAsync(Guid negocioId, string nombre)
+    {
+        if (string.IsNullOrWhiteSpace(nombre)) return (false, "El nombre de la categoría es requerido.");
+
+        var currentMaxOrder = await _context.CategoriasProducto
+            .Where(c => c.NegocioId == negocioId)
+            .MaxAsync(c => (int?)c.Orden) ?? 0;
+
+        var cat = new CategoriaProducto
+        {
+            CategoriaId = Guid.NewGuid(),
+            NegocioId = negocioId,
+            Nombre = nombre.Trim(),
+            Orden = currentMaxOrder + 1,
+            FechaCreacion = TimeHelper.Now
+        };
+        
+        _context.CategoriasProducto.Add(cat);
+        await _context.SaveChangesAsync();
+        return (true, "Categoría creada exitosamente");
+    }
+
+    public async Task<(bool success, string message)> EliminarCategoriaAsync(Guid categoriaId, Guid negocioId)
+    {
+        var categoria = await _context.CategoriasProducto
+            .Include(c => c.Productos)
+            .FirstOrDefaultAsync(c => c.CategoriaId == categoriaId && c.NegocioId == negocioId);
+
+        if (categoria == null) return (false, "Categoría no encontrada.");
+
+        foreach (var prod in categoria.Productos)
+        {
+            prod.CategoriaProductoId = null;
+        }
+
+        _context.CategoriasProducto.Remove(categoria);
+        await _context.SaveChangesAsync();
+        return (true, "Categoría eliminada. Los productos han sido des-asignados.");
+    }
+
+    public async Task<(bool success, string message)> ReordenarCategoriasAsync(Guid negocioId, List<Guid> categoriasOrdenadasIds)
+    {
+        var categorias = await _context.CategoriasProducto
+            .Where(c => c.NegocioId == negocioId && categoriasOrdenadasIds.Contains(c.CategoriaId))
+            .ToListAsync();
+
+        for (int i = 0; i < categoriasOrdenadasIds.Count; i++)
+        {
+            var cid = categoriasOrdenadasIds[i];
+            var cat = categorias.FirstOrDefault(c => c.CategoriaId == cid);
+            if (cat != null) cat.Orden = i + 1;
+        }
+        await _context.SaveChangesAsync();
+        return (true, "Categorías re-ordenadas.");
+    }
+
+    public async Task<(bool success, string message)> MoverProductoDeCategoriaAsync(Guid productoId, Guid negocioId, Guid? nuevaCategoriaId)
+    {
+        var prod = await _context.Productos.FirstOrDefaultAsync(p => p.ProductoId == productoId && p.NegocioId == negocioId);
+        if (prod == null) return (false, "Producto no encontrado.");
+
+        if (nuevaCategoriaId.HasValue)
+        {
+            var catExists = await _context.CategoriasProducto.AnyAsync(c => c.CategoriaId == nuevaCategoriaId.Value && c.NegocioId == negocioId);
+            if (!catExists) return (false, "La categoría destino no existe.");
+        }
+
+        prod.CategoriaProductoId = nuevaCategoriaId;
+        prod.FechaDeActualizacion = TimeHelper.Now;
+        await _context.SaveChangesAsync();
+        return (true, "Producto re-categorizado.");
+    }
+
+    public async Task<(bool success, string message)> CambiarImagenProductoAsync(Guid productoId, Guid negocioId, string urlImagen)
+    {
+        var prod = await _context.Productos.FirstOrDefaultAsync(p => p.ProductoId == productoId && p.NegocioId == negocioId);
+        if (prod == null) return (false, "Producto no encontrado.");
+
+        prod.ImagenUrl = urlImagen;
+        prod.FechaDeActualizacion = TimeHelper.Now;
+        await _context.SaveChangesAsync();
+        return (true, "Imagen del producto actualizada.");
     }
 }

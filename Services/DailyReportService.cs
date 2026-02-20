@@ -152,7 +152,7 @@ public class DailyReportService : BackgroundService
             // Solo procesar negocios activos de tipo membresías.
             // Los artesanales (peluquerías, spas) manejan citas, no membresías.
             var negociosActivos = await context.Negocios
-                .Where(n => n.IsActive && n.TipoNegocio != "artesanal")
+                .Where(n => n.IsActive && n.TipoNegocio == "membresias")
                 .ToListAsync(stoppingToken);
 
             _logger.LogInformation(

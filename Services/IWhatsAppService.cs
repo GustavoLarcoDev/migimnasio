@@ -99,4 +99,12 @@ public interface IWhatsAppService
     /// <param name="hora">Hora de la cita</param>
     /// <param name="nombreEmpleado">Nombre del empleado que realizará el servicio</param>
     Task<bool> EnviarRecordatorioCitaNegocioAsync(string telefono, string nombreDueno, string nombreServicio, string hora, string nombreEmpleado);
+
+    /// <summary>
+    /// Envía el link del Catálogo de la Tienda al cliente vía WhatsApp.
+    /// </summary>
+    /// <param name="telefono">Número del cliente</param>
+    /// <param name="nombreNegocio">Nombre comercial de la tienda</param>
+    /// <param name="linkCatalogo">URL pública para descargar/ver el PDF del catálogo</param>
+    Task<bool> EnviarLinkCatalogoTiendaAsync(string telefono, string nombreNegocio, string linkCatalogo);
 }
