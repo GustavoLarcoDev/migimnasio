@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Gimnasio.Data;
 using Microsoft.EntityFrameworkCore;
+using Gimnasio.Models;
 
 namespace Gimnasio.Controllers;
 
@@ -36,19 +37,19 @@ public class ClientesController : Controller
     // ── Dependencias inyectadas por el constructor ────────────────────────────
     // ASP.NET Core se encarga de crear estas instancias automáticamente
     // (Dependency Injection). Nunca se instancian con "new" aquí.
-    private readonly IClienteService _clienteService;   // Lógica de negocio de clientes
-    private readonly IAuthService _authService;         // Utilidades de autenticación (leer claims del usuario)
-    private readonly ApplicationDbContext _context;     // Acceso directo a la base de datos (EF Core)
+    private readonly IClienteService _clienteService;
+    private readonly IAuthService _authService;
+    private readonly ApplicationDbContext _context;
+    private readonly IEmailService _emailService;
+    private readonly IReciboService _reciboService;
 
-    /// <summary>
-    /// Constructor: recibe las dependencias registradas en Program.cs
-    /// mediante inyección de dependencias.
-    /// </summary>
-    public ClientesController(IClienteService clienteService, IAuthService authService, ApplicationDbContext context)
+    public ClientesController(IClienteService clienteService, IAuthService authService, ApplicationDbContext context, IEmailService emailService, IReciboService reciboService)
     {
         _clienteService = clienteService;
         _authService = authService;
         _context = context;
+        _emailService = emailService;
+        _reciboService = reciboService;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -321,6 +322,17 @@ public class ClientesController : Controller
     {
         try
         {
+            // Validar el modelo (ej: StringLength, Required) antes de procesar.
+            // Sin esta verificación, datos inválidos llegan al servicio y causan HTTP 500.
+            if (!ModelState.IsValid)
+            {
+                var firstError = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .FirstOrDefault() ?? "Datos inválidos";
+                return BadRequest(new { success = false, message = firstError });
+            }
+
             // El NegocioId viene dentro del DTO (campo oculto en el formulario HTML).
             // Lo comparamos con el del claim de sesión para evitar que alguien
             // manipule el formulario y cree clientes en un negocio ajeno.
@@ -335,6 +347,28 @@ public class ClientesController : Controller
 
             if (!success)
                 return BadRequest(new { success = false, message });
+
+            // Enviar recibo al cliente si tiene email registrado y guardar en BD
+            if (!string.IsNullOrWhiteSpace(model.Email))
+            {
+                var negocio = await _context.Negocios.FindAsync(model.NegocioId);
+                if (negocio != null)
+                {
+                    var concepto = $"Membresía x{model.Dias} días";
+                    var nombreCompleto = $"{model.Nombre} {model.Apellido}";
+                    try
+                    {
+                        var numRecibo = await _reciboService.ObtenerSiguienteNumeroAsync(model.NegocioId);
+                        var (enviado, html) = await _emailService.EnviarReciboPagoClienteAsync(
+                            model.Email, nombreCompleto, negocio.NegocioNombre,
+                            concepto, model.Precio, model.Dias,
+                            negocio.Email, negocio.Telefono, numRecibo);
+                        await _reciboService.CrearReciboAsync(model.NegocioId, numRecibo, "pago_cliente",
+                            model.Email, nombreCompleto, negocio.NegocioNombre, concepto, model.Precio, html);
+                    }
+                    catch { }
+                }
+            }
 
             return Ok(new { success = true, message });
         }
@@ -447,12 +481,31 @@ public class ClientesController : Controller
 
             if (!success)
             {
-                // Distinguir 404 (cliente no existe) de 400 (error de negocio,
-                // ej: fecha inválida, membresía ya vigente por más tiempo, etc.)
                 if (message.Contains("no encontrado"))
                     return NotFound(new { success = false, message });
                 return BadRequest(new { success = false, message });
             }
+
+            // Enviar recibo de renovación y guardarlo en BD
+            try
+            {
+                var cliente = await _context.Clientes.FindAsync(id);
+                var negocio = await _context.Negocios.FindAsync(negocioId);
+                if (cliente != null && negocio != null && !string.IsNullOrWhiteSpace(cliente.Email))
+                {
+                    var dias = (int)(nuevaFechaFin.Date - TimeHelper.Now.Date).TotalDays;
+                    if (dias < 1) dias = 1;
+                    var concepto = $"Renovación membresía x{dias} días";
+                    var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
+                    var numRecibo = await _reciboService.ObtenerSiguienteNumeroAsync(negocioId);
+                    var (enviado, html) = await _emailService.EnviarReciboPagoClienteAsync(
+                        cliente.Email, nombreCompleto, negocio.NegocioNombre,
+                        concepto, precio, dias, negocio.Email, negocio.Telefono, numRecibo);
+                    await _reciboService.CrearReciboAsync(negocioId, numRecibo, "pago_cliente",
+                        cliente.Email, nombreCompleto, negocio.NegocioNombre, concepto, precio, html);
+                }
+            }
+            catch { }
 
             return Ok(new { success = true, message });
         }
@@ -597,6 +650,116 @@ public class ClientesController : Controller
             // El resultado incluye cuántos clientes se importaron, cuántos se omitieron
             // por ser duplicados, y posibles mensajes de error por fila.
             return Ok(result);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // SECCIÓN 7 — RECIBOS
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    [HttpGet("GetRecibos")]
+    public async Task<IActionResult> GetRecibos(Guid negocioId)
+    {
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+            var recibos = await _reciboService.GetRecibosAsync(negocioId);
+            return Ok(recibos);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    [HttpGet("GetRecibo")]
+    public async Task<IActionResult> GetRecibo(Guid reciboId, Guid negocioId)
+    {
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+            var recibo = await _reciboService.GetReciboAsync(reciboId, negocioId);
+            if (recibo == null)
+                return NotFound(new { success = false, message = "Recibo no encontrado" });
+            return Ok(recibo);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    [HttpGet("BuscarRecibo")]
+    public async Task<IActionResult> BuscarRecibo(int numero, Guid negocioId)
+    {
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+            var recibo = await _reciboService.BuscarPorNumeroAsync(numero, negocioId);
+            return Ok(recibo);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    [HttpGet("ExportRecibosExcel")]
+    public async Task<IActionResult> ExportRecibosExcel(Guid negocioId, int anio, int mes)
+    {
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+            var content = await _reciboService.ExportRecibosExcelAsync(negocioId, anio, mes);
+            return File(content,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"Recibos_{anio}_{mes:D2}.xlsx");
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    [HttpGet("GetFechaReciboMasAntiguo")]
+    public async Task<IActionResult> GetFechaReciboMasAntiguo(Guid negocioId)
+    {
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+            var fecha = await _reciboService.GetFechaReciboMasAntiguoAsync(negocioId);
+            return Ok(new { fecha });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    [HttpPost("EliminarRecibosAntiguos")]
+    public async Task<IActionResult> EliminarRecibosAntiguos(Guid negocioId, DateTime anteriorA)
+    {
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+            var eliminados = await _reciboService.EliminarRecibosAntiguosAsync(negocioId, anteriorA);
+            return Ok(new { success = true, eliminados });
         }
         catch (Exception)
         {

@@ -39,7 +39,7 @@ public class AuthController : Controller
     [HttpGet("Login")]
     public IActionResult Login()
     {
-        if (User.Identity.IsAuthenticated)
+        if (User.Identity?.IsAuthenticated == true)
         {
             if (_authService.IsAdmin(User))
                 return RedirectToAction("Index", "Admin");

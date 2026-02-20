@@ -76,11 +76,11 @@ public class VentasService : IVentasService
 
         // Cargar clientes y logs en memoria para hacer todos los cálculos
         // en LINQ to Objects (más flexible para operaciones de fecha).
-        var clientes = await _context.Clientes
+        var clientes = await _context.Clientes.AsNoTracking()
             .Where(c => c.NegocioId == negocioId)
             .ToListAsync();
 
-        var logs = await _context.Logs
+        var logs = await _context.Logs.AsNoTracking()
             .Where(l => l.NegocioId == negocioId)
             .ToListAsync();
 
@@ -158,7 +158,7 @@ public class VentasService : IVentasService
         var ahora = TimeHelper.Now;
 
         // Cargar todos los logs en memoria para hacer los cálculos por periodo
-        var logs = await _context.Logs
+        var logs = await _context.Logs.AsNoTracking()
             .Where(l => l.NegocioId == negocioId)
             .ToListAsync();
 
@@ -249,7 +249,7 @@ public class VentasService : IVentasService
         var ahora = TimeHelper.Now;
 
         // Cargar todos los clientes del negocio para filtrar por fecha en memoria
-        var clientes = await _context.Clientes
+        var clientes = await _context.Clientes.AsNoTracking()
             .Where(c => c.NegocioId == negocioId)
             .ToListAsync();
 

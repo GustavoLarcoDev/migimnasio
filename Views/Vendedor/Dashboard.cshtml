@@ -324,25 +324,50 @@
                                     </div>
 
                                     <hr class="my-4" />
-                                    <h5 class="fw-bold mb-4"><i class="bi bi-calendar-check text-primary me-2"></i>Suscripción</h5>
-                                    <div class="row">
-                                        <div class="col-md-3 mb-4">
-                                            <label class="form-label fw-semibold">Fecha de Inicio</label>
-                                            <input type="date" class="form-control form-control-lg" name="fechaPago" id="crearFechaPago" />
+                                    <h5 class="fw-bold mb-1"><i class="bi bi-calendar-check text-primary me-2"></i>Suscripción</h5>
+                                    <p class="text-muted small mb-4">Elige cuántos días venderás la suscripción. El precio es una referencia que puedes ajustar.</p>
+
+                                    <!-- Duración preset + custom -->
+                                    <div class="row g-3 mb-3">
+                                        <div class="col-sm-6 col-lg-4">
+                                            <label class="form-label fw-semibold" for="crearDiasPagados">Duración</label>
+                                            <select class="form-select form-select-lg" id="crearDiasPagados">
+                                                <option value="">-- Seleccionar duración --</option>
+                                                <option value="30">30 días &mdash; 1 mes</option>
+                                                <option value="60">60 días &mdash; 2 meses</option>
+                                                <option value="90">90 días &mdash; 3 meses</option>
+                                                <option value="180">180 días &mdash; 6 meses</option>
+                                                <option value="365">365 días &mdash; 1 año</option>
+                                                <option value="custom">Personalizado...</option>
+                                            </select>
                                         </div>
-                                        <div class="col-md-3 mb-4">
-                                            <label class="form-label fw-semibold">Fecha de Expiración</label>
-                                            <input type="date" class="form-control form-control-lg" name="fechaExpiracion" id="crearFechaExpiracion" />
+                                        <div class="col-sm-6 col-lg-2 d-none" id="crearDiasCustomContainer">
+                                            <label class="form-label fw-semibold" for="crearDiasCustom">Días</label>
+                                            <input type="number" min="1" class="form-control form-control-lg" id="crearDiasCustom" placeholder="Ej: 45" />
                                         </div>
-                                        <div class="col-md-3 mb-4">
-                                            <label class="form-label fw-semibold">Precio ($)</label>
-                                            <input type="number" step="0.01" min="0" class="form-control form-control-lg" name="precioSuscripcion" id="crearPrecio" placeholder="0.00" />
+                                        <div class="col-sm-6 col-lg-3">
+                                            <label class="form-label fw-semibold" for="crearPrecio">Precio ($)</label>
+                                            <div class="input-group input-group-lg">
+                                                <span class="input-group-text">$</span>
+                                                <input type="number" step="0.01" min="0" class="form-control" name="precioSuscripcion" id="crearPrecio" placeholder="0.00" />
+                                            </div>
+                                            <div class="form-text" id="crearPrecioSugerido" style="display:none;">
+                                                Sugerido: <strong id="crearPrecioSugeridoVal"></strong>
+                                            </div>
                                         </div>
-                                        <div class="col-md-3 mb-4">
-                                            <label class="form-label fw-semibold">Días Pagados</label>
-                                            <input type="number" min="1" class="form-control form-control-lg" name="diasPagados" id="crearDias" placeholder="30" readonly />
+                                        <div class="col-sm-6 col-lg-3" id="crearResumenWrap" style="display:none;">
+                                            <label class="form-label fw-semibold">Resumen</label>
+                                            <div class="border rounded-3 p-3" style="background: var(--mg-primary-light, rgba(62,151,255,0.08)); border-color: var(--mg-primary, #3E97FF) !important;">
+                                                <div class="fw-semibold text-primary mb-1" id="crearResumenDias"></div>
+                                                <small class="text-muted" id="crearResumenFechas"></small>
+                                            </div>
                                         </div>
                                     </div>
+
+                                    <!-- Hidden fields sent to the server -->
+                                    <input type="hidden" name="diasPagados" id="crearDias" />
+                                    <input type="hidden" name="fechaPago" id="crearFechaPago" />
+                                    <input type="hidden" name="fechaExpiracion" id="crearFechaExpiracion" />
 
                                     <div class="d-flex justify-content-end gap-3 mt-4 pt-4 border-top">
                                         <button type="button" class="btn btn-light btn-lg" id="btnCancelar">
@@ -862,33 +887,129 @@
         }
     });
 
-    // Crear negocio
-    $('#crearFechaPago, #crearFechaExpiracion').on('change', function() {
-        var inicio = new Date($('#crearFechaPago').val());
-        var fin = new Date($('#crearFechaExpiracion').val());
-        if (inicio && fin && fin > inicio) {
-            var dias = Math.ceil((fin - inicio) / (1000 * 60 * 60 * 24));
-            $('#crearDias').val(dias);
+    // ================================================================
+    // CREAR NEGOCIO: Duración y precios sugeridos
+    // ================================================================
+
+    // Suggested prices per preset (in USD). Vendedor can freely edit.
+    var preciosSugeridos = {
+        '30':  25,
+        '60':  45,
+        '90':  60,
+        '180': 100,
+        '365': 180
+    };
+
+    function aplicarDiasCrear(dias) {
+        if (!dias || dias < 1) return;
+
+        var hoy = new Date();
+        var expiracion = new Date(hoy.getTime() + dias * 24 * 60 * 60 * 1000);
+
+        var hoyStr = hoy.toISOString().split('T')[0];
+        var expStr = expiracion.toISOString().split('T')[0];
+
+        // Store in hidden fields
+        $('#crearDias').val(dias);
+        $('#crearFechaPago').val(hoyStr);
+        $('#crearFechaExpiracion').val(expStr);
+
+        // Resumen visual
+        var diasKey = String(dias);
+        var labelMeses = '';
+        if (dias === 30) labelMeses = '1 mes';
+        else if (dias === 60) labelMeses = '2 meses';
+        else if (dias === 90) labelMeses = '3 meses';
+        else if (dias === 180) labelMeses = '6 meses';
+        else if (dias === 365) labelMeses = '1 año';
+
+        var labelDias = dias + ' días' + (labelMeses ? ' (' + labelMeses + ')' : '');
+        var fechaHoyFmt = hoy.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+        var fechaExpFmt = expiracion.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+
+        $('#crearResumenDias').text(labelDias);
+        $('#crearResumenFechas').text('Inicio: ' + fechaHoyFmt + ' — Vence: ' + fechaExpFmt);
+        $('#crearResumenWrap').show();
+
+        // Suggested price
+        if (preciosSugeridos[diasKey]) {
+            var sugerido = preciosSugeridos[diasKey];
+            // Only pre-fill price if it's empty (don't overwrite vendedor's custom value)
+            if (!$('#crearPrecio').val()) {
+                $('#crearPrecio').val(sugerido.toFixed(2));
+            }
+            $('#crearPrecioSugeridoVal').text('$' + sugerido.toFixed(2));
+            $('#crearPrecioSugerido').show();
+        } else {
+            $('#crearPrecioSugerido').hide();
+        }
+    }
+
+    function resetCrearSuscripcion() {
+        $('#crearDias').val('');
+        $('#crearFechaPago').val('');
+        $('#crearFechaExpiracion').val('');
+        $('#crearResumenWrap').hide();
+        $('#crearPrecioSugerido').hide();
+    }
+
+    $('#crearDiasPagados').on('change', function() {
+        var val = $(this).val();
+
+        if (val === 'custom') {
+            $('#crearDiasCustomContainer').removeClass('d-none');
+            $('#crearDiasCustom').val('').prop('required', true).focus();
+            resetCrearSuscripcion();
+        } else if (val) {
+            $('#crearDiasCustomContainer').addClass('d-none');
+            $('#crearDiasCustom').prop('required', false);
+            aplicarDiasCrear(parseInt(val));
+        } else {
+            $('#crearDiasCustomContainer').addClass('d-none');
+            $('#crearDiasCustom').prop('required', false);
+            resetCrearSuscripcion();
         }
     });
 
+    $('#crearDiasCustom').on('input change', function() {
+        var dias = parseInt($(this).val());
+        if (dias > 0) {
+            aplicarDiasCrear(dias);
+        } else {
+            resetCrearSuscripcion();
+        }
+    });
+
+    // When "Prueba" is selected, lock to 7 days; when "Pago" restore dropdown
     $('input[name="esPrueba"]').on('change', function() {
         var esPrueba = $(this).val() === 'true';
         if (esPrueba) {
-            var hoy = new Date();
-            var fin = new Date(hoy.getTime() + 7 * 24 * 60 * 60 * 1000);
-            $('#crearFechaPago').val(hoy.toISOString().split('T')[0]);
-            $('#crearFechaExpiracion').val(fin.toISOString().split('T')[0]);
-            $('#crearDias').val(7);
-            $('#crearPrecio').val(0);
+            // Override subscription to 7-day trial, price = 0
+            $('#crearDiasPagados').val('').prop('disabled', true);
+            $('#crearDiasCustomContainer').addClass('d-none');
+            $('#crearDiasCustom').prop('required', false);
+            $('#crearPrecio').val('0.00');
+            $('#crearPrecioSugerido').hide();
+            aplicarDiasCrear(7);
+            $('#crearResumenDias').text('7 días (prueba)');
         } else {
-            $('#crearFechaPago, #crearFechaExpiracion, #crearPrecio').val('');
-            $('#crearDias').val('');
+            $('#crearDiasPagados').prop('disabled', false).val('');
+            resetCrearSuscripcion();
+            $('#crearPrecio').val('');
         }
     });
 
     $('#crearNegocioForm').on('submit', function(e) {
         e.preventDefault();
+
+        // Validate subscription selection when "De Pago" is chosen
+        var esPrueba = $('input[name="esPrueba"]:checked').val() === 'true';
+        if (!esPrueba && !$('#crearDias').val()) {
+            toastr.warning('Por favor selecciona la duración de la suscripción.');
+            $('#crearDiasPagados').focus();
+            return;
+        }
+
         var btn = $('#btnCrear');
         var originalHtml = btn.html();
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Creando...');
@@ -897,6 +1018,11 @@
             if (r.success) {
                 swalMG.fire('Negocio creado', r.message, 'success');
                 $('#crearNegocioForm')[0].reset();
+                // Re-enable select after reset
+                $('#crearDiasPagados').prop('disabled', false);
+                $('#crearDiasCustomContainer').addClass('d-none');
+                $('#crearDiasCustom').prop('required', false);
+                resetCrearSuscripcion();
                 cargarStats();
                 if (tablaNegocios) tablaNegocios.ajax.reload();
             } else {

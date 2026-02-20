@@ -71,6 +71,15 @@ public class Empleado
     public string Telefono { get; set; }
 
     /// <summary>
+    /// Correo electrónico del empleado (opcional, para notificaciones de citas).
+    /// Si tiene email registrado, el sistema le enviará recordatorios de cita
+    /// 30 minutos antes, similar al recordatorio que recibe el cliente.
+    /// [MaxLength(200)] = suficiente para cualquier dirección de email.
+    /// </summary>
+    [MaxLength(200)]
+    public string Email { get; set; }
+
+    /// <summary>
     /// Área de especialización del empleado dentro del negocio.
     /// Ejemplos: "Manicurista", "Pedicurista", "Estilista", "Barbero", "Masajista".
     /// Se muestra en el panel de citas para que el cliente sepa con quién agendar.

@@ -125,6 +125,16 @@ public class ApplicationDbContext : DbContext
     /// </summary>
     public DbSet<LeadVendedor> LeadsVendedor { get; set; }
 
+    /// <summary>
+    /// Tabla de comisiones generadas para los vendedores.
+    /// Cada registro representa una comisión ganada al crear un negocio
+    /// que cumple los requisitos mínimos ($15+ de precio, 30+ días).
+    /// El admin marca las comisiones como pagadas al transferir el dinero.
+    /// </summary>
+    public DbSet<ComisionVendedor> ComisionesVendedor { get; set; }
+
+    public DbSet<Recibo> Recibos { get; set; }
+
     // ═══════════════════════════════════════════════════════════
     // TABLAS DEL MODELO ARTESANAL
     //
@@ -320,5 +330,81 @@ public class ApplicationDbContext : DbContext
                 .HasForeignKey(c => c.NegocioId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        // ═══════════════════════════════════════════════════════════
+        // C4: Indexes for multi-tenant query performance
+        // ═══════════════════════════════════════════════════════════
+        modelBuilder.Entity<Cliente>()
+            .HasIndex(c => c.NegocioId)
+            .HasDatabaseName("IX_Clientes_NegocioId");
+
+        modelBuilder.Entity<Cliente>()
+            .HasIndex(c => new { c.NegocioId, c.FechaQueTermina })
+            .HasDatabaseName("IX_Clientes_NegocioId_FechaQueTermina");
+
+        modelBuilder.Entity<Logs>()
+            .HasIndex(l => l.NegocioId)
+            .HasDatabaseName("IX_Logs_NegocioId");
+
+        modelBuilder.Entity<Logs>()
+            .HasIndex(l => new { l.NegocioId, l.Fecha })
+            .HasDatabaseName("IX_Logs_NegocioId_Fecha");
+
+        modelBuilder.Entity<Producto>()
+            .HasIndex(p => p.NegocioId)
+            .HasDatabaseName("IX_Productos_NegocioId");
+
+        modelBuilder.Entity<Notificacion>()
+            .HasIndex(n => n.NegocioId)
+            .HasDatabaseName("IX_Notificaciones_NegocioId");
+
+        modelBuilder.Entity<Notificacion>()
+            .HasIndex(n => new { n.NegocioId, n.ClienteId, n.FechaCreacion })
+            .HasDatabaseName("IX_Notificaciones_NegocioId_ClienteId_Fecha");
+
+        modelBuilder.Entity<Sugerencia>()
+            .HasIndex(s => s.NegocioId)
+            .HasDatabaseName("IX_Sugerencias_NegocioId");
+
+        modelBuilder.Entity<MovimientoInventario>()
+            .HasIndex(m => m.NegocioId)
+            .HasDatabaseName("IX_MovimientosInventario_NegocioId");
+
+        modelBuilder.Entity<ServicioNegocio>()
+            .HasIndex(s => s.NegocioId)
+            .HasDatabaseName("IX_ServiciosNegocio_NegocioId");
+
+        modelBuilder.Entity<Empleado>()
+            .HasIndex(e => e.NegocioId)
+            .HasDatabaseName("IX_Empleados_NegocioId");
+
+        modelBuilder.Entity<Gym>()
+            .HasIndex(g => g.Email)
+            .IsUnique()
+            .HasDatabaseName("IX_Negocios_Email_Unique");
+
+        modelBuilder.Entity<Recibo>(entity =>
+        {
+            entity.HasIndex(r => new { r.NegocioId, r.NumeroRecibo })
+                .HasDatabaseName("IX_Recibos_NegocioId_NumeroRecibo");
+
+            entity.HasIndex(r => new { r.NegocioId, r.FechaCreacion })
+                .HasDatabaseName("IX_Recibos_NegocioId_FechaCreacion");
+        });
+
+        // ═══════════════════════════════════════════════════════════
+        // H8: Decimal precision for money fields
+        // ═══════════════════════════════════════════════════════════
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var property in entityType.GetProperties())
+            {
+                if (property.ClrType == typeof(decimal) || property.ClrType == typeof(decimal?))
+                {
+                    property.SetPrecision(18);
+                    property.SetScale(2);
+                }
+            }
+        }
     }
 }

@@ -4,6 +4,7 @@ using Gimnasio.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Gimnasio.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260219051328_AddEmpleadoEmail")]
+    partial class AddEmpleadoEmail
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -101,7 +104,6 @@ namespace Gimnasio.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.Property<decimal>("PrecioServicio")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<bool>("RecordatorioEnviado")
@@ -177,7 +179,6 @@ namespace Gimnasio.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal>("Precio")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Telefono")
@@ -187,12 +188,6 @@ namespace Gimnasio.Migrations
                     b.HasKey("ClienteId");
 
                     b.HasIndex("GymNegocioId");
-
-                    b.HasIndex("NegocioId")
-                        .HasDatabaseName("IX_Clientes_NegocioId");
-
-                    b.HasIndex("NegocioId", "FechaQueTermina")
-                        .HasDatabaseName("IX_Clientes_NegocioId_FechaQueTermina");
 
                     b.ToTable("Clientes");
                 });
@@ -213,7 +208,6 @@ namespace Gimnasio.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("MontoComision")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<Guid>("NegocioId")
@@ -231,7 +225,6 @@ namespace Gimnasio.Migrations
                         .HasColumnType("bit");
 
                     b.Property<decimal>("PrecioNegocio")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("TipoComision")
@@ -285,8 +278,7 @@ namespace Gimnasio.Migrations
 
                     b.HasKey("EmpleadoId");
 
-                    b.HasIndex("NegocioId")
-                        .HasDatabaseName("IX_Empleados_NegocioId");
+                    b.HasIndex("NegocioId");
 
                     b.ToTable("Empleados");
                 });
@@ -336,7 +328,6 @@ namespace Gimnasio.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.Property<decimal>("PrecioSuscripcion")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Telefono")
@@ -351,11 +342,6 @@ namespace Gimnasio.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("NegocioId");
-
-                    b.HasIndex("Email")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Negocios_Email_Unique")
-                        .HasFilter("[Email] IS NOT NULL");
 
                     b.ToTable("Negocios");
                 });
@@ -498,7 +484,6 @@ namespace Gimnasio.Migrations
                         .HasColumnType("nvarchar(300)");
 
                     b.Property<decimal>("Monto")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<Guid>("NegocioId")
@@ -513,12 +498,6 @@ namespace Gimnasio.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("NegocioId")
-                        .HasDatabaseName("IX_Logs_NegocioId");
-
-                    b.HasIndex("NegocioId", "Fecha")
-                        .HasDatabaseName("IX_Logs_NegocioId_Fecha");
 
                     b.ToTable("Logs");
                 });
@@ -548,7 +527,6 @@ namespace Gimnasio.Migrations
                         .HasColumnType("nvarchar(500)");
 
                     b.Property<decimal>("PrecioUnitario")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<Guid>("ProductoId")
@@ -566,13 +544,9 @@ namespace Gimnasio.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.Property<decimal>("Total")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("MovimientoId");
-
-                    b.HasIndex("NegocioId")
-                        .HasDatabaseName("IX_MovimientosInventario_NegocioId");
 
                     b.ToTable("MovimientosInventario");
                 });
@@ -610,12 +584,6 @@ namespace Gimnasio.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("NegocioId")
-                        .HasDatabaseName("IX_Notificaciones_NegocioId");
-
-                    b.HasIndex("NegocioId", "ClienteId", "FechaCreacion")
-                        .HasDatabaseName("IX_Notificaciones_NegocioId_ClienteId_Fecha");
-
                     b.ToTable("Notificaciones");
                 });
 
@@ -644,11 +612,9 @@ namespace Gimnasio.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.Property<decimal>("MontoExtra")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("MontoServicio")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("MotivoRegalo")
@@ -667,11 +633,9 @@ namespace Gimnasio.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.Property<decimal>("Propina")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<decimal>("Total")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("PagoId");
@@ -690,7 +654,6 @@ namespace Gimnasio.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("CostoCompra")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTime>("FechaCreacion")
@@ -711,7 +674,6 @@ namespace Gimnasio.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.Property<decimal>("PrecioVenta")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<byte[]>("RowVersion")
@@ -727,63 +689,7 @@ namespace Gimnasio.Migrations
 
                     b.HasKey("ProductoId");
 
-                    b.HasIndex("NegocioId")
-                        .HasDatabaseName("IX_Productos_NegocioId");
-
                     b.ToTable("Productos");
-                });
-
-            modelBuilder.Entity("Gimnasio.Models.Recibo", b =>
-                {
-                    b.Property<Guid>("ReciboId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Concepto")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("ContenidoHtml")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("DestinatarioEmail")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("DestinatarioNombre")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<decimal>("Monto")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<Guid?>("NegocioId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("NegocioNombre")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<int>("NumeroRecibo")
-                        .HasColumnType("int");
-
-                    b.Property<string>("TipoRecibo")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("ReciboId");
-
-                    b.HasIndex("NegocioId", "FechaCreacion")
-                        .HasDatabaseName("IX_Recibos_NegocioId_FechaCreacion");
-
-                    b.HasIndex("NegocioId", "NumeroRecibo")
-                        .HasDatabaseName("IX_Recibos_NegocioId_NumeroRecibo");
-
-                    b.ToTable("Recibos");
                 });
 
             modelBuilder.Entity("Gimnasio.Models.ServicioNegocio", b =>
@@ -824,13 +730,11 @@ namespace Gimnasio.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.Property<decimal>("Precio")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("ServicioId");
 
-                    b.HasIndex("NegocioId")
-                        .HasDatabaseName("IX_ServiciosNegocio_NegocioId");
+                    b.HasIndex("NegocioId");
 
                     b.ToTable("ServiciosNegocio");
                 });
@@ -861,9 +765,6 @@ namespace Gimnasio.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("NegocioId")
-                        .HasDatabaseName("IX_Sugerencias_NegocioId");
 
                     b.ToTable("Sugerencias");
                 });

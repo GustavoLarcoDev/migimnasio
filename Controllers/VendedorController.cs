@@ -42,25 +42,27 @@ namespace Gimnasio.Controllers;
 public class VendedorController : Controller
 {
     // ─── Servicios inyectados por el contenedor de dependencias ───────────────
-    private readonly IVendedorService _vendedorService; // CRUD, login y stats de vendedores
-    private readonly IAuthService _authService;         // Utilidades de autenticación (IsAdmin, etc.)
-    private readonly INegocioService _negocioService;   // CRUD de negocios y logs de auditoría
-    private readonly IEmailService _emailService;       // Envío de correos de bienvenida
+    private readonly IVendedorService _vendedorService;
+    private readonly IAuthService _authService;
+    private readonly INegocioService _negocioService;
+    private readonly IEmailService _emailService;
+    private readonly IComisionService _comisionService;
+    private readonly IReciboService _reciboService;
 
-    /// <summary>
-    /// Constructor: recibe todos los servicios necesarios mediante inyección de dependencias.
-    /// ASP.NET Core se encarga de instanciar e inyectar estos servicios automáticamente.
-    /// </summary>
     public VendedorController(
         IVendedorService vendedorService,
         IAuthService authService,
         INegocioService negocioService,
-        IEmailService emailService)
+        IEmailService emailService,
+        IComisionService comisionService,
+        IReciboService reciboService)
     {
         _vendedorService = vendedorService;
         _authService = authService;
         _negocioService = negocioService;
         _emailService = emailService;
+        _comisionService = comisionService;
+        _reciboService = reciboService;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -109,7 +111,10 @@ public class VendedorController : Controller
             vendedor.Nombre,
             vendedor.Apellido,
             vendedor.Correo,
-            vendedor.Telefono
+            vendedor.Telefono,
+            vendedor.NombreBanco,
+            vendedor.NumeroCedula,
+            vendedor.NumeroCuenta
         });
     }
 
@@ -120,7 +125,8 @@ public class VendedorController : Controller
     /// </summary>
     [HttpPost("CrearVendedor")]
     public async Task<IActionResult> CrearVendedor(
-        string nombre, string apellido, string correo, string telefono, string password)
+        string nombre, string apellido, string correo, string telefono, string password,
+        string? nombreBanco = null, string? numeroCedula = null, string? numeroCuenta = null)
     {
         if (!_authService.IsAdmin(User))
             return Forbid();
@@ -128,7 +134,7 @@ public class VendedorController : Controller
         // El servicio se encarga de validar el correo único, hashear la contraseña,
         // y persistir en base de datos. Devuelve una tupla (éxito, mensaje).
         var (success, message) = await _vendedorService.CrearVendedorAsync(
-            nombre, apellido, correo, telefono, password);
+            nombre, apellido, correo, telefono, password, nombreBanco, numeroCedula, numeroCuenta);
 
         if (!success)
             return BadRequest(new { success = false, message });
@@ -156,14 +162,15 @@ public class VendedorController : Controller
     /// </summary>
     [HttpPost("EditarVendedor")]
     public async Task<IActionResult> EditarVendedor(
-        Guid id, string nombre, string apellido, string correo, string telefono, string? password)
+        Guid id, string nombre, string apellido, string correo, string telefono, string? password,
+        string? nombreBanco = null, string? numeroCedula = null, string? numeroCuenta = null)
     {
         if (!_authService.IsAdmin(User))
             return Forbid();
 
         // password es nullable: si viene null, el servicio omite el cambio de contraseña.
         var (success, message) = await _vendedorService.EditarVendedorAsync(
-            id, nombre, apellido, correo, telefono, password);
+            id, nombre, apellido, correo, telefono, password, nombreBanco, numeroCedula, numeroCuenta);
 
         if (!success)
             return BadRequest(new { success = false, message });
@@ -418,12 +425,52 @@ public class VendedorController : Controller
             $"Vendedor {vendedorNombre} creó el negocio '{NombreNegocio}'",
             NombreNegocio);
 
-        // Enviar email en segundo plano con try-catch para evitar unobserved task exceptions.
+        // ─── Generar comisión si el negocio cumple los requisitos ────────
+        // Se necesita el ID del negocio recién creado, que no devuelve CreateNegocioAsync.
+        // Lo recuperamos buscando por email (es único en la plataforma, acaba de ser creado).
+        // La comisión se genera solo si precio >= $15 y días >= 30.
+        // Se ejecuta dentro del request (contexto de DI todavía vivo) con try-catch
+        // para no bloquear al vendedor si algo falla en la generación de comisión.
+        try
+        {
+            var negocioCreado = await _negocioService.GetNegocioByEmailAsync(EmailNegocio);
+            if (negocioCreado != null && precioSuscripcion.HasValue && diasPagados.HasValue)
+            {
+                await _comisionService.GenerarComisionNuevaNegocioAsync(
+                    vendedorId.Value,
+                    vendedorNombre,
+                    negocioCreado.NegocioId,
+                    NombreNegocio,
+                    diasPagados.Value,
+                    precioSuscripcion.Value);
+            }
+        }
+        catch { /* No bloquear el flujo principal si falla la generación de comisión */ }
+
+        // Enviar email de bienvenida en segundo plano
         _ = Task.Run(async () =>
         {
             try { await _emailService.EnviarBienvenidaNegocioAsync(EmailNegocio, NombreNegocio, duenoNegocio, EmailNegocio, passwordNegocio, telefono, vendedorNombre); }
-            catch { /* El EmailService ya loguea internamente */ }
+            catch { }
         });
+
+        // Enviar recibo de pago si no es prueba y guardarlo en BD (admin-scope)
+        if (!esPrueba && precioSuscripcion.HasValue && precioSuscripcion.Value > 0)
+        {
+            try
+            {
+                var vendedor = await _vendedorService.GetVendedorAsync(vendedorId.Value);
+                var vendedorTelefono = vendedor?.Telefono;
+                var numRecibo = await _reciboService.ObtenerSiguienteNumeroAsync(null);
+                var concepto = $"Suscripción {NombreNegocio} x{diasPagados ?? 30} días";
+                var (enviado, html) = await _emailService.EnviarReciboPagoNegocioAsync(
+                    EmailNegocio, NombreNegocio, duenoNegocio,
+                    diasPagados ?? 30, precioSuscripcion.Value, vendedorNombre, vendedorTelefono, numRecibo);
+                await _reciboService.CrearReciboAsync(null, numRecibo, "suscripcion_negocio",
+                    EmailNegocio, duenoNegocio, NombreNegocio, concepto, precioSuscripcion.Value, html);
+            }
+            catch { }
+        }
 
         return Ok(new { success = true, message });
     }

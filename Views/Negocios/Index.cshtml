@@ -517,6 +517,22 @@
                             <input type="password" class="form-control form-control-lg" id="vendedorPassword" placeholder="Mínimo 6 caracteres" />
                             <div class="form-text" id="vendedorPasswordHelp">Mínimo 6 caracteres</div>
                         </div>
+                        <hr class="my-3" />
+                        <p class="fw-semibold text-muted mb-3"><i class="bi bi-bank me-2"></i>Datos para Transferencia <span class="fw-normal">(Opcional)</span></p>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Nombre del Banco</label>
+                                <input type="text" class="form-control form-control-lg" id="vendedorNombreBanco" placeholder="Ej: Banco Pichincha" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Número de Cédula</label>
+                                <input type="text" class="form-control form-control-lg" id="vendedorNumeroCedula" placeholder="Ej: 1234567890" />
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Número de Cuenta</label>
+                            <input type="text" class="form-control form-control-lg" id="vendedorNumeroCuenta" placeholder="Ej: 2200123456789" />
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer bg-light">
@@ -526,6 +542,88 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+
+<!-- ═══════════════════════════ COMISIONES TAB ═══════════════════════════ -->
+<div class="tab-pane fade" id="comisionesTab" role="tabpanel">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold mb-0">Comisiones de Vendedores</h4>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-md-6 col-6">
+            <div class="mg-stat-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">Pendiente Total</div>
+                        <div class="stat-value text-warning" id="comTotalPendiente">$0</div>
+                    </div>
+                    <div class="stat-icon bg-light-warning"><i class="bi bi-clock-fill text-warning"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 col-6">
+            <div class="mg-stat-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">Pagado Total</div>
+                        <div class="stat-value text-success" id="comTotalPagado">$0</div>
+                    </div>
+                    <div class="stat-icon bg-light-success"><i class="bi bi-check-circle-fill text-success"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 col-6">
+            <div class="mg-stat-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">Vendedores Activos</div>
+                        <div class="stat-value" id="comVendedoresActivos">0</div>
+                    </div>
+                    <div class="stat-icon bg-light-primary"><i class="bi bi-people-fill text-primary"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6 col-6">
+            <div class="mg-stat-card">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">Negocios con Comisión</div>
+                        <div class="stat-value" id="comTotalNegocios">0</div>
+                    </div>
+                    <div class="stat-icon bg-light-info"><i class="bi bi-building text-info"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Commissions by Vendor -->
+    <h5 class="fw-bold mb-3"><i class="bi bi-clock-history me-2"></i>Comisiones Pendientes por Vendedor</h5>
+    <div id="comisionesPendientesList" class="d-flex flex-column gap-3 mb-4">
+        <div class="text-center py-4 text-muted">Cargando...</div>
+    </div>
+
+    <!-- History -->
+    <h5 class="fw-bold mb-3 mt-4"><i class="bi bi-journal-check me-2"></i>Historial de Pagos</h5>
+    <div id="comisionesHistorialList" class="d-flex flex-column gap-2">
+        <div class="text-center py-4 text-muted">Cargando...</div>
+    </div>
+</div>
+
+    <!-- ============================================================== -->
+    <!-- TAB RECIBOS ADMIN                                              -->
+    <!-- ============================================================== -->
+    <div class="tab-pane fade" id="recibosTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold mb-0">Recibos de Suscripciones y Comisiones</h4>
+        </div>
+        <div class="table-responsive">
+            <table id="tablaRecibosAdmin" class="table table-row-bordered align-middle gs-0 gy-3">
+                <thead><tr class="fw-bold text-muted"><th>#Recibo</th><th>Tipo</th><th>Destinatario</th><th>Concepto</th><th>Monto</th><th>Fecha</th><th>Acciones</th></tr></thead>
+                <tbody></tbody>
+            </table>
         </div>
     </div>
 
@@ -575,6 +673,9 @@
 <!-- ================================================================ -->
 <!-- Modal Editar Negocio                                             -->
 <!-- ================================================================ -->
+<!-- Modal Ver Recibo Admin -->
+<div class="modal fade" id="reciboAdminModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down"><div class="modal-content"><div class="modal-header bg-light"><h3 class="modal-title fw-bolder"><i class="bi bi-receipt me-2"></i>Recibo #<span id="reciboAdminModalNumero"></span></h3><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><iframe id="reciboAdminIframe" sandbox style="width:100%;height:500px;border:none;"></iframe></div><div class="modal-footer bg-light"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button></div></div></div></div>
+
 <div class="modal fade" id="editarNegocioModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down">
         <div class="modal-content">
@@ -732,6 +833,10 @@ document.addEventListener('mg-tab-shown', function (e) {
         else tablaVendedores.ajax.reload(null, false);
     } else if (tab === 'sugerenciasTab') {
         cargarSugerencias();
+    } else if (e.detail.tab === 'comisionesTab') {
+        cargarComisiones();
+    } else if (tab === 'recibosTab') {
+        cargarRecibosAdmin();
     }
 });
 
@@ -1582,6 +1687,9 @@ $('#btnCrearVendedor').click(function() {
     $('#vendedorPassword').prop('required', true);
     $('#vendedorPasswordLabel').addClass('required');
     $('#vendedorPasswordHelp').text('Mínimo 6 caracteres');
+    $('#vendedorNombreBanco').val('');
+    $('#vendedorNumeroCedula').val('');
+    $('#vendedorNumeroCuenta').val('');
     $('#vendedorModal').modal('show');
 });
 
@@ -1597,6 +1705,9 @@ function editarVendedor(id) {
         $('#vendedorPassword').val('').prop('required', false);
         $('#vendedorPasswordLabel').removeClass('required');
         $('#vendedorPasswordHelp').text('Dejar en blanco para mantener la actual');
+        $('#vendedorNombreBanco').val(data.nombreBanco || '');
+        $('#vendedorNumeroCedula').val(data.numeroCedula || '');
+        $('#vendedorNumeroCuenta').val(data.numeroCuenta || '');
         $('#vendedorModal').modal('show');
     }).fail(function() { toastr.error('Error al cargar vendedor'); });
 }
@@ -1607,6 +1718,9 @@ $('#btnGuardarVendedor').click(function() {
     var correo = $('#vendedorCorreo').val().trim();
     var telefono = $('#vendedorTelefono').val().trim();
     var password = $('#vendedorPassword').val();
+    var nombreBanco = $('#vendedorNombreBanco').val().trim();
+    var numeroCedula = $('#vendedorNumeroCedula').val().trim();
+    var numeroCuenta = $('#vendedorNumeroCuenta').val().trim();
 
     if (!nombre || !apellido || !correo || !telefono) {
         toastr.error('Todos los campos son obligatorios');
@@ -1622,7 +1736,7 @@ $('#btnGuardarVendedor').click(function() {
     btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...');
 
     var url = modoEdicionVendedor ? '/Negocios/EditarVendedor' : '/Negocios/CrearVendedor';
-    var data = { nombre, apellido, correo, telefono, password };
+    var data = { nombre, apellido, correo, telefono, password, nombreBanco, numeroCedula, numeroCuenta };
     if (modoEdicionVendedor) data.id = $('#vendedorId').val();
 
     $.post(url, data, function(r) {
@@ -1723,6 +1837,151 @@ $('#editDiasPagados').on('change input', function() {
         $('#editFechaExpiracion').val(fecha.toISOString().split('T')[0]);
     }
 });
+
+// ================================================================
+// TAB COMISIONES
+// ================================================================
+function cargarComisiones() {
+    // Load summary
+    $.get('/Negocios/GetResumenComisiones', function(data) {
+        var totalPendiente = 0, totalPagado = 0, vendedoresActivos = 0, totalNegocios = 0;
+        if (data && data.length) {
+            data.forEach(function(v) {
+                totalPendiente += v.montoPendiente || 0;
+                totalPagado += v.montoPagado || 0;
+                totalNegocios += v.totalNegocios || 0;
+                if (v.montoPendiente > 0) vendedoresActivos++;
+            });
+        }
+        $('#comTotalPendiente').text('$' + totalPendiente.toFixed(2));
+        $('#comTotalPagado').text('$' + totalPagado.toFixed(2));
+        $('#comVendedoresActivos').text(vendedoresActivos);
+        $('#comTotalNegocios').text(totalNegocios);
+        // Update badge
+        if (totalPendiente > 0) {
+            $('#sidebarComisionesBadge').text('$' + totalPendiente.toFixed(0)).removeClass('d-none');
+        } else {
+            $('#sidebarComisionesBadge').addClass('d-none');
+        }
+    });
+    // Load pending
+    $.get('/Negocios/GetComisionesPendientes', function(data) {
+        var html = '';
+        if (!data || !data.length) {
+            html = '<div class="text-center py-4 text-muted"><i class="bi bi-check-circle fs-1 d-block mb-2 text-success"></i>No hay comisiones pendientes</div>';
+        } else {
+            data.forEach(function(g) {
+                html += '<div class="mg-card p-3">';
+                html += '<div class="d-flex justify-content-between align-items-center mb-2">';
+                html += '<div><h6 class="fw-bold mb-0">' + escHtml(g.nombreVendedor) + '</h6>';
+                if (g.nombreBanco) html += '<small class="text-muted"><i class="bi bi-bank me-1"></i>' + escHtml(g.nombreBanco) + ' - ' + escHtml(g.numeroCuenta || '') + '</small>';
+                html += '</div>';
+                html += '<div class="text-end"><span class="fs-4 fw-bolder text-warning">$' + (g.totalPendiente || 0).toFixed(2) + '</span>';
+                html += '<br><small class="text-muted">' + (g.cantidadPendientes || 0) + ' negocio(s)</small></div></div>';
+                // Detail table
+                if (g.comisiones && g.comisiones.length) {
+                    html += '<div class="table-responsive"><table class="table table-sm mb-2"><thead><tr><th>Negocio</th><th>Tipo</th><th>Días</th><th>Precio</th><th>Comisión</th><th>Fecha</th></tr></thead><tbody>';
+                    g.comisiones.forEach(function(c) {
+                        html += '<tr><td>' + escHtml(c.nombreNegocio) + '</td><td><span class="badge bg-' + (c.tipoComision === 'nueva' ? 'primary' : 'info') + '">' + c.tipoComision + '</span></td>';
+                        html += '<td>' + c.diasContratados + 'd</td><td>$' + (c.precioNegocio || 0).toFixed(2) + '</td>';
+                        html += '<td class="fw-bold">$' + (c.montoComision || 0).toFixed(2) + '</td>';
+                        html += '<td>' + new Date(c.fechaCreacion).toLocaleDateString('es-MX') + '</td></tr>';
+                    });
+                    html += '</tbody></table></div>';
+                }
+                html += '<button class="btn btn-success btn-sm" onclick="pagarComision(\'' + g.vendedorId + '\', \'' + escHtml(g.nombreVendedor) + '\', ' + (g.totalPendiente || 0).toFixed(2) + ', \'' + escHtml(g.nombreBanco || '') + '\', \'' + escHtml(g.numeroCedula || '') + '\', \'' + escHtml(g.numeroCuenta || '') + '\')"><i class="bi bi-cash-stack me-2"></i>Marcar como Pagado ($' + (g.totalPendiente || 0).toFixed(2) + ')</button>';
+                html += '</div>';
+            });
+        }
+        $('#comisionesPendientesList').html(html);
+    });
+    // Load history
+    $.get('/Negocios/GetHistorialComisiones', function(data) {
+        var html = '';
+        if (!data || !data.length) {
+            html = '<div class="text-center py-4 text-muted">Sin historial de pagos</div>';
+        } else {
+            data.forEach(function(c) {
+                html += '<div class="mg-card p-2 d-flex justify-content-between align-items-center">';
+                html += '<div><span class="fw-semibold">' + escHtml(c.nombreVendedor) + '</span> — ' + escHtml(c.nombreNegocio);
+                html += ' <span class="badge bg-success">$' + (c.montoComision || 0).toFixed(2) + '</span></div>';
+                html += '<small class="text-muted">' + (c.fechaPago ? new Date(c.fechaPago).toLocaleDateString('es-MX') : '') + '</small>';
+                html += '</div>';
+            });
+        }
+        $('#comisionesHistorialList').html(html);
+    });
+}
+
+function pagarComision(vendedorId, nombre, monto, nombreBanco, numeroCedula, numeroCuenta) {
+    var bancoHtml = '';
+    if (nombreBanco) {
+        bancoHtml = '<div class="alert alert-info text-start mt-3 mb-0">' +
+            '<h6 class="fw-bold mb-2"><i class="bi bi-bank me-2"></i>Datos Bancarios</h6>' +
+            '<p class="mb-1"><strong>Banco:</strong> ' + nombreBanco + '</p>' +
+            (numeroCedula ? '<p class="mb-1"><strong>Cedula:</strong> ' + numeroCedula + '</p>' : '') +
+            (numeroCuenta ? '<p class="mb-0"><strong>Cuenta:</strong> ' + numeroCuenta + '</p>' : '') +
+            '</div>';
+    } else {
+        bancoHtml = '<div class="alert alert-warning text-start mt-3 mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Este vendedor no tiene datos bancarios registrados.</div>';
+    }
+    swalMG.fire({
+        title: 'Confirmar Pago',
+        html: '<p>Vas a marcar como pagadas las comisiones de <strong>' + nombre + '</strong> por un total de <strong>$' + monto.toFixed(2) + '</strong>.</p>' +
+            bancoHtml +
+            '<p class="text-muted small mt-3">Asegurate de haber realizado la transferencia antes de confirmar.</p>',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Si, ya pague'
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            $.post('/Negocios/PagarComisionesVendedor', { vendedorId: vendedorId }, function(r) {
+                if (r.success) {
+                    toastr.success(r.message);
+                    cargarComisiones();
+                } else {
+                    toastr.error(r.message || 'Error al procesar pago');
+                }
+            }).fail(function() { toastr.error('Error de conexion'); });
+        }
+    });
+}
+
+// ═══════════════════════════════════════════════════════════
+// RECIBOS ADMIN
+// ═══════════════════════════════════════════════════════════
+let tablaRecibosAdmin = null;
+function cargarRecibosAdmin() {
+    if (tablaRecibosAdmin) { tablaRecibosAdmin.ajax.reload(); return; }
+    tablaRecibosAdmin = $('#tablaRecibosAdmin').DataTable({
+        ajax: { url: '/Negocios/GetRecibosAdmin', dataSrc: '' },
+        columns: [
+            { data: 'numeroRecibo', render: d => `<span class="badge bg-primary">#${d}</span>` },
+            { data: 'tipoRecibo', render: d => {
+                const labels = { suscripcion_negocio: 'Suscripción', pago_comision: 'Comisión' };
+                return labels[d] || d;
+            }},
+            { data: 'destinatarioNombre' },
+            { data: 'concepto', render: d => d && d.length > 40 ? d.substring(0,40)+'...' : d },
+            { data: 'monto', render: d => `$${parseFloat(d).toFixed(2)}` },
+            { data: 'fechaCreacion', render: d => new Date(d).toLocaleDateString('es-EC') },
+            { data: null, orderable: false, render: (d,t,r) => `<button class="btn btn-sm btn-outline-primary" onclick="verReciboAdmin('${r.reciboId}')"><i class="bi bi-eye"></i></button>` }
+        ],
+        order: [[5, 'desc']],
+        language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' },
+        responsive: true
+    });
+}
+
+function verReciboAdmin(reciboId) {
+    $.get('/Negocios/GetReciboAdmin', { reciboId }, function(r) {
+        if (r) {
+            $('#reciboAdminModalNumero').text(r.numeroRecibo);
+            document.getElementById('reciboAdminIframe').srcdoc = r.contenidoHtml;
+            new bootstrap.Modal('#reciboAdminModal').show();
+        }
+    });
+}
 </script>
 
 <style>

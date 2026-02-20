@@ -140,7 +140,7 @@ public class LogService : ILogService
     /// <param name="negocioId">ID del negocio cuyos logs se quieren obtener.</param>
     public async Task<object> GetLogsAsync(Guid negocioId)
     {
-        return await _context.Logs
+        return await _context.Logs.AsNoTracking()
             .Where(l => l.NegocioId == negocioId)
             .OrderByDescending(l => l.Fecha)
             .Select(l => new
@@ -164,7 +164,7 @@ public class LogService : ILogService
     /// <param name="negocioId">ID del negocio (para verificar que el log pertenece al negocio correcto).</param>
     public async Task<object> GetLogAsync(Guid id, Guid negocioId)
     {
-        return await _context.Logs
+        return await _context.Logs.AsNoTracking()
             .FirstOrDefaultAsync(l => l.Id == id && l.NegocioId == negocioId);
     }
 
@@ -176,7 +176,7 @@ public class LogService : ILogService
     /// <param name="negocioId">ID del negocio.</param>
     public async Task<DateTime?> GetOldestLogDateAsync(Guid negocioId)
     {
-        var oldest = await _context.Logs
+        var oldest = await _context.Logs.AsNoTracking()
             .Where(l => l.NegocioId == negocioId)
             .OrderBy(l => l.Fecha)
             .FirstOrDefaultAsync();
@@ -277,7 +277,7 @@ public class LogService : ILogService
     /// <returns>Array de bytes del archivo .xlsx listo para descargar.</returns>
     public async Task<byte[]> ExportLogsExcelAsync(Guid negocioId)
     {
-        var logs = await _context.Logs
+        var logs = await _context.Logs.AsNoTracking()
             .Where(l => l.NegocioId == negocioId)
             .OrderByDescending(l => l.Fecha)
             .ToListAsync();

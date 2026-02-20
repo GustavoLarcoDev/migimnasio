@@ -74,6 +74,15 @@ public class EmpleadoCreateDto
     public string Telefono { get; set; }
 
     /// <summary>
+    /// Correo electrónico del empleado. Opcional, máximo 200 caracteres.
+    /// Si se proporciona, el empleado recibirá recordatorios de cita por email
+    /// 30 minutos antes de cada cita asignada.
+    /// Ejemplo: "ana.ramirez@gmail.com".
+    /// </summary>
+    [MaxLength(200)]
+    public string Email { get; set; }
+
+    /// <summary>
     /// Especialidad o área de trabajo del empleado. Opcional, máximo 100 caracteres.
     /// Se muestra en el perfil del empleado y puede usarse para filtrar empleados
     /// al asignar citas según el tipo de servicio.

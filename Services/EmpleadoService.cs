@@ -67,7 +67,7 @@ public class EmpleadoService : IEmpleadoService
     /// </summary>
     public async Task<object> GetEmpleadosAsync(Guid negocioId)
     {
-        return await _context.Empleados
+        return await _context.Empleados.AsNoTracking()
             .Where(e => e.NegocioId == negocioId && e.IsActive)
             .OrderBy(e => e.Nombre)
             .Select(e => new
@@ -78,6 +78,7 @@ public class EmpleadoService : IEmpleadoService
                 // Concatenamos nombre completo en el servidor para no tener que hacerlo en cada vista
                 NombreCompleto = e.Nombre + " " + e.Apellido,
                 e.Telefono,
+                e.Email,
                 e.Especialidad,
                 e.FechaCreacion
             })
@@ -131,6 +132,7 @@ public class EmpleadoService : IEmpleadoService
             Nombre = dto.Nombre,
             Apellido = dto.Apellido,
             Telefono = PhoneHelper.NormalizeEcuador(dto.Telefono),
+            Email = dto.Email?.Trim(),
             Especialidad = dto.Especialidad,
             IsActive = true,
             FechaCreacion = TimeHelper.Now
@@ -206,6 +208,7 @@ public class EmpleadoService : IEmpleadoService
         empleado.Nombre = dto.Nombre;
         empleado.Apellido = dto.Apellido;
         empleado.Telefono = PhoneHelper.NormalizeEcuador(dto.Telefono);
+        empleado.Email = dto.Email?.Trim();
         empleado.Especialidad = dto.Especialidad;
 
         // EF Core detecta automáticamente los cambios en la entidad tracked y
@@ -266,7 +269,7 @@ public class EmpleadoService : IEmpleadoService
     /// </summary>
     public async Task<object> GetHorariosAsync(Guid empleadoId, Guid negocioId)
     {
-        return await _context.HorariosEmpleado
+        return await _context.HorariosEmpleado.AsNoTracking()
             .Where(h => h.EmpleadoId == empleadoId && h.NegocioId == negocioId)
             .OrderBy(h => h.DiaSemana)
             .Select(h => new
@@ -302,6 +305,11 @@ public class EmpleadoService : IEmpleadoService
         if (empleado == null)
             return (false, "Empleado no encontrado");
 
+        // Pre-cargar horarios existentes en diccionario (elimina N+1)
+        var horariosExistentes = await _context.HorariosEmpleado
+            .Where(h => h.EmpleadoId == dto.EmpleadoId && h.NegocioId == dto.NegocioId)
+            .ToDictionaryAsync(h => h.DiaSemana);
+
         // Procesamos cada día enviado en el DTO
         foreach (var dia in dto.Dias)
         {
@@ -323,11 +331,9 @@ public class EmpleadoService : IEmpleadoService
                     return (false, $"La hora de inicio debe ser anterior a la hora de fin");
             }
 
-            // Buscar si ya existe un registro de horario para este día de la semana.
-            // SEGURIDAD MULTI-TENANT: Filtramos también por NegocioId para evitar
-            // que una consulta manipulada modifique horarios de otro negocio.
-            var horario = await _context.HorariosEmpleado
-                .FirstOrDefaultAsync(h => h.EmpleadoId == dto.EmpleadoId && h.NegocioId == dto.NegocioId && h.DiaSemana == dia.DiaSemana);
+            // Buscar en el diccionario pre-cargado (O(1) en vez de consulta SQL por día).
+            // SEGURIDAD MULTI-TENANT: El diccionario ya fue filtrado por NegocioId arriba.
+            var horario = horariosExistentes.GetValueOrDefault(dia.DiaSemana);
 
             if (horario != null)
             {
@@ -386,7 +392,7 @@ public class EmpleadoService : IEmpleadoService
         var diaSemana = (int)fecha.DayOfWeek;
 
         // CONSULTA 1: Todos los empleados activos del negocio
-        var empleados = await _context.Empleados
+        var empleados = await _context.Empleados.AsNoTracking()
             .Where(e => e.NegocioId == negocioId && e.IsActive)
             .OrderBy(e => e.Nombre)
             .ToListAsync();
@@ -396,19 +402,19 @@ public class EmpleadoService : IEmpleadoService
 
         // CONSULTA 2: Horarios semanales de todos los empleados para ese día de semana.
         // Traemos solo el DiaSemana que corresponde a la fecha pedida.
-        var horarios = await _context.HorariosEmpleado
+        var horarios = await _context.HorariosEmpleado.AsNoTracking()
             .Where(h => empleadoIds.Contains(h.EmpleadoId) && h.DiaSemana == diaSemana)
             .ToListAsync();
 
         // CONSULTA 3: Excepciones de horario de todos los empleados para esa fecha exacta.
         // Comparamos solo la parte de la fecha (sin hora) usando .Date
-        var excepciones = await _context.HorariosExcepcion
+        var excepciones = await _context.HorariosExcepcion.AsNoTracking()
             .Where(h => empleadoIds.Contains(h.EmpleadoId) && h.Fecha.Date == fecha.Date)
             .ToListAsync();
 
         // CONSULTA 4: Conteo de citas por empleado para ese día (para mostrar carga de trabajo).
         // GroupBy en SQL genera un COUNT(*) GROUP BY EmpleadoId eficientemente.
-        var citasDelDia = await _context.Citas
+        var citasDelDia = await _context.Citas.AsNoTracking()
             .Where(c => c.NegocioId == negocioId
                 && c.Estado != "cancelada"
                 && c.FechaHoraInicio >= fecha.Date
@@ -471,7 +477,7 @@ public class EmpleadoService : IEmpleadoService
     public async Task<object> GetExcepcionesAsync(Guid empleadoId, Guid negocioId, DateTime? desde, DateTime? hasta)
     {
         // Iniciamos con el filtro base: las excepciones del empleado en este negocio
-        var query = _context.HorariosExcepcion
+        var query = _context.HorariosExcepcion.AsNoTracking()
             .Where(h => h.EmpleadoId == empleadoId && h.NegocioId == negocioId);
 
         // Aplicamos los filtros opcionales de fecha solo si se proporcionaron.

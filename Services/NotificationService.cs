@@ -210,18 +210,19 @@ public class NotificationService : INotificationService
                 && c.FechaQueTermina.Date <= en3Dias) // Hasta 3 días en el futuro
             .ToListAsync();
 
+        // Pre-cargar ClienteIds ya notificados hoy (elimina N+1)
+        var notificadosHoy = (await _context.Notificaciones
+            .Where(n => n.NegocioId == negocioId && n.FechaCreacion.Date == hoy)
+            .Select(n => n.ClienteId)
+            .ToListAsync()).ToHashSet();
+
         int count = 0;
         foreach (var cliente in clientesProximos)
         {
             // Anti-duplicado: verificar si ya existe una notificación para este cliente HOY
             // Un cliente puede aparecer varios días seguidos (ej. 3 días, luego 2, luego 1)
             // pero solo generamos UNA notificación por día por cliente
-            var existe = await _context.Notificaciones
-                .AnyAsync(n => n.NegocioId == negocioId
-                    && n.ClienteId == cliente.ClienteId
-                    && n.FechaCreacion.Date == hoy);
-
-            if (existe) continue;  // Ya fue notificado hoy → skip
+            if (notificadosHoy.Contains(cliente.ClienteId)) continue;  // Ya fue notificado hoy → skip
 
             // Calcular cuántos días exactos faltan para el vencimiento
             var diasRestantes  = (cliente.FechaQueTermina.Date - hoy).Days;

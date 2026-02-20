@@ -70,7 +70,7 @@ public class ClienteService : IClienteService
         // múltiples métricas sin volver a la base de datos cada vez.
         // Si hubiera millones de clientes, habría que calcular en la BD;
         // para el volumen actual esto es más simple y legible.
-        var clientes = await _context.Clientes
+        var clientes = await _context.Clientes.AsNoTracking()
             .Where(c => c.NegocioId == negocioId)
             .ToListAsync();
 
@@ -91,7 +91,7 @@ public class ClienteService : IClienteService
         // Los ingresos NO se calculan sumando los precios de clientes actuales,
         // sino desde la tabla Logs. Razón: si un cliente es eliminado, su pago
         // sigue registrado. Los logs son el registro financiero verdadero.
-        var logs = await _context.Logs
+        var logs = await _context.Logs.AsNoTracking()
             .Where(l => l.NegocioId == negocioId && l.Monto > 0)
             .ToListAsync();
 
@@ -151,7 +151,7 @@ public class ClienteService : IClienteService
     /// </summary>
     public async Task<object> GetClientesAsync(Guid negocioId)
     {
-        return await _context.Clientes
+        return await _context.Clientes.AsNoTracking()
             .Where(c => c.NegocioId == negocioId)
             // Ordenamos por FechaQueTermina desc para que los activos aparezcan primero
             .OrderByDescending(c => c.FechaQueTermina)
@@ -202,7 +202,7 @@ public class ClienteService : IClienteService
     /// </summary>
     public async Task<object> GetClientesDiariosAsync(Guid negocioId)
     {
-        return await _context.Clientes
+        return await _context.Clientes.AsNoTracking()
             .Where(c => c.NegocioId == negocioId && c.EsDiario)
             // Los más recientes primero: el dueño suele querer ver los del día de hoy
             .OrderByDescending(c => c.FechaDeCreacion)
@@ -291,20 +291,31 @@ public class ClienteService : IClienteService
             FechaQueTermina = fechaFin
         };
 
-        _context.Clientes.Add(cliente);
-        await _context.SaveChangesAsync();
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            _context.Clientes.Add(cliente);
+            await _context.SaveChangesAsync();
 
-        // ─── Registrar log inmutable con el pago ──────────────────────
-        // Este log se guarda SIEMPRE, incluso si después el cliente es eliminado.
-        // Así el dueño siempre puede ver cuánto ingresó históricamente.
-        var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
-        await _logService.CreateLogAsync(
-            model.NegocioId,
-            "cliente_creado",
-            $"Nuevo cliente registrado: {nombreCompleto}, {dias} días, ${model.Precio:F2}, vence {fechaFin:dd/MM/yyyy}",
-            model.Precio,
-            cliente.ClienteId,
-            nombreCompleto);
+            // ─── Registrar log inmutable con el pago ──────────────────────
+            // Este log se guarda SIEMPRE, incluso si después el cliente es eliminado.
+            // Así el dueño siempre puede ver cuánto ingresó históricamente.
+            var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
+            await _logService.CreateLogAsync(
+                model.NegocioId,
+                "cliente_creado",
+                $"Nuevo cliente registrado: {nombreCompleto}, {dias} días, ${model.Precio:F2}, vence {fechaFin:dd/MM/yyyy}",
+                model.Precio,
+                cliente.ClienteId,
+                nombreCompleto);
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
 
         return (true, "Cliente creado exitosamente");
     }
@@ -409,23 +420,34 @@ public class ClienteService : IClienteService
         cliente.FechaQueTermina = fechaFin;
         cliente.FechaDeActualizacion = TimeHelper.Now;
 
-        _context.Update(cliente);
-        await _context.SaveChangesAsync();
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            _context.Update(cliente);
+            await _context.SaveChangesAsync();
 
-        // Guardar en el log el detalle de todos los cambios detectados
-        var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
-        var detalleCambios = cambios.Count > 0
-            ? string.Join(", ", cambios)
-            : "sin cambios detectados";
+            // Guardar en el log el detalle de todos los cambios detectados
+            var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
+            var detalleCambios = cambios.Count > 0
+                ? string.Join(", ", cambios)
+                : "sin cambios detectados";
 
-        // Monto = 0 porque una edición no implica necesariamente un pago nuevo
-        await _logService.CreateLogAsync(
-            model.NegocioId,
-            "cliente_editado",
-            $"Cliente {nombreAnterior} actualizado: {detalleCambios}",
-            0,
-            cliente.ClienteId,
-            nombreCompleto);
+            // Monto = 0 porque una edición no implica necesariamente un pago nuevo
+            await _logService.CreateLogAsync(
+                model.NegocioId,
+                "cliente_editado",
+                $"Cliente {nombreAnterior} actualizado: {detalleCambios}",
+                0,
+                cliente.ClienteId,
+                nombreCompleto);
+
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
 
         return (true, "Cliente actualizado exitosamente");
     }
@@ -613,7 +635,7 @@ public class ClienteService : IClienteService
         // Normalizar el query a minúsculas para comparación case-insensitive
         var q = query.ToLower();
 
-        return await _context.Clientes
+        return await _context.Clientes.AsNoTracking()
             .Where(c => c.NegocioId == negocioId &&
                 // Buscar en nombre, apellido y teléfono con búsqueda parcial
                 (c.Nombre.ToLower().Contains(q) ||
@@ -720,7 +742,7 @@ public class ClienteService : IClienteService
     /// </summary>
     public async Task<object> GetClientesArtesanalAsync(Guid negocioId)
     {
-        return await _context.Clientes
+        return await _context.Clientes.AsNoTracking()
             .Where(c => c.NegocioId == negocioId)
             .OrderBy(c => c.Nombre)
             .Select(c => new
@@ -757,7 +779,7 @@ public class ClienteService : IClienteService
     /// </summary>
     public async Task<byte[]> ExportClientesExcelAsync(Guid negocioId)
     {
-        var clientes = await _context.Clientes
+        var clientes = await _context.Clientes.AsNoTracking()
             .Where(c => c.NegocioId == negocioId)
             .OrderBy(c => c.Nombre)
             .ToListAsync();

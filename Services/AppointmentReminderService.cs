@@ -118,11 +118,12 @@ public class AppointmentReminderService : BackgroundService
     /// </summary>
     private async Task EnviarRecordatoriosCitasAsync(CancellationToken stoppingToken)
     {
-        // Crear scope de DI para acceder a DbContext y WhatsAppService.
+        // Crear scope de DI para acceder a DbContext, WhatsAppService e IEmailService.
         // El using libera el scope y la conexión a la DB al finalizar.
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var whatsAppService = scope.ServiceProvider.GetRequiredService<IWhatsAppService>();
+        var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
 
         try
         {
@@ -157,6 +158,12 @@ public class AppointmentReminderService : BackgroundService
             var clientes = await context.Clientes
                 .Where(c => clienteIds.Contains(c.ClienteId))
                 .ToDictionaryAsync(c => c.ClienteId, stoppingToken);
+
+            // Cargar empleados para enviarles recordatorios por email
+            var empleadoIds = citas.Select(c => c.EmpleadoId).Distinct().ToList();
+            var empleados = await context.Empleados
+                .Where(e => empleadoIds.Contains(e.EmpleadoId))
+                .ToDictionaryAsync(e => e.EmpleadoId, stoppingToken);
 
             foreach (var cita in citas)
             {
@@ -201,7 +208,49 @@ public class AppointmentReminderService : BackgroundService
                         if (!resultNegocio) envioExitoso = false;
                     }
 
-                    // Marcar como enviada solo si ambos envíos fueron exitosos.
+                    // ENVÍO 3: Email de recordatorio al cliente (si tiene email registrado).
+                    // El email es adicional a WhatsApp, no afecta el flag envioExitoso para
+                    // no bloquear el marcado de RecordatorioEnviado por un fallo de email.
+                    if (!string.IsNullOrWhiteSpace(cliente.Email))
+                    {
+                        try
+                        {
+                            await emailService.EnviarRecordatorioCitaEmailAsync(
+                                cliente.Email, cita.NombreCliente, negocio.NegocioNombre,
+                                cita.NombreServicio, cita.NombreEmpleado, cita.FechaHoraInicio,
+                                negocio.Email, negocio.Telefono);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Error enviando email de recordatorio para cita {CitaId}", cita.CitaId);
+                        }
+                    }
+
+                    // ENVÍO 4: Email de recordatorio al empleado (si tiene email registrado).
+                    // Le avisa que tiene una cita próxima, con datos del cliente y el servicio,
+                    // e incluye los datos de contacto del dueño por si necesita comunicarse.
+                    var empleado = empleados.GetValueOrDefault(cita.EmpleadoId);
+                    if (empleado != null && !string.IsNullOrWhiteSpace(empleado.Email))
+                    {
+                        try
+                        {
+                            await emailService.EnviarRecordatorioCitaEmpleadoAsync(
+                                empleado.Email,
+                                cita.NombreEmpleado,
+                                cita.NombreCliente,
+                                negocio.NegocioNombre,
+                                cita.NombreServicio,
+                                cita.FechaHoraInicio,
+                                negocio.Email,
+                                negocio.Telefono);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Error enviando email de recordatorio al empleado para cita {CitaId}", cita.CitaId);
+                        }
+                    }
+
+                    // Marcar como enviada solo si ambos envíos de WhatsApp fueron exitosos.
                     // Si alguno falló, se reintentará en el próximo ciclo de 5 minutos.
                     if (envioExitoso)
                         cita.RecordatorioEnviado = true;

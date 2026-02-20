@@ -57,6 +57,14 @@ public interface INegocioService
     /// <returns>Objeto Gym completo, o null si no existe.</returns>
     Task<Gym> GetNegocioForImpersonationAsync(Guid id);
 
+    /// <summary>
+    /// Obtiene el objeto Gym por email. Usado internamente después de crear un negocio
+    /// para recuperar el ID asignado y poder generar la comisión del vendedor.
+    /// </summary>
+    /// <param name="email">Email del negocio (identificador único de login).</param>
+    /// <returns>Objeto Gym completo, o null si no existe.</returns>
+    Task<Gym> GetNegocioByEmailAsync(string email);
+
     // ═══════════════════════════════════════════════════════════
     // CRUD
     // ═══════════════════════════════════════════════════════════

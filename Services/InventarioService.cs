@@ -64,7 +64,7 @@ public class InventarioService : IInventarioService
     /// </summary>
     public async Task<object> GetProductosAsync(Guid negocioId)
     {
-        return await _context.Productos
+        return await _context.Productos.AsNoTracking()
             .Where(p => p.NegocioId == negocioId && p.IsActive)
             .OrderBy(p => p.Nombre)
             .Select(p => new
@@ -287,22 +287,29 @@ public class InventarioService : IInventarioService
             Fecha          = TimeHelper.Now
         });
 
+        using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
             _context.Update(producto);
             await _context.SaveChangesAsync();
+
+            // El total es positivo porque es un ingreso para el negocio
+            await _logService.CreateLogAsync(negocioId, "venta_inventario",
+                $"Venta inventario: {cantidad}x {producto.Nombre} @ ${producto.PrecioVenta:F2} = ${total:F2}",
+                total);
+
+            await transaction.CommitAsync();
         }
         catch (DbUpdateConcurrencyException)
         {
-            // Otro usuario modificó el stock entre que lo leímos y que intentamos guardarlo.
-            // Pedimos que recarguen para obtener el estado actual real.
+            await transaction.RollbackAsync();
             return (false, "El stock fue modificado por otro usuario. Recarga e intenta de nuevo.");
         }
-
-        // El total es positivo porque es un ingreso para el negocio
-        await _logService.CreateLogAsync(negocioId, "venta_inventario",
-            $"Venta inventario: {cantidad}x {producto.Nombre} @ ${producto.PrecioVenta:F2} = ${total:F2}",
-            total);
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
 
         return (true, $"Venta registrada: {cantidad}x {producto.Nombre} (${total:F2})");
     }
@@ -352,20 +359,29 @@ public class InventarioService : IInventarioService
             Fecha          = TimeHelper.Now
         });
 
+        using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
             _context.Update(producto);
             await _context.SaveChangesAsync();
+
+            // El total es NEGATIVO porque es dinero que sale del negocio (se devuelve al cliente)
+            await _logService.CreateLogAsync(negocioId, "devolucion_inventario",
+                $"Devolución inventario: {cantidad}x {producto.Nombre}, ${total:F2}. Razón: {nota}",
+                -total);
+
+            await transaction.CommitAsync();
         }
         catch (DbUpdateConcurrencyException)
         {
+            await transaction.RollbackAsync();
             return (false, "El stock fue modificado por otro usuario. Recarga e intenta de nuevo.");
         }
-
-        // El total es NEGATIVO porque es dinero que sale del negocio (se devuelve al cliente)
-        await _logService.CreateLogAsync(negocioId, "devolucion_inventario",
-            $"Devolución inventario: {cantidad}x {producto.Nombre}, ${total:F2}. Razón: {nota}",
-            -total);
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
 
         return (true, $"Devolución registrada: {cantidad}x {producto.Nombre}");
     }
@@ -525,7 +541,7 @@ public class InventarioService : IInventarioService
     /// </summary>
     public async Task<object> GetMovimientosAsync(Guid negocioId)
     {
-        return await _context.MovimientosInventario
+        return await _context.MovimientosInventario.AsNoTracking()
             .Where(m => m.NegocioId == negocioId)
             .OrderByDescending(m => m.Fecha)
             .Select(m => new
@@ -560,13 +576,13 @@ public class InventarioService : IInventarioService
     public async Task<object> GetInventarioStatsAsync(Guid negocioId)
     {
         // Cargar todos los productos activos para calcular múltiples métricas sobre ellos
-        var productos = await _context.Productos
+        var productos = await _context.Productos.AsNoTracking()
             .Where(p => p.NegocioId == negocioId && p.IsActive)
             .ToListAsync();
 
         // Solo los movimientos de hoy para las estadísticas diarias
         var hoy = TimeHelper.Now.Date;
-        var movimientosHoy = await _context.MovimientosInventario
+        var movimientosHoy = await _context.MovimientosInventario.AsNoTracking()
             .Where(m => m.NegocioId == negocioId && m.Fecha.Date == hoy)
             .ToListAsync();
 
@@ -619,12 +635,12 @@ public class InventarioService : IInventarioService
     public async Task<byte[]> ExportInventarioExcelAsync(Guid negocioId)
     {
         // Cargar datos ordenados para el Excel
-        var productos = await _context.Productos
+        var productos = await _context.Productos.AsNoTracking()
             .Where(p => p.NegocioId == negocioId && p.IsActive)
             .OrderBy(p => p.Nombre)
             .ToListAsync();
 
-        var movimientos = await _context.MovimientosInventario
+        var movimientos = await _context.MovimientosInventario.AsNoTracking()
             .Where(m => m.NegocioId == negocioId)
             .OrderByDescending(m => m.Fecha)
             .ToListAsync();

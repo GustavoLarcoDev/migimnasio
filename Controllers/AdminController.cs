@@ -24,6 +24,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace Gimnasio.Controllers;
 
@@ -37,19 +38,21 @@ namespace Gimnasio.Controllers;
 public class AdminController : Controller
 {
     // ── Servicios inyectados por el contenedor de dependencias (Program.cs) ──────────
-    private readonly INegocioService _negocioService; // Lógica de negocio: CRUD, estadísticas, logs, Excel
-    private readonly IAuthService _authService;       // Verifica si el usuario actual es admin
-    private readonly IEmailService _emailService;     // Envía correos automáticos (bienvenida al crear un negocio)
+    private readonly INegocioService _negocioService;
+    private readonly IAuthService _authService;
+    private readonly IEmailService _emailService;
+    private readonly IComisionService _comisionService;
+    private readonly IVendedorService _vendedorService;
+    private readonly IReciboService _reciboService;
 
-    /// <summary>
-    /// Constructor: ASP.NET Core inyecta automáticamente las dependencias registradas en Program.cs.
-    /// Este patrón se llama "Inyección de Dependencias" y permite testear el controlador fácilmente.
-    /// </summary>
-    public AdminController(INegocioService negocioService, IAuthService authService, IEmailService emailService)
+    public AdminController(INegocioService negocioService, IAuthService authService, IEmailService emailService, IComisionService comisionService, IVendedorService vendedorService, IReciboService reciboService)
     {
         _negocioService = negocioService;
         _authService = authService;
         _emailService = emailService;
+        _comisionService = comisionService;
+        _vendedorService = vendedorService;
+        _reciboService = reciboService;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -261,7 +264,7 @@ public class AdminController : Controller
 
             // Si el servicio devuelve error (ej: email ya existe), lo propagamos al frontend
             if (!success)
-                return BadRequest(message);
+                return BadRequest(new { success = false, message });
 
             // Registrar en el log de auditoría quién creó el negocio y de qué tipo
             await _negocioService.RegistrarAdminLogAsync(
@@ -269,14 +272,28 @@ public class AdminController : Controller
                 $"Negocio '{NombreNegocio}' creado ({(esPrueba ? "Prueba" : "Pago")})",
                 NombreNegocio);
 
-            // Enviar correo de bienvenida en segundo plano sin bloquear la respuesta.
-            // Se usa Task.Run con try-catch para que las excepciones del email no se pierdan
-            // como unobserved task exceptions (lo que ocurría con el patrón "_ = Task").
+            // Enviar correo de bienvenida en segundo plano
             _ = Task.Run(async () =>
             {
                 try { await _emailService.EnviarBienvenidaNegocioAsync(EmailNegocio, NombreNegocio, duenoNegocio, EmailNegocio, passwordNegocio, telefono, null); }
-                catch { /* El EmailService ya loguea internamente */ }
+                catch { }
             });
+
+            // Enviar recibo de pago si no es prueba y guardarlo en BD (admin-scope: NegocioId=null)
+            if (!esPrueba && precioSuscripcion.HasValue && precioSuscripcion.Value > 0)
+            {
+                try
+                {
+                    var numRecibo = await _reciboService.ObtenerSiguienteNumeroAsync(null);
+                    var concepto = $"Suscripción {NombreNegocio} x{diasPagados ?? 30} días";
+                    var (enviado, html) = await _emailService.EnviarReciboPagoNegocioAsync(
+                        EmailNegocio, NombreNegocio, duenoNegocio,
+                        diasPagados ?? 30, precioSuscripcion.Value, null, null, numRecibo);
+                    await _reciboService.CrearReciboAsync(null, numRecibo, "suscripcion_negocio",
+                        EmailNegocio, duenoNegocio, NombreNegocio, concepto, precioSuscripcion.Value, html);
+                }
+                catch { }
+            }
 
             return Ok(new { success = true, message });
         }
@@ -527,6 +544,163 @@ public class AdminController : Controller
         }
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // COMISIONES DE VENDEDORES — Gestión de pagos a vendedores
+    //
+    // Los vendedores ganan comisiones automáticamente al crear negocios
+    // que cumplan: precio >= $15 y días contratados >= 30.
+    //
+    // El flujo es:
+    //   1. Vendedor crea negocio → se genera ComisionVendedor (Pagada=false)
+    //   2. Admin consulta comisiones pendientes por vendedor
+    //   3. Admin transfiere el dinero y marca como pagado (Pagada=true)
+    //   4. La comisión pasa al historial como registro contable
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Obtiene todas las comisiones pendientes de pago agrupadas por vendedor.
+    /// Permite al admin ver cuánto le debe a cada vendedor y el detalle de cada comisión.
+    /// </summary>
+    /// <returns>
+    /// 200 OK con lista de grupos por vendedor con totales y comisiones detalladas,
+    /// 403 si no es admin, o 500 ante error.
+    /// </returns>
+    [HttpGet("GetComisionesPendientes")]
+    public async Task<IActionResult> GetComisionesPendientes()
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var comisiones = await _comisionService.GetComisionesPendientesAsync();
+            return Ok(comisiones);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Obtiene el resumen de comisiones por vendedor: pendiente, pagado y total histórico.
+    /// Alimenta las tarjetas de estadísticas del panel de comisiones.
+    /// </summary>
+    /// <returns>
+    /// 200 OK con lista de vendedores y sus métricas de comisiones,
+    /// 403 si no es admin, o 500 ante error.
+    /// </returns>
+    [HttpGet("GetResumenComisiones")]
+    public async Task<IActionResult> GetResumenComisiones()
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var resumen = await _comisionService.GetResumenComisionesAsync();
+            return Ok(resumen);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Marca todas las comisiones pendientes de un vendedor como pagadas.
+    /// Se debe llamar después de haber transferido el dinero al vendedor.
+    /// Retorna el total pagado y el detalle de los negocios involucrados.
+    /// </summary>
+    /// <param name="vendedorId">ID del vendedor a quien se le pagan todas sus comisiones pendientes.</param>
+    /// <returns>
+    /// 200 OK con { success, message, totalPagado, detalleNegocios } si hay pendientes y se pagaron,
+    /// 400 si el vendedor no tiene comisiones pendientes,
+    /// 403 si no es admin, o 500 ante error.
+    /// </returns>
+    [HttpPost("PagarComisionesVendedor")]
+    public async Task<IActionResult> PagarComisionesVendedor(Guid vendedorId)
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var (success, message, totalPagado, detalleNegocios) =
+                await _comisionService.PagarComisionesVendedorAsync(vendedorId);
+
+            if (!success)
+                return BadRequest(new { success = false, message });
+
+            // Registrar el pago en el log de auditoría del admin
+            await _negocioService.RegistrarAdminLogAsync(
+                "PagarComisiones",
+                $"Comisiones pagadas al vendedor (ID: {vendedorId}). Total: ${totalPagado:F2}",
+                null);
+
+            // Enviar recibo de comisión y guardarlo en BD (admin-scope)
+            var vendedor = await _vendedorService.GetVendedorAsync(vendedorId);
+            if (vendedor != null && !string.IsNullOrWhiteSpace(vendedor.Correo))
+            {
+                var lineasDetalle = detalleNegocios.Select(item =>
+                {
+                    var json = JsonSerializer.Serialize(item);
+                    var doc = JsonDocument.Parse(json).RootElement;
+                    var nombre = doc.TryGetProperty("NombreNegocio", out var n) ? n.GetString() : "—";
+                    var monto = doc.TryGetProperty("MontoComision", out var m) ? m.GetDecimal() : 0m;
+                    var dias = doc.TryGetProperty("DiasContratados", out var d) ? d.GetInt32() : 0;
+                    var precio = doc.TryGetProperty("PrecioNegocio", out var p) ? p.GetDecimal() : 0m;
+                    return $"- {nombre}: ${monto:F2} (precio ${precio:F2} / {dias} días)";
+                });
+                var detalle = string.Join("\n", lineasDetalle);
+                var vendedorNombre = $"{vendedor.Nombre} {vendedor.Apellido}";
+
+                try
+                {
+                    var numRecibo = await _reciboService.ObtenerSiguienteNumeroAsync(null);
+                    var concepto = $"Comisión vendedor {vendedorNombre} ({detalleNegocios.Count} negocios)";
+                    var (enviado, html) = await _emailService.EnviarReciboComisionAsync(
+                        vendedor.Correo, vendedorNombre, totalPagado,
+                        detalleNegocios.Count, detalle, numRecibo);
+                    await _reciboService.CrearReciboAsync(null, numRecibo, "pago_comision",
+                        vendedor.Correo, vendedorNombre, "My-Negocio", concepto, totalPagado, html);
+                }
+                catch { }
+            }
+
+            return Ok(new { success = true, message, totalPagado, detalleNegocios });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Obtiene el historial de todas las comisiones ya pagadas, ordenadas por fecha de pago.
+    /// Sirve como registro contable de los pagos realizados a vendedores.
+    /// </summary>
+    /// <returns>
+    /// 200 OK con lista de comisiones pagadas con fecha, vendedor y monto,
+    /// 403 si no es admin, o 500 ante error.
+    /// </returns>
+    [HttpGet("GetHistorialComisiones")]
+    public async Task<IActionResult> GetHistorialComisiones()
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var historial = await _comisionService.GetHistorialComisionesAsync();
+            return Ok(historial);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
     /// <summary>
     /// Finaliza la impersonación y restaura la sesión original del administrador.
     /// Lee el claim "AdminEmail" guardado en la cookie de impersonación para reconstruir
@@ -570,6 +744,44 @@ public class AdminController : Controller
 
             // Volver al panel de administración
             return RedirectToAction("Index", "Admin");
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // RECIBOS ADMIN
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    [HttpGet("GetRecibosAdmin")]
+    public async Task<IActionResult> GetRecibosAdmin()
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+            var recibos = await _reciboService.GetRecibosAdminAsync();
+            return Ok(recibos);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    [HttpGet("GetReciboAdmin")]
+    public async Task<IActionResult> GetReciboAdmin(Guid reciboId)
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+            var recibo = await _reciboService.GetReciboAdminAsync(reciboId);
+            if (recibo == null)
+                return NotFound(new { success = false, message = "Recibo no encontrado" });
+            return Ok(recibo);
         }
         catch (Exception)
         {

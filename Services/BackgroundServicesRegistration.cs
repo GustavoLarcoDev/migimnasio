@@ -37,7 +37,7 @@ namespace Gimnasio.Services;
 public static class BackgroundServicesRegistration
 {
     /// <summary>
-    /// Registra los tres servicios de fondo de mensajería WhatsApp
+    /// Registra los servicios de fondo de mensajería y reportes automáticos
     /// en el contenedor de inyección de dependencias.
     ///
     /// Servicios registrados:
@@ -57,6 +57,11 @@ public static class BackgroundServicesRegistration
     ///     Envía recordatorios de cita al cliente y al dueño del negocio,
     ///     35 minutos antes del inicio de la cita. Solo para negocios "artesanal".
     ///   </item>
+    ///   <item>
+    ///     <see cref="DailyEmailReportService"/> — Corre a las 11:00 PM Ecuador.
+    ///     Envía un reporte financiero detallado del día por correo electrónico
+    ///     al dueño de cada negocio activo (membresias y artesanal).
+    ///   </item>
     /// </list>
     ///
     /// Retorna el mismo IServiceCollection para permitir el encadenamiento
@@ -74,6 +79,9 @@ public static class BackgroundServicesRegistration
 
         // Recordatorios de citas: cada 5 minutos (solo artesanal)
         services.AddHostedService<AppointmentReminderService>();
+
+        // Reporte diario detallado al dueño por email: 11:00 PM Ecuador
+        services.AddHostedService<DailyEmailReportService>();
 
         // Retornar services permite encadenar: builder.Services.AddBackgroundServices().AddOtraCosa()
         return services;

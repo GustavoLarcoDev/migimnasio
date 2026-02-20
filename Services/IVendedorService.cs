@@ -66,9 +66,13 @@ public interface IVendedorService
     /// <param name="correo">Email de login (debe ser único entre vendedores activos).</param>
     /// <param name="telefono">Teléfono de contacto (opcional, puede ser vacío).</param>
     /// <param name="password">Contraseña en texto plano (mínimo 6 caracteres, se hashea).</param>
+    /// <param name="nombreBanco">Nombre del banco para transferencias (opcional).</param>
+    /// <param name="numeroCedula">Número de cédula del vendedor (opcional).</param>
+    /// <param name="numeroCuenta">Número de cuenta bancaria (opcional).</param>
     /// <returns>Tupla (success, message).</returns>
     Task<(bool success, string message)> CrearVendedorAsync(
-        string nombre, string apellido, string correo, string telefono, string password);
+        string nombre, string apellido, string correo, string telefono, string password,
+        string? nombreBanco = null, string? numeroCedula = null, string? numeroCuenta = null);
 
     /// <summary>
     /// Edita los datos de un vendedor existente.
@@ -84,9 +88,13 @@ public interface IVendedorService
     /// <param name="correo">Nuevo correo (debe ser único).</param>
     /// <param name="telefono">Nuevo teléfono.</param>
     /// <param name="password">Nueva contraseña (null o vacío = conservar la actual).</param>
+    /// <param name="nombreBanco">Nombre del banco para transferencias (opcional).</param>
+    /// <param name="numeroCedula">Número de cédula del vendedor (opcional).</param>
+    /// <param name="numeroCuenta">Número de cuenta bancaria (opcional).</param>
     /// <returns>Tupla (success, message).</returns>
     Task<(bool success, string message)> EditarVendedorAsync(
-        Guid id, string nombre, string apellido, string correo, string telefono, string? password);
+        Guid id, string nombre, string apellido, string correo, string telefono, string? password,
+        string? nombreBanco = null, string? numeroCedula = null, string? numeroCuenta = null);
 
     /// <summary>
     /// Elimina un vendedor de forma LÓGICA (soft delete).

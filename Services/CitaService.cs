@@ -67,7 +67,7 @@ public class CitaService : ICitaService
     /// </summary>
     public async Task<object> GetCitasCalendarioAsync(Guid negocioId, DateTime start, DateTime end)
     {
-        return await _context.Citas
+        return await _context.Citas.AsNoTracking()
             .Where(c => c.NegocioId == negocioId
                 && c.FechaHoraInicio >= start
                 && c.FechaHoraInicio <= end)
@@ -109,13 +109,13 @@ public class CitaService : ICitaService
     {
         // Siempre filtramos también por negocioId para garantizar que un negocio
         // no pueda ver datos de otro negocio (seguridad multi-tenant).
-        var cita = await _context.Citas
+        var cita = await _context.Citas.AsNoTracking()
             .FirstOrDefaultAsync(c => c.CitaId == citaId && c.NegocioId == negocioId);
 
         if (cita == null) return null;
 
         // Buscamos el pago asociado (puede no existir si la cita no fue completada aún)
-        var pago = await _context.PagosCita
+        var pago = await _context.PagosCita.AsNoTracking()
             .FirstOrDefaultAsync(p => p.CitaId == citaId);
 
         return new
@@ -297,13 +297,13 @@ public class CitaService : ICitaService
         var manana = hoy.AddDays(1);       // Ejemplo: 2026-02-19 00:00:00
 
         // Traemos todas las citas del día (incluyendo canceladas, para el contador de canceladas)
-        var citasHoy = await _context.Citas
+        var citasHoy = await _context.Citas.AsNoTracking()
             .Where(c => c.NegocioId == negocioId
                 && c.FechaHoraInicio >= hoy && c.FechaHoraInicio < manana)
             .ToListAsync();
 
         // Los pagos son una tabla separada; solo existen para citas completadas y cobradas.
-        var pagosHoy = await _context.PagosCita
+        var pagosHoy = await _context.PagosCita.AsNoTracking()
             .Where(p => p.NegocioId == negocioId
                 && p.FechaCreacion >= hoy && p.FechaCreacion < manana)
             .ToListAsync();
@@ -328,7 +328,7 @@ public class CitaService : ICitaService
     /// </summary>
     public async Task<object> GetHistorialClienteAsync(Guid clienteId, Guid negocioId)
     {
-        return await _context.Citas
+        return await _context.Citas.AsNoTracking()
             .Where(c => c.ClienteId == clienteId && c.NegocioId == negocioId)
             // Las más recientes primero para que el historial sea intuitivo
             .OrderByDescending(c => c.FechaHoraInicio)
@@ -368,6 +368,10 @@ public class CitaService : ICitaService
     /// </summary>
     public async Task<(bool success, string message, Guid? citaId)> CrearCitaRapidaAsync(CitaQuickCreateDto dto)
     {
+        // Validar que la cita no sea en el pasado (usar TimeHelper.Now para zona horaria Ecuador UTC-5)
+        if (dto.FechaHoraInicio < TimeHelper.Now)
+            return (false, "No se pueden crear citas en el pasado", null);
+
         // --- RESOLVER CLIENTE ---
         // Determinamos el clienteId y el nombre antes de seguir.
         Guid clienteId;
@@ -484,6 +488,10 @@ public class CitaService : ICitaService
     /// </summary>
     public async Task<(bool success, string message)> CrearCitaAsync(CitaCreateDto dto)
     {
+        // Validar que la cita no sea en el pasado (usar TimeHelper.Now para zona horaria Ecuador UTC-5)
+        if (dto.FechaHoraInicio < TimeHelper.Now)
+            return (false, "No se pueden crear citas en el pasado");
+
         // Obtener y validar los tres actores de la cita: cliente, empleado y servicio.
         var cliente = await _context.Clientes
             .FirstOrDefaultAsync(c => c.ClienteId == dto.ClienteId && c.NegocioId == dto.NegocioId);
@@ -773,7 +781,7 @@ public class CitaService : ICitaService
     /// </summary>
     public async Task<object> GetPagoCitaAsync(Guid citaId, Guid negocioId)
     {
-        return await _context.PagosCita
+        return await _context.PagosCita.AsNoTracking()
             .Where(p => p.CitaId == citaId && p.NegocioId == negocioId)
             .Select(p => new
             {

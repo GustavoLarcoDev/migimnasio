@@ -72,7 +72,7 @@ public class NegocioService : INegocioService
     {
         var now = TimeHelper.Now;
 
-        return await _context.Negocios
+        return await _context.Negocios.AsNoTracking()
             .Select(g => new
             {
                 g.NegocioId,
@@ -152,6 +152,16 @@ public class NegocioService : INegocioService
     public async Task<Gym> GetNegocioForImpersonationAsync(Guid id)
     {
         return await _context.Negocios.FindAsync(id);
+    }
+
+    /// <summary>
+    /// Obtiene un negocio por su email. Usado para recuperar el ID del negocio
+    /// recién creado cuando CreateNegocioAsync solo retorna (success, message).
+    /// El email es único en la plataforma, por lo que la búsqueda es segura.
+    /// </summary>
+    public async Task<Gym> GetNegocioByEmailAsync(string email)
+    {
+        return await _context.Negocios.FirstOrDefaultAsync(n => n.Email == email);
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -497,7 +507,7 @@ public class NegocioService : INegocioService
     /// </summary>
     public async Task<object> GetAdminLogsAsync()
     {
-        return await _context.AdminLogs
+        return await _context.AdminLogs.AsNoTracking()
             .OrderByDescending(l => l.Fecha)
             .Take(200)
             .Select(l => new

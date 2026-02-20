@@ -31,21 +31,27 @@ public class CitasController : Controller
     // Se reciben en el constructor y se guardan como readonly para
     // asegurarse de que no se reasignan accidentalmente en otra parte.
 
-    private readonly ICitaService _citaService;       // Lógica de negocio de citas
-    private readonly IClienteService _clienteService; // Búsqueda y creación de clientes
-    private readonly IAuthService _authService;       // Obtiene el negocioId del claim del usuario
-    private readonly ApplicationDbContext _context;   // Solo se usa en DashboardArtesanal para cargar la vista
+    private readonly ICitaService _citaService;
+    private readonly IClienteService _clienteService;
+    private readonly IAuthService _authService;
+    private readonly ApplicationDbContext _context;
+    private readonly IEmailService _emailService;
+    private readonly IReciboService _reciboService;
 
     public CitasController(
         ICitaService citaService,
         IClienteService clienteService,
         IAuthService authService,
-        ApplicationDbContext context)
+        ApplicationDbContext context,
+        IEmailService emailService,
+        IReciboService reciboService)
     {
         _citaService = citaService;
         _clienteService = clienteService;
         _authService = authService;
         _context = context;
+        _reciboService = reciboService;
+        _emailService = emailService;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -282,6 +288,41 @@ public class CitasController : Controller
             if (!success)
                 return BadRequest(new { success, message });
 
+            // Enviar confirmación de reserva por email si la cita se creó exitosamente.
+            // Se obtiene el email del cliente y los datos del negocio para el email.
+            // Se ejecuta en segundo plano para no bloquear la respuesta HTTP al usuario.
+            // IMPORTANTE: Los datos se cargan ANTES del Task.Run porque _context es scoped
+            // al request HTTP y estará disposed cuando el Task.Run se ejecute.
+            if (citaId.HasValue)
+            {
+                var cita = await _context.Citas.FindAsync(citaId.Value);
+                if (cita != null)
+                {
+                    var cliente = await _context.Clientes.FindAsync(cita.ClienteId);
+                    var negocio = await _context.Negocios.FindAsync(cita.NegocioId);
+
+                    if (cliente != null && negocio != null)
+                    {
+                        var clienteEmail = cliente.Email;
+                        if (!string.IsNullOrWhiteSpace(clienteEmail))
+                        {
+                            _ = Task.Run(async () =>
+                            {
+                                try
+                                {
+                                    await _emailService.EnviarConfirmacionReservaAsync(
+                                        clienteEmail, cita.NombreCliente, negocio.NegocioNombre,
+                                        cita.NombreServicio, cita.NombreEmpleado, cita.FechaHoraInicio,
+                                        cita.DuracionMinutos, cita.PrecioServicio,
+                                        negocio.Email, negocio.Telefono);
+                                }
+                                catch { }
+                            });
+                        }
+                    }
+                }
+            }
+
             return Ok(new { success, message, citaId });
         }
         catch (Exception)
@@ -342,6 +383,46 @@ public class CitasController : Controller
             var (success, message) = await _citaService.CrearCitaAsync(dto);
             if (!success)
                 return BadRequest(new { success, message });
+
+            // Enviar confirmación de reserva por email al cliente.
+            // Se ejecuta en segundo plano para no bloquear la respuesta HTTP al usuario.
+            // IMPORTANTE: Los datos se cargan ANTES del Task.Run porque _context es scoped
+            // al request HTTP y estará disposed cuando el Task.Run se ejecute.
+            var cliente = await _context.Clientes
+                .FirstOrDefaultAsync(c => c.ClienteId == dto.ClienteId && c.NegocioId == dto.NegocioId);
+            var negocio = await _context.Negocios.FindAsync(dto.NegocioId);
+
+            if (cliente != null && negocio != null)
+            {
+                var clienteEmail = cliente.Email;
+                if (!string.IsNullOrWhiteSpace(clienteEmail))
+                {
+                    // Buscar la cita recién creada para obtener todos los datos desnormalizados
+                    var cita = await _context.Citas
+                        .Where(c => c.ClienteId == dto.ClienteId
+                            && c.NegocioId == dto.NegocioId
+                            && c.EmpleadoId == dto.EmpleadoId
+                            && c.FechaHoraInicio == dto.FechaHoraInicio)
+                        .OrderByDescending(c => c.FechaCreacion)
+                        .FirstOrDefaultAsync();
+
+                    if (cita != null)
+                    {
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await _emailService.EnviarConfirmacionReservaAsync(
+                                    clienteEmail, cita.NombreCliente, negocio.NegocioNombre,
+                                    cita.NombreServicio, cita.NombreEmpleado, cita.FechaHoraInicio,
+                                    cita.DuracionMinutos, cita.PrecioServicio,
+                                    negocio.Email, negocio.Telefono);
+                            }
+                            catch { }
+                        });
+                    }
+                }
+            }
 
             return Ok(new { success, message });
         }
@@ -445,6 +526,39 @@ public class CitasController : Controller
             var (success, message) = await _citaService.RegistrarPagoAsync(dto);
             if (!success)
                 return BadRequest(new { success, message });
+
+            // Enviar recibo de servicio completado y guardarlo en BD
+            var cita = await _context.Citas
+                .FirstOrDefaultAsync(c => c.CitaId == dto.CitaId && c.NegocioId == dto.NegocioId);
+
+            if (cita != null)
+            {
+                var cliente = await _context.Clientes.FindAsync(cita.ClienteId);
+                var negocio = await _context.Negocios.FindAsync(cita.NegocioId);
+                var pago = await _context.PagosCita
+                    .FirstOrDefaultAsync(p => p.CitaId == dto.CitaId);
+
+                if (cliente != null && negocio != null && pago != null)
+                {
+                    var clienteEmail = cliente.Email;
+                    if (!string.IsNullOrWhiteSpace(clienteEmail))
+                    {
+                        try
+                        {
+                            var numRecibo = await _reciboService.ObtenerSiguienteNumeroAsync(dto.NegocioId);
+                            var concepto = $"Servicio: {cita.NombreServicio}";
+                            var (enviado, html) = await _emailService.EnviarReciboCitaCompletadaAsync(
+                                clienteEmail, cita.NombreCliente, negocio.NegocioNombre,
+                                cita.NombreServicio, cita.NombreEmpleado,
+                                pago.MontoServicio, pago.MontoExtra, pago.Propina, pago.Total,
+                                negocio.Email, negocio.Telefono, numRecibo);
+                            await _reciboService.CrearReciboAsync(dto.NegocioId, numRecibo, "pago_cita",
+                                clienteEmail, cita.NombreCliente, negocio.NegocioNombre, concepto, pago.Total, html);
+                        }
+                        catch { }
+                    }
+                }
+            }
 
             return Ok(new { success, message });
         }

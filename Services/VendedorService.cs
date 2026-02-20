@@ -69,7 +69,7 @@ public class VendedorService : IVendedorService
     public async Task<List<object>> GetAllVendedoresAsync()
     {
         // Primera consulta: todos los vendedores activos
-        var vendedores = await _context.Vendedores
+        var vendedores = await _context.Vendedores.AsNoTracking()
             .Where(v => v.IsActive)
             .OrderByDescending(v => v.FechaCreacion)
             .ToListAsync();
@@ -100,6 +100,9 @@ public class VendedorService : IVendedorService
             nombreCompleto = $"{v.Nombre} {v.Apellido}",
             v.Correo,
             v.Telefono,
+            v.NombreBanco,
+            v.NumeroCedula,
+            v.NumeroCuenta,
             v.IsActive,
             fechaCreacion = v.FechaCreacion.ToString("yyyy-MM-dd"),
             // GetValueOrDefault retorna 0 si el vendedor no tiene negocios asignados
@@ -133,7 +136,8 @@ public class VendedorService : IVendedorService
     ///   5. Guardar en la BD.
     /// </summary>
     public async Task<(bool success, string message)> CrearVendedorAsync(
-        string nombre, string apellido, string correo, string telefono, string password)
+        string nombre, string apellido, string correo, string telefono, string password,
+        string? nombreBanco = null, string? numeroCedula = null, string? numeroCuenta = null)
     {
         if (string.IsNullOrWhiteSpace(nombre) || string.IsNullOrWhiteSpace(apellido))
             return (false, "Nombre y apellido son obligatorios");
@@ -162,6 +166,10 @@ public class VendedorService : IVendedorService
             Telefono = PhoneHelper.NormalizeEcuador(telefono?.Trim() ?? ""),
             // Hashear la contraseña antes de guardar (nunca guardar texto plano)
             Password = _authService.HashPassword(password),
+            // Datos bancarios opcionales: null si vienen vacíos
+            NombreBanco = string.IsNullOrWhiteSpace(nombreBanco) ? null : nombreBanco.Trim(),
+            NumeroCedula = string.IsNullOrWhiteSpace(numeroCedula) ? null : numeroCedula.Trim(),
+            NumeroCuenta = string.IsNullOrWhiteSpace(numeroCuenta) ? null : numeroCuenta.Trim(),
             IsActive = true,
             FechaCreacion = TimeHelper.Now
         };
@@ -183,7 +191,8 @@ public class VendedorService : IVendedorService
     /// para evitar que "editar sin cambiar el correo" falle.
     /// </summary>
     public async Task<(bool success, string message)> EditarVendedorAsync(
-        Guid id, string nombre, string apellido, string correo, string telefono, string? password)
+        Guid id, string nombre, string apellido, string correo, string telefono, string? password,
+        string? nombreBanco = null, string? numeroCedula = null, string? numeroCuenta = null)
     {
         // Buscar solo entre activos para no editar vendedores eliminados
         var vendedor = await _context.Vendedores.FirstOrDefaultAsync(v => v.VendedorId == id && v.IsActive);
@@ -202,6 +211,10 @@ public class VendedorService : IVendedorService
         vendedor.Apellido = apellido.Trim();
         vendedor.Correo = correo.Trim().ToLower();
         vendedor.Telefono = PhoneHelper.NormalizeEcuador(telefono?.Trim() ?? "");
+        // Datos bancarios: null si vienen vacíos (el campo se limpia si se borra en el form)
+        vendedor.NombreBanco = string.IsNullOrWhiteSpace(nombreBanco) ? null : nombreBanco.Trim();
+        vendedor.NumeroCedula = string.IsNullOrWhiteSpace(numeroCedula) ? null : numeroCedula.Trim();
+        vendedor.NumeroCuenta = string.IsNullOrWhiteSpace(numeroCuenta) ? null : numeroCuenta.Trim();
 
         // Solo actualizar la contraseña si se envió una nueva
         if (!string.IsNullOrWhiteSpace(password))
@@ -384,7 +397,7 @@ public class VendedorService : IVendedorService
     /// </summary>
     public async Task<List<object>> GetLeadsAsync()
     {
-        var leads = await _context.LeadsVendedor
+        var leads = await _context.LeadsVendedor.AsNoTracking()
             // No atendidos primero, luego por fecha descendente
             .OrderBy(l => l.Atendido)
             .ThenByDescending(l => l.FechaCreacion)

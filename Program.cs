@@ -23,6 +23,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.RateLimiting;
+using Gimnasio.Filters;
 
 // WebApplication.CreateBuilder prepara el contenedor de DI y la
 // configuración (appsettings.json, variables de entorno, etc.)
@@ -44,14 +45,19 @@ builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 // Credenciales del súper-admin (email + contraseña) definidas
 // en appsettings.json bajo la sección "AdminSettings".
 // Nunca se escriben en el código fuente (secreto en config).
-builder.Services.Configure<AdminSettings>(
-    builder.Configuration.GetSection("AdminSettings"));
+builder.Services.AddOptions<AdminSettings>()
+    .BindConfiguration("AdminSettings")
+    .Validate(s => !string.IsNullOrWhiteSpace(s.Email), "AdminSettings:Email is required")
+    .Validate(s => !string.IsNullOrWhiteSpace(s.PasswordHash), "AdminSettings:PasswordHash is required")
+    .ValidateOnStart();
 
 // Configuración del servidor SMTP de Gmail para envío de emails
 // (host, puerto, credenciales). Separado del admin para poder
 // cambiar el proveedor de email sin tocar la lógica de negocio.
-builder.Services.Configure<EmailSettings>(
-    builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddOptions<EmailSettings>()
+    .BindConfiguration("EmailSettings")
+    .Validate(s => !string.IsNullOrWhiteSpace(s.SmtpHost), "EmailSettings:SmtpHost is required")
+    .ValidateOnStart();
 
 // Credenciales de la Meta Cloud API (WhatsApp Business):
 // token de acceso, número de teléfono, ID de plantillas, etc.
@@ -128,6 +134,12 @@ builder.Services.AddScoped<IInventarioService, InventarioService>();
 // Gestión de vendedores y sus comisiones
 builder.Services.AddScoped<IVendedorService, VendedorService>();
 
+// Comisiones generadas para vendedores al crear negocios calificados
+builder.Services.AddScoped<IComisionService, ComisionService>();
+
+// Recibos de pago almacenados en BD con HTML del email
+builder.Services.AddScoped<IReciboService, ReciboService>();
+
 // Envío de emails transaccionales (bienvenida, recordatorios, etc.)
 builder.Services.AddScoped<IEmailService, EmailService>();
 
@@ -197,6 +209,7 @@ builder.Services.AddControllersWithViews(options =>
     // deje los endpoints sin protección. Usar [IgnoreAntiforgeryToken]
     // en endpoints específicos si es necesario para testing.
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+    options.Filters.Add(new ValidateModelStateAttribute());
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -414,6 +427,8 @@ if (!app.Environment.IsDevelopment())
     // Solo en producción porque en dev usamos HTTP localmente.
     app.UseHsts();
 }
+
+app.UseStatusCodePagesWithReExecute("/Home/Error", "?statusCode={0}");
 
 // ── Cabeceras de Seguridad HTTP ────────────────────────────
 // Añadimos cabeceras de seguridad estándar a CADA respuesta.

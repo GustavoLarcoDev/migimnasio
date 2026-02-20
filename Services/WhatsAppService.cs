@@ -263,52 +263,80 @@ public class WhatsAppService : IWhatsAppService
     /// </summary>
     private async Task<bool> EnviarPayloadAsync(object payload)
     {
-        try
+        const int maxAttempts = 3;
+
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
         {
-            // Obtener un HttpClient del pool administrado por la fábrica
-            var client = _httpClientFactory.CreateClient("WhatsApp");
-
-            // URL del endpoint de mensajes de Meta Graph API
-            var url = $"https://graph.facebook.com/{_settings.ApiVersion}/{_settings.PhoneNumberId}/messages";
-
-            // Serializar el payload a JSON y empaquetarlo como contenido HTTP
-            var json    = JsonSerializer.Serialize(payload);
-
-            // Usar HttpRequestMessage para establecer el header de autenticación por request
-            // en lugar de DefaultRequestHeaders, que NO es thread-safe para escrituras concurrentes.
-            using var request = new HttpRequestMessage(HttpMethod.Post, url);
-            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
-            request.Headers.Authorization =
-                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _settings.AccessToken);
-
-            // Hacer el POST a la API de Meta
-            var response     = await client.SendAsync(request);
-            var responseBody = await response.Content.ReadAsStringAsync();
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                // Errores comunes:
-                //   400 = payload malformado (número inválido, campo faltante)
-                //   401 = token de acceso expirado o inválido
-                //   403 = número no verificado o sin permisos
-                //   429 = límite de rate de la API superado (demasiados mensajes/segundo)
-                _logger.LogError(
-                    "Error WhatsApp API. Código: {StatusCode}, Respuesta: {ResponseBody}",
-                    (int)response.StatusCode, responseBody);
-                return false;
-            }
+                var client = _httpClientFactory.CreateClient("WhatsApp");
+                var url = $"https://graph.facebook.com/{_settings.ApiVersion}/{_settings.PhoneNumberId}/messages";
+                var json = JsonSerializer.Serialize(payload);
 
-            _logger.LogInformation("Mensaje de WhatsApp enviado exitosamente");
-            return true;
+                using var request = new HttpRequestMessage(HttpMethod.Post, url);
+                request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+                request.Headers.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _settings.AccessToken);
+
+                var response = await client.SendAsync(request);
+                var responseBody = await response.Content.ReadAsStringAsync();
+
+                if (response.IsSuccessStatusCode)
+                {
+                    _logger.LogInformation("Mensaje de WhatsApp enviado exitosamente");
+                    return true;
+                }
+
+                // HTTP 429: respetar Retry-After header
+                if ((int)response.StatusCode == 429 && attempt < maxAttempts - 1)
+                {
+                    var retryAfterSeconds = 0;
+                    if (response.Headers.RetryAfter?.Delta.HasValue == true)
+                        retryAfterSeconds = (int)response.Headers.RetryAfter.Delta.Value.TotalSeconds;
+
+                    var delaySeconds = retryAfterSeconds > 0 ? retryAfterSeconds : (int)Math.Pow(2, attempt + 1);
+                    _logger.LogWarning(
+                        "WhatsApp API rate limited (429). Reintentando en {Delay}s (intento {Attempt}/{Max})...",
+                        delaySeconds, attempt + 1, maxAttempts);
+                    await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+                    continue;
+                }
+
+                if (attempt < maxAttempts - 1)
+                {
+                    var delaySeconds = (int)Math.Pow(2, attempt + 1);
+                    _logger.LogWarning(
+                        "Error WhatsApp API. Código: {StatusCode} (intento {Attempt}/{Max}). Reintentando en {Delay}s...",
+                        (int)response.StatusCode, attempt + 1, maxAttempts, delaySeconds);
+                    await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+                }
+                else
+                {
+                    _logger.LogError(
+                        "Error WhatsApp API tras {Max} intentos. Código: {StatusCode}, Respuesta: {ResponseBody}",
+                        maxAttempts, (int)response.StatusCode, responseBody);
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                if (attempt < maxAttempts - 1)
+                {
+                    var delaySeconds = (int)Math.Pow(2, attempt + 1);
+                    _logger.LogWarning(ex,
+                        "Excepción WhatsApp (intento {Attempt}/{Max}). Reintentando en {Delay}s...",
+                        attempt + 1, maxAttempts, delaySeconds);
+                    await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+                }
+                else
+                {
+                    _logger.LogError(ex, "Excepción al enviar WhatsApp tras {Max} intentos", maxAttempts);
+                    return false;
+                }
+            }
         }
-        catch (Exception ex)
-        {
-            // Excepción de red: servidor de Meta no disponible, timeout, DNS, etc.
-            // No propagamos la excepción — un WhatsApp fallido no debe romper
-            // el flujo principal de la aplicación.
-            _logger.LogError(ex, "Excepción al enviar mensaje de WhatsApp");
-            return false;
-        }
+
+        return false;
     }
 
     /// <summary>

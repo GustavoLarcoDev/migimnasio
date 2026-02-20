@@ -162,12 +162,39 @@
         <div id="notificacionesList" class="d-flex flex-column gap-2"><div class="text-center py-5 text-muted"><i class="bi bi-bell-slash fs-1 d-block mb-3"></i><p>No hay notificaciones.</p></div></div>
     </div>
 
+    <!-- ═══════════════ TAB RECIBOS ═══════════════ -->
+    <div class="tab-pane fade" id="recibosTab" role="tabpanel">
+        <div id="recibosCleanupBanner" class="alert alert-warning d-none mb-3">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            Tienes recibos con más de 30 días. <button class="btn btn-sm btn-warning ms-2" id="btnExportarYLimpiar">Exportar y Limpiar</button>
+        </div>
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold mb-0">Recibos</h4>
+            <div class="d-flex gap-2 align-items-center">
+                <div class="input-group input-group-sm" style="width: 200px;">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="buscarReciboInput" placeholder="# Recibo...">
+                </div>
+                <button id="btnExportRecibos" class="btn btn-sm btn-success"><i class="bi bi-file-earmark-excel me-1"></i>Exportar</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table id="tablaRecibos" class="table table-row-bordered align-middle gs-0 gy-3">
+                <thead><tr class="fw-bold text-muted"><th>#Recibo</th><th>Destinatario</th><th>Concepto</th><th>Monto</th><th>Fecha</th><th>Acciones</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
     <!-- ═══════════════ TAB SUGERENCIAS (reutilizado) ═══════════════ -->
     <div class="tab-pane fade" id="sugerenciasTab" role="tabpanel">
         <div class="row justify-content-center"><div class="col-lg-8"><div class="mg-card"><div class="card-header border-0"><h5 class="fw-bold mb-0"><i class="bi bi-chat-left-text me-2"></i>Enviar Sugerencia</h5></div><div class="card-body"><p class="text-muted mb-3">Ayudanos a mejorar. Escribe tu sugerencia, idea o comentario.</p><div class="mb-3"><textarea class="form-control form-control-lg" id="sugerenciaTexto" rows="5" maxlength="1000" placeholder="Escribe tu sugerencia aqui..."></textarea><div class="d-flex justify-content-between mt-1"><small class="text-muted">Maximo 1000 caracteres</small><small class="text-muted"><span id="sugerenciaCount">0</span>/1000</small></div></div><button id="btnEnviarSugerencia" class="btn btn-primary"><i class="bi bi-send me-2"></i>Enviar Sugerencia</button></div></div></div></div>
     </div>
 
 </div><!-- /tab-content -->
+
+<!-- Modal Ver Recibo -->
+<div class="modal fade" id="reciboModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down"><div class="modal-content"><div class="modal-header bg-light"><h3 class="modal-title fw-bolder"><i class="bi bi-receipt me-2"></i>Recibo #<span id="reciboModalNumero"></span></h3><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><iframe id="reciboIframe" sandbox style="width:100%;height:500px;border:none;"></iframe></div><div class="modal-footer bg-light"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button></div></div></div></div>
 
 <!-- ═══════════════ MODALES ═══════════════ -->
 
@@ -315,6 +342,7 @@
             <div class="col-md-6 mb-3"><label class="form-label fw-semibold required">Nombre</label><input type="text" class="form-control" name="Nombre" id="empNombre" required /></div>
             <div class="col-md-6 mb-3"><label class="form-label fw-semibold required">Apellido</label><input type="text" class="form-control" name="Apellido" id="empApellido" required /></div>
             <div class="col-md-6 mb-3"><label class="form-label fw-semibold">Telefono</label><input type="tel" class="form-control" name="Telefono" id="empTelefono" /></div>
+            <div class="col-md-6 mb-3"><label class="form-label fw-semibold">Email</label><input type="email" class="form-control" name="Email" id="empEmail" placeholder="Ej: ana@gmail.com" /></div>
             <div class="col-md-6 mb-3"><label class="form-label fw-semibold">Especialidad</label><input type="text" class="form-control" name="Especialidad" id="empEspecialidad" placeholder="Ej: Manicurista" /></div>
         </div>
     </form>
@@ -535,7 +563,7 @@ function verificarSuscripcion() {
             else if (d.diasRestantes <= 0) t.innerHTML = '<span class="badge bg-danger">Expirado</span>';
             else t.innerHTML = '- Te quedan <strong>' + d.diasRestantes + ' dias</strong>';
         }
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 }
 
 // ═══════════════ EMPLOYEE TABS ═══════════════
@@ -544,7 +572,7 @@ function cargarEmpleadosTabs(callback) {
         empleadosCache = data;
         buildEmpColorMap(data);
         refreshEmployeeTabsAvailability(callback);
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 }
 
 function refreshEmployeeTabsAvailability(callback) {
@@ -707,7 +735,7 @@ function cargarAgendaStats() {
         $('#statIngresosHoy').text('$' + (d.ingresosHoy || 0).toFixed(2));
         $('#statCompletadas').text(d.completadas);
         $('#statCanceladas').text(d.canceladas);
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 }
 
 // ═══════════════ CREAR CITA RAPIDA ═══════════════
@@ -760,7 +788,7 @@ function abrirModalCitaRapida(fechaHora, empleadoId) {
         data.forEach(function(s) {
             sel.append('<option value="' + s.servicioId + '" data-duracion="' + s.duracionMinutos + '" data-precio="' + s.precio + '">' + escHtml(s.nombre) + ' - $' + s.precio.toFixed(2) + ' (' + s.duracionMinutos + 'min)</option>');
         });
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 
     // Load slots if we have enough info
     cargarSlotsRapida();
@@ -834,7 +862,7 @@ $('#crClienteSearch').on('input', function() {
                 });
             }
             container.removeClass('d-none');
-        });
+        }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
     }, 300);
 });
 
@@ -888,7 +916,7 @@ function cargarSlotsRapida() {
         d.slots.forEach(function(s) {
             container.append('<button type="button" class="mg-slot-btn" data-inicio="' + s.inicio + '">' + escHtml(s.hora) + '</button>');
         });
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 }
 
 $('#crServicio, #crFecha').on('change', cargarSlotsRapida);
@@ -1010,7 +1038,7 @@ function abrirDetalleCita(citaId) {
         if (footer === '') footer = '<button class="btn btn-light btn-sm" data-bs-dismiss="modal">Cerrar</button>';
         $('#citaDetalleFooter').html(footer);
         new bootstrap.Modal('#citaDetalleModal').show();
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 }
 
 function cambiarEstado(citaId, nuevoEstado) {
@@ -1050,7 +1078,7 @@ $('#btnConfirmarCancelar').on('click', function() {
     $.post('/Negocios/CambiarEstadoCita', { citaId, negocioId, nuevoEstado: 'cancelada', motivoCancelacion: motivo }, function(r) {
         if (r.success) { toastr.success('Cita cancelada'); bootstrap.Modal.getInstance('#cancelarCitaModal').hide(); calendar.refetchEvents(); cargarAgendaStats(); refreshEmployeeTabsAvailability(); }
         else toastr.error(r.message);
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 });
 
 // ═══════════════ PAGO ═══════════════
@@ -1102,7 +1130,7 @@ function cargarServicios() {
                 ${s.esCombo ? '<span class="badge bg-info mt-2">Combo</span>' : ''}
             </div></div>`);
         });
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 }
 
 $('#btnNuevoServicio').on('click', function() { $('#servicioForm')[0].reset(); $('#servId').val(''); $('#servicioModalTitle').text('Nuevo Servicio'); new bootstrap.Modal('#servicioModal').show(); });
@@ -1113,7 +1141,7 @@ function editarServicio(id) {
         $('#servPrecio').val(s.precio); $('#servDuracion').val(s.duracionMinutos); $('#servItems').val(s.itemsIncluidos);
         $('#servEsCombo').prop('checked', s.esCombo); $('#servicioModalTitle').text('Editar Servicio');
         new bootstrap.Modal('#servicioModal').show();
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 }
 
 $('#btnGuardarServicio').on('click', function() {
@@ -1126,7 +1154,7 @@ $('#btnGuardarServicio').on('click', function() {
 
 function eliminarServicio(id, nombre) {
     swalMG.fire({ title: 'Eliminar servicio', text: 'Se eliminara "' + nombre + '"', icon: 'warning', showCancelButton: true, confirmButtonText: 'Eliminar', confirmButtonColor: '#F1416C' }).then(r => {
-        if (r.isConfirmed) $.post('/Negocios/EliminarServicio', { servicioId: id, negocioId }, function(r) { if (r.success) { toastr.success(r.message); cargarServicios(); } else toastr.error(r.message); });
+        if (r.isConfirmed) $.post('/Negocios/EliminarServicio', { servicioId: id, negocioId }, function(r) { if (r.success) { toastr.success(r.message); cargarServicios(); } else toastr.error(r.message); }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
     });
 }
 
@@ -1146,7 +1174,7 @@ function cargarEmpleados() {
         });
         // Also refresh tabs with new employee data
         refreshEmployeeTabsAvailability();
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 }
 
 $('#btnNuevoEmpleado').on('click', function() { $('#empleadoForm')[0].reset(); $('#empId').val(''); $('#empleadoModalTitle').text('Nuevo Empleado'); new bootstrap.Modal('#empleadoModal').show(); });
@@ -1154,9 +1182,9 @@ $('#btnNuevoEmpleado').on('click', function() { $('#empleadoForm')[0].reset(); $
 function editarEmpleado(id) {
     $.get('/Negocios/GetEmpleado', { empleadoId: id, negocioId }, function(e) {
         $('#empId').val(e.empleadoId); $('#empNombre').val(e.nombre); $('#empApellido').val(e.apellido);
-        $('#empTelefono').val(e.telefono); $('#empEspecialidad').val(e.especialidad); $('#empleadoModalTitle').text('Editar Empleado');
+        $('#empTelefono').val(e.telefono); $('#empEmail').val(e.email); $('#empEspecialidad').val(e.especialidad); $('#empleadoModalTitle').text('Editar Empleado');
         new bootstrap.Modal('#empleadoModal').show();
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 }
 
 $('#btnGuardarEmpleado').on('click', function() {
@@ -1169,7 +1197,7 @@ $('#btnGuardarEmpleado').on('click', function() {
 
 function eliminarEmpleado(id, nombre) {
     swalMG.fire({ title: 'Eliminar empleado', text: 'Se eliminara "' + nombre + '"', icon: 'warning', showCancelButton: true, confirmButtonText: 'Eliminar', confirmButtonColor: '#F1416C' }).then(r => {
-        if (r.isConfirmed) $.post('/Negocios/EliminarEmpleado', { empleadoId: id, negocioId }, function(r) { if (r.success) { toastr.success(r.message); cargarEmpleados(); } else toastr.error(r.message); });
+        if (r.isConfirmed) $.post('/Negocios/EliminarEmpleado', { empleadoId: id, negocioId }, function(r) { if (r.success) { toastr.success(r.message); cargarEmpleados(); } else toastr.error(r.message); }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
     });
 }
 
@@ -1190,7 +1218,7 @@ function abrirHorario(empleadoId) {
             </div>`);
         }
         new bootstrap.Modal('#horarioModal').show();
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 }
 
 $('#btnGuardarHorario').on('click', function() {
@@ -1242,7 +1270,7 @@ function editarClienteArt(id) {
         $('#caEmail').val(c.email); $('#caTelefono').val(c.telefono); $('#caDireccion').val(c.direccion);
         $('#clienteArtModalTitle').text('Editar Cliente');
         new bootstrap.Modal('#clienteArtModal').show();
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 }
 
 $('#btnGuardarClienteArt').on('click', function() {
@@ -1255,7 +1283,7 @@ $('#btnGuardarClienteArt').on('click', function() {
 
 function eliminarClienteArt(id, nombre) {
     swalMG.fire({ title: 'Eliminar cliente', text: 'Se eliminara "' + nombre + '"', icon: 'warning', showCancelButton: true, confirmButtonText: 'Eliminar', confirmButtonColor: '#F1416C' }).then(r => {
-        if (r.isConfirmed) $.post('/Negocios/EliminarCliente', { id, negocioId }, function(r) { if (r.success) { toastr.success(r.message); cargarClientesArt(); } else toastr.error(r.message); });
+        if (r.isConfirmed) $.post('/Negocios/EliminarCliente', { id, negocioId }, function(r) { if (r.success) { toastr.success(r.message); cargarClientesArt(); } else toastr.error(r.message); }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
     });
 }
 
@@ -1283,7 +1311,7 @@ $('#btnRegistrarLog').on('click', function() {
     $.post('/Negocios/CrearLog', { negocioId, message: desc, monto }, function(r) {
         if (r.success) { toastr.success('Movimiento registrado'); $('#logDescripcion').val(''); $('#logMonto').val(''); tablaLogs.ajax.reload(); }
         else toastr.error(r.message);
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 });
 
 $('#btnExportLogsExcel').on('click', function() { window.location.href = '/Negocios/ExportLogsExcel?negocioId=' + negocioId; });
@@ -1309,7 +1337,7 @@ function cargarVentasStats() {
         $('#ventasIngresosLabel').text('Ingresos ' + labels[periodo]);
         $('#ventasGastosLabel').text('Gastos ' + labels[periodo]);
         $('#ventasGananciaLabel').text('Ganancia ' + labels[periodo]);
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 }
 
 function cargarCharts() {
@@ -1332,7 +1360,7 @@ function cargarCharts() {
 
         // Donut — sincronizado con el periodo seleccionado
         actualizarDonut(logs);
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 }
 
 function actualizarDonut(logs) {
@@ -1369,7 +1397,7 @@ $('#ventasPeriodPills').on('click', '.mg-pill', function() {
     $(this).addClass('active');
     cargarVentasStats();
     // Re-cargar donut con el periodo actualizado
-    $.get('/Negocios/GetLogs', { negocioId }, function(logs) { actualizarDonut(logs); });
+    $.get('/Negocios/GetLogs', { negocioId }, function(logs) { actualizarDonut(logs); }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 });
 
 // ═══════════════ INVENTARIO (reutilizado) ═══════════════
@@ -1390,13 +1418,13 @@ function cargarProductosGrid() {
                 </div>
             </div></div></div>`);
         });
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 }
 
 function cargarInventarioStats() {
     $.get('/Negocios/GetInventarioStats', { negocioId }, function(d) {
         if (d) { $('#invTotalProductos').text(d.totalProductos || 0); $('#invStockBajo').text(d.stockBajo || 0); $('#invVentasHoy').text(d.ventasHoy || 0); $('#invIngresosHoy').text('$' + (d.ingresosHoy || 0).toFixed(2)); }
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 }
 
 $('#btnCrearProducto').on('click', function() { $('#productoForm')[0].reset(); $('#prodId').val(''); $('#productoModalTitle').text('Nuevo Producto'); new bootstrap.Modal('#productoModal').show(); });
@@ -1414,7 +1442,7 @@ function editarProducto(id) {
         $('#prodId').val(p.productoId); $('#prodNombre').val(p.nombre); $('#prodPrecioVenta').val(p.precioVenta);
         $('#prodCostoCompra').val(p.costoCompra); $('#prodStock').val(p.stock); $('#prodStockMinimo').val(p.stockMinimo);
         $('#productoModalTitle').text('Editar Producto'); new bootstrap.Modal('#productoModal').show();
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 }
 
 function venderProducto(id, nombre, precio) {
@@ -1422,7 +1450,7 @@ function venderProducto(id, nombre, precio) {
         if (r.isConfirmed && r.value > 0) {
             $.post('/Negocios/VenderProducto', { productoId: id, negocioId, cantidad: r.value }, function(r) {
                 if (r.success) { toastr.success(r.message); cargarProductosGrid(); cargarInventarioStats(); } else toastr.error(r.message);
-            });
+            }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
         }
     });
 }
@@ -1452,7 +1480,7 @@ function cargarNotificacionesCount() {
         var count = d.count || d;
         if (count > 0) { $('#sidebarNotifBadge, #topbarNotifBadge').text(count).removeClass('d-none'); }
         else { $('#sidebarNotifBadge, #topbarNotifBadge').addClass('d-none'); }
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 }
 
 function cargarNotificacionesTab() {
@@ -1467,15 +1495,15 @@ function cargarNotificacionesTab() {
                 ${!n.leida ? '<button class="btn btn-sm btn-outline-primary" onclick="marcarLeida(\'' + n.id + '\')"><i class="bi bi-check"></i></button>' : ''}
             </div></div>`);
         });
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 }
 
 function marcarLeida(id) {
-    $.post('/Negocios/MarcarNotificacionLeida', { id, negocioId }, function() { cargarNotificacionesTab(); cargarNotificacionesCount(); });
+    $.post('/Negocios/MarcarNotificacionLeida', { id, negocioId }, function() { cargarNotificacionesTab(); cargarNotificacionesCount(); }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 }
 
 $('#btnMarcarTodasLeidasTab').on('click', function() {
-    $.post('/Negocios/MarcarTodasNotificacionesLeidas', { negocioId }, function() { cargarNotificacionesTab(); cargarNotificacionesCount(); toastr.success('Todas marcadas como leidas'); });
+    $.post('/Negocios/MarcarTodasNotificacionesLeidas', { negocioId }, function() { cargarNotificacionesTab(); cargarNotificacionesCount(); toastr.success('Todas marcadas como leidas'); }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 });
 
 // ═══════════════ SUGERENCIAS ═══════════════
@@ -1486,7 +1514,7 @@ $('#btnEnviarSugerencia').on('click', function() {
     $.post('/Negocios/EnviarSugerencia', { negocioId, mensaje: texto }, function(r) {
         if (r.success) { toastr.success('Sugerencia enviada'); $('#sugerenciaTexto').val(''); $('#sugerenciaCount').text('0'); }
         else toastr.error(r.message);
-    });
+    }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
 });
 
 // ═══════════════ TAB SWITCHING ═══════════════
@@ -1500,6 +1528,96 @@ document.addEventListener('mg-tab-shown', function(e) {
     else if (tab === 'ventasTab') { cargarVentasStats(); cargarCharts(); }
     else if (tab === 'inventarioTab') { cargarProductosGrid(); cargarInventarioStats(); }
     else if (tab === 'notificacionesTab') { cargarNotificacionesTab(); }
+    else if (tab === 'recibosTab') { cargarRecibos(); verificarCleanupRecibos(); }
+});
+
+// ═══════════════════════════════════════════════════════════
+// RECIBOS
+// ═══════════════════════════════════════════════════════════
+let tablaRecibos = null;
+function cargarRecibos() {
+    if (tablaRecibos) { tablaRecibos.ajax.reload(); return; }
+    tablaRecibos = $('#tablaRecibos').DataTable({
+        ajax: { url: '/Negocios/GetRecibos', data: { negocioId }, dataSrc: '' },
+        columns: [
+            { data: 'numeroRecibo', render: d => `<span class="badge bg-primary">#${d}</span>` },
+            { data: 'destinatarioNombre' },
+            { data: 'concepto', render: d => d && d.length > 40 ? d.substring(0,40)+'...' : d },
+            { data: 'monto', render: d => `$${parseFloat(d).toFixed(2)}` },
+            { data: 'fechaCreacion', render: d => new Date(d).toLocaleDateString('es-EC') },
+            { data: null, orderable: false, render: (d,t,r) => `<button class="btn btn-sm btn-outline-primary" onclick="verRecibo('${r.reciboId}')"><i class="bi bi-eye"></i></button>` }
+        ],
+        order: [[4, 'desc']],
+        language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' },
+        responsive: true
+    });
+}
+
+function verRecibo(reciboId) {
+    $.get('/Negocios/GetRecibo', { reciboId, negocioId }, function(r) {
+        if (r) {
+            $('#reciboModalNumero').text(r.numeroRecibo);
+            document.getElementById('reciboIframe').srcdoc = r.contenidoHtml;
+            new bootstrap.Modal('#reciboModal').show();
+        }
+    });
+}
+
+$('#buscarReciboInput').on('keypress', function(e) {
+    if (e.which === 13) {
+        var num = parseInt($(this).val());
+        if (!num || num < 1) return;
+        $.get('/Negocios/BuscarRecibo', { numero: num, negocioId }, function(r) {
+            if (r) {
+                $('#reciboModalNumero').text(r.numeroRecibo);
+                document.getElementById('reciboIframe').srcdoc = r.contenidoHtml;
+                new bootstrap.Modal('#reciboModal').show();
+            } else {
+                toastr.warning('No se encontro el recibo #' + num);
+            }
+        });
+    }
+});
+
+$('#btnExportRecibos').on('click', function() {
+    var now = new Date();
+    window.location.href = `/Negocios/ExportRecibosExcel?negocioId=${negocioId}&anio=${now.getFullYear()}&mes=${now.getMonth()+1}`;
+});
+
+function verificarCleanupRecibos() {
+    $.get('/Negocios/GetFechaReciboMasAntiguo', { negocioId }, function(r) {
+        if (r.fecha) {
+            var dias = Math.floor((new Date() - new Date(r.fecha)) / (1000*60*60*24));
+            if (dias > 30) { $('#recibosCleanupBanner').removeClass('d-none'); }
+            else { $('#recibosCleanupBanner').addClass('d-none'); }
+        }
+    });
+}
+
+$('#btnExportarYLimpiar').on('click', function() {
+    swalMG.fire({
+        title: 'Exportar y limpiar recibos',
+        text: 'Se exportaran los recibos del mes y se eliminaran los mayores a 30 dias.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Si, exportar y limpiar'
+    }).then(result => {
+        if (result.isConfirmed) {
+            var now = new Date();
+            window.location.href = `/Negocios/ExportRecibosExcel?negocioId=${negocioId}&anio=${now.getFullYear()}&mes=${now.getMonth()+1}`;
+            var hace30 = new Date();
+            hace30.setDate(hace30.getDate() - 30);
+            setTimeout(() => {
+                $.post('/Negocios/EliminarRecibosAntiguos', { negocioId, anteriorA: hace30.toISOString() }, function(r) {
+                    if (r.success) {
+                        toastr.success(`${r.eliminados} recibos antiguos eliminados`);
+                        if (tablaRecibos) tablaRecibos.ajax.reload();
+                        $('#recibosCleanupBanner').addClass('d-none');
+                    }
+                });
+            }, 2000);
+        }
+    });
 });
 
 </script>

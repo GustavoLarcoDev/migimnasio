@@ -102,4 +102,26 @@ public class Vendedor
     /// Valor por defecto: 0 (ningún negocio al registrarse).
     /// </summary>
     public int NegociosCreados { get; set; } = 0;
+
+    // ─── Datos para Transferencia Bancaria (opcionales) ──────────────────────
+    // No todos los vendedores aceptan pagos por transferencia.
+
+    /// <summary>
+    /// Nombre del banco donde el vendedor tiene su cuenta (ej: "Banco Pichincha").
+    /// Nullable: solo se llena si el vendedor acepta transferencias.
+    /// </summary>
+    [StringLength(100)]
+    public string? NombreBanco { get; set; }
+
+    /// <summary>
+    /// Número de cédula del titular de la cuenta bancaria.
+    /// </summary>
+    [StringLength(20)]
+    public string? NumeroCedula { get; set; }
+
+    /// <summary>
+    /// Número de cuenta bancaria para recibir comisiones.
+    /// </summary>
+    [StringLength(50)]
+    public string? NumeroCuenta { get; set; }
 }

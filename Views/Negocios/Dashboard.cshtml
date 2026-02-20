@@ -287,7 +287,34 @@
         <div class="d-flex justify-content-between align-items-center mb-4"><h4 class="fw-bold mb-0">Notificaciones</h4><div class="d-flex gap-2"><button id="btnGenerarNotificaciones" class="btn btn-primary"><i class="bi bi-arrow-repeat me-2"></i>Generar Notificaciones</button><button id="btnMarcarTodasLeidasTab" class="btn btn-outline-primary"><i class="bi bi-check-all me-2"></i>Marcar todas leídas</button></div></div>
         <div id="notificacionesList" class="d-flex flex-column gap-2"><div class="text-center py-5 text-muted"><i class="bi bi-bell-slash fs-1 d-block mb-3"></i><p>No hay notificaciones. Haz clic en "Generar Notificaciones" para verificar membresías próximas a vencer.</p></div></div>
     </div>
+
+    <!-- TAB RECIBOS -->
+    <div class="tab-pane fade" id="recibosTab" role="tabpanel">
+        <div id="recibosCleanupBanner" class="alert alert-warning d-none mb-3">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            Tienes recibos con más de 30 días. <button class="btn btn-sm btn-warning ms-2" id="btnExportarYLimpiar">Exportar y Limpiar</button>
+        </div>
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+            <h4 class="fw-bold mb-0">Recibos</h4>
+            <div class="d-flex gap-2 align-items-center">
+                <div class="input-group input-group-sm" style="width: 200px;">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="buscarReciboInput" placeholder="# Recibo...">
+                </div>
+                <button id="btnExportRecibos" class="btn btn-sm btn-success"><i class="bi bi-file-earmark-excel me-1"></i>Exportar</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table id="tablaRecibos" class="table table-row-bordered align-middle gs-0 gy-3">
+                <thead><tr class="fw-bold text-muted"><th>#Recibo</th><th>Destinatario</th><th>Concepto</th><th>Monto</th><th>Fecha</th><th>Acciones</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
 </div>
+
+<!-- Modal Ver Recibo -->
+<div class="modal fade" id="reciboModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down"><div class="modal-content"><div class="modal-header bg-light"><h3 class="modal-title fw-bolder"><i class="bi bi-receipt me-2"></i>Recibo #<span id="reciboModalNumero"></span></h3><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-0"><iframe id="reciboIframe" sandbox style="width:100%;height:500px;border:none;"></iframe></div><div class="modal-footer bg-light"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button></div></div></div></div>
 
 <!-- Modal Crear/Editar Cliente -->
 <div class="modal fade" id="clienteModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down"><div class="modal-content"><div class="modal-header bg-light"><h3 class="modal-title fw-bolder" id="modalTitle">Nuevo Cliente</h3><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><form id="clienteForm"><input type="hidden" id="clienteId" name="ClienteId" /><input type="hidden" name="NegocioId" value="@negocioId" /><div class="row"><div class="col-md-6 mb-3"><label class="form-label fw-semibold required">Nombre</label><input type="text" class="form-control" name="Nombre" id="nombre" required /></div><div class="col-md-6 mb-3"><label class="form-label fw-semibold required">Apellido</label><input type="text" class="form-control" name="Apellido" id="apellido" required /></div></div><div class="row"><div class="col-md-6 mb-3"><label class="form-label fw-semibold">Email</label><input type="email" class="form-control" name="Email" id="email" /></div><div class="col-md-6 mb-3"><label class="form-label fw-semibold required">Teléfono</label><input type="tel" class="form-control" name="Telefono" id="telefono" required /></div></div><div class="mb-3"><label class="form-label fw-semibold">Dirección</label><input type="text" class="form-control" name="Direccion" id="direccion" /></div><div class="row"><div class="col-md-4 mb-3"><label class="form-label fw-semibold required">Fecha Inicio</label><input type="date" class="form-control" name="FechaInicio" id="fechaInicio" required /></div><div class="col-md-4 mb-3"><label class="form-label fw-semibold required">Fecha Fin</label><input type="date" class="form-control" name="FechaFin" id="fechaFin" required /></div><div class="col-md-4 mb-3"><label class="form-label fw-semibold">Días</label><input type="number" class="form-control" name="Dias" id="dias" min="1" /></div></div><div class="row"><div class="col-md-4 mb-3"><label class="form-label fw-semibold required">Precio ($)</label><input type="number" step="0.01" class="form-control" name="Precio" id="precio" min="0" required /></div><div class="col-md-4 mb-3 pt-4"><div class="form-check form-switch mt-2"><input class="form-check-input" type="checkbox" name="EsDiario" id="esDiario" value="true" /><label class="form-check-label fw-semibold" for="esDiario">Es Diario</label></div></div></div></form></div><div class="modal-footer bg-light"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="button" id="btnGuardarCliente" class="btn btn-primary"><i class="bi bi-save me-2"></i>Guardar</button></div></div></div></div>
@@ -390,7 +417,7 @@ function verificarSuscripcion() {
         console.warn('Error al verificar suscripción');
     });
 }
-document.addEventListener('mg-tab-shown', function(e) { if (e.detail.tab === 'resumenTab') { cargarResumen(); } else if (e.detail.tab === 'clientesTab') { if (!tablaClientes) { cargarTablaClientes(); } cargarEstadisticas(); } else if (e.detail.tab === 'ventasTab') { cargarVentasStats(); cargarCharts(); } else if (e.detail.tab === 'logsTab') { if (!tablaLogs) cargarTablaLogs(); verificarCerrarPeriodo(); } else if (e.detail.tab === 'notificacionesTab') { cargarNotificacionesTab(); } else if (e.detail.tab === 'inventarioTab') { cargarProductosGrid(); cargarInventarioStats(); } });
+document.addEventListener('mg-tab-shown', function(e) { if (e.detail.tab === 'resumenTab') { cargarResumen(); } else if (e.detail.tab === 'clientesTab') { if (!tablaClientes) { cargarTablaClientes(); } cargarEstadisticas(); } else if (e.detail.tab === 'ventasTab') { cargarVentasStats(); cargarCharts(); } else if (e.detail.tab === 'logsTab') { if (!tablaLogs) cargarTablaLogs(); verificarCerrarPeriodo(); } else if (e.detail.tab === 'notificacionesTab') { cargarNotificacionesTab(); } else if (e.detail.tab === 'inventarioTab') { cargarProductosGrid(); cargarInventarioStats(); } else if (e.detail.tab === 'recibosTab') { cargarRecibos(); verificarCleanupRecibos(); } });
 
 // Cargar estadísticas de la pestaña Clientes
 function cargarEstadisticas() {
@@ -451,10 +478,10 @@ function cargarTablaClientes() {
     });
 }
 
-function toDateInput(d) { return d.toISOString().split('T')[0]; }
-function calcDias() { const inicio = $('#fechaInicio').val(); const fin = $('#fechaFin').val(); if (inicio && fin) { const dias = Math.round((new Date(fin) - new Date(inicio)) / 86400000); $('#dias').val(dias > 0 ? dias : ''); } }
+function toDateInput(d) { const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, '0'); const dd = String(d.getDate()).padStart(2, '0'); return y + '-' + m + '-' + dd; }
+function calcDias() { const inicio = $('#fechaInicio').val(); const fin = $('#fechaFin').val(); if (inicio && fin) { const p1 = inicio.split('-'); const p2 = fin.split('-'); const d1 = new Date(parseInt(p1[0]), parseInt(p1[1]) - 1, parseInt(p1[2])); const d2 = new Date(parseInt(p2[0]), parseInt(p2[1]) - 1, parseInt(p2[2])); const dias = Math.round((d2 - d1) / 86400000); $('#dias').val(dias > 0 ? dias : ''); } }
 $('#fechaInicio, #fechaFin').on('change', calcDias);
-$('#dias').on('change', function() { const inicio = $('#fechaInicio').val(); const dias = parseInt($(this).val()); if (inicio && dias > 0) { const fin = new Date(inicio); fin.setDate(fin.getDate() + dias); $('#fechaFin').val(toDateInput(fin)); } });
+$('#dias').on('change', function() { const inicio = $('#fechaInicio').val(); const dias = parseInt($(this).val()); if (inicio && dias > 0) { const parts = inicio.split('-'); const fin = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]) + dias); const y = fin.getFullYear(); const m = String(fin.getMonth() + 1).padStart(2, '0'); const d = String(fin.getDate()).padStart(2, '0'); $('#fechaFin').val(y + '-' + m + '-' + d); } });
 $('#btnCrearCliente').click(function() { modoEdicion = false; $('#modalTitle').text('Nuevo Cliente'); $('#clienteForm')[0].reset(); $('#clienteId').val(''); $('#fechaInicio').val(toDateInput(new Date())); $('#clienteModal').modal('show'); });
 // Guardar cliente con estado de carga y validación
 $('#btnGuardarCliente').click(function() {
@@ -875,7 +902,7 @@ $('#waFinalizarBtn').click(function() {
             bootstrap.Modal.getInstance(document.getElementById('whatsappDiariosModal')).hide();
             swalMG.fire({ title: 'Listo', text: d.limpiados + ' cliente(s) removido(s) de la lista diaria', icon: 'success' });
             tablaUsuariosDiarios.ajax.reload();
-            cargarDashboardStats();
+            cargarEstadisticas();
         } else {
             toastr.error(d.message || 'Error al limpiar lista');
         }
@@ -1415,5 +1442,100 @@ function eliminarProducto(id, nombre) {
         }
     });
 }
+
+// ═══════════════════════════════════════════════════════════
+// RECIBOS
+// ═══════════════════════════════════════════════════════════
+let tablaRecibos = null;
+function cargarRecibos() {
+    if (tablaRecibos) { tablaRecibos.ajax.reload(); return; }
+    tablaRecibos = $('#tablaRecibos').DataTable({
+        ajax: { url: '/Negocios/GetRecibos', data: { negocioId }, dataSrc: '' },
+        columns: [
+            { data: 'numeroRecibo', render: d => `<span class="badge bg-primary">#${d}</span>` },
+            { data: 'destinatarioNombre' },
+            { data: 'concepto', render: d => d && d.length > 40 ? d.substring(0,40)+'...' : d },
+            { data: 'monto', render: d => `$${parseFloat(d).toFixed(2)}` },
+            { data: 'fechaCreacion', render: d => new Date(d).toLocaleDateString('es-EC') },
+            { data: null, orderable: false, render: (d,t,r) => `<button class="btn btn-sm btn-outline-primary" onclick="verRecibo('${r.reciboId}')"><i class="bi bi-eye"></i></button>` }
+        ],
+        order: [[4, 'desc']],
+        language: { url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json' },
+        responsive: true
+    });
+}
+
+function verRecibo(reciboId) {
+    $.get('/Negocios/GetRecibo', { reciboId, negocioId }, function(r) {
+        if (r) {
+            $('#reciboModalNumero').text(r.numeroRecibo);
+            var iframe = document.getElementById('reciboIframe');
+            iframe.srcdoc = r.contenidoHtml;
+            new bootstrap.Modal('#reciboModal').show();
+        }
+    });
+}
+
+$('#buscarReciboInput').on('keypress', function(e) {
+    if (e.which === 13) {
+        var num = parseInt($(this).val());
+        if (!num || num < 1) return;
+        $.get('/Negocios/BuscarRecibo', { numero: num, negocioId }, function(r) {
+            if (r) {
+                $('#reciboModalNumero').text(r.numeroRecibo);
+                var iframe = document.getElementById('reciboIframe');
+                iframe.srcdoc = r.contenidoHtml;
+                new bootstrap.Modal('#reciboModal').show();
+            } else {
+                toastr.warning('No se encontró el recibo #' + num);
+            }
+        });
+    }
+});
+
+$('#btnExportRecibos').on('click', function() {
+    var now = new Date();
+    window.location.href = `/Negocios/ExportRecibosExcel?negocioId=${negocioId}&anio=${now.getFullYear()}&mes=${now.getMonth()+1}`;
+});
+
+function verificarCleanupRecibos() {
+    $.get('/Negocios/GetFechaReciboMasAntiguo', { negocioId }, function(r) {
+        if (r.fecha) {
+            var fecha = new Date(r.fecha);
+            var dias = Math.floor((new Date() - fecha) / (1000*60*60*24));
+            if (dias > 30) {
+                $('#recibosCleanupBanner').removeClass('d-none');
+            } else {
+                $('#recibosCleanupBanner').addClass('d-none');
+            }
+        }
+    });
+}
+
+$('#btnExportarYLimpiar').on('click', function() {
+    swalMG.fire({
+        title: 'Exportar y limpiar recibos',
+        text: 'Se exportarán los recibos del mes anterior y se eliminarán los mayores a 30 días. ¿Continuar?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, exportar y limpiar'
+    }).then(result => {
+        if (result.isConfirmed) {
+            var now = new Date();
+            window.location.href = `/Negocios/ExportRecibosExcel?negocioId=${negocioId}&anio=${now.getFullYear()}&mes=${now.getMonth()+1}`;
+            var hace30 = new Date();
+            hace30.setDate(hace30.getDate() - 30);
+            setTimeout(() => {
+                $.post('/Negocios/EliminarRecibosAntiguos', { negocioId, anteriorA: hace30.toISOString() }, function(r) {
+                    if (r.success) {
+                        toastr.success(`${r.eliminados} recibos antiguos eliminados`);
+                        if (tablaRecibos) tablaRecibos.ajax.reload();
+                        $('#recibosCleanupBanner').addClass('d-none');
+                    }
+                });
+            }, 2000);
+        }
+    });
+});
 </script>
 }
