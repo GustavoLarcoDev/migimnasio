@@ -143,12 +143,6 @@ builder.Services.AddScoped<IReciboService, ReciboService>();
 // Envío de emails transaccionales (bienvenida, recordatorios, etc.)
 builder.Services.AddScoped<IEmailService, EmailService>();
 
-// Gestión de Ventas POS de la Tienda
-builder.Services.AddScoped<IVentaProductoService, VentaProductoService>();
-
-// Generación de Catálogos (PDF y HTML)
-builder.Services.AddScoped<ICatalogoService, CatalogoService>();
-
 // ── Modelo Artesanal ────────────────────────────────────────
 // El "modelo artesanal" es la modalidad de negocios basados en
 // citas (peluquerías, spas, estudios, etc.) a diferencia del
