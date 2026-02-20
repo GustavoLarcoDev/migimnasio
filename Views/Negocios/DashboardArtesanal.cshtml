@@ -146,10 +146,6 @@
             <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Ventas Hoy</div><div class="stat-value" id="invVentasHoy">0</div></div><div class="stat-icon bg-light-success"><i class="bi bi-cart-check-fill text-success"></i></div></div></div></div>
             <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Ingresos Hoy</div><div class="stat-value text-success" id="invIngresosHoy">$0</div></div><div class="stat-icon bg-light-info"><i class="bi bi-currency-dollar text-info"></i></div></div></div></div>
         </div>
-        <div class="d-flex gap-2 mb-3 align-items-center overflow-auto pb-2" style="scrollbar-width: none;" id="categoriasTabsContainer">
-            <button class="btn btn-primary d-flex align-items-center flex-shrink-0" onclick="nuevaCategoria()"><i class="bi bi-plus me-1"></i> Categoria</button>
-            <div class="d-flex gap-2 px-1" id="categoriasTabs" style="white-space:nowrap;"></div>
-        </div>
         <div class="row g-3 mb-4" id="productosGrid"></div>
         <div id="movimientosSection" class="d-none">
             <h5 class="fw-bold mb-3"><i class="bi bi-clock-history me-2"></i>Historial de Movimientos</h5>
@@ -171,26 +167,8 @@
                         <input type="hidden" name="NegocioId" value="@negocioId" />
                         <div class="row">
                             <div class="col-12 mb-3">
-                                <label class="form-label fw-semibold">Imagen del Producto</label>
-                                <div class="d-flex gap-3 align-items-center">
-                                    <div class="bg-light border rounded flex-shrink-0 d-flex justify-content-center align-items-center overflow-hidden" style="width: 80px; height: 80px;" id="prodImagenPreview">
-                                        <i class="bi bi-image fs-1 text-muted"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <input class="form-control form-control-sm" type="file" id="prodImagenFile" accept=".jpg,.jpeg,.png,.webp">
-                                        <small class="text-muted">Acepta JPG, PNG, WEBP. Max 2MB.</small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-12 mb-3">
                                 <label class="form-label fw-semibold required">Nombre del Producto</label>
                                 <input type="text" class="form-control" name="Nombre" id="prodNombre" placeholder="Ej: Botella de Agua" required />
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-semibold">Categoria</label>
-                                <select class="form-select" name="CategoriaProductoId" id="prodCategoriaId">
-                                    <option value="">Sin categoria (Todos)</option>
-                                </select>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-semibold required">Precio de Venta ($)</label>
@@ -590,8 +568,6 @@ let calendar, tablaLogs, tablaClientesArt, tablaMovimientos;
 let serviciosCache = [], empleadosCache = [], clientesCache = [];
 var modoEdicionProducto = false;
 var productosCache = [];
-var categoriasCache = [];
-var currentCategoriaId = null;
 let empleadosDisponibilidad = [];
 let activeEmpTabId = '';
 const empColors = ['#3E97FF','#50CD89','#F1416C','#FFC700','#7239EA','#009EF7','#E4E6EF','#181C32'];
@@ -1502,130 +1478,42 @@ function cargarInventarioStats() {
     });
 }
 
-function cargarCategoriasYProductos() {
-    $.when(
-        $.get('/Negocios/GetCategorias', { negocioId }),
-        $.get('/Negocios/GetProductos', { negocioId })
-    ).done(function(reqCat, reqProd) {
-        categoriasCache = reqCat[0] || [];
-        productosCache = reqProd[0] || [];
-        renderizarTabs();
-        cargarProductosGrid();
-        poblarSelectCategorias();
-    }).fail(function() { toastr.error('Error al cargar datos del inventario'); });
-}
-
-function renderizarTabs() {
-    var cont = $('#categoriasTabs');
-    cont.empty();
-    var activeTodos = currentCategoriaId === null ? 'btn-dark' : 'btn-outline-dark bg-white';
-    cont.append(`<button class="btn ${activeTodos} rounded-pill border shadow-sm px-4 fw-bold" onclick="filtrarCategoria(null)">Todos</button>`);
-    var sortableCont = $('<div id="sortableCategorias" class="d-flex gap-2"></div>');
-    categoriasCache.forEach(function(c) {
-        var activo = currentCategoriaId === c.categoriaProductoId ? 'btn-dark' : 'btn-outline-dark bg-white';
-        sortableCont.append(`
-        <div class="btn-group shadow-sm sortable-cat" data-id="${c.categoriaProductoId}">
-            <button class="btn ${activo} rounded-start border-end-0 fw-bold px-3 btn-cat-name" onclick="filtrarCategoria('${c.categoriaProductoId}')">
-                <i class="bi bi-grip-vertical text-muted me-1 cat-drag-handle" style="cursor: grab;"></i> ${escHtml(c.nombre)}
-            </button>
-            <button type="button" class="btn ${activo} rounded-end border dropdown-toggle dropdown-toggle-split px-2" data-bs-toggle="dropdown"><span class="visually-hidden">Options</span></button>
-            <ul class="dropdown-menu dropdown-menu-end p-2 border-0 shadow-sm">
-                <li><a class="dropdown-item rounded mb-1" href="#" onclick="eliminarCategoria('${c.categoriaProductoId}', '${escAttr(c.nombre)}'); return false;"><i class="bi bi-trash text-danger me-2"></i>Eliminar Categoria</a></li>
-            </ul>
-        </div>`);
-    });
-    cont.append(sortableCont);
-    if (typeof Sortable !== 'undefined' && categoriasCache.length > 1) {
-        new Sortable(document.getElementById('sortableCategorias'), {
-            animation: 150, handle: '.cat-drag-handle', ghostClass: 'opacity-50',
-            onEnd: function() {
-                var newOrder = [];
-                $('#sortableCategorias .sortable-cat').each(function() { newOrder.push($(this).data('id')); });
-                $.ajax({ url: '/Negocios/ReordenarCategorias?negocioId=' + negocioId, type: 'POST', contentType: 'application/json', data: JSON.stringify(newOrder),
-                    success: function(r) { if (!r.success) toastr.error('Error al guardar el nuevo orden'); }
-                });
-            }
-        });
-    }
-}
-
-function filtrarCategoria(id) {
-    currentCategoriaId = id;
-    renderizarTabs();
-    cargarProductosGrid();
-}
-
-function nuevaCategoria() {
-    swalMG.fire({
-        title: 'Nueva Categoria', input: 'text', inputPlaceholder: 'Ej: Bebidas, Snacks, Ropa...',
-        showCancelButton: true, confirmButtonText: 'Crear',
-        preConfirm: (val) => { if (!val || val.trim() === '') { Swal.showValidationMessage('El nombre es requerido'); } return val; }
-    }).then((res) => {
-        if (res.isConfirmed) {
-            $.post('/Negocios/CrearCategoria', { negocioId, nombre: res.value }, function(r) {
-                if (r.success) { toastr.success(r.message); cargarCategoriasYProductos(); } else toastr.error(r.message);
-            }).fail(() => toastr.error('Error al crear categoria'));
-        }
-    });
-}
-
-function eliminarCategoria(id, nombre) {
-    swalMG.fire({
-        title: 'Eliminar Categoria', text: '¿Seguro que deseas eliminar la categoria "' + nombre + '"? Los productos volveran a "Todos".',
-        icon: 'warning', showCancelButton: true, confirmButtonColor: '#F1416C', confirmButtonText: 'Si, eliminar'
-    }).then(res => {
-        if (res.isConfirmed) {
-            $.post('/Negocios/EliminarCategoria', { id, negocioId }, function(r) {
-                if (r.success) { currentCategoriaId = null; toastr.success(r.message); cargarCategoriasYProductos(); } else toastr.error(r.message);
-            }).fail(() => toastr.error('Error en conexion'));
-        }
-    });
-}
-
-function poblarSelectCategorias() {
-    var cbo = $('#prodCategoriaId');
-    cbo.empty();
-    cbo.append('<option value="">Sin categoria (Todos)</option>');
-    categoriasCache.forEach(c => { cbo.append(`<option value="${c.categoriaProductoId}">${escHtml(c.nombre)}</option>`); });
-}
-
 const tipoMovBadges = { 'venta': 'bg-success', 'devolucion': 'bg-warning text-dark', 'restock': 'bg-info', 'ajuste': 'bg-danger' };
-const tipoMovLabels = { 'venta': 'Venta', 'devolucion': 'Devolucion', 'restock': 'Restock', 'ajuste': 'Ajuste' };
+const tipoMovLabels = { 'venta': 'Venta', 'devolucion': 'Devolución', 'restock': 'Restock', 'ajuste': 'Ajuste' };
 
 function cargarProductosGrid() {
-    var grid = $('#productosGrid');
-    grid.empty();
-    var filtrados = productosCache;
-    if (currentCategoriaId !== null) { filtrados = productosCache.filter(p => p.categoriaId === currentCategoriaId); }
-    if (!filtrados.length) {
-        grid.html('<div class="col-12 text-center py-5 text-muted"><i class="bi bi-box-seam fs-1 d-block mb-3 opacity-50"></i><p class="fs-5">No hay productos en esta categoria</p><p>Haz clic en <strong>"Nuevo Producto"</strong> para agregar el primero</p></div>');
-        return;
-    }
-    filtrados.forEach(function(p) {
-        var stockClass = p.stockBajo ? 'text-danger' : 'text-success';
-        let imgHtml = p.imagenUrl
-            ? `<div class="w-100 rounded-top" style="height: 120px; background-image: url('${p.imagenUrl}'); background-size: cover; background-position: center; border-radius: 12px 12px 0 0;"></div>`
-            : `<div class="w-100 rounded-top bg-light d-flex align-items-center justify-content-center" style="height: 120px; border-radius: 12px 12px 0 0;"><i class="bi bi-image fs-1 text-muted opacity-25"></i></div>`;
-        var card = '<div class="col-xl-2 col-lg-3 col-md-4 col-6">' +
-            '<div class="inv-card p-0" data-id="' + p.productoId + '">' +
-                imgHtml +
-                '<div class="p-3 position-relative">' +
-                    '<div class="inv-card-actions" style="top: 10px; right: 10px; opacity: 1;">' +
-                        '<button class="inv-card-action-btn shadow-sm" style="background:rgba(255,255,255,0.9);color:#333;" onclick="editarProducto(\'' + p.productoId + '\')" title="Editar"><i class="bi bi-pencil"></i></button>' +
-                        '<button class="inv-card-action-btn inv-card-action-delete shadow-sm" style="background:rgba(255,255,255,0.9)" onclick="eliminarProducto(\'' + p.productoId + '\',\'' + escAttr(p.nombre) + '\')" title="Eliminar"><i class="bi bi-trash"></i></button>' +
+    $.get('/Negocios/GetProductos', { negocioId }, function(productos) {
+        productosCache = productos;
+        var grid = $('#productosGrid');
+        grid.empty();
+
+        if (!productos.length) {
+            grid.html('<div class="col-12 text-center py-5 text-muted"><i class="bi bi-box-seam fs-1 d-block mb-3 opacity-50"></i><p class="fs-5">No hay productos en el inventario</p><p>Haz clic en <strong>"Nuevo Producto"</strong> para agregar el primero</p></div>');
+            return;
+        }
+
+        productos.forEach(function(p) {
+            var stockClass = p.stockBajo ? 'text-danger' : 'text-success';
+            var card = '<div class="col-xl-2 col-lg-3 col-md-4 col-6">' +
+                '<div class="inv-card" data-id="' + p.productoId + '">' +
+                    '<div class="inv-card-actions">' +
+                        '<button class="inv-card-action-btn" onclick="editarProducto(\'' + p.productoId + '\')" title="Editar"><i class="bi bi-pencil"></i></button>' +
+                        '<button class="inv-card-action-btn inv-card-action-delete" onclick="eliminarProducto(\'' + p.productoId + '\',\'' + escAttr(p.nombre) + '\')" title="Eliminar"><i class="bi bi-trash"></i></button>' +
                     '</div>' +
-                    '<div class="inv-card-name mt-1" style="font-size: 0.95rem;">' + escHtml(p.nombre) + '</div>' +
-                    '<div class="inv-card-price text-primary fw-bolder fs-5 mb-2">$' + p.precioVenta.toFixed(2) + '</div>' +
-                    '<div class="inv-card-stock-row border-top pt-2 mt-auto">' +
-                        '<button class="btn btn-sm btn-outline-warning p-1" style="width:28px;height:28px;" onclick="accionSubir(\'' + p.productoId + '\',\'' + escAttr(p.nombre) + '\',' + p.precioVenta + ',' + p.stock + ')" title="Devolver o actualizar"><i class="bi bi-arrow-return-left"></i></button>' +
-                        '<span class="inv-card-stock ' + stockClass + ' fw-bold fs-6" id="stock-' + p.productoId + '">' + p.stock + '</span> uni' +
-                        '<button class="btn btn-sm btn-outline-success p-1 ms-auto" style="width:28px;height:28px;"' + (p.stock <= 0 ? ' disabled' : '') + ' onclick="venderRapido(\'' + p.productoId + '\')" title="Vender 1 unidad"><i class="bi bi-caret-down-fill"></i></button>' +
+                    '<div class="inv-card-name">' + escHtml(p.nombre) + '</div>' +
+                    '<div class="inv-card-price">$' + p.precioVenta.toFixed(2) + '</div>' +
+                    '<div class="inv-card-stock-row">' +
+                        '<button class="inv-arrow inv-arrow-up" onclick="accionSubir(\'' + p.productoId + '\',\'' + escAttr(p.nombre) + '\',' + p.precioVenta + ',' + p.stock + ')" title="Devolver o actualizar"><i class="bi bi-caret-up-fill"></i></button>' +
+                        '<span class="inv-card-stock ' + stockClass + '" id="stock-' + p.productoId + '">' + p.stock + '</span>' +
+                        '<button class="inv-arrow inv-arrow-down' + (p.stock <= 0 ? ' disabled' : '') + '" onclick="venderRapido(\'' + p.productoId + '\')" title="Vender 1 unidad"><i class="bi bi-caret-down-fill"></i></button>' +
                     '</div>' +
-                    (p.stockBajo ? '<small class="text-danger d-block mt-1" style="font-size:10px;"><i class="bi bi-exclamation-triangle-fill me-1"></i>Stock bajo</small>' : '') +
+                    (p.stockBajo ? '<small class="inv-card-alert"><i class="bi bi-exclamation-triangle-fill me-1"></i>Stock bajo</small>' : '') +
                 '</div>' +
-            '</div>' +
-        '</div>';
-        grid.append(card);
+            '</div>';
+            grid.append(card);
+        });
+    }).fail(function() {
+        toastr.error('Error al cargar productos');
     });
 }
 
@@ -1642,9 +1530,9 @@ function venderRapido(productoId) {
             cargarInventarioStats();
             if (tablaMovimientos) tablaMovimientos.ajax.reload();
             if (tablaLogs) tablaLogs.ajax.reload();
-            setTimeout(function() { cargarCategoriasYProductos(); }, 300);
-        } else { toastr.error(r.message); cargarCategoriasYProductos(); }
-    }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al vender'); cargarCategoriasYProductos(); })
+            setTimeout(function() { cargarProductosGrid(); }, 300);
+        } else { toastr.error(r.message); cargarProductosGrid(); }
+    }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al vender'); cargarProductosGrid(); })
       .always(function() { setTimeout(function() { cardEl.removeClass('inv-card-selling'); }, 300); });
 }
 
@@ -1672,7 +1560,7 @@ function accionSubir(productoId, nombre, precio, stockActual) {
             }).then(function(res) {
                 if (res.isConfirmed) {
                     $.post('/Negocios/DevolverProducto', { productoId, negocioId, cantidad: res.value.cantidad, nota: res.value.nota }, function(r) {
-                        if (r.success) { toastr.success(r.message); cargarCategoriasYProductos(); cargarInventarioStats(); if (tablaMovimientos) tablaMovimientos.ajax.reload(); if (tablaLogs) tablaLogs.ajax.reload(); }
+                        if (r.success) { toastr.success(r.message); cargarProductosGrid(); cargarInventarioStats(); if (tablaMovimientos) tablaMovimientos.ajax.reload(); if (tablaLogs) tablaLogs.ajax.reload(); }
                         else { toastr.error(r.message); }
                     }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al devolver'); });
                 }
@@ -1703,7 +1591,7 @@ function accionSubir(productoId, nombre, precio, stockActual) {
             }).then(function(res) {
                 if (res.isConfirmed) {
                     $.post('/Negocios/AjustarStock', { productoId, negocioId, stockReal: res.value.stockReal, nota: res.value.nota }, function(r) {
-                        if (r.success) { toastr.success(r.message); cargarCategoriasYProductos(); cargarInventarioStats(); if (tablaMovimientos) tablaMovimientos.ajax.reload(); if (tablaLogs) tablaLogs.ajax.reload(); }
+                        if (r.success) { toastr.success(r.message); cargarProductosGrid(); cargarInventarioStats(); if (tablaMovimientos) tablaMovimientos.ajax.reload(); if (tablaLogs) tablaLogs.ajax.reload(); }
                         else { toastr.error(r.message); }
                     }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al ajustar'); });
                 }
@@ -1754,9 +1642,6 @@ $('#btnCrearProducto').click(function() {
     $('#prodStockMinimo').val(5);
     $('#prodStock').prop('readonly', false);
     $('#prodMargenText').text('');
-    $('#prodCategoriaId').val(currentCategoriaId || '');
-    $('#prodImagenPreview').html('<i class="bi bi-image fs-1 text-muted"></i>');
-    $('#prodImagenFile').val('');
     $('#productoModal').modal('show');
 });
 
@@ -1769,35 +1654,19 @@ $('#prodPrecioVenta, #prodCostoCompra').on('input', function() {
     } else { $('#prodMargenText').text(''); }
 });
 
-$('#prodImagenFile').change(function() {
-    if (this.files && this.files[0]) {
-        var reader = new FileReader();
-        reader.onload = function(e) { $('#prodImagenPreview').html(`<img src="${e.target.result}" style="width:100%; height:100%; object-fit:cover;">`); }
-        reader.readAsDataURL(this.files[0]);
-    }
-});
-
 function editarProducto(id) {
-    var prodCache = productosCache.find(p => p.productoId === id);
-    if (prodCache) { llenarModalProducto(prodCache); }
-    else { $.get('/Negocios/GetProducto', { id, negocioId }, llenarModalProducto).fail(() => toastr.error('Error al cargar producto')); }
-}
-
-function llenarModalProducto(data) {
-    modoEdicionProducto = true;
-    $('#productoModalTitle').text('Editar Producto');
-    $('#prodId').val(data.productoId);
-    $('#prodNombre').val(data.nombre);
-    $('#prodPrecioVenta').val(data.precioVenta);
-    $('#prodCostoCompra').val(data.costoCompra);
-    $('#prodStock').val(data.stock).prop('readonly', true);
-    $('#prodStockMinimo').val(data.stockMinimo);
-    $('#prodCategoriaId').val(data.categoriaId || '');
-    if (data.imagenUrl) { $('#prodImagenPreview').html(`<img src="${data.imagenUrl}" style="width:100%; height:100%; object-fit:cover;">`); }
-    else { $('#prodImagenPreview').html('<i class="bi bi-image fs-1 text-muted"></i>'); }
-    $('#prodImagenFile').val('');
-    $('#prodPrecioVenta').trigger('input');
-    $('#productoModal').modal('show');
+    $.get('/Negocios/GetProducto', { id, negocioId }, function(data) {
+        modoEdicionProducto = true;
+        $('#productoModalTitle').text('Editar Producto');
+        $('#prodId').val(data.productoId);
+        $('#prodNombre').val(data.nombre);
+        $('#prodPrecioVenta').val(data.precioVenta);
+        $('#prodCostoCompra').val(data.costoCompra);
+        $('#prodStock').val(data.stock).prop('readonly', true);
+        $('#prodStockMinimo').val(data.stockMinimo);
+        $('#prodPrecioVenta').trigger('input');
+        $('#productoModal').modal('show');
+    }).fail(() => toastr.error('Error al cargar producto'));
 }
 
 $('#btnGuardarProducto').click(function() {
@@ -1808,25 +1677,11 @@ $('#btnGuardarProducto').click(function() {
     btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...');
     $.post(url, $('#productoForm').serialize(), function(r) {
         if (r.success) {
-            var file = $('#prodImagenFile')[0].files[0];
-            var productoActId = modoEdicionProducto ? $('#prodId').val() : r.dataId;
-            if (file && productoActId) {
-                var formData = new FormData();
-                formData.append('imagen', file);
-                formData.append('productoId', productoActId);
-                formData.append('negocioId', negocioId);
-                $.ajax({
-                    url: '/Negocios/SubirImagenProducto', type: 'POST', data: formData, processData: false, contentType: false,
-                    success: function() { $('#productoModal').modal('hide'); cargarCategoriasYProductos(); cargarInventarioStats(); if (tablaLogs) tablaLogs.ajax.reload(); toastr.success(r.message + ' e imagen subida.'); },
-                    error: function() { toastr.error('El producto se guardo pero hubo un error al subir la imagen.'); $('#productoModal').modal('hide'); cargarCategoriasYProductos(); }
-                });
-            } else {
-                $('#productoModal').modal('hide');
-                cargarCategoriasYProductos();
-                cargarInventarioStats();
-                if (tablaLogs) tablaLogs.ajax.reload();
-                toastr.success(r.message);
-            }
+            $('#productoModal').modal('hide');
+            cargarProductosGrid();
+            cargarInventarioStats();
+            if (tablaLogs) tablaLogs.ajax.reload();
+            toastr.success(r.message);
         } else { toastr.error(r.message || 'Error al guardar'); }
     }).fail(xhr => toastr.error(xhr.responseJSON?.message || 'Error al guardar producto'))
       .always(() => btn.prop('disabled', false).html(originalHtml));
@@ -1839,7 +1694,7 @@ function eliminarProducto(id, nombre) {
     }).then(result => {
         if (result.isConfirmed) {
             $.post('/Negocios/EliminarProducto', { id, negocioId }, function(r) {
-                if (r.success) { cargarCategoriasYProductos(); cargarInventarioStats(); if (tablaLogs) tablaLogs.ajax.reload(); swalMG.fire('Eliminado', r.message, 'success'); }
+                if (r.success) { cargarProductosGrid(); cargarInventarioStats(); if (tablaLogs) tablaLogs.ajax.reload(); swalMG.fire('Eliminado', r.message, 'success'); }
                 else { swalMG.fire('Error', r.message, 'error'); }
             }).fail(xhr => swalMG.fire('Error', xhr.responseJSON?.message || 'Error', 'error'));
         }
@@ -1898,7 +1753,7 @@ document.addEventListener('mg-tab-shown', function(e) {
     else if (tab === 'empleadosTab') { cargarEmpleados(); }
     else if (tab === 'logsTab') { if (!tablaLogs) cargarTablaLogs(); }
     else if (tab === 'ventasTab') { cargarVentasStats(); cargarCharts(); }
-    else if (tab === 'inventarioTab') { cargarCategoriasYProductos(); cargarInventarioStats(); }
+    else if (tab === 'inventarioTab') { cargarProductosGrid(); cargarInventarioStats(); }
     else if (tab === 'notificacionesTab') { cargarNotificacionesTab(); }
     else if (tab === 'recibosTab') { cargarRecibos(); verificarCleanupRecibos(); }
 });
