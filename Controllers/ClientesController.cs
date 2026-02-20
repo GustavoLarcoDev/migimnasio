@@ -322,20 +322,6 @@ public class ClientesController : Controller
     {
         try
         {
-            // Validar el modelo (ej: StringLength, Required) antes de procesar.
-            // Sin esta verificación, datos inválidos llegan al servicio y causan HTTP 500.
-            if (!ModelState.IsValid)
-            {
-                var firstError = ModelState.Values
-                    .SelectMany(v => v.Errors)
-                    .Select(e => e.ErrorMessage)
-                    .FirstOrDefault() ?? "Datos inválidos";
-                return BadRequest(new { success = false, message = firstError });
-            }
-
-            // El NegocioId viene dentro del DTO (campo oculto en el formulario HTML).
-            // Lo comparamos con el del claim de sesión para evitar que alguien
-            // manipule el formulario y cree clientes en un negocio ajeno.
             var negocioId = _authService.GetNegocioId(User);
             if (!negocioId.HasValue || model.NegocioId != negocioId.Value)
                 return Forbid();
