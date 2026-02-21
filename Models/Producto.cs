@@ -114,22 +114,11 @@ public class Producto
     public DateTime FechaDeActualizacion { get; set; } = TimeHelper.Now;
 
     /// <summary>
-    /// Token de concurrencia optimista para prevenir race conditions en operaciones de stock.
-    /// [Timestamp] = EF Core lo usa automáticamente para detectar conflictos de concurrencia.
-    ///
-    /// Problema que resuelve: si dos usuarios intentan vender el mismo producto
-    /// al mismo tiempo, el segundo UPDATE fallará porque el RowVersion cambió
-    /// desde que el segundo usuario leyó el registro. Esto evita "overselling"
-    /// (vender más de lo que hay en inventario).
-    ///
-    /// SQL Server actualiza este campo automáticamente en cada UPDATE.
-    /// El código de la aplicación no necesita manejarlo directamente.
+    /// Imagen del producto como data URI Base64 (data:image/jpeg;base64,...).
+    /// Se almacena directamente en la BD para funcionar en cualquier entorno
+    /// de producción sin depender del filesystem (contenedores, Azure, etc.).
+    /// Sin [StringLength] = nvarchar(max) en SQL Server.
     /// </summary>
-    /// <summary>
-    /// URL o nombre de archivo de la imagen visual del producto para tiendas/catálogos.
-    /// Para mantener retrocompatibilidad (membresias/artesanal) es opcional (nullable).
-    /// </summary>
-    [StringLength(1000)]
     public string ImagenUrl { get; set; }
 
     /// <summary>
@@ -150,6 +139,18 @@ public class Producto
     /// </summary>
     public CategoriaProducto Categoria { get; set; }
 
+    /// <summary>
+    /// Token de concurrencia optimista para prevenir race conditions en operaciones de stock.
+    /// [Timestamp] = EF Core lo usa automáticamente para detectar conflictos de concurrencia.
+    ///
+    /// Problema que resuelve: si dos usuarios intentan vender el mismo producto
+    /// al mismo tiempo, el segundo UPDATE fallará porque el RowVersion cambió
+    /// desde que el segundo usuario leyó el registro. Esto evita "overselling"
+    /// (vender más de lo que hay en inventario).
+    ///
+    /// SQL Server actualiza este campo automáticamente en cada UPDATE.
+    /// El código de la aplicación no necesita manejarlo directamente.
+    /// </summary>
     [Timestamp]
     public byte[] RowVersion { get; set; }
 }

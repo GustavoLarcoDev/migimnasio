@@ -82,7 +82,7 @@ public class DailyReportService : BackgroundService
                 // Calcular la próxima ejecución en hora Ecuador (UTC-5).
                 // Usamos la zona horaria real en lugar de sumar horas fijas
                 // para manejar correctamente el horario de verano si Ecuador lo adopta.
-                var ecuadorZone = TimeZoneInfo.FindSystemTimeZoneById("America/Guayaquil");
+                var ecuadorZone = TimeHelper.EcuadorTz;
                 var nowEcuador = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ecuadorZone);
 
                 // La próxima ejecución es hoy a las 21:00 (9 PM)

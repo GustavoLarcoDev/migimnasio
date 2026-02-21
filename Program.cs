@@ -23,7 +23,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.RateLimiting;
-using Gimnasio.Filters;
 
 // WebApplication.CreateBuilder prepara el contenedor de DI y la
 // configuración (appsettings.json, variables de entorno, etc.)

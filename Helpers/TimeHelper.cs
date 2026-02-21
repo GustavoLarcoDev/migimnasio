@@ -6,7 +6,8 @@ namespace Gimnasio.Helpers;
 /// </summary>
 internal static class TimeHelper
 {
-    private static readonly TimeZoneInfo EcuadorTz = TimeZoneInfo.FindSystemTimeZoneById("America/Guayaquil");
+    /// <summary>Zona horaria de Ecuador (America/Guayaquil, UTC-5). Reutilizar en background services.</summary>
+    public static readonly TimeZoneInfo EcuadorTz = TimeZoneInfo.FindSystemTimeZoneById("America/Guayaquil");
 
     /// <summary>Fecha y hora actual en zona horaria de Ecuador</summary>
     public static DateTime Now => TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, EcuadorTz);

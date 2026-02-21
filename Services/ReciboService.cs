@@ -1,3 +1,25 @@
+// ═══════════════════════════════════════════════════════════
+// ReciboService.cs — Servicio de gestion de recibos digitales
+//
+// RESPONSABILIDADES:
+//   - Generar numeros secuenciales de recibo por negocio
+//   - Almacenar recibos con su contenido HTML completo
+//   - Consultar recibos por negocio (multi-tenant) o por admin (NegocioId = null)
+//   - Buscar recibos por numero secuencial
+//   - Exportar recibos a Excel filtrados por ano y mes
+//   - Eliminar recibos antiguos (limpieza de datos)
+//
+// NUMERACION:
+//   Cada negocio tiene su propia secuencia independiente de numeros.
+//   El numero se formatea con 6 digitos (ej: 000001, 000042).
+//   Los recibos del admin (comisiones, pagos SaaS) tienen NegocioId = null.
+//
+// CONTENIDO HTML:
+//   El campo ContenidoHtml almacena el recibo completo tal como se genera
+//   en el momento del pago. Esto permite re-enviar o reimprimir el recibo
+//   exactamente como se vio la primera vez, sin recalcular nada.
+// ═══════════════════════════════════════════════════════════
+
 #nullable enable
 
 using ClosedXML.Excel;
@@ -7,6 +29,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Gimnasio.Services;
 
+/// <summary>
+/// Servicio de gestion de recibos digitales. Cada recibo guarda el HTML completo
+/// para poder re-enviarlo o reimprimirlo sin recalcular. Multi-tenant por NegocioId.
+/// </summary>
 public class ReciboService : IReciboService
 {
     private readonly ApplicationDbContext _context;

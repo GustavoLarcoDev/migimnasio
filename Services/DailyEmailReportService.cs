@@ -96,7 +96,7 @@ public class DailyEmailReportService : BackgroundService
                 // Calcular la próxima ejecución en hora Ecuador (UTC-5).
                 // Usamos la zona horaria real en lugar de sumar horas fijas
                 // para manejar correctamente el horario de verano si Ecuador lo adopta.
-                var ecuadorZone = TimeZoneInfo.FindSystemTimeZoneById("America/Guayaquil");
+                var ecuadorZone = TimeHelper.EcuadorTz;
                 var nowEcuador = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ecuadorZone);
 
                 // La próxima ejecución es hoy a las 23:00 (11 PM)
@@ -193,18 +193,13 @@ public class DailyEmailReportService : BackgroundService
                         continue;
                     }
 
+                    // Artesanal tiene su propio formato de reporte (citas, servicios populares).
+                    // Membresias, tienda y restaurante comparten el formato general (ingresos/gastos).
                     bool resultado;
 
                     if (negocio.TipoNegocio == "artesanal")
                     {
                         resultado = await EnviarReporteArtesanalAsync(
-                            context, emailService, negocio.NegocioId, negocio.NegocioNombre,
-                            negocio.DuenoNegocio, negocio.Email, hoy, stoppingToken);
-                    }
-                    else if (negocio.TipoNegocio == "tienda" || negocio.TipoNegocio == "restaurante")
-                    {
-                        // Tiendas y restaurantes reutilizan el formato de membresías (ingresos/gastos del día)
-                        resultado = await EnviarReporteMembresiaAsync(
                             context, emailService, negocio.NegocioId, negocio.NegocioNombre,
                             negocio.DuenoNegocio, negocio.Email, hoy, stoppingToken);
                     }

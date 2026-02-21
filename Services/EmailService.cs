@@ -1,6 +1,5 @@
 #nullable enable
 
-using Gimnasio.Helpers;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
@@ -94,8 +93,9 @@ public class EmailService : IEmailService
                 {
                     var builder = new BodyBuilder();
                     builder.HtmlBody = htmlBody;
-                    builder.Attachments.Add(attachmentFileName, attachmentBytes,
-                        new ContentType("application", "vnd.openxmlformats-officedocument.wordprocessingml.document"));
+                    // Detectar el tipo MIME segun la extension del archivo adjunto
+                    var contentType = ObtenerContentType(attachmentFileName);
+                    builder.Attachments.Add(attachmentFileName, attachmentBytes, contentType);
                     message.Body = builder.ToMessageBody();
                 }
                 else
@@ -544,9 +544,29 @@ public class EmailService : IEmailService
     }
 
     // ═══════════════════════════════════════════════════════════
-    // HELPER PRIVADO — LINKS DE CONTACTO DEL NEGOCIO
+    // HELPERS PRIVADOS
     // ═══════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// Determina el tipo MIME del adjunto segun su extension de archivo.
+    /// Usado por EnviarEmailAsync para enviar adjuntos con el Content-Type correcto.
+    /// </summary>
+    private static ContentType ObtenerContentType(string fileName)
+    {
+        var ext = Path.GetExtension(fileName)?.ToLowerInvariant();
+        return ext switch
+        {
+            ".pdf"  => new ContentType("application", "pdf"),
+            ".docx" => new ContentType("application", "vnd.openxmlformats-officedocument.wordprocessingml.document"),
+            ".xlsx" => new ContentType("application", "vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+            _       => new ContentType("application", "octet-stream")
+        };
+    }
+
+    /// <summary>
+    /// Genera links de contacto del negocio (email mailto + WhatsApp) para incluir
+    /// en los emails de recibos y confirmaciones. Retorna string vacio si no hay datos.
+    /// </summary>
     private static string GenerarLinksContacto(string? emailNegocio, string? telefonoNegocio)
     {
         var links = new List<string>();
@@ -1079,6 +1099,11 @@ public class EmailService : IEmailService
     // CATÁLOGO DE LA TIENDA
     // ═══════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// Envia el catalogo de productos de una tienda como PDF adjunto.
+    /// Usa el metodo central EnviarEmailAsync con soporte de adjuntos,
+    /// reintentos automaticos y validacion de credenciales SMTP.
+    /// </summary>
     public async Task<bool> EnviarCatalogoTiendaAsync(string destinatario, string nombreNegocio, byte[] pdfBytes)
     {
         var body = $@"
@@ -1095,7 +1120,7 @@ public class EmailService : IEmailService
         </p>
 
         <p style='color: #999; font-size: 12px; margin: 20px 0 0; text-align: center;'>
-            Por favor, no respondas a este correo. Si deseas contactar con la tienda, 
+            Por favor, no respondas a este correo. Si deseas contactar con la tienda,
             hazlo a traves de sus canales de contacto habituales.
         </p>
     </div>
@@ -1104,58 +1129,21 @@ public class EmailService : IEmailService
     </div>
 </div>";
 
-        try 
-        {
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_settings.FromName, _settings.FromEmail));
-            message.To.Add(MailboxAddress.Parse(destinatario));
-            message.Subject = $"Catalogo de Productos - {nombreNegocio}";
-
-            var builder = new BodyBuilder { HtmlBody = body };
-            builder.Attachments.Add("Catalogo_Productos.pdf", pdfBytes, new ContentType("application", "pdf"));
-            message.Body = builder.ToMessageBody();
-
-            using var client = new MailKit.Net.Smtp.SmtpClient();
-            await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, SecureSocketOptions.StartTls);
-            await client.AuthenticateAsync(_settings.FromEmail, _settings.Password);
-            await client.SendAsync(message);
-            await client.DisconnectAsync(true);
-
-            return true;
-        } 
-        catch (Exception ex) 
-        {
-            _logger.LogError(ex, "Error enviando el catalogo en PDF a {Email}", destinatario);
-            return false;
-        }
+        return await EnviarEmailAsync(destinatario, $"Catalogo de Productos - {nombreNegocio}",
+            body, pdfBytes, "Catalogo_Productos.pdf");
     }
 
     // ═══════════════════════════════════════════════════════════
     // ENVÍO GENÉRICO DE RECIBO HTML (Tienda POS)
     // ═══════════════════════════════════════════════════════════
 
+    /// <summary>
+    /// Envia un recibo HTML generico por email (usado por el POS de Tienda y Restaurante).
+    /// Delega al metodo central EnviarEmailAsync que incluye reintentos automaticos
+    /// y validacion de credenciales SMTP.
+    /// </summary>
     public async Task<bool> EnviarReciboPorEmailGenericoAsync(string destinatario, string asunto, string contenidoHtml)
     {
-        try
-        {
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress(_settings.FromName, _settings.FromEmail));
-            message.To.Add(MailboxAddress.Parse(destinatario));
-            message.Subject = asunto;
-            message.Body = new TextPart("html") { Text = contenidoHtml };
-
-            using var client = new MailKit.Net.Smtp.SmtpClient();
-            await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, SecureSocketOptions.StartTls);
-            await client.AuthenticateAsync(_settings.FromEmail, _settings.Password);
-            await client.SendAsync(message);
-            await client.DisconnectAsync(true);
-
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error enviando recibo por email a {Email}", destinatario);
-            return false;
-        }
+        return await EnviarEmailAsync(destinatario, asunto, contenidoHtml);
     }
 }

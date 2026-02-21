@@ -121,7 +121,7 @@
 
     <!-- ═══════════════ TAB REPORTES (reutilizado) ═══════════════ -->
     <div class="tab-pane fade" id="ventasTab" role="tabpanel">
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2"><div class="mg-period-pills" id="ventasPeriodPills"><button class="mg-pill active" data-periodo="dia">Dia</button><button class="mg-pill" data-periodo="semana">Semana</button><button class="mg-pill" data-periodo="mes">Mes</button></div></div>
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2"><div class="mg-period-pills" id="ventasPeriodPills"><button class="mg-pill active" data-periodo="dia">Dia</button><button class="mg-pill" data-periodo="semana">Semana</button><button class="mg-pill" data-periodo="mes">Mes</button></div><button class="btn btn-outline-primary btn-sm" id="btnRefrescarVentas" title="Refrescar datos"><i class="bi bi-arrow-clockwise me-1"></i>Refrescar</button></div>
         <div class="row g-3 mb-4">
             <div class="col-xl-4 col-md-6 col-12"><div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-primary) 0%, var(--mg-gradient-primary-end) 100%);"><div class="card-body text-white"><span class="d-block mb-2 opacity-75" id="ventasIngresosLabel">Ingresos del Dia</span><span class="fs-2x fw-bolder" id="ventasIngresos">$0</span></div></div></div>
             <div class="col-xl-4 col-md-6 col-12"><div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-danger) 0%, var(--mg-gradient-danger-end) 100%);"><div class="card-body text-white"><span class="d-block mb-2 opacity-75" id="ventasGastosLabel">Gastos del Dia</span><span class="fs-2x fw-bolder" id="ventasGastos">$0</span></div></div></div>
@@ -575,9 +575,6 @@ let empColorMap = {};
 
 const swalMG = Swal.mixin({ confirmButtonColor: '#3E97FF', cancelButtonColor: '#E4E6EF', cancelButtonText: 'Cancelar', reverseButtons: true });
 const diasNombres = ['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'];
-
-function escHtml(str) { if (!str) return ''; return $('<span>').text(str).html(); }
-function escAttr(str) { if (!str) return ''; return escHtml(str).replace(/'/g, '&#39;'); }
 
 function getEmpColor(empleadoId) {
     return empColorMap[empleadoId] || '#3E97FF';
@@ -1465,6 +1462,14 @@ $('#ventasPeriodPills').on('click', '.mg-pill', function() {
     cargarVentasStats();
     // Re-cargar donut con el periodo actualizado
     $.get('/Negocios/GetLogs', { negocioId }, function(logs) { actualizarDonut(logs); }).fail(function() { toastr.error('Error de conexión. Intente de nuevo.'); });
+});
+
+$('#btnRefrescarVentas').on('click', function() {
+    var btn = $(this);
+    btn.find('i').addClass('spin-animation');
+    cargarVentasStats();
+    cargarCharts();
+    setTimeout(function() { btn.find('i').removeClass('spin-animation'); toastr.info('Datos actualizados'); }, 800);
 });
 
 // ═══════════════ INVENTARIO — Categorias y Productos ═══════════════

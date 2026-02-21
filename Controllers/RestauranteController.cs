@@ -59,7 +59,7 @@ public class RestauranteController : Controller
     public async Task<IActionResult> DescargarMenu(Guid menuId)
     {
         var nId = _authService.GetNegocioId(User);
-        if (nId == null) return Unauthorized();
+        if (nId == null) return Forbid();
 
         var html = await _menuService.GenerarHtmlMenuAsync(menuId, nId.Value);
         if (html == null) return NotFound();
@@ -76,9 +76,9 @@ public class RestauranteController : Controller
     public async Task<IActionResult> EnviarMenu([FromForm] Guid menuId, [FromForm] string destino, [FromForm] string tipo)
     {
         var nId = _authService.GetNegocioId(User);
-        if (nId == null) return Unauthorized();
+        if (nId == null) return Forbid();
 
-        var companyName = User.Claims.FirstOrDefault(c => c.Type == "NegocioNombre")?.Value ?? "Mi Restaurante";
+        var companyName = User.Identity?.Name ?? "Mi Restaurante";
 
         if (string.IsNullOrWhiteSpace(destino) || string.IsNullOrWhiteSpace(tipo))
             return Json(new { success = false, message = "Datos de destino invalidos." });
@@ -141,66 +141,108 @@ public class RestauranteCrudController : Controller
     [HttpGet("GetMesas")]
     public async Task<IActionResult> GetMesas(Guid negocioId)
     {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue || negocioId != nId.Value) return Forbid();
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
 
-        var mesas = await _mesaService.GetMesasAsync(negocioId);
-        return Ok(mesas);
+            var mesas = await _mesaService.GetMesasAsync(negocioId);
+            return Ok(mesas);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
     }
 
     [HttpGet("GetMesa")]
     public async Task<IActionResult> GetMesa(Guid mesaId)
     {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue) return Unauthorized();
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue) return Forbid();
 
-        var mesa = await _mesaService.GetMesaAsync(mesaId, nId.Value);
-        if (mesa == null) return NotFound(new { success = false, message = "Mesa no encontrada" });
-        return Ok(mesa);
+            var mesa = await _mesaService.GetMesaAsync(mesaId, nId.Value);
+            if (mesa == null) return NotFound(new { success = false, message = "Mesa no encontrada" });
+            return Ok(mesa);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
     }
 
     [HttpPost("CrearMesa")]
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> CrearMesa([FromBody] MesaRequest req)
     {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue) return Unauthorized();
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue) return Forbid();
 
-        var (success, message) = await _mesaService.CrearMesaAsync(nId.Value, req.Nombre, req.Numero, req.Capacidad);
-        return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+            var (success, message) = await _mesaService.CrearMesaAsync(nId.Value, req.Nombre, req.Numero, req.Capacidad);
+            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
     }
 
     [HttpPost("EditarMesa")]
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> EditarMesa([FromBody] MesaRequest req)
     {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue) return Unauthorized();
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue) return Forbid();
 
-        var (success, message) = await _mesaService.EditarMesaAsync(req.MesaId, nId.Value, req.Nombre, req.Numero, req.Capacidad);
-        return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+            var (success, message) = await _mesaService.EditarMesaAsync(req.MesaId, nId.Value, req.Nombre, req.Numero, req.Capacidad);
+            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
     }
 
     [HttpPost("CambiarEstadoMesa")]
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> CambiarEstadoMesa([FromBody] CambiarEstadoMesaRequest req)
     {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue) return Unauthorized();
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue) return Forbid();
 
-        var (success, message) = await _mesaService.CambiarEstadoMesaAsync(req.MesaId, nId.Value, req.Estado);
-        return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+            var (success, message) = await _mesaService.CambiarEstadoMesaAsync(req.MesaId, nId.Value, req.Estado);
+            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
     }
 
     [HttpPost("EliminarMesa")]
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> EliminarMesa([FromBody] EliminarMesaRequest req)
     {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue) return Unauthorized();
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue) return Forbid();
 
-        var (success, message) = await _mesaService.EliminarMesaAsync(req.MesaId, nId.Value);
-        return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+            var (success, message) = await _mesaService.EliminarMesaAsync(req.MesaId, nId.Value);
+            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
     }
 
     // ── Menus ──────────────────────────────────────────────────
@@ -208,77 +250,119 @@ public class RestauranteCrudController : Controller
     [HttpGet("GetMenus")]
     public async Task<IActionResult> GetMenus(Guid negocioId)
     {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue || negocioId != nId.Value) return Forbid();
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
 
-        var menus = await _menuService.GetMenusAsync(negocioId);
-        return Ok(menus);
+            var menus = await _menuService.GetMenusAsync(negocioId);
+            return Ok(menus);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
     }
 
     [HttpGet("GetMenu")]
     public async Task<IActionResult> GetMenu(Guid menuId)
     {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue) return Unauthorized();
-
-        var menu = await _menuService.GetMenuAsync(menuId, nId.Value);
-        if (menu == null) return NotFound(new { success = false, message = "Menu no encontrado" });
-        return Ok(new
+        try
         {
-            menu.MenuId,
-            menu.Nombre,
-            menu.TipoMenu,
-            menu.PrecioFijo,
-            menu.ItemsJson,
-            menu.Estilo,
-            menu.FechaCreacion
-        });
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue) return Forbid();
+
+            var menu = await _menuService.GetMenuAsync(menuId, nId.Value);
+            if (menu == null) return NotFound(new { success = false, message = "Menu no encontrado" });
+            return Ok(new
+            {
+                menu.MenuId,
+                menu.Nombre,
+                menu.TipoMenu,
+                menu.PrecioFijo,
+                menu.ItemsJson,
+                menu.Estilo,
+                menu.FechaCreacion
+            });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
     }
 
     [HttpPost("CrearMenu")]
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> CrearMenu([FromBody] MenuRestauranteDto dto)
     {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue) return Unauthorized();
-        dto.NegocioId = nId.Value;
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue) return Forbid();
+            dto.NegocioId = nId.Value;
 
-        var (success, message) = await _menuService.CrearMenuAsync(dto);
-        return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+            var (success, message) = await _menuService.CrearMenuAsync(dto);
+            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
     }
 
     [HttpPost("EditarMenu")]
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> EditarMenu([FromBody] MenuRestauranteDto dto)
     {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue) return Unauthorized();
-        dto.NegocioId = nId.Value;
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue) return Forbid();
+            dto.NegocioId = nId.Value;
 
-        var (success, message) = await _menuService.EditarMenuAsync(dto);
-        return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+            var (success, message) = await _menuService.EditarMenuAsync(dto);
+            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
     }
 
     [HttpPost("EliminarMenu")]
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> EliminarMenu([FromBody] EliminarMenuRequest req)
     {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue) return Unauthorized();
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue) return Forbid();
 
-        var (success, message) = await _menuService.EliminarMenuAsync(req.MenuId, nId.Value);
-        return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+            var (success, message) = await _menuService.EliminarMenuAsync(req.MenuId, nId.Value);
+            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
     }
 
     [HttpGet("PreviewMenu")]
     public async Task<IActionResult> PreviewMenu(Guid menuId)
     {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue) return Unauthorized();
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue) return Forbid();
 
-        var html = await _menuService.GenerarHtmlMenuAsync(menuId, nId.Value);
-        if (html == null) return NotFound();
-        return Content(html, "text/html");
+            var html = await _menuService.GenerarHtmlMenuAsync(menuId, nId.Value);
+            if (html == null) return NotFound();
+            return Content(html, "text/html");
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
     }
 }
 

@@ -803,20 +803,6 @@ const swalMG = Swal.mixin({
     reverseButtons: true
 });
 
-// Función auxiliar para escapar HTML y prevenir XSS
-function escHtml(str) {
-    if (!str) return '';
-    return $('<span>').text(str).html();
-}
-
-// Saludo según hora del día
-function saludoHora() {
-    const h = new Date().getHours();
-    if (h < 12) return 'Buenos días';
-    if (h < 18) return 'Buenas tardes';
-    return 'Buenas noches';
-}
-
 // ================================================================
 // Inicialización
 // ================================================================

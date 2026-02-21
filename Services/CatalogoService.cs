@@ -101,7 +101,8 @@ public class CatalogoService : ICatalogoService
 
             foreach (var prod in cat.Productos)
             {
-                sb.AppendLine("  <div class='card'>");
+                bool agotado = prod.Stock <= 0;
+                sb.AppendLine($"  <div class='card{(agotado ? " out-of-stock" : "")}'>");
 
                 // Usar imagen placeholder si el producto no tiene foto
                 string imagen = string.IsNullOrEmpty(prod.ImagenUrl)
@@ -109,6 +110,8 @@ public class CatalogoService : ICatalogoService
                     : prod.ImagenUrl;
 
                 sb.AppendLine($"    <img src='{imagen}' alt='{prod.Nombre}' />");
+                if (agotado)
+                    sb.AppendLine("    <span class='sold-out-badge'>No Disponible</span>");
                 sb.AppendLine("    <div class='card-body'>");
                 sb.AppendLine($"      <h3 class='product-title'>{prod.Nombre}</h3>");
                 sb.AppendLine($"      <p class='product-price'>${prod.PrecioVenta:F2}</p>");
@@ -199,6 +202,9 @@ public class CatalogoService : ICatalogoService
             .hero p { margin: 10px 0 0; font-size: 24px; opacity: 0.9; }
             .category-title { border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 40px; margin-bottom: 20px; font-size: 28px; }
             .footer { text-align: center; padding: 30px; margin-top: 50px; color: #666; font-size: 14px; page-break-inside: avoid; }
+            .card.out-of-stock { position: relative; opacity: 0.6; }
+            .card.out-of-stock img { filter: grayscale(80%); }
+            .sold-out-badge { position: absolute; top: 12px; right: 12px; background: #dc3545; color: #fff; padding: 4px 12px; border-radius: 4px; font-size: 12px; font-weight: bold; text-transform: uppercase; z-index: 1; }
         ";
 
         // Overrides especificos de cada estilo

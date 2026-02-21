@@ -9,9 +9,7 @@
 // una app para gimnasios y fue renombrado a "Negocio" sin cambiar la clase.
 // ═══════════════════════════════════════════════════════════
 
-using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Gimnasio.Models;
 

@@ -17,7 +17,6 @@
 // ═══════════════════════════════════════════════════════════
 
 using Gimnasio.Data;
-using Gimnasio.Helpers;
 using Gimnasio.Models;
 using Microsoft.EntityFrameworkCore;
 

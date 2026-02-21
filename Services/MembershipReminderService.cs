@@ -81,7 +81,7 @@ public class MembershipReminderService : BackgroundService
             {
                 // Calcular la próxima ejecución en hora Ecuador.
                 // Se usa la zona horaria real (no offset fijo) para mayor precisión.
-                var ecuadorZone = TimeZoneInfo.FindSystemTimeZoneById("America/Guayaquil");
+                var ecuadorZone = TimeHelper.EcuadorTz;
                 var nowEcuador = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ecuadorZone);
 
                 // La próxima ejecución es hoy a las 08:00 AM

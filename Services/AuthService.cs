@@ -27,7 +27,6 @@
 
 using System.Security.Claims;
 using Gimnasio.Data;
-using Gimnasio.Helpers;
 using Gimnasio.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;

@@ -5,8 +5,7 @@
 // Para negocios de tipo "membresias", el cliente tiene fecha de vencimiento
 // y cantidad de días. Para negocios "artesanal", el cliente tiene citas.
 //
-// Este archivo también contiene ClienteCreateModel, un modelo legacy
-// para formularios anteriores al sistema DTO.
+// Los formularios de creación/edición usan ClienteCreateDto en Models/DTOs/.
 // ═══════════════════════════════════════════════════════════
 
 using System.ComponentModel.DataAnnotations;
@@ -145,89 +144,4 @@ public class Cliente
     /// EF Core carga esta lista solo cuando se hace .Include(c => c.Citas).
     /// </summary>
     public ICollection<Cita> Citas { get; set; } = new List<Cita>();
-}
-
-/// <summary>
-/// Modelo legacy para la creación de clientes desde formularios anteriores al sistema DTO.
-/// Se usa en algunos formularios HTML directamente en lugar de ClienteCreateDto.
-///
-/// Para nuevos formularios o endpoints de API, usar ClienteCreateDto en Models/DTOs/.
-/// Este modelo tiene validaciones más estrictas ([Required] en más campos).
-/// </summary>
-public class ClienteCreateModel
-{
-    /// <summary>
-    /// ID del cliente (se ignora al crear; EF Core genera un nuevo GUID automáticamente).
-    /// </summary>
-    public Guid ClienteId { get; set; }
-
-    /// <summary>
-    /// ID del negocio al que pertenecerá este cliente.
-    /// [Required] = obligatorio; no se puede crear un cliente sin negocio.
-    /// </summary>
-    [Required]
-    public Guid NegocioId { get; set; }
-
-    /// <summary>
-    /// Nombre(s) del cliente.
-    /// [Required] = campo obligatorio en el formulario.
-    /// [StringLength(100)] = máximo 100 caracteres.
-    /// </summary>
-    [Required]
-    [StringLength(100)]
-    public string Nombre { get; set; }
-
-    /// <summary>
-    /// Apellido(s) del cliente.
-    /// [Required] = campo obligatorio en el formulario.
-    /// [StringLength(100)] = máximo 100 caracteres.
-    /// </summary>
-    [Required]
-    [StringLength(100)]
-    public string Apellido { get; set; }
-
-    /// <summary>
-    /// Correo electrónico del cliente (opcional en este modelo).
-    /// [EmailAddress] = si se ingresa, debe tener formato válido.
-    /// </summary>
-    [EmailAddress]
-    public string Email { get; set; }
-
-    /// <summary>
-    /// Teléfono del cliente.
-    /// [Required] = obligatorio en este modelo legacy (a diferencia de la entidad Cliente).
-    /// [Phone] = valida el formato telefónico.
-    /// </summary>
-    [Required]
-    [Phone]
-    public string Telefono { get; set; }
-
-    /// <summary>
-    /// Dirección física del cliente (opcional).
-    /// </summary>
-    public string Direccion { get; set; }
-
-    /// <summary>
-    /// Indica si el cliente paga por día en lugar de membresía.
-    /// true = cliente diario, false = membresía por periodo.
-    /// </summary>
-    public bool EsDiario { get; set; }
-
-    /// <summary>
-    /// Duración de la membresía en días.
-    /// [Required] = obligatorio.
-    /// [Range(1, int.MaxValue)] = debe ser al menos 1 día; muestra mensaje de error si es 0 o negativo.
-    /// </summary>
-    [Required]
-    [Range(1, int.MaxValue, ErrorMessage = "Los días deben ser mayor a 0")]
-    public int Dias { get; set; }
-
-    /// <summary>
-    /// Precio cobrado por la membresía.
-    /// [Required] = obligatorio.
-    /// [Range(0.01, double.MaxValue)] = debe ser mayor a cero; no se permiten membresías gratis por este modelo.
-    /// </summary>
-    [Required]
-    [Range(0.01, double.MaxValue, ErrorMessage = "El precio debe ser mayor a 0")]
-    public decimal Precio { get; set; }
 }

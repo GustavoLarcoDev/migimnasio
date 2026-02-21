@@ -74,9 +74,15 @@
             <div class="col-lg-5">
                 <div class="mg-card h-100">
                     <div class="card-header border-0">
-                        <h5 class="fw-bold mb-0"><i class="bi bi-receipt me-2"></i>Factura</h5>
+                        <h5 class="fw-bold mb-0"><i class="bi bi-receipt me-2"></i>Recibo</h5>
                     </div>
                     <div class="card-body d-flex flex-column">
+                        <!-- Indicador mesa activa -->
+                        <div id="mesaActivaIndicator">
+                            <i class="bi bi-grid-3x3"></i>
+                            <span id="mesaActivaNombre"></span>
+                            <button class="mesa-close-btn" onclick="cerrarMesaActiva()" title="Volver a Mesas"><i class="bi bi-x"></i></button>
+                        </div>
                         <!-- Tipo de orden -->
                         <div class="d-flex gap-2 mb-3" id="tipoOrdenPills">
                             <button class="mg-pill active" data-tipo="local"><i class="bi bi-shop me-1"></i>Local</button>
@@ -138,6 +144,9 @@
                         <!-- Boton delivery WhatsApp -->
                         <button class="btn btn-success mb-2 d-none" id="btnLlamarDelivery">
                             <i class="bi bi-whatsapp me-2"></i>Llamar Delivery
+                        </button>
+                        <button class="btn btn-outline-danger w-100 mb-2 d-none" id="btnCancelarOrden" onclick="cancelarOrdenMesa()">
+                            <i class="bi bi-x-circle me-2"></i>Cancelar Orden
                         </button>
                         <button class="btn btn-success btn-lg w-100" id="btnCobrar" disabled>
                             <i class="bi bi-cash-stack me-2"></i>Cobrar
@@ -280,9 +289,15 @@
             <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Ventas Hoy</div><div class="stat-value" id="invVentasHoy">0</div></div><div class="stat-icon bg-light-success"><i class="bi bi-cart-check-fill text-success"></i></div></div></div></div>
             <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Ingresos Hoy</div><div class="stat-value text-success" id="invIngresosHoy">$0</div></div><div class="stat-icon bg-light-info"><i class="bi bi-currency-dollar text-info"></i></div></div></div></div>
         </div>
-        <div class="d-flex align-items-center gap-2 mb-3 px-2 py-2 rounded-3" style="background: rgba(62,151,255,0.04); border: 1px dashed rgba(62,151,255,0.2);">
-            <i class="bi bi-arrows-move text-primary"></i>
-            <span class="text-muted small">Arrastra platos sobre las carpetas para organizarlos</span>
+        <div class="d-flex align-items-center gap-2 mb-3 flex-wrap">
+            <div class="d-flex align-items-center gap-2 px-2 py-2 rounded-3 flex-grow-1" style="background: rgba(62,151,255,0.04); border: 1px dashed rgba(62,151,255,0.2);">
+                <i class="bi bi-arrows-move text-primary"></i>
+                <span class="text-muted small">Arrastra platos sobre las carpetas para organizarlos</span>
+            </div>
+            <div class="position-relative" style="min-width:220px;">
+                <i class="bi bi-search position-absolute text-muted" style="left:12px;top:50%;transform:translateY(-50%);"></i>
+                <input type="text" id="buscarPlato" class="form-control form-control-sm" placeholder="Buscar plato..." style="padding-left:34px;">
+            </div>
         </div>
         <div class="row g-3 mb-3" id="invCategoryFolders"></div>
         <div class="row g-3 mb-4" id="productosGrid"></div>
@@ -329,7 +344,7 @@
 
     <!-- ═══════════════ TAB REPORTES (reutilizado) ═══════════════ -->
     <div class="tab-pane fade" id="ventasTab" role="tabpanel">
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2"><div class="mg-period-pills" id="ventasPeriodPills"><button class="mg-pill active" data-periodo="dia">Dia</button><button class="mg-pill" data-periodo="semana">Semana</button><button class="mg-pill" data-periodo="mes">Mes</button></div></div>
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2"><div class="mg-period-pills" id="ventasPeriodPills"><button class="mg-pill active" data-periodo="dia">Dia</button><button class="mg-pill" data-periodo="semana">Semana</button><button class="mg-pill" data-periodo="mes">Mes</button></div><button class="btn btn-outline-primary btn-sm" id="btnRefrescarVentas" title="Refrescar datos"><i class="bi bi-arrow-clockwise me-1"></i>Refrescar</button></div>
         <div class="row g-3 mb-4">
             <div class="col-xl-4 col-md-6 col-12"><div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-primary) 0%, var(--mg-gradient-primary-end) 100%);"><div class="card-body text-white"><span class="d-block mb-2 opacity-75" id="ventasIngresosLabel">Ingresos del Dia</span><span class="fs-2x fw-bolder" id="ventasIngresos">$0</span></div></div></div>
             <div class="col-xl-4 col-md-6 col-12"><div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-danger) 0%, var(--mg-gradient-danger-end) 100%);"><div class="card-body text-white"><span class="d-block mb-2 opacity-75" id="ventasGastosLabel">Gastos del Dia</span><span class="fs-2x fw-bolder" id="ventasGastos">$0</span></div></div></div>
@@ -338,6 +353,10 @@
         <div class="row g-3 mb-4">
             <div class="col-md-6"><div class="mg-card"><div class="card-header border-0"><h5 class="fw-bold mb-0">Ingresos vs Gastos</h5></div><div class="card-body"><div id="chartBarVentas"></div></div></div></div>
             <div class="col-md-6"><div class="mg-card"><div class="card-header border-0"><h5 class="fw-bold mb-0" id="chartResumenTitle">Resumen del Dia</h5></div><div class="card-body"><div id="chartResumen"></div></div></div></div>
+        </div>
+        <div class="mg-card mb-4">
+            <div class="card-header border-0"><h5 class="fw-bold mb-0"><i class="bi bi-pie-chart me-2"></i>Ventas por Categoria</h5></div>
+            <div class="card-body"><div class="row"><div class="col-md-6"><div id="chartVentasCategoria"></div></div><div class="col-md-6"><div class="table-responsive"><table class="table table-sm" id="tablaVentasCategoria"><thead><tr class="fw-bold text-muted"><th>Categoria</th><th class="text-end">Unidades</th><th class="text-end">Total</th></tr></thead><tbody></tbody></table></div></div></div></div>
         </div>
     </div>
 
@@ -481,6 +500,120 @@
 </div>
 
 <style>
+/* ── POS Product Cards ── */
+.pos-product-card {
+    cursor: pointer;
+    border: 2px solid var(--mg-border-color);
+    border-radius: var(--mg-border-radius);
+    padding: 0.75rem;
+    text-align: center;
+    transition: all 0.15s ease;
+    background: var(--mg-card-bg);
+    height: 100%;
+}
+.pos-product-card:hover {
+    border-color: var(--mg-primary);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
+}
+.pos-product-card.out-of-stock {
+    opacity: 0.5;
+    pointer-events: none;
+}
+.pos-product-card .pos-prod-img {
+    width: 100%;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+}
+.pos-product-card .pos-prod-placeholder {
+    width: 100%;
+    height: 90px;
+    border-radius: 8px;
+    background: var(--mg-gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.5rem;
+    font-size: 2rem;
+    color: var(--mg-gray-400);
+}
+.pos-product-card .pos-prod-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.pos-product-card .pos-prod-price {
+    font-weight: 700;
+    color: var(--mg-success);
+    font-size: 1rem;
+}
+.pos-product-card .pos-prod-stock {
+    font-size: 0.75rem;
+    color: var(--mg-gray-500);
+}
+
+/* ── POS Cart Items ── */
+.pos-cart-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    border-bottom: 1px solid var(--mg-border-color);
+}
+.pos-cart-item .pos-cart-img {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+.pos-cart-item .pos-cart-img-placeholder {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    background: var(--mg-gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+    color: var(--mg-gray-400);
+}
+.pos-cart-item .pos-cart-name {
+    flex: 1;
+    font-weight: 600;
+    font-size: 0.85rem;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.pos-cart-item .pos-cart-qty {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+.pos-cart-item .pos-cart-qty button {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 0.75rem;
+}
+.pos-cart-item .pos-cart-subtotal {
+    font-weight: 700;
+    min-width: 60px;
+    text-align: right;
+}
+
 /* ── POS Category Pills ── */
 #posCategoryTabs .mg-pill,
 #tipoOrdenPills .mg-pill,
@@ -536,6 +669,42 @@
     background: rgba(255,255,255,0.25);
     color: #fff;
 }
+
+/* ── Mesa Order System ── */
+.mesa-card-wrapper { position: relative; }
+.mesa-card-wrapper .mesa-gear-btn {
+    position: absolute; top: 6px; right: 6px; z-index: 2;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(255,255,255,0.3); border: none;
+    display: flex; align-items: center; justify-content: center;
+    color: inherit; opacity: 0.6; transition: all 0.2s;
+    cursor: pointer; font-size: 0.85rem;
+}
+.mesa-card-wrapper .mesa-gear-btn:hover { opacity: 1; background: rgba(255,255,255,0.5); }
+.mesa-order-info { font-size: 0.75rem; opacity: 0.85; margin-top: 4px; }
+.mesa-order-info .mesa-timer { font-family: monospace; }
+
+/* Mesa activa indicator en POS */
+#mesaActivaIndicator {
+    display: none; align-items: center; gap: 0.5rem;
+    padding: 0.5rem 1rem; border-radius: 8px;
+    background: linear-gradient(135deg, #F1416C, #E03E6B);
+    color: #fff; font-weight: 700; font-size: 0.9rem;
+    animation: mesaPulse 2s ease-in-out infinite;
+    margin-bottom: 0.75rem;
+}
+#mesaActivaIndicator.active { display: flex; }
+#mesaActivaIndicator .mesa-close-btn {
+    margin-left: auto; background: rgba(255,255,255,0.2); border: none;
+    color: #fff; border-radius: 50%; width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 0.75rem;
+}
+#mesaActivaIndicator .mesa-close-btn:hover { background: rgba(255,255,255,0.4); }
+@@keyframes mesaPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(241, 65, 108, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(241, 65, 108, 0); }
+}
 </style>
 
 @section Scripts {
@@ -561,15 +730,33 @@ var menuEditId = null;
 var currentMenuEstilo = 'moderno';
 var currentMenuTipo = 'general';
 
+// ── Ordenes por Mesa (persistidas en localStorage) ──
+var ordenesMesa = {};
+var mesaActiva = null;
+var mesaActivaTimestamps = {};
+
+function guardarOrdenesMesa() {
+    try { localStorage.setItem('mg-ordenes-mesa-' + negocioId, JSON.stringify(ordenesMesa)); } catch(e) {}
+}
+function restaurarOrdenesMesa() {
+    try {
+        var saved = localStorage.getItem('mg-ordenes-mesa-' + negocioId);
+        if (saved) ordenesMesa = JSON.parse(saved) || {};
+        var ts = localStorage.getItem('mg-mesa-timestamps-' + negocioId);
+        if (ts) mesaActivaTimestamps = JSON.parse(ts) || {};
+    } catch(e) { ordenesMesa = {}; mesaActivaTimestamps = {}; }
+}
+function guardarTimestamps() {
+    try { localStorage.setItem('mg-mesa-timestamps-' + negocioId, JSON.stringify(mesaActivaTimestamps)); } catch(e) {}
+}
+restaurarOrdenesMesa();
+
 const swalMG = Swal.mixin({
-    customClass: { confirmButton: 'btn btn-primary me-2', cancelButton: 'btn btn-light' },
+    customClass: { confirmButton: 'btn btn-primary me-2', cancelButton: 'btn btn-light', denyButton: 'btn btn-outline-warning me-2' },
     buttonsStyling: false
 });
 
 $.ajaxSetup({ cache: false });
-
-function escHtml(str) { return $('<span>').text(str || '').html(); }
-function escAttr(str) { return escHtml(str).replace(/'/g, '&#39;'); }
 
 const dtLang = { emptyTable: 'Sin datos', info: 'Mostrando _START_ a _END_ de _TOTAL_', infoEmpty: 'Sin registros', search: 'Buscar:', paginate: { first: 'Primera', last: 'Ultima', next: 'Sig.', previous: 'Ant.' }, lengthMenu: 'Mostrar _MENU_' };
 
@@ -688,15 +875,18 @@ function agregarAlCarrito(productoId) {
     if (!p || p.stock <= 0) return;
     var ex = posCart.find(function(c) { return c.productoId === productoId; });
     if (ex) { if (ex.cantidad >= p.stock) { toastr.warning('No hay mas stock de ' + p.nombre); return; } ex.cantidad++; }
-    else posCart.push({ productoId: p.productoId, nombre: p.nombre, precioVenta: p.precioVenta, cantidad: 1, stock: p.stock });
+    else posCart.push({ productoId: p.productoId, nombre: p.nombre, precioVenta: p.precioVenta, cantidad: 1, stock: p.stock, imagenUrl: p.imagenUrl || '' });
     renderCart();
 }
 
 function renderCart() {
+    // Sincronizar con ordenesMesa si hay mesa activa
+    if (mesaActiva) { ordenesMesa[mesaActiva] = posCart.slice(); guardarOrdenesMesa(); }
     var c = $('#posCartItems'); c.empty();
     if (!posCart.length) { c.html('<div class="text-center py-5 text-muted"><i class="bi bi-cart3 fs-1 d-block mb-2 opacity-50"></i><p>Selecciona platos para agregar</p></div>'); $('#btnCobrar').prop('disabled', true); calcularTotales(); return; }
     posCart.forEach(function(item, i) {
-        c.append('<div class="pos-cart-item"><div class="pos-cart-name">' + escHtml(item.nombre) + '</div><div class="pos-cart-qty"><button class="btn btn-sm btn-outline-secondary" onclick="cambiarCantidad(' + i + ',-1)"><i class="bi bi-dash"></i></button><span class="fw-bold px-2">' + item.cantidad + '</span><button class="btn btn-sm btn-outline-secondary" onclick="cambiarCantidad(' + i + ',1)"><i class="bi bi-plus"></i></button></div><div class="pos-cart-subtotal">$' + (item.precioVenta * item.cantidad).toFixed(2) + '</div><button class="btn btn-sm btn-outline-danger" onclick="quitarDelCarrito(' + i + ')"><i class="bi bi-x"></i></button></div>');
+        var cartImg = item.imagenUrl ? '<img src="' + escAttr(item.imagenUrl) + '" class="pos-cart-img" alt="">' : '<div class="pos-cart-img-placeholder"><i class="bi bi-cup-hot"></i></div>';
+        c.append('<div class="pos-cart-item">' + cartImg + '<div class="pos-cart-name" title="' + escAttr(item.nombre) + '">' + escHtml(item.nombre) + '</div><div class="pos-cart-qty"><button class="btn btn-sm btn-outline-secondary" onclick="cambiarCantidad(' + i + ',-1)"><i class="bi bi-dash"></i></button><span class="fw-bold px-2">' + item.cantidad + '</span><button class="btn btn-sm btn-outline-secondary" onclick="cambiarCantidad(' + i + ',1)"><i class="bi bi-plus"></i></button></div><div class="pos-cart-subtotal">$' + (item.precioVenta * item.cantidad).toFixed(2) + '</div><button class="btn btn-sm btn-outline-danger" onclick="quitarDelCarrito(' + i + ')"><i class="bi bi-x"></i></button></div>');
     });
     $('#btnCobrar').prop('disabled', false); calcularTotales();
 }
@@ -729,13 +919,19 @@ function procesarVenta() {
         PorcentajeIva: parseFloat($('#posIva').val()) || 0,
         Items: posCart.map(function(c) { return { ProductoId: c.productoId, Cantidad: c.cantidad }; }),
         TipoOrden: currentTipoOrden,
-        MesaId: currentTipoOrden === 'local' ? ($('#posMesaId').val() || null) : null,
+        MesaId: mesaActiva ? mesaActiva : (currentTipoOrden === 'local' ? ($('#posMesaId').val() || null) : null),
         EmpleadoId: currentTipoOrden === 'delivery' ? ($('#posRepartidorId').val() || null) : null,
         DireccionEntrega: currentTipoOrden === 'delivery' ? ($('#posDireccion').val() || '') : null
     };
     $.ajax({ url: '/Negocios/ProcesarVentaPOS', type: 'POST', contentType: 'application/json', data: JSON.stringify(payload),
         success: function(r) {
-            if (r.success) { posCart = []; renderCart(); $('#posNombreCliente').val(''); $('#posDescuento').val(0); cargarPOS(); if (tablaLogs) tablaLogs.ajax.reload(); if (tablaRecibos) tablaRecibos.ajax.reload();
+            if (r.success) {
+                var mesaVendida = mesaActiva;
+                posCart = []; renderCart(); $('#posNombreCliente').val(''); $('#posDescuento').val(0);
+                if (mesaVendida) {
+                    liberarMesaTrasVenta(mesaVendida);
+                }
+                cargarPOS(); if (tablaLogs) tablaLogs.ajax.reload(); if (tablaRecibos) tablaRecibos.ajax.reload();
                 if (r.reciboId) mostrarReciboVenta(r.reciboId); else swalMG.fire({ title: 'Venta Exitosa!', icon: 'success' });
             } else toastr.error(r.message);
         },
@@ -791,29 +987,196 @@ function cargarMesas() {
         mesas.forEach(function(m) {
             var color = m.estado === 'libre' ? 'success' : m.estado === 'ocupada' ? 'danger' : 'warning';
             var textColor = m.estado === 'reservada' ? 'text-dark' : 'text-white';
-            grid.append('<div class="col-xl-2 col-lg-3 col-md-4 col-6"><div class="mg-card border-0 text-center cursor-pointer" style="background: var(--mg-' + color + '); border-radius: 12px;" onclick="mostrarOpcionesMesa(\'' + m.mesaId + '\')">' +
+            var orden = ordenesMesa[m.mesaId];
+            var orderInfo = '';
+            if (m.estado === 'ocupada' && orden && orden.length > 0) {
+                var totalItems = orden.reduce(function(s, i) { return s + i.cantidad; }, 0);
+                var totalMonto = orden.reduce(function(s, i) { return s + i.precioVenta * i.cantidad; }, 0);
+                var tiempoStr = '';
+                if (mesaActivaTimestamps[m.mesaId]) {
+                    var mins = Math.floor((Date.now() - mesaActivaTimestamps[m.mesaId]) / 60000);
+                    tiempoStr = '<div class="mesa-timer"><i class="bi bi-clock me-1"></i>' + (mins < 60 ? mins + ' min' : Math.floor(mins/60) + 'h ' + (mins%60) + 'm') + '</div>';
+                }
+                orderInfo = '<div class="mesa-order-info"><div><i class="bi bi-cart me-1"></i>' + totalItems + ' items &middot; <strong>$' + totalMonto.toFixed(2) + '</strong></div>' + tiempoStr + '</div>';
+            }
+            grid.append(
+                '<div class="col-xl-2 col-lg-3 col-md-4 col-6">' +
+                '<div class="mesa-card-wrapper">' +
+                '<button class="mesa-gear-btn ' + textColor + '" onclick="event.stopPropagation(); editarMesaModal(\'' + m.mesaId + '\')" title="Editar mesa"><i class="bi bi-gear"></i></button>' +
+                '<div class="mg-card border-0 text-center cursor-pointer" style="background: var(--mg-' + color + '); border-radius: 12px;" onclick="clickMesa(\'' + m.mesaId + '\')">' +
                 '<div class="card-body py-3 ' + textColor + '">' +
                 '<div class="fs-3 fw-bolder">' + m.numero + '</div>' +
                 '<div class="small fw-semibold">' + escHtml(m.nombre) + '</div>' +
                 '<div class="small opacity-75"><i class="bi bi-people me-1"></i>' + m.capacidad + '</div>' +
                 '<span class="badge bg-white bg-opacity-25 mt-1">' + m.estado + '</span>' +
-                '</div></div></div>');
+                orderInfo +
+                '</div></div></div></div>'
+            );
         });
+        // Limpiar ordenes huerfanas
+        Object.keys(ordenesMesa).forEach(function(mid) {
+            if (!mesas.find(function(m) { return m.mesaId === mid; })) { delete ordenesMesa[mid]; delete mesaActivaTimestamps[mid]; }
+        });
+        guardarOrdenesMesa(); guardarTimestamps();
     });
 }
 
-function mostrarOpcionesMesa(mesaId) {
+function clickMesa(mesaId) {
     var m = mesasCache.find(function(x) { return x.mesaId === mesaId; });
     if (!m) return;
-    swalMG.fire({ title: m.nombre, html: '<p>Estado: <strong>' + m.estado + '</strong></p><p>Capacidad: ' + m.capacidad + ' personas</p>', showDenyButton: true, showCancelButton: true, confirmButtonText: 'Cambiar Estado', denyButtonText: 'Editar', cancelButtonText: 'Cerrar'
+
+    if (m.estado === 'libre') {
+        // Marcar como ocupada y abrir POS
+        $.ajax({ url: '/Negocios/CambiarEstadoMesa', type: 'POST', contentType: 'application/json',
+            data: JSON.stringify({ MesaId: mesaId, Estado: 'ocupada' }),
+            success: function(r) {
+                if (r.success) {
+                    if (!ordenesMesa[mesaId]) ordenesMesa[mesaId] = [];
+                    mesaActivaTimestamps[mesaId] = Date.now();
+                    guardarOrdenesMesa(); guardarTimestamps();
+                    abrirPOSParaMesa(mesaId);
+                } else toastr.error(r.message);
+            }
+        });
+    } else if (m.estado === 'ocupada') {
+        abrirPOSParaMesa(mesaId);
+    } else if (m.estado === 'reservada') {
+        swalMG.fire({
+            title: escHtml(m.nombre), html: '<p><i class="bi bi-bookmark-star me-1"></i>Mesa reservada</p><p>Capacidad: ' + m.capacidad + ' personas</p>',
+            showDenyButton: true, showCancelButton: true,
+            confirmButtonText: '<i class="bi bi-door-open me-1"></i>Abrir Mesa',
+            denyButtonText: '<i class="bi bi-unlock me-1"></i>Liberar',
+            cancelButtonText: 'Cerrar'
+        }).then(function(r) {
+            if (r.isConfirmed) {
+                $.ajax({ url: '/Negocios/CambiarEstadoMesa', type: 'POST', contentType: 'application/json',
+                    data: JSON.stringify({ MesaId: mesaId, Estado: 'ocupada' }),
+                    success: function(r2) {
+                        if (r2.success) {
+                            if (!ordenesMesa[mesaId]) ordenesMesa[mesaId] = [];
+                            mesaActivaTimestamps[mesaId] = Date.now();
+                            guardarOrdenesMesa(); guardarTimestamps();
+                            abrirPOSParaMesa(mesaId);
+                        } else toastr.error(r2.message);
+                    }
+                });
+            } else if (r.isDenied) {
+                $.ajax({ url: '/Negocios/CambiarEstadoMesa', type: 'POST', contentType: 'application/json',
+                    data: JSON.stringify({ MesaId: mesaId, Estado: 'libre' }),
+                    success: function(r2) { if (r2.success) { toastr.success('Mesa liberada'); cargarMesas(); cargarMesasParaPOS(); } else toastr.error(r2.message); }
+                });
+            }
+        });
+    }
+}
+
+function abrirPOSParaMesa(mesaId) {
+    // Guardar carrito actual si hay otra mesa activa
+    if (mesaActiva && mesaActiva !== mesaId) {
+        ordenesMesa[mesaActiva] = posCart.slice();
+        guardarOrdenesMesa();
+    }
+    mesaActiva = mesaId;
+    // Restaurar carrito de esta mesa
+    posCart = (ordenesMesa[mesaId] || []).slice();
+    // Forzar tipo local
+    currentTipoOrden = 'local';
+    $('#tipoOrdenPills .mg-pill').removeClass('active');
+    $('#tipoOrdenPills .mg-pill[data-tipo="local"]').addClass('active');
+    renderCart();
+    actualizarIndicadorMesa();
+    switchToTab('posTab');
+}
+
+function actualizarIndicadorMesa() {
+    if (mesaActiva) {
+        var m = mesasCache.find(function(x) { return x.mesaId === mesaActiva; });
+        var nombre = m ? m.nombre : 'Mesa';
+        $('#mesaActivaNombre').text(nombre);
+        $('#mesaActivaIndicator').addClass('active');
+        $('#tipoOrdenPills').addClass('d-none');
+        $('#mesaSelector').addClass('d-none');
+        $('#btnCancelarOrden').removeClass('d-none');
+    } else {
+        $('#mesaActivaIndicator').removeClass('active');
+        $('#tipoOrdenPills').removeClass('d-none');
+        if (currentTipoOrden === 'local') $('#mesaSelector').removeClass('d-none');
+        $('#btnCancelarOrden').addClass('d-none');
+    }
+}
+
+function cerrarMesaActiva() {
+    if (mesaActiva) {
+        ordenesMesa[mesaActiva] = posCart.slice();
+        guardarOrdenesMesa();
+    }
+    mesaActiva = null;
+    posCart = [];
+    renderCart();
+    actualizarIndicadorMesa();
+    switchToTab('mesasTab');
+}
+
+function cancelarOrdenMesa() {
+    if (!mesaActiva) return;
+    var mid = mesaActiva;
+    swalMG.fire({
+        title: 'Cancelar Orden?', text: 'Se vaciara el carrito y la mesa se liberara.',
+        icon: 'warning', showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-x-circle me-1"></i>Si, cancelar',
+        confirmButtonColor: '#F1416C', cancelButtonText: 'No'
     }).then(function(r) {
-        if (r.isConfirmed) {
-            swalMG.fire({ title: 'Cambiar Estado', input: 'select', inputOptions: { libre: 'Libre', ocupada: 'Ocupada', reservada: 'Reservada' }, inputValue: m.estado, showCancelButton: true, confirmButtonText: 'Cambiar'
-            }).then(function(r2) { if (r2.isConfirmed) $.ajax({ url: '/Negocios/CambiarEstadoMesa', type: 'POST', contentType: 'application/json', data: JSON.stringify({ MesaId: mesaId, Estado: r2.value }), success: function(r3) { if (r3.success) { toastr.success(r3.message); cargarMesas(); cargarMesasParaPOS(); } else toastr.error(r3.message); } }); });
-        } else if (r.isDenied) {
-            $('#mesaEditId').val(mesaId); $('#mesaNombre').val(m.nombre); $('#mesaNumero').val(m.numero); $('#mesaCapacidad').val(m.capacidad); $('#mesaModalTitle').text('Editar Mesa'); new bootstrap.Modal('#mesaModal').show();
+        if (r.isConfirmed) liberarMesaTrasVenta(mid);
+    });
+}
+
+function liberarMesaTrasVenta(mesaId) {
+    delete ordenesMesa[mesaId];
+    delete mesaActivaTimestamps[mesaId];
+    guardarOrdenesMesa(); guardarTimestamps();
+    if (mesaActiva === mesaId) {
+        mesaActiva = null;
+        posCart = [];
+        renderCart();
+        actualizarIndicadorMesa();
+    }
+    $.ajax({ url: '/Negocios/CambiarEstadoMesa', type: 'POST', contentType: 'application/json',
+        data: JSON.stringify({ MesaId: mesaId, Estado: 'libre' }),
+        success: function(r) {
+            if (r.success) { cargarMesas(); cargarMesasParaPOS(); }
         }
     });
+    switchToTab('mesasTab');
+}
+
+function editarMesaModal(mesaId) {
+    var m = mesasCache.find(function(x) { return x.mesaId === mesaId; });
+    if (!m) return;
+    swalMG.fire({
+        title: escHtml(m.nombre),
+        html: '<p>Estado: <strong>' + m.estado + '</strong></p><p>Capacidad: ' + m.capacidad + ' personas</p>',
+        showDenyButton: true, showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-pencil me-1"></i>Editar',
+        denyButtonText: '<i class="bi bi-trash me-1"></i>Eliminar',
+        cancelButtonText: 'Cerrar'
+    }).then(function(r) {
+        if (r.isConfirmed) {
+            $('#mesaEditId').val(mesaId); $('#mesaNombre').val(m.nombre); $('#mesaNumero').val(m.numero); $('#mesaCapacidad').val(m.capacidad);
+            $('#mesaModalTitle').text('Editar Mesa'); new bootstrap.Modal('#mesaModal').show();
+        } else if (r.isDenied) {
+            swalMG.fire({ title: 'Eliminar ' + escHtml(m.nombre) + '?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Si, eliminar', confirmButtonColor: '#F1416C'
+            }).then(function(r2) {
+                if (r2.isConfirmed) $.ajax({ url: '/Negocios/EliminarMesa', type: 'POST', contentType: 'application/json', data: JSON.stringify({ MesaId: mesaId }),
+                    success: function(r3) { if (r3.success) { toastr.success('Mesa eliminada'); delete ordenesMesa[mesaId]; delete mesaActivaTimestamps[mesaId]; guardarOrdenesMesa(); guardarTimestamps(); cargarMesas(); cargarMesasParaPOS(); } else toastr.error(r3.message); }
+                });
+            });
+        }
+    });
+}
+
+function switchToTab(tabId) {
+    var link = document.querySelector('[data-mg-tab="' + tabId + '"]');
+    if (link) link.click();
 }
 
 $('#btnNuevaMesa').on('click', function() { $('#mesaEditId').val(''); $('#mesaNombre').val(''); $('#mesaNumero').val(mesasCache.length + 1); $('#mesaCapacidad').val(4); $('#mesaModalTitle').text('Nueva Mesa'); new bootstrap.Modal('#mesaModal').show(); });
@@ -963,7 +1326,7 @@ $('#btnGuardarRepartidor').on('click', function() {
     if (!data.Nombre || !data.Apellido) { toastr.error('Nombre y apellido obligatorios'); return; }
     if (id) data.EmpleadoId = id;
     var url = id ? '/Negocios/EditarEmpleado' : '/Negocios/CrearEmpleado';
-    $.ajax({ url: url, type: 'POST', contentType: 'application/json', data: JSON.stringify(data), success: function(r) { if (r.success) { toastr.success(r.message); bootstrap.Modal.getInstance(document.getElementById('repartidorModal')).hide(); cargarRepartidores(); cargarRepartidoresParaPOS(); } else toastr.error(r.message); } });
+    $.post(url, data, function(r) { if (r.success) { toastr.success(r.message); bootstrap.Modal.getInstance(document.getElementById('repartidorModal')).hide(); cargarRepartidores(); cargarRepartidoresParaPOS(); } else toastr.error(r.message); }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al guardar repartidor'); });
 });
 
 function editarRepartidor(id) {
@@ -975,7 +1338,7 @@ function editarRepartidor(id) {
 
 function eliminarRepartidor(id) {
     swalMG.fire({ title: 'Eliminar repartidor?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Si, eliminar', confirmButtonColor: '#F1416C' }).then(function(r) {
-        if (r.isConfirmed) $.ajax({ url: '/Negocios/EliminarEmpleado', type: 'POST', contentType: 'application/json', data: JSON.stringify({ EmpleadoId: id, NegocioId: negocioId }), success: function(r) { if (r.success) { toastr.success(r.message); cargarRepartidores(); cargarRepartidoresParaPOS(); } else toastr.error(r.message); } });
+        if (r.isConfirmed) $.post('/Negocios/EliminarEmpleado', { empleadoId: id, negocioId: negocioId }, function(r) { if (r.success) { toastr.success(r.message); cargarRepartidores(); cargarRepartidoresParaPOS(); } else toastr.error(r.message); }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al eliminar'); });
     });
 }
 
@@ -1016,6 +1379,13 @@ function renderProductosGrid(prods) {
 
 function dropProductoEnCategoria(event, catId) { event.preventDefault(); var prodId = event.dataTransfer.getData('text/plain'); if (!prodId) return; $.ajax({ url: '/Negocios/CambiarCategoriaProducto', type: 'POST', contentType: 'application/json', data: JSON.stringify({ ProductoId: prodId, CategoriaProductoId: catId }), success: function(r) { if (r.success) { toastr.success('Plato movido'); cargarInventario(); cargarPOS(); } else toastr.error(r.message); } }); }
 
+$('#buscarPlato').on('input', function() {
+    var q = $(this).val().toLowerCase().trim();
+    if (!q) { renderProductosGrid(productosCache); return; }
+    var filtrados = productosCache.filter(function(p) { return p.nombre.toLowerCase().includes(q); });
+    renderProductosGrid(filtrados);
+});
+
 $('#btnCrearProducto').on('click', function() { modoEdicionProducto = false; $('#prodEditId').val(''); $('#prodNombre').val(''); $('#prodPrecio').val(''); $('#prodCosto').val(0); $('#prodStock').val(0); $('#prodStockMin').val(5); $('#prodCategoria').val(''); $('#prodImagen').val(''); $('#prodImagenPreview').empty(); $('#prodReceta').val(''); $('#productoModalTitle').text('Nuevo Plato'); new bootstrap.Modal('#productoModal').show(); });
 
 // Preview de imagen al seleccionar archivo
@@ -1033,25 +1403,35 @@ $('#btnGuardarProducto').on('click', function() {
     var data = { NegocioId: negocioId, Nombre: $('#prodNombre').val(), PrecioVenta: parseFloat($('#prodPrecio').val()) || 0, CostoCompra: parseFloat($('#prodCosto').val()) || 0, Stock: parseInt($('#prodStock').val()) || 0, StockMinimo: parseInt($('#prodStockMin').val()) || 5, CategoriaProductoId: $('#prodCategoria').val() || null, Receta: $('#prodReceta').val() || null };
     if (!data.Nombre) { toastr.error('Nombre obligatorio'); return; }
     if (id) { data.ProductoId = id; }
+    var fileInput = document.getElementById('prodImagen');
+    var tieneImagen = fileInput.files.length > 0;
     var url = id ? '/Negocios/EditarProducto' : '/Negocios/CrearProducto';
-    $.ajax({ url: url, type: 'POST', contentType: 'application/json', data: JSON.stringify(data), success: function(r) {
+    var cerrarYRecargar = function(msg) { toastr.success(msg); bootstrap.Modal.getInstance(document.getElementById('productoModal')).hide(); cargarInventario(); cargarPOS(); };
+    var subirImagen = function(prodId, msg) {
+        var fd = new FormData();
+        fd.append('productoId', prodId);
+        fd.append('negocioId', negocioId);
+        fd.append('imagen', fileInput.files[0]);
+        $.ajax({ url: '/Negocios/SubirImagenProducto', type: 'POST', data: fd, processData: false, contentType: false,
+            success: function() { cerrarYRecargar(msg || 'Imagen actualizada'); },
+            error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al subir imagen'); }
+        });
+    };
+    $.post(url, data, function(r) {
         if (r.success) {
-            // Subir foto si se seleccionó una
-            var fileInput = document.getElementById('prodImagen');
             var prodId = r.dataId || id;
-            if (fileInput.files.length > 0 && prodId) {
-                var fd = new FormData();
-                fd.append('productoId', prodId);
-                fd.append('negocioId', negocioId);
-                fd.append('imagen', fileInput.files[0]);
-                $.ajax({ url: '/Negocios/SubirImagenProducto', type: 'POST', data: fd, processData: false, contentType: false,
-                    complete: function() { toastr.success(r.message); bootstrap.Modal.getInstance(document.getElementById('productoModal')).hide(); cargarInventario(); cargarPOS(); }
-                });
-            } else {
-                toastr.success(r.message); bootstrap.Modal.getInstance(document.getElementById('productoModal')).hide(); cargarInventario(); cargarPOS();
-            }
-        } else toastr.error(r.message);
-    }});
+            if (tieneImagen && prodId) { subirImagen(prodId, r.message); }
+            else { cerrarYRecargar(r.message); }
+        } else if (tieneImagen && id) {
+            // Solo cambió la imagen, no los campos de texto — subir igual
+            subirImagen(id, 'Imagen actualizada');
+        } else { toastr.error(r.message); }
+    }).fail(function(xhr) {
+        // Si el backend dice "no hay cambios" pero SÍ hay imagen nueva, subirla igual
+        if (tieneImagen && id && xhr.responseJSON?.message?.includes('No se detectaron')) {
+            subirImagen(id, 'Imagen actualizada');
+        } else { toastr.error(xhr.responseJSON?.message || 'Error al guardar plato'); }
+    });
 });
 
 function editarProducto(id) {
@@ -1061,12 +1441,12 @@ function editarProducto(id) {
     $('#prodReceta').val(p.receta || ''); $('#productoModalTitle').text('Editar Plato'); new bootstrap.Modal('#productoModal').show();
 }
 
-function venderProducto(id) { var p = productosCache.find(function(x) { return x.productoId === id; }); if (!p) return; swalMG.fire({ title: 'Vender ' + p.nombre, input: 'number', inputValue: 1, inputAttributes: { min: 1, max: p.stock }, showCancelButton: true, confirmButtonText: 'Vender' }).then(function(r) { if (r.isConfirmed) $.ajax({ url: '/Negocios/VenderProducto', type: 'POST', contentType: 'application/json', data: JSON.stringify({ ProductoId: id, NegocioId: negocioId, Cantidad: parseInt(r.value) }), success: function(r) { if (r.success) { toastr.success(r.message); cargarInventario(); cargarPOS(); } else toastr.error(r.message); } }); }); }
+function venderProducto(id) { var p = productosCache.find(function(x) { return x.productoId === id; }); if (!p) return; swalMG.fire({ title: 'Vender ' + p.nombre, input: 'number', inputValue: 1, inputAttributes: { min: 1, max: p.stock }, showCancelButton: true, confirmButtonText: 'Vender' }).then(function(r) { if (r.isConfirmed) $.post('/Negocios/VenderProducto', { productoId: id, negocioId: negocioId, cantidad: parseInt(r.value) }, function(r) { if (r.success) { toastr.success(r.message); cargarInventario(); cargarPOS(); } else toastr.error(r.message); }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al vender'); }); }); }
 
-function restockProducto(id) { swalMG.fire({ title: 'Restock', input: 'number', inputValue: 10, inputAttributes: { min: 1 }, showCancelButton: true, confirmButtonText: 'Agregar stock' }).then(function(r) { if (r.isConfirmed) $.ajax({ url: '/Negocios/RestockProducto', type: 'POST', contentType: 'application/json', data: JSON.stringify({ ProductoId: id, NegocioId: negocioId, Cantidad: parseInt(r.value) }), success: function(r) { if (r.success) { toastr.success(r.message); cargarInventario(); cargarPOS(); } else toastr.error(r.message); } }); }); }
+function restockProducto(id) { swalMG.fire({ title: 'Restock', input: 'number', inputValue: 10, inputAttributes: { min: 1 }, showCancelButton: true, confirmButtonText: 'Agregar stock' }).then(function(r) { if (r.isConfirmed) $.post('/Negocios/RestockProducto', { productoId: id, negocioId: negocioId, cantidad: parseInt(r.value), costoTotal: 0 }, function(r) { if (r.success) { toastr.success(r.message); cargarInventario(); cargarPOS(); } else toastr.error(r.message); }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al restock'); }); }); }
 
 $('#btnCrearCategoria').on('click', function() { $('#catNombre').val(''); new bootstrap.Modal('#categoriaModal').show(); });
-$('#btnGuardarCategoria').on('click', function() { var n = $('#catNombre').val(); if (!n) { toastr.error('Nombre obligatorio'); return; } $.ajax({ url: '/Negocios/CrearCategoria', type: 'POST', contentType: 'application/json', data: JSON.stringify({ NegocioId: negocioId, Nombre: n }), success: function(r) { if (r.success) { toastr.success(r.message); bootstrap.Modal.getInstance(document.getElementById('categoriaModal')).hide(); cargarInventario(); cargarPOS(); } else toastr.error(r.message); } }); });
+$('#btnGuardarCategoria').on('click', function() { var n = $('#catNombre').val(); if (!n) { toastr.error('Nombre obligatorio'); return; } $.post('/Negocios/CrearCategoria', { negocioId: negocioId, nombre: n }, function(r) { if (r.success) { toastr.success(r.message); bootstrap.Modal.getInstance(document.getElementById('categoriaModal')).hide(); cargarInventario(); cargarPOS(); } else toastr.error(r.message); }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al crear categoria'); }); });
 
 $('#btnExportInventarioExcel').on('click', function() { window.location.href = '/Negocios/ExportInventarioExcel?negocioId=' + negocioId; });
 
@@ -1105,21 +1485,21 @@ $('#btnNuevoProveedor').on('click', function() { $('#provEditId').val(''); $('#p
 
 $('#btnGuardarProveedor').on('click', function() {
     var id = $('#provEditId').val();
-    var data = { NegocioId: negocioId, Nombre: $('#provCompania').val(), Apellido: $('#provContacto').val(), Telefono: $('#provTelefono').val(), Email: $('#provEmail').val() };
+    var data = { NegocioId: negocioId, Nombre: $('#provCompania').val(), Apellido: $('#provContacto').val() || '', Telefono: $('#provTelefono').val(), Email: $('#provEmail').val() };
     if (!data.Nombre) { toastr.error('Nombre de compania obligatorio'); return; }
-    if (id) data.ClienteArtesanalId = id;
+    if (id) data.ClienteId = id;
     var url = id ? '/Negocios/EditarClienteArtesanal' : '/Negocios/CrearClienteArtesanal';
-    $.ajax({ url: url, type: 'POST', contentType: 'application/json', data: JSON.stringify(data), success: function(r) { if (r.success) { toastr.success(r.message); bootstrap.Modal.getInstance(document.getElementById('proveedorModal')).hide(); cargarProveedores(); } else toastr.error(r.message); } });
+    $.post(url, data, function(r) { if (r.success) { toastr.success(r.message); bootstrap.Modal.getInstance(document.getElementById('proveedorModal')).hide(); cargarProveedores(); } else toastr.error(r.message); }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al guardar distribuidor'); });
 });
 
 function editarProveedor(id) {
-    $.get('/Negocios/GetClienteArtesanal', { clienteId: id, negocioId }, function(c) {
-        if (!c) { toastr.error('Proveedor no encontrado'); return; }
-        $('#provEditId').val(c.clienteArtesanalId); $('#provCompania').val(c.nombre); $('#provContacto').val(c.apellido); $('#provTelefono').val(c.telefono); $('#provEmail').val(c.email); $('#proveedorModalTitle').text('Editar Distribuidor'); new bootstrap.Modal('#proveedorModal').show();
-    });
+    var rows = tablaProveedores ? tablaProveedores.rows().data().toArray() : [];
+    var c = rows.find(function(r) { return r.clienteArtesanalId === id || r.clienteId === id; });
+    if (!c) { toastr.error('Distribuidor no encontrado'); return; }
+    $('#provEditId').val(c.clienteArtesanalId || c.clienteId); $('#provCompania').val(c.nombre); $('#provContacto').val(c.apellido); $('#provTelefono').val(c.telefono); $('#provEmail').val(c.email); $('#proveedorModalTitle').text('Editar Distribuidor'); new bootstrap.Modal('#proveedorModal').show();
 }
 
-function eliminarProveedor(id) { swalMG.fire({ title: 'Eliminar distribuidor?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Si, eliminar', confirmButtonColor: '#F1416C' }).then(function(r) { if (r.isConfirmed) $.ajax({ url: '/Negocios/EliminarClienteArtesanal', type: 'POST', contentType: 'application/json', data: JSON.stringify({ ClienteArtesanalId: id, NegocioId: negocioId }), success: function(r) { if (r.success) { toastr.success(r.message); cargarProveedores(); } else toastr.error(r.message); } }); }); }
+function eliminarProveedor(id) { swalMG.fire({ title: 'Eliminar distribuidor?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Si, eliminar', confirmButtonColor: '#F1416C' }).then(function(r) { if (r.isConfirmed) $.post('/Negocios/EliminarCliente', { id: id, negocioId: negocioId }, function(r) { if (r.success) { toastr.success(r.message); cargarProveedores(); } else toastr.error(r.message); }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al eliminar'); }); }); }
 
 // ═══════════════ LOGS/MOVIMIENTOS ═══════════════
 function cargarLogs() {
@@ -1174,7 +1554,36 @@ function cargarReportes(periodo) {
     });
 }
 
-$(document).on('click', '#ventasPeriodPills .mg-pill', function() { $('#ventasPeriodPills .mg-pill').removeClass('active'); $(this).addClass('active'); cargarReportes($(this).data('periodo')); });
+var chartVentasCategoria;
+function cargarVentasPorCategoria() {
+    var periodo = $('#ventasPeriodPills .mg-pill.active').data('periodo') || 'mes';
+    $.get('/Negocios/GetVentasPorCategoria', { negocioId, periodo }, function(datos) {
+        var tbody = $('#tablaVentasCategoria tbody'); tbody.empty();
+        if (!datos.length) { tbody.html('<tr><td colspan="3" class="text-center text-muted py-3">Sin ventas en este periodo</td></tr>'); }
+        else { datos.forEach(function(d) { tbody.append('<tr><td>' + escHtml(d.categoria) + '</td><td class="text-end">' + d.unidades + '</td><td class="text-end fw-bold text-success">$' + d.totalVentas.toFixed(2) + '</td></tr>'); }); }
+        if (chartVentasCategoria) chartVentasCategoria.destroy();
+        $('#chartVentasCategoria').empty();
+        if (!datos.length) { $('#chartVentasCategoria').html('<div class="text-center py-5 text-muted"><i class="bi bi-pie-chart fs-1 d-block mb-2"></i>Sin datos</div>'); return; }
+        chartVentasCategoria = new ApexCharts(document.querySelector('#chartVentasCategoria'), {
+            chart: { type: 'donut', height: 300 },
+            series: datos.map(function(d) { return d.totalVentas; }),
+            labels: datos.map(function(d) { return d.categoria; }),
+            plotOptions: { pie: { donut: { labels: { show: true, total: { show: true, label: 'Total', formatter: function(w) { return '$' + w.globals.seriesTotals.reduce(function(a,b){return a+b;},0).toFixed(2); } } } } } }
+        });
+        chartVentasCategoria.render();
+    });
+}
+
+$(document).on('click', '#ventasPeriodPills .mg-pill', function() { $('#ventasPeriodPills .mg-pill').removeClass('active'); $(this).addClass('active'); cargarReportes($(this).data('periodo')); cargarVentasPorCategoria(); });
+
+$('#btnRefrescarVentas').on('click', function() {
+    var btn = $(this);
+    btn.find('i').addClass('spin-animation');
+    var periodo = $('#ventasPeriodPills .mg-pill.active').data('periodo') || 'dia';
+    cargarReportes(periodo);
+    cargarVentasPorCategoria();
+    setTimeout(function() { btn.find('i').removeClass('spin-animation'); toastr.info('Datos actualizados'); }, 800);
+});
 
 // ═══════════════ NOTIFICACIONES ═══════════════
 function cargarNotificaciones() {
@@ -1222,14 +1631,14 @@ $('#btnExportRecibos').on('click', function() { window.location.href = '/Negocio
 // ═══════════════ TAB SWITCHING ═══════════════
 document.addEventListener('mg-tab-shown', function(e) {
     var tab = e.detail.tab;
-    if (tab === 'posTab') cargarPOS();
-    else if (tab === 'mesasTab') cargarMesas();
+    if (tab === 'posTab') { cargarPOS(); actualizarIndicadorMesa(); }
+    else if (tab === 'mesasTab') { if (mesaActiva) { ordenesMesa[mesaActiva] = posCart.slice(); guardarOrdenesMesa(); } cargarMesas(); }
     else if (tab === 'menusTab') cargarMenus();
     else if (tab === 'inventarioTab') cargarInventario();
     else if (tab === 'proveedoresTab') cargarProveedores();
     else if (tab === 'repartidoresTab') cargarRepartidores();
     else if (tab === 'logsTab') cargarLogs();
-    else if (tab === 'ventasTab') cargarReportes();
+    else if (tab === 'ventasTab') { cargarReportes(); cargarVentasPorCategoria(); }
     else if (tab === 'recibosTab') cargarRecibos();
     else if (tab === 'notificacionesTab') cargarNotificaciones();
 });

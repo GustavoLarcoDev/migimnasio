@@ -21,7 +21,6 @@
 
 using ClosedXML.Excel;
 using Gimnasio.Data;
-using Gimnasio.Helpers;
 using Gimnasio.Models;
 using Gimnasio.Models.DTOs;
 using Microsoft.EntityFrameworkCore;
@@ -321,35 +320,78 @@ public class NegocioService : INegocioService
     }
 
     /// <summary>
-    /// Elimina un negocio con verificación de integridad referencial manual.
+    /// Elimina un negocio y TODOS sus datos relacionados.
     ///
-    /// Usamos Include(g => g.Clientes) para cargar los clientes en el mismo query
-    /// y poder verificar si hay alguno y cuántos son, sin una segunda consulta.
-    ///
-    /// No usamos eliminación en cascada automática porque queremos que el admin
-    /// sepa explícitamente que está intentando eliminar un negocio con datos.
-    /// El mensaje de error con el conteo de clientes es intencional para evitar
-    /// eliminaciones accidentales.
+    /// Usa una transacción para garantizar atomicidad: o se borra todo o nada.
+    /// El orden de eliminación respeta las restricciones de FK (hijos antes que padres).
+    /// Se usa ExecuteDeleteAsync para borrar en bulk directamente en SQL, sin cargar
+    /// entidades en memoria (más eficiente que Remove + SaveChanges para miles de filas).
     /// </summary>
     public async Task<(bool success, string message)> EliminarNegocioAsync(Guid id)
     {
-        // Include para cargar la colección de clientes en el mismo JOIN
-        var negocio = await _context.Negocios
-            .Include(g => g.Clientes)
-            .FirstOrDefaultAsync(g => g.NegocioId == id);
-
-        if (negocio == null)
+        var exists = await _context.Negocios.AnyAsync(g => g.NegocioId == id);
+        if (!exists)
             return (false, "Negocio no encontrado");
 
-        // Bloquear eliminación si tiene clientes para evitar datos huérfanos.
-        // El mensaje muestra cuántos hay para que el admin sepa la magnitud.
-        if (negocio.Clientes.Any())
-            return (false, $"No se puede eliminar. El negocio tiene {negocio.Clientes.Count} cliente(s) registrado(s)");
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            // ── Nivel 3: tablas que dependen de tablas de nivel 2 ──
+            // PagosCita depende de Citas
+            var citaIds = await _context.Citas
+                .Where(c => c.NegocioId == id)
+                .Select(c => c.CitaId)
+                .ToListAsync();
+            if (citaIds.Count > 0)
+                await _context.PagosCita.Where(p => citaIds.Contains(p.CitaId)).ExecuteDeleteAsync();
 
-        _context.Negocios.Remove(negocio);
-        await _context.SaveChangesAsync();
+            // DetallesOrdenVenta depende de OrdenesVenta
+            var ordenIds = await _context.OrdenesVenta
+                .Where(o => o.NegocioId == id)
+                .Select(o => o.OrdenVentaId)
+                .ToListAsync();
+            if (ordenIds.Count > 0)
+                await _context.DetallesOrdenVenta.Where(d => ordenIds.Contains(d.OrdenVentaId)).ExecuteDeleteAsync();
 
-        return (true, "Negocio eliminado exitosamente");
+            // HorariosEmpleado y HorariosExcepcion dependen de Empleados
+            var empleadoIds = await _context.Empleados
+                .Where(e => e.NegocioId == id)
+                .Select(e => e.EmpleadoId)
+                .ToListAsync();
+            if (empleadoIds.Count > 0)
+            {
+                await _context.HorariosExcepcion.Where(h => empleadoIds.Contains(h.EmpleadoId)).ExecuteDeleteAsync();
+                await _context.HorariosEmpleado.Where(h => empleadoIds.Contains(h.EmpleadoId)).ExecuteDeleteAsync();
+            }
+
+            // ── Nivel 2: tablas que dependen directamente de Negocio ──
+            await _context.Citas.Where(c => c.NegocioId == id).ExecuteDeleteAsync();
+            await _context.Notificaciones.Where(n => n.NegocioId == id).ExecuteDeleteAsync();
+            await _context.Clientes.Where(c => c.NegocioId == id).ExecuteDeleteAsync();
+            await _context.Empleados.Where(e => e.NegocioId == id).ExecuteDeleteAsync();
+            await _context.ServiciosNegocio.Where(s => s.NegocioId == id).ExecuteDeleteAsync();
+            await _context.OrdenesVenta.Where(o => o.NegocioId == id).ExecuteDeleteAsync();
+            await _context.MovimientosInventario.Where(m => m.NegocioId == id).ExecuteDeleteAsync();
+            await _context.Productos.Where(p => p.NegocioId == id).ExecuteDeleteAsync();
+            await _context.CategoriasProducto.Where(c => c.NegocioId == id).ExecuteDeleteAsync();
+            await _context.Logs.Where(l => l.NegocioId == id).ExecuteDeleteAsync();
+            await _context.Sugerencias.Where(s => s.NegocioId == id).ExecuteDeleteAsync();
+            await _context.ComisionesVendedor.Where(c => c.NegocioId == id).ExecuteDeleteAsync();
+            await _context.Recibos.Where(r => r.NegocioId == id).ExecuteDeleteAsync();
+            await _context.Mesas.Where(m => m.NegocioId == id).ExecuteDeleteAsync();
+            await _context.MenusRestaurante.Where(m => m.NegocioId == id).ExecuteDeleteAsync();
+
+            // ── Nivel 1: el negocio mismo ──
+            await _context.Negocios.Where(n => n.NegocioId == id).ExecuteDeleteAsync();
+
+            await transaction.CommitAsync();
+            return (true, "Negocio eliminado exitosamente");
+        }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync();
+            return (false, "Error al eliminar el negocio. Intente nuevamente.");
+        }
     }
 
     /// <summary>

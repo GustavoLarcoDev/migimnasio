@@ -259,15 +259,24 @@ public class VentaProductoService : IVentaProductoService
         var nombreNeg = enc(negocio.NegocioNombre ?? "Tienda");
         var nombreCli = enc(orden.NombreCliente ?? "Mostrador");
 
-        // Construir filas de la tabla de productos con colores alternados
+        // Construir filas de la tabla de productos con colores alternados e imágenes
         var itemsHtml = "";
         var altRow = false;
         foreach (var det in orden.Detalles)
         {
-            var nombre = enc(productos.FirstOrDefault(p => p.ProductoId == det.ProductoId)?.Nombre ?? "Producto");
+            var prod = productos.FirstOrDefault(p => p.ProductoId == det.ProductoId);
+            var nombre = enc(prod?.Nombre ?? "Producto");
             var bg = altRow ? "background: #f8f9fa;" : "";
+
+            // Imagen del producto (Base64 data URI) o placeholder
+            var imgHtml = "";
+            if (!string.IsNullOrEmpty(prod?.ImagenUrl))
+                imgHtml = $"<img src='{prod.ImagenUrl}' style='width:40px;height:40px;object-fit:cover;border-radius:6px;margin-right:10px;vertical-align:middle;' alt=''>";
+            else
+                imgHtml = "<div style='display:inline-block;width:40px;height:40px;border-radius:6px;background:#e9ecef;vertical-align:middle;margin-right:10px;text-align:center;line-height:40px;color:#adb5bd;font-size:18px;'>&#128722;</div>";
+
             itemsHtml += $@"<tr style='{bg}'>
-                <td style='padding: 10px 12px; color: #333;'>{nombre}</td>
+                <td style='padding: 10px 12px; color: #333;'>{imgHtml}<span style='vertical-align:middle;'>{nombre}</span></td>
                 <td style='padding: 10px 12px; color: #333; text-align: center;'>{det.Cantidad}</td>
                 <td style='padding: 10px 12px; color: #333; text-align: right;'>${det.PrecioUnitario:F2}</td>
                 <td style='padding: 10px 12px; color: #333; text-align: right;'>${det.Subtotal:F2}</td>

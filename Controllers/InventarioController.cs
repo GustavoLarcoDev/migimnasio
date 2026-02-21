@@ -372,11 +372,18 @@ public class InventarioController : Controller
     [HttpGet("GetCategorias")]
     public async Task<IActionResult> GetCategorias(Guid negocioId)
     {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue || negocioId != nId.Value) return Forbid();
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
 
-        var categorias = await _inventarioService.GetCategoriasAsync(negocioId);
-        return Ok(categorias);
+            var categorias = await _inventarioService.GetCategoriasAsync(negocioId);
+            return Ok(categorias);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
     }
 
     /// <summary>
@@ -385,11 +392,18 @@ public class InventarioController : Controller
     [HttpPost("CrearCategoria")]
     public async Task<IActionResult> CrearCategoria([FromForm] Guid negocioId, [FromForm] string nombre)
     {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue || negocioId != nId.Value) return Forbid();
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
 
-        var (success, message) = await _inventarioService.CrearCategoriaAsync(negocioId, nombre);
-        return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+            var (success, message) = await _inventarioService.CrearCategoriaAsync(negocioId, nombre);
+            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
     }
 
     /// <summary>
@@ -398,11 +412,43 @@ public class InventarioController : Controller
     [HttpPost("EliminarCategoria")]
     public async Task<IActionResult> EliminarCategoria([FromForm] Guid id, [FromForm] Guid negocioId)
     {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue || negocioId != nId.Value) return Forbid();
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
 
-        var (success, message) = await _inventarioService.EliminarCategoriaAsync(id, negocioId);
-        return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+            var (success, message) = await _inventarioService.EliminarCategoriaAsync(id, negocioId);
+            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Mueve un producto a otra categoria (drag & drop).
+    /// </summary>
+    [HttpPost("CambiarCategoriaProducto")]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> CambiarCategoriaProducto([FromBody] CambiarCategoriaRequest req)
+    {
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue) return Forbid();
+
+            var producto = await _context.Productos.FirstOrDefaultAsync(p => p.ProductoId == req.ProductoId && p.NegocioId == nId.Value);
+            if (producto == null) return NotFound(new { success = false, message = "Producto no encontrado" });
+
+            producto.CategoriaProductoId = req.CategoriaProductoId;
+            await _context.SaveChangesAsync();
+            return Ok(new { success = true, message = "Categoria actualizada" });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
     }
 
     /// <summary>
@@ -411,11 +457,18 @@ public class InventarioController : Controller
     [HttpPost("ReordenarCategorias")]
     public async Task<IActionResult> ReordenarCategorias([FromBody] List<Guid> categoriasIds, [FromQuery] Guid negocioId)
     {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue || negocioId != nId.Value) return Forbid();
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
 
-        var (success, message) = await _inventarioService.ReordenarCategoriasAsync(negocioId, categoriasIds);
-        return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+            var (success, message) = await _inventarioService.ReordenarCategoriasAsync(negocioId, categoriasIds);
+            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
     }
 
     /// <summary>
@@ -424,57 +477,68 @@ public class InventarioController : Controller
     [HttpPost("MoverProductoDeCategoria")]
     public async Task<IActionResult> MoverProductoDeCategoria([FromForm] Guid productoId, [FromForm] Guid? categoriaId, [FromForm] Guid negocioId)
     {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue || negocioId != nId.Value) return Forbid();
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
 
-        var (success, message) = await _inventarioService.MoverProductoDeCategoriaAsync(productoId, negocioId, categoriaId);
-        return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+            var (success, message) = await _inventarioService.MoverProductoDeCategoriaAsync(productoId, negocioId, categoriaId);
+            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
     }
 
     /// <summary>
     /// Sube una imagen para un producto. Validaciones:
-    ///   - Tamanio maximo: 2 MB
+    ///   - Tamaño máximo: 2 MB
     ///   - Formatos permitidos: .jpg, .jpeg, .png, .webp
-    /// La imagen se guarda en wwwroot/uploads/productos/{negocioId}/{guid}.ext
+    /// La imagen se convierte a Base64 data URI y se almacena en la BD.
+    /// Esto funciona en cualquier entorno de producción sin depender del filesystem.
     /// </summary>
     [HttpPost("SubirImagenProducto")]
     public async Task<IActionResult> SubirImagenProducto([FromForm] Guid productoId, [FromForm] Guid negocioId, IFormFile imagen)
     {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue || negocioId != nId.Value) return Forbid();
-
-        // Validar que se haya adjuntado un archivo
-        if (imagen == null || imagen.Length == 0)
-            return BadRequest(new { success = false, message = "No se ha proporcionado ninguna imagen." });
-
-        // Limitar tamanio a 2 MB para evitar consumo excesivo de almacenamiento
-        if (imagen.Length > 2 * 1024 * 1024)
-            return BadRequest(new { success = false, message = "La imagen no debe superar los 2MB." });
-
-        // Validar extension del archivo para prevenir subida de archivos maliciosos
-        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-        var extension = Path.GetExtension(imagen.FileName).ToLowerInvariant();
-        if (!allowedExtensions.Contains(extension))
-            return BadRequest(new { success = false, message = "Formato de imagen no permitido." });
-
-        // Crear directorio si no existe y guardar con nombre unico (GUID) para evitar colisiones
-        var folderRoot = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "productos", negocioId.ToString());
-        if (!Directory.Exists(folderRoot)) Directory.CreateDirectory(folderRoot);
-
-        var fileName = $"{Guid.NewGuid()}{extension}";
-        var filePath = Path.Combine(folderRoot, fileName);
-
-        using (var stream = new FileStream(filePath, FileMode.Create))
+        try
         {
-            await imagen.CopyToAsync(stream);
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
+
+            if (imagen == null || imagen.Length == 0)
+                return BadRequest(new { success = false, message = "No se ha proporcionado ninguna imagen." });
+
+            if (imagen.Length > 2 * 1024 * 1024)
+                return BadRequest(new { success = false, message = "La imagen no debe superar los 2MB." });
+
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var extension = Path.GetExtension(imagen.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(extension))
+                return BadRequest(new { success = false, message = "Formato de imagen no permitido." });
+
+            // Convertir a Base64 data URI para almacenar en BD (producción-safe)
+            var mimeType = extension switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".webp" => "image/webp",
+                _ => "image/jpeg"
+            };
+
+            using var ms = new MemoryStream();
+            await imagen.CopyToAsync(ms);
+            var base64 = Convert.ToBase64String(ms.ToArray());
+            var dataUri = $"data:{mimeType};base64,{base64}";
+
+            var (success, message) = await _inventarioService.CambiarImagenProductoAsync(productoId, negocioId, dataUri);
+
+            return success ? Ok(new { success, message, url = dataUri }) : BadRequest(new { success, message });
         }
-
-        // Guardar la URL relativa en la BD para servir la imagen desde wwwroot
-        var urlImage = $"/uploads/productos/{negocioId}/{fileName}";
-
-        var (success, message) = await _inventarioService.CambiarImagenProductoAsync(productoId, negocioId, urlImage);
-
-        return success ? Ok(new { success, message, url = urlImage }) : BadRequest(new { success, message });
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -500,10 +564,10 @@ public class InventarioController : Controller
         try
         {
             var nId = _authService.GetNegocioId(User);
-            if (nId == null) return Unauthorized();
+            if (nId == null) return Forbid();
 
             if (request == null || request.Items == null || !request.Items.Any())
-                return Json(new { success = false, message = "Orden vacía." });
+                return BadRequest(new { success = false, message = "Orden vacía." });
 
             var res = await _ventaService.RegistrarVentaAsync(
                 nId.Value,
@@ -518,7 +582,10 @@ public class InventarioController : Controller
                 request.DireccionEntrega
             );
 
-            return Json(new { success = res.success, message = res.message, ordenId = res.ordenId, reciboId = res.reciboId });
+            if (!res.success)
+                return BadRequest(new { success = false, message = res.message });
+
+            return Ok(new { success = true, message = res.message, ordenId = res.ordenId, reciboId = res.reciboId });
         }
         catch (Exception)
         {
@@ -614,33 +681,137 @@ public class InventarioController : Controller
     [HttpPost("EnviarRecibo")]
     public async Task<IActionResult> EnviarRecibo([FromForm] Guid reciboId, [FromForm] Guid negocioId, [FromForm] string destino, [FromForm] string tipo)
     {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue || negocioId != nId.Value) return Forbid();
-        if (string.IsNullOrWhiteSpace(destino)) return Json(new { success = false, message = "Destino requerido" });
-
-        // Buscar el recibo en la BD con filtro de NegocioId para seguridad multi-tenant
-        var recibo = await _context.Recibos
-            .AsNoTracking()
-            .FirstOrDefaultAsync(r => r.ReciboId == reciboId && r.NegocioId == negocioId);
-        if (recibo == null) return Json(new { success = false, message = "Recibo no encontrado" });
-
-        if (tipo == "email")
+        try
         {
-            // Enviar el HTML completo del recibo como cuerpo del correo
-            var enviado = await _emailService.EnviarReciboPorEmailGenericoAsync(
-                destino,
-                $"Tu recibo de compra #{recibo.NumeroRecibo:D6} - {recibo.NegocioNombre}",
-                recibo.ContenidoHtml);
-            return Json(new { success = enviado, message = enviado ? "Recibo enviado por email" : "Error al enviar email" });
-        }
-        else if (tipo == "whatsapp")
-        {
-            // Por WhatsApp solo se envia un resumen de texto (no soporta HTML)
-            var msg = $"Hola! Aqui esta tu recibo de compra #{recibo.NumeroRecibo:D6} de {recibo.NegocioNombre} por ${recibo.Monto:F2}. Gracias por tu compra!";
-            var enviado = await _whatsAppService.EnviarMensajeTextoAsync(destino, msg);
-            return Json(new { success = enviado, message = enviado ? "Recibo enviado por WhatsApp" : "Error al enviar WhatsApp" });
-        }
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
+            if (string.IsNullOrWhiteSpace(destino))
+                return BadRequest(new { success = false, message = "Destino requerido" });
 
-        return Json(new { success = false, message = "Tipo de envio no soportado" });
+            // Buscar el recibo en la BD con filtro de NegocioId para seguridad multi-tenant
+            var recibo = await _context.Recibos
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.ReciboId == reciboId && r.NegocioId == negocioId);
+            if (recibo == null)
+                return NotFound(new { success = false, message = "Recibo no encontrado" });
+
+            if (tipo == "email")
+            {
+                // Enviar el HTML completo del recibo como cuerpo del correo
+                var enviado = await _emailService.EnviarReciboPorEmailGenericoAsync(
+                    destino,
+                    $"Tu recibo de compra #{recibo.NumeroRecibo:D6} - {recibo.NegocioNombre}",
+                    recibo.ContenidoHtml);
+                return Ok(new { success = enviado, message = enviado ? "Recibo enviado por email" : "Error al enviar email" });
+            }
+            else if (tipo == "whatsapp")
+            {
+                // Por WhatsApp solo se envia un resumen de texto (no soporta HTML)
+                var msg = $"Hola! Aqui esta tu recibo de compra #{recibo.NumeroRecibo:D6} de {recibo.NegocioNombre} por ${recibo.Monto:F2}. Gracias por tu compra!";
+                var enviado = await _whatsAppService.EnviarMensajeTextoAsync(destino, msg);
+                return Ok(new { success = enviado, message = enviado ? "Recibo enviado por WhatsApp" : "Error al enviar WhatsApp" });
+            }
+
+            return BadRequest(new { success = false, message = "Tipo de envio no soportado" });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
     }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SECCION 7 — RESUMEN DE VENTAS POR CATEGORIA
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Retorna las ventas agrupadas por categoria de producto.
+    /// Incluye nombre de categoria, total vendido y cantidad de unidades.
+    /// </summary>
+    /// <summary>
+    /// Top 10 productos más vendidos en el periodo, agrupados por nombre de producto.
+    /// </summary>
+    [HttpGet("GetProductosMasVendidos")]
+    public async Task<IActionResult> GetProductosMasVendidos(Guid negocioId, string periodo = "mes")
+    {
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
+
+            var ahora = TimeHelper.Now;
+            DateTime desde = periodo switch
+            {
+                "dia" => ahora.Date,
+                "semana" => ahora.Date.AddDays(-(int)ahora.DayOfWeek),
+                _ => new DateTime(ahora.Year, ahora.Month, 1)
+            };
+
+            var datos = await _context.DetallesOrdenVenta
+                .Include(d => d.OrdenVenta)
+                .Include(d => d.Producto)
+                .Where(d => d.OrdenVenta.NegocioId == negocioId && d.OrdenVenta.FechaCreacion >= desde)
+                .GroupBy(d => d.Producto.Nombre)
+                .Select(g => new
+                {
+                    producto = g.Key,
+                    unidades = g.Sum(d => d.Cantidad),
+                    totalVentas = g.Sum(d => d.Subtotal)
+                })
+                .OrderByDescending(x => x.unidades)
+                .Take(10)
+                .ToListAsync();
+
+            return Ok(datos);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    [HttpGet("GetVentasPorCategoria")]
+    public async Task<IActionResult> GetVentasPorCategoria(Guid negocioId, string periodo = "mes")
+    {
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
+
+            var ahora = TimeHelper.Now;
+            DateTime desde = periodo switch
+            {
+                "dia" => ahora.Date,
+                "semana" => ahora.Date.AddDays(-(int)ahora.DayOfWeek),
+                _ => new DateTime(ahora.Year, ahora.Month, 1)
+            };
+
+            var datos = await _context.DetallesOrdenVenta
+                .Include(d => d.OrdenVenta)
+                .Include(d => d.Producto)
+                    .ThenInclude(p => p.Categoria)
+                .Where(d => d.OrdenVenta.NegocioId == negocioId && d.OrdenVenta.FechaCreacion >= desde)
+                .GroupBy(d => d.Producto.Categoria != null ? d.Producto.Categoria.Nombre : "Sin Categoria")
+                .Select(g => new
+                {
+                    categoria = g.Key,
+                    totalVentas = g.Sum(d => d.Subtotal),
+                    unidades = g.Sum(d => d.Cantidad)
+                })
+                .OrderByDescending(x => x.totalVentas)
+                .ToListAsync();
+
+            return Ok(datos);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+}
+
+public class CambiarCategoriaRequest
+{
+    public Guid ProductoId { get; set; }
+    public Guid? CategoriaProductoId { get; set; }
 }

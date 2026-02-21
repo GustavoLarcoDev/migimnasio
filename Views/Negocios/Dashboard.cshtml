@@ -362,14 +362,6 @@ let tablaClientes, tablaLogs, tablaUsuariosDiarios, tablaMovimientos;
 let modoEdicion = false;
 const swalMG = Swal.mixin({ confirmButtonColor: '#3E97FF', cancelButtonColor: '#E4E6EF', cancelButtonText: 'Cancelar', reverseButtons: true, customClass: { popup: 'mg-swal-popup', confirmButton: 'mg-swal-confirm', cancelButton: 'mg-swal-cancel' } });
 
-// Función auxiliar para escapar HTML y prevenir XSS
-function escHtml(str) {
-    if (!str) return '';
-    return $('<span>').text(str).html();
-}
-// SEGURIDAD: escAttr escapa para uso dentro de atributos HTML (onclick, title, etc.)
-// Necesario porque escHtml no escapa comillas simples que rompen contexto JavaScript
-function escAttr(str) { if (!str) return ''; return escHtml(str).replace(/'/g, '&#39;'); }
 
 $(document).ready(function () {
     cargarResumen();
@@ -581,7 +573,6 @@ function uploadExcel(file) {
     });
 }
 
-function initLogsTab() {}
 const tipoLogBadges = { 'ingreso': 'bg-success', 'gasto': 'bg-danger', 'cliente_creado': 'bg-primary', 'cliente_editado': 'bg-warning text-dark', 'cliente_renovado': 'bg-info', 'cliente_eliminado': 'bg-danger', 'sesion_inicio': 'bg-secondary', 'sesion_cierre': 'bg-dark', 'manual': 'bg-light text-dark', 'venta_inventario': 'bg-success', 'devolucion_inventario': 'bg-warning text-dark', 'restock_inventario': 'bg-info', 'ajuste_inventario': 'bg-secondary', 'producto_creado': 'bg-primary', 'producto_editado': 'bg-warning text-dark', 'producto_eliminado': 'bg-danger' };
 const tipoLogLabels = { 'ingreso': 'Ingreso', 'gasto': 'Gasto', 'cliente_creado': 'Cliente Nuevo', 'cliente_editado': 'Edición', 'cliente_renovado': 'Renovación', 'cliente_eliminado': 'Eliminación', 'sesion_inicio': 'Inicio Sesión', 'sesion_cierre': 'Cierre Sesión', 'manual': 'Manual', 'venta_inventario': 'Venta Inv.', 'devolucion_inventario': 'Dev. Inv.', 'restock_inventario': 'Restock', 'ajuste_inventario': 'Ajuste Inv.', 'producto_creado': 'Producto', 'producto_editado': 'Edit. Prod.', 'producto_eliminado': 'Elim. Prod.' };
 function cargarTablaLogs() { if (tablaLogs) { tablaLogs.destroy(); } tablaLogs = $('#logsTable').DataTable({ ajax: { url: '/Negocios/GetLogs', data: { negocioId: negocioId }, dataSrc: '', error: function(xhr, error, code) { console.error('DataTables error:'); toastr.error('Error al cargar los logs: ' + (xhr.responseJSON?.message || 'Error desconocido')); } }, columns: [ { data: 'message' }, { data: 'tipo', render: function(d) { const badge = tipoLogBadges[d] || 'bg-secondary'; const label = tipoLogLabels[d] || d; return `<span class="badge ${badge}">${label}</span>`; } }, { data: 'nombreCliente', render: d => d || '<span class="text-muted">-</span>' }, { data: 'monto', render: d => d === 0 ? '<span class="text-muted">-</span>' : `<span class="${d >= 0 ? 'text-success' : 'text-danger'} fw-bold">${d >= 0 ? '+' : ''}$${d.toFixed(2)}</span>` }, { data: 'fecha', render: function(d, type) { if (type === 'sort' || type === 'type') return d; return new Date(d).toLocaleString('es-MX'); } } ], order: [[4, 'desc']] }); }
@@ -1006,12 +997,6 @@ let resumenPeriodo = 'dia';
 let resumenStatsData = null;
 let chartOverview = null;
 
-function saludoHora() {
-    const h = new Date().getHours();
-    if (h < 12) return 'Buenos días';
-    if (h < 18) return 'Buenas tardes';
-    return 'Buenas noches';
-}
 
 // Cargar pestaña de resumen con manejo de errores
 function cargarResumen() {

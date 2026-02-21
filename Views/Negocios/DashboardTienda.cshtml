@@ -75,7 +75,7 @@
             <div class="col-lg-5">
                 <div class="mg-card h-100">
                     <div class="card-header border-0">
-                        <h5 class="fw-bold mb-0"><i class="bi bi-receipt me-2"></i>Factura</h5>
+                        <h5 class="fw-bold mb-0"><i class="bi bi-receipt me-2"></i>Recibo</h5>
                     </div>
                     <div class="card-body d-flex flex-column">
                         <div class="mb-3">
@@ -222,7 +222,7 @@
 
     <!-- ═══════════════ TAB REPORTES (reutilizado) ═══════════════ -->
     <div class="tab-pane fade" id="ventasTab" role="tabpanel">
-        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2"><div class="mg-period-pills" id="ventasPeriodPills"><button class="mg-pill active" data-periodo="dia">Dia</button><button class="mg-pill" data-periodo="semana">Semana</button><button class="mg-pill" data-periodo="mes">Mes</button></div></div>
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2"><div class="mg-period-pills" id="ventasPeriodPills"><button class="mg-pill active" data-periodo="dia">Dia</button><button class="mg-pill" data-periodo="semana">Semana</button><button class="mg-pill" data-periodo="mes">Mes</button></div><button class="btn btn-outline-primary btn-sm" id="btnRefrescarVentas" title="Refrescar datos"><i class="bi bi-arrow-clockwise me-1"></i>Refrescar</button></div>
         <div class="row g-3 mb-4">
             <div class="col-xl-4 col-md-6 col-12"><div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-primary) 0%, var(--mg-gradient-primary-end) 100%);"><div class="card-body text-white"><span class="d-block mb-2 opacity-75" id="ventasIngresosLabel">Ingresos del Dia</span><span class="fs-2x fw-bolder" id="ventasIngresos">$0</span></div></div></div>
             <div class="col-xl-4 col-md-6 col-12"><div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-danger) 0%, var(--mg-gradient-danger-end) 100%);"><div class="card-body text-white"><span class="d-block mb-2 opacity-75" id="ventasGastosLabel">Gastos del Dia</span><span class="fs-2x fw-bolder" id="ventasGastos">$0</span></div></div></div>
@@ -231,6 +231,10 @@
         <div class="row g-3 mb-4">
             <div class="col-md-6"><div class="mg-card"><div class="card-header border-0"><h5 class="fw-bold mb-0">Ingresos vs Gastos</h5></div><div class="card-body"><div id="chartBarVentas"></div></div></div></div>
             <div class="col-md-6"><div class="mg-card"><div class="card-header border-0"><h5 class="fw-bold mb-0" id="chartResumenTitle">Resumen del Dia</h5></div><div class="card-body"><div id="chartResumen"></div></div></div></div>
+        </div>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6"><div class="mg-card"><div class="card-header border-0"><h5 class="fw-bold mb-0"><i class="bi bi-pie-chart me-2"></i>Ventas por Categoria</h5></div><div class="card-body"><div id="chartVentasCategoria"></div></div></div></div>
+            <div class="col-md-6"><div class="mg-card"><div class="card-header border-0"><h5 class="fw-bold mb-0"><i class="bi bi-trophy me-2"></i>Productos Mas Vendidos</h5></div><div class="card-body"><div id="chartProductosMasVendidos"></div></div></div></div>
         </div>
     </div>
 
@@ -380,22 +384,22 @@
     pointer-events: none;
 }
 .pos-product-card .pos-prod-img {
-    width: 60px;
-    height: 60px;
+    width: 100%;
+    height: 90px;
     object-fit: cover;
     border-radius: 8px;
     margin-bottom: 0.5rem;
 }
 .pos-product-card .pos-prod-placeholder {
-    width: 60px;
-    height: 60px;
+    width: 100%;
+    height: 90px;
     border-radius: 8px;
     background: var(--mg-gray-100);
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto 0.5rem;
-    font-size: 1.5rem;
+    font-size: 2rem;
     color: var(--mg-gray-400);
 }
 .pos-product-card .pos-prod-name {
@@ -594,6 +598,25 @@
     padding: 0.5rem;
     border-bottom: 1px solid var(--mg-border-color);
 }
+.pos-cart-img {
+    width: 36px;
+    height: 36px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+.pos-cart-img-placeholder {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    background: var(--mg-gray-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1rem;
+    color: var(--mg-gray-400);
+}
 .pos-cart-item .pos-cart-name {
     flex: 1;
     font-weight: 600;
@@ -635,9 +658,6 @@ const swalMG = Swal.mixin({ confirmButtonColor: '#3E97FF', cancelButtonColor: '#
 
 // Prevent browser caching of GET responses (critical for drag-and-drop refresh)
 $.ajaxSetup({ cache: false });
-
-function escHtml(str) { if (!str) return ''; return $('<span>').text(str).html(); }
-function escAttr(str) { if (!str) return ''; return escHtml(str).replace(/'/g, '&#39;'); }
 
 // ═══════════════ INIT ═══════════════
 $(document).ready(function() {
@@ -760,7 +780,8 @@ function agregarAlCarrito(productoId) {
             nombre: producto.nombre,
             precioVenta: producto.precioVenta,
             cantidad: 1,
-            stock: producto.stock
+            stock: producto.stock,
+            imagenUrl: producto.imagenUrl || ''
         });
     }
     renderCart();
@@ -778,8 +799,12 @@ function renderCart() {
     }
 
     posCart.forEach(function(item, i) {
+        var imgTag = item.imagenUrl
+            ? '<img src="' + escAttr(item.imagenUrl) + '" class="pos-cart-img" alt="">'
+            : '<div class="pos-cart-img-placeholder"><i class="bi bi-box"></i></div>';
         container.append(
             '<div class="pos-cart-item">' +
+                imgTag +
                 '<div class="pos-cart-name">' + escHtml(item.nombre) + '</div>' +
                 '<div class="pos-cart-qty">' +
                     '<button class="btn btn-sm btn-outline-secondary" onclick="cambiarCantidad(' + i + ', -1)"><i class="bi bi-dash"></i></button>' +
@@ -1461,39 +1486,39 @@ $('#btnGuardarProducto').click(function() {
     var btn = $(this);
     var originalHtml = btn.html();
     btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...');
+    var imageFile = document.getElementById('prodImagen').files[0];
+    var cerrarYRecargar = function(msg) {
+        $('#productoModal').modal('hide');
+        cargarProductosGrid(); cargarInventarioStats(); cargarPOS();
+        if (tablaLogs) tablaLogs.ajax.reload();
+        toastr.success(msg);
+    };
+    var subirImagen = function(prodId, msg) {
+        var formData = new FormData();
+        formData.append('productoId', prodId);
+        formData.append('negocioId', negocioId);
+        formData.append('imagen', imageFile);
+        $.ajax({
+            url: '/Negocios/SubirImagenProducto', type: 'POST', data: formData, processData: false, contentType: false,
+            headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+            success: function() { cerrarYRecargar(msg || 'Imagen actualizada'); },
+            error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al subir imagen'); }
+        });
+    };
     $.post(url, $('#productoForm').serialize(), function(r) {
         if (r.success) {
-            // If there's a new image and product was just created, upload it
-            var imageFile = document.getElementById('prodImagen').files[0];
             var prodIdForImage = r.dataId || $('#prodId').val();
-            if (imageFile && prodIdForImage && !modoEdicionProducto) {
-                var formData = new FormData();
-                formData.append('productoId', prodIdForImage);
-                formData.append('negocioId', negocioId);
-                formData.append('imagen', imageFile);
-                $.ajax({
-                    url: '/Negocios/SubirImagenProducto',
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
-                    complete: function() {
-                        $('#productoModal').modal('hide');
-                        cargarProductosGrid(); cargarInventarioStats(); cargarPOS();
-                        if (tablaLogs) tablaLogs.ajax.reload();
-                        toastr.success(r.message);
-                    }
-                });
-            } else {
-                $('#productoModal').modal('hide');
-                cargarProductosGrid(); cargarInventarioStats(); cargarPOS();
-                if (tablaLogs) tablaLogs.ajax.reload();
-                toastr.success(r.message);
-            }
+            if (imageFile && prodIdForImage) { subirImagen(prodIdForImage, r.message); }
+            else { cerrarYRecargar(r.message); }
+        } else if (imageFile && modoEdicionProducto) {
+            // Solo cambió la imagen, no los campos de texto — subir igual
+            subirImagen($('#prodId').val(), 'Imagen actualizada');
         } else { toastr.error(r.message || 'Error al guardar'); }
-    }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al guardar producto'); })
-      .always(function() { btn.prop('disabled', false).html(originalHtml); });
+    }).fail(function(xhr) {
+        if (imageFile && modoEdicionProducto && xhr.responseJSON?.message?.includes('No se detectaron')) {
+            subirImagen($('#prodId').val(), 'Imagen actualizada');
+        } else { toastr.error(xhr.responseJSON?.message || 'Error al guardar producto'); }
+    }).always(function() { btn.prop('disabled', false).html(originalHtml); });
 });
 
 function eliminarProducto(id, nombre) {
@@ -1565,15 +1590,16 @@ $('#btnNuevoProveedor').on('click', function() {
 });
 
 function editarProveedor(id) {
-    $.get('/Negocios/GetClienteArtesanal', { clienteId: id, negocioId }, function(data) {
-        $('#proveedorModalTitle').text('Editar Proveedor');
-        $('#provId').val(data.clienteId);
-        $('#provNombre').val(data.nombre);
-        $('#provApellido').val(data.apellido);
-        $('#provTelefono').val(data.telefono);
-        $('#provEmail').val(data.email);
-        new bootstrap.Modal('#proveedorModal').show();
-    }).fail(function() { toastr.error('Error al cargar proveedor'); });
+    var rows = tablaProveedores ? tablaProveedores.rows().data().toArray() : [];
+    var data = rows.find(function(r) { return r.clienteId === id || r.clienteArtesanalId === id; });
+    if (!data) { toastr.error('Proveedor no encontrado'); return; }
+    $('#proveedorModalTitle').text('Editar Proveedor');
+    $('#provId').val(data.clienteId || data.clienteArtesanalId);
+    $('#provNombre').val(data.nombre);
+    $('#provApellido').val(data.apellido);
+    $('#provTelefono').val(data.telefono);
+    $('#provEmail').val(data.email);
+    new bootstrap.Modal('#proveedorModal').show();
 }
 
 $('#btnGuardarProveedor').on('click', function() {
@@ -1756,11 +1782,61 @@ function actualizarDonut(logs) {
     chartResumen.render();
 }
 
+var chartVentasCategoria;
+function cargarVentasPorCategoria() {
+    var periodo = $('#ventasPeriodPills .mg-pill.active').data('periodo') || 'mes';
+    $.get('/Negocios/GetVentasPorCategoria', { negocioId, periodo }, function(datos) {
+        if (chartVentasCategoria) chartVentasCategoria.destroy();
+        $('#chartVentasCategoria').empty();
+        if (!datos.length) { $('#chartVentasCategoria').html('<div class="text-center py-5 text-muted"><i class="bi bi-pie-chart fs-1 d-block mb-2"></i>Sin datos</div>'); return; }
+        chartVentasCategoria = new ApexCharts(document.querySelector('#chartVentasCategoria'), {
+            chart: { type: 'donut', height: 300 },
+            series: datos.map(function(d) { return d.totalVentas; }),
+            labels: datos.map(function(d) { return d.categoria; }),
+            plotOptions: { pie: { donut: { labels: { show: true, total: { show: true, label: 'Total', formatter: function(w) { return '$' + w.globals.seriesTotals.reduce(function(a,b){return a+b;},0).toFixed(2); } } } } } }
+        });
+        chartVentasCategoria.render();
+    });
+}
+
+var chartProductosMasVendidos;
+function cargarProductosMasVendidos() {
+    var periodo = $('#ventasPeriodPills .mg-pill.active').data('periodo') || 'mes';
+    $.get('/Negocios/GetProductosMasVendidos', { negocioId, periodo }, function(datos) {
+        if (chartProductosMasVendidos) chartProductosMasVendidos.destroy();
+        $('#chartProductosMasVendidos').empty();
+        if (!datos.length) { $('#chartProductosMasVendidos').html('<div class="text-center py-5 text-muted"><i class="bi bi-trophy fs-1 d-block mb-2"></i>Sin ventas</div>'); return; }
+        chartProductosMasVendidos = new ApexCharts(document.querySelector('#chartProductosMasVendidos'), {
+            chart: { type: 'bar', height: 300, toolbar: { show: false } },
+            series: [{ name: 'Unidades', data: datos.map(function(d) { return d.unidades; }) }],
+            xaxis: { categories: datos.map(function(d) { return d.producto; }), labels: { style: { fontSize: '11px' }, rotate: -45, maxHeight: 80 } },
+            plotOptions: { bar: { borderRadius: 4, columnWidth: '60%', distributed: true } },
+            colors: ['#3E97FF', '#50CD89', '#F1416C', '#FFC700', '#7239EA', '#00B2FF', '#E4E6EF', '#F59E0B', '#8B5CF6', '#EC4899'],
+            dataLabels: { enabled: true, style: { fontSize: '12px', fontWeight: 'bold' } },
+            tooltip: { y: { formatter: function(val, opts) { var d = datos[opts.dataPointIndex]; return val + ' uds — $' + d.totalVentas.toFixed(2); } } },
+            legend: { show: false }
+        });
+        chartProductosMasVendidos.render();
+    });
+}
+
 $('#ventasPeriodPills').on('click', '.mg-pill', function() {
     $('#ventasPeriodPills .mg-pill').removeClass('active');
     $(this).addClass('active');
     cargarVentasStats();
     $.get('/Negocios/GetLogs', { negocioId }, function(logs) { actualizarDonut(logs); });
+    cargarVentasPorCategoria();
+    cargarProductosMasVendidos();
+});
+
+$('#btnRefrescarVentas').on('click', function() {
+    var btn = $(this);
+    btn.find('i').addClass('spin-animation');
+    cargarVentasStats();
+    cargarCharts();
+    cargarVentasPorCategoria();
+    cargarProductosMasVendidos();
+    setTimeout(function() { btn.find('i').removeClass('spin-animation'); toastr.info('Datos actualizados'); }, 800);
 });
 
 // ═══════════════ NOTIFICACIONES ═══════════════
@@ -1897,7 +1973,7 @@ document.addEventListener('mg-tab-shown', function(e) {
     else if (tab === 'proveedoresTab') { cargarProveedores(); }
     else if (tab === 'catalogoTab') { cargarCatalogo(); }
     else if (tab === 'logsTab') { if (!tablaLogs) cargarTablaLogs(); }
-    else if (tab === 'ventasTab') { cargarVentasStats(); cargarCharts(); }
+    else if (tab === 'ventasTab') { cargarVentasStats(); cargarCharts(); cargarVentasPorCategoria(); cargarProductosMasVendidos(); }
     else if (tab === 'recibosTab') { cargarRecibos(); verificarCleanupRecibos(); }
     else if (tab === 'notificacionesTab') { cargarNotificacionesTab(); }
 });

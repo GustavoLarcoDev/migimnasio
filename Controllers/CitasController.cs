@@ -58,49 +58,6 @@ public class CitasController : Controller
     }
 
     // ═══════════════════════════════════════════════════════════
-    // VISTA PRINCIPAL
-    // ═══════════════════════════════════════════════════════════
-
-    /// <summary>
-    /// Renderiza el dashboard del modelo artesanal (calendario + empleados + servicios).
-    /// Es la única acción que devuelve una View HTML; el resto son endpoints JSON.
-    /// </summary>
-    /// <param name="id">
-    ///   GUID del negocio en la URL (ej. /Negocios/abc-123/DashboardArtesanal).
-    ///   Se compara contra el claim del usuario para evitar que un negocio vea
-    ///   el dashboard de otro negocio (aislamiento multi-tenant).
-    /// </param>
-    [HttpGet("{id}/DashboardArtesanal")]
-    public async Task<IActionResult> DashboardArtesanal(Guid id)
-    {
-        try
-        {
-            // Verificación de identidad multi-tenant:
-            // El claim "NegocioId" se almacena en la cookie cuando el negocio hace login.
-            // Si el GUID en la URL no coincide con el claim, el usuario está intentando
-            // acceder a un negocio ajeno → devolvemos 403 Forbidden.
-            var negocioId = _authService.GetNegocioId(User);
-            if (!negocioId.HasValue || negocioId.Value != id)
-                return Forbid();
-
-            // Cargamos el negocio con sus clientes para que la vista tenga los datos
-            // necesarios al renderizarse por primera vez.
-            var negocio = await _context.Negocios
-                .Include(g => g.Clientes)
-                .FirstOrDefaultAsync(g => g.NegocioId == id);
-
-            if (negocio == null)
-                return NotFound();
-
-            return View("~/Views/Negocios/DashboardArtesanal.cshtml", negocio);
-        }
-        catch
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════
     // ENDPOINTS DE CONSULTA
     // ═══════════════════════════════════════════════════════════
 

@@ -191,7 +191,6 @@ body {
     font-weight: 500;
     font-size: 0.925rem;
     transition: all 0.2s ease;
-    border-radius: 0;
     margin: 0 0.75rem;
     border-radius: 0.5rem;
 }
@@ -415,6 +414,8 @@ body {
     50% { transform: scale(0.95); background: #E8FFF3; }
     100% { transform: scale(1); }
 }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+.spin-animation { animation: spin 0.8s linear infinite; }
 .inv-card-actions {
     position: absolute;
     top: 0.4rem;

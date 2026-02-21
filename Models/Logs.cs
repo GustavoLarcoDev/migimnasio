@@ -117,36 +117,3 @@ public class Logs
     /// </summary>
     public DateTime Fecha { get; set; } = TimeHelper.Now;
 }
-
-/// <summary>
-/// Modelo legacy para la creación manual de logs desde formularios HTML.
-/// Se usa en algunos formularios de ingreso/gasto anteriores al sistema DTO.
-///
-/// Para nuevos endpoints de API, usar LogCreateDto en Models/DTOs/.
-/// Este modelo es más simple: solo captura los campos esenciales del log manual.
-/// </summary>
-public class LogCreateModel
-{
-    /// <summary>
-    /// ID del negocio al que se registrará el log.
-    /// [Required] = obligatorio; no se puede crear un log sin negocio.
-    /// </summary>
-    [Required]
-    public Guid NegocioId { get; set; }
-
-    /// <summary>
-    /// Descripción del ingreso o gasto manual.
-    /// [Required] = el mensaje es obligatorio.
-    /// [MaxLength(300)] = igual al límite del modelo principal.
-    /// </summary>
-    [Required]
-    [MaxLength(300)]
-    public string Message { get; set; }
-
-    /// <summary>
-    /// Monto del movimiento. Positivo = ingreso, negativo = gasto.
-    /// [Required] = el monto es obligatorio en un log manual.
-    /// </summary>
-    [Required]
-    public decimal Monto { get; set; }
-}

@@ -609,10 +609,10 @@ public class InventarioService : IInventarioService
             stockBajo = productos.Count(p => p.Stock <= p.StockMinimo),
 
             // Unidades físicas vendidas hoy (no en dinero, sino en piezas)
-            ventasHoyUnidades = movimientosHoy.Where(m => m.Tipo == "venta").Sum(m => m.Cantidad),
+            ventasHoyUnidades = movimientosHoy.Where(m => m.Tipo == "venta" || m.Tipo == "venta_tienda").Sum(m => m.Cantidad),
 
             // Ingreso neto: lo que entró por ventas menos lo que salió por devoluciones
-            ingresosHoy = movimientosHoy.Where(m => m.Tipo == "venta").Sum(m => m.Total)
+            ingresosHoy = movimientosHoy.Where(m => m.Tipo == "venta" || m.Tipo == "venta_tienda").Sum(m => m.Total)
                          - movimientosHoy.Where(m => m.Tipo == "devolucion").Sum(m => m.Total),
 
             // Monto total devuelto hoy (ayuda a detectar problemas de calidad o servicio)

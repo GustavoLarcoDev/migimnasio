@@ -612,8 +612,22 @@
     // (previene XSS por inyección de comillas o tags en el nombre del vendedor)
     const vendedorNombreActual = @Json.Serialize(vendedorNombre);
 
+    var leadsCache = [];
+
+    function verMensajeCompleto(leadId) {
+        var lead = leadsCache.find(function(l) { return l.id === leadId; });
+        if (!lead || !lead.mensaje) return;
+        swalMG.fire({
+            title: '<i class="bi bi-chat-text me-2"></i>' + escHtml(lead.nombre),
+            html: '<div class="text-start"><p class="text-muted small mb-2">' + escHtml(lead.nombreNegocio) + ' &bull; ' + escHtml(lead.fechaCreacion) + '</p><div class="p-3 rounded" style="background: rgba(62,151,255,0.04); border: 1px solid rgba(62,151,255,0.15); white-space: pre-wrap; word-break: break-word;">' + escHtml(lead.mensaje) + '</div></div>',
+            confirmButtonText: 'Cerrar',
+            width: 500
+        });
+    }
+
     function cargarLeads() {
         $.get('/Negocios/GetVendedorLeads', function(leads) {
+            leadsCache = leads;
             var sinAtender = leads.filter(l => !l.atendido).length;
             // Update badges
             if (sinAtender > 0) {
@@ -649,7 +663,7 @@
                 var contactoHtml = escHtml(l.email);
                 if (l.telefono) contactoHtml += '<br><small class="text-muted">' + escHtml(l.telefono) + '</small>';
 
-                var mensajeTruncado = l.mensaje ? (l.mensaje.length > 60 ? escHtml(l.mensaje.substring(0, 60)) + '...' : escHtml(l.mensaje)) : '<span class="text-muted">-</span>';
+                var mensajeTruncado = l.mensaje ? (l.mensaje.length > 60 ? escHtml(l.mensaje.substring(0, 60)) + '... <a href="javascript:void(0)" class="text-primary fw-semibold" onclick="verMensajeCompleto(\'' + l.id + '\')">Leer mas</a>' : escHtml(l.mensaje)) : '<span class="text-muted">-</span>';
 
                 html += '<tr class="' + atendidoClass + '">'
                     + '<td style="' + nombreStyle + '"><strong>' + escHtml(l.nombre) + '</strong></td>'

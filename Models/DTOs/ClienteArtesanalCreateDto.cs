@@ -48,10 +48,9 @@ public class ClienteArtesanalCreateDto
     public string Nombre { get; set; }
 
     /// <summary>
-    /// Apellido del cliente. Obligatorio, máximo 100 caracteres.
-    /// Se combina con Nombre para mostrar el nombre completo en la UI.
+    /// Apellido del cliente (o nombre de contacto en proveedores/distribuidores).
+    /// Opcional, máximo 100 caracteres.
     /// </summary>
-    [Required]
     [MaxLength(100)]
     public string Apellido { get; set; }
 
@@ -66,11 +65,8 @@ public class ClienteArtesanalCreateDto
 
     /// <summary>
     /// Número de teléfono del cliente. Opcional, máximo 20 caracteres.
-    /// [Phone] valida que sea un número telefónico reconocible.
     /// Principal canal de contacto para recordatorios de cita por WhatsApp.
-    /// Ejemplo: "+52 55 1234 5678".
     /// </summary>
-    [Phone]
     [MaxLength(20)]
     public string Telefono { get; set; }
 

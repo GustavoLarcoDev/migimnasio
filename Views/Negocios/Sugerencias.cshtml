@@ -68,13 +68,6 @@ $(document).ready(function() {
     cargarSugerencias();
 });
 
-function escapeHtml(text) {
-    if (!text) return '';
-    var div = document.createElement('div');
-    div.appendChild(document.createTextNode(text));
-    return div.innerHTML;
-}
-
 function cargarSugerencias() {
     $.get('/Negocios/GetSugerencias', function(data) {
         $('#totalSugerencias').text(data.length);
@@ -96,13 +89,13 @@ function cargarSugerencias() {
                             <div>
                                 <h6 class="fw-bold mb-0">
                                     <i class="bi bi-building me-1 text-primary"></i>
-                                    ${escapeHtml(s.negocioNombre)}
+                                    ${escHtml(s.negocioNombre)}
                                 </h6>
-                                <small class="text-muted">${escapeHtml(fecha)}</small>
+                                <small class="text-muted">${escHtml(fecha)}</small>
                             </div>
-                            ${!s.leida ? `<button class="btn btn-sm btn-light-primary" onclick="marcarLeida('${escapeHtml(s.id)}')"><i class="bi bi-check me-1"></i>Leída</button>` : '<span class="badge bg-light text-muted">Leída</span>'}
+                            ${!s.leida ? `<button class="btn btn-sm btn-light-primary" onclick="marcarLeida('${escHtml(s.id)}')"><i class="bi bi-check me-1"></i>Leída</button>` : '<span class="badge bg-light text-muted">Leída</span>'}
                         </div>
-                        <p class="mb-0 mt-2">${escapeHtml(s.mensaje)}</p>
+                        <p class="mb-0 mt-2">${escHtml(s.mensaje)}</p>
                     </div>
                 </div>`;
         });

@@ -76,7 +76,7 @@ public class TiendaController : Controller
     public async Task<IActionResult> DescargarCatalogo(string estilo = "moderno")
     {
         var nId = _authService.GetNegocioId(User);
-        if (nId == null) return Unauthorized();
+        if (nId == null) return Forbid();
 
         var html = await _catalogoService.GenerarCatalogoHtmlAsync(nId.Value, estilo);
         // Inyectar script que dispara window.print() al cargar la pagina
@@ -99,10 +99,10 @@ public class TiendaController : Controller
     public async Task<IActionResult> EnviarCatalogo([FromForm] string destino, [FromForm] string tipo, [FromForm] string estilo = "moderno")
     {
         var nId = _authService.GetNegocioId(User);
-        if (nId == null) return Unauthorized();
+        if (nId == null) return Forbid();
 
         // Obtener el nombre del negocio desde los claims para personalizar el mensaje
-        var companyName = User.Claims.FirstOrDefault(c => c.Type == "NegocioNombre")?.Value ?? "Mi Negocio";
+        var companyName = User.Identity?.Name ?? "Mi Negocio";
 
         if (string.IsNullOrWhiteSpace(destino) || string.IsNullOrWhiteSpace(tipo))
             return Json(new { success = false, message = "Datos de destino inválidos." });
