@@ -37,6 +37,7 @@ public class CitasController : Controller
     private readonly ApplicationDbContext _context;
     private readonly IEmailService _emailService;
     private readonly IReciboService _reciboService;
+    private readonly IWhatsAppService _whatsAppService;
     private readonly ILogger<CitasController> _logger;
 
     public CitasController(
@@ -46,6 +47,7 @@ public class CitasController : Controller
         ApplicationDbContext context,
         IEmailService emailService,
         IReciboService reciboService,
+        IWhatsAppService whatsAppService,
         ILogger<CitasController> logger)
     {
         _citaService = citaService;
@@ -54,6 +56,7 @@ public class CitasController : Controller
         _context = context;
         _reciboService = reciboService;
         _emailService = emailService;
+        _whatsAppService = whatsAppService;
         _logger = logger;
     }
 
@@ -279,6 +282,22 @@ public class CitasController : Controller
                                 catch { }
                             });
                         }
+
+                        // Enviar confirmación de reserva por WhatsApp al cliente
+                        if (!string.IsNullOrWhiteSpace(cliente.Telefono))
+                        {
+                            _ = Task.Run(async () =>
+                            {
+                                try
+                                {
+                                    await _whatsAppService.EnviarConfirmacionReservaWhatsAppAsync(
+                                        cliente.Telefono, cita.NombreCliente, negocio.NegocioNombre,
+                                        cita.NombreServicio, cita.NombreEmpleado, cita.FechaHoraInicio,
+                                        cita.PrecioServicio);
+                                }
+                                catch { }
+                            });
+                        }
                     }
                 }
             }
@@ -354,19 +373,19 @@ public class CitasController : Controller
 
             if (cliente != null && negocio != null)
             {
-                var clienteEmail = cliente.Email;
-                if (!string.IsNullOrWhiteSpace(clienteEmail))
-                {
-                    // Buscar la cita recién creada para obtener todos los datos desnormalizados
-                    var cita = await _context.Citas
-                        .Where(c => c.ClienteId == dto.ClienteId
-                            && c.NegocioId == dto.NegocioId
-                            && c.EmpleadoId == dto.EmpleadoId
-                            && c.FechaHoraInicio == dto.FechaHoraInicio)
-                        .OrderByDescending(c => c.FechaCreacion)
-                        .FirstOrDefaultAsync();
+                // Buscar la cita recién creada para obtener todos los datos desnormalizados
+                var cita = await _context.Citas
+                    .Where(c => c.ClienteId == dto.ClienteId
+                        && c.NegocioId == dto.NegocioId
+                        && c.EmpleadoId == dto.EmpleadoId
+                        && c.FechaHoraInicio == dto.FechaHoraInicio)
+                    .OrderByDescending(c => c.FechaCreacion)
+                    .FirstOrDefaultAsync();
 
-                    if (cita != null)
+                if (cita != null)
+                {
+                    var clienteEmail = cliente.Email;
+                    if (!string.IsNullOrWhiteSpace(clienteEmail))
                     {
                         _ = Task.Run(async () =>
                         {
@@ -377,6 +396,22 @@ public class CitasController : Controller
                                     cita.NombreServicio, cita.NombreEmpleado, cita.FechaHoraInicio,
                                     cita.DuracionMinutos, cita.PrecioServicio,
                                     negocio.Email, negocio.Telefono);
+                            }
+                            catch { }
+                        });
+                    }
+
+                    // Enviar confirmación de reserva por WhatsApp al cliente
+                    if (!string.IsNullOrWhiteSpace(cliente.Telefono))
+                    {
+                        _ = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                await _whatsAppService.EnviarConfirmacionReservaWhatsAppAsync(
+                                    cliente.Telefono, cita.NombreCliente, negocio.NegocioNombre,
+                                    cita.NombreServicio, cita.NombreEmpleado, cita.FechaHoraInicio,
+                                    cita.PrecioServicio);
                             }
                             catch { }
                         });
@@ -517,6 +552,17 @@ public class CitasController : Controller
                         // Siempre almacenar el recibo en BD (aunque el email falle)
                         await _reciboService.CrearReciboAsync(dto.NegocioId, numRecibo, "pago_cita",
                             clienteEmail, clienteNombre, negocio.NegocioNombre, concepto, pago.Total, html);
+
+                        // Enviar recibo de servicio completado por WhatsApp al cliente
+                        var clienteTelefono = cliente?.Telefono;
+                        if (!string.IsNullOrWhiteSpace(clienteTelefono))
+                        {
+                            _ = Task.Run(async () =>
+                            {
+                                try { await _whatsAppService.EnviarReciboCitaCompletadaWhatsAppAsync(clienteTelefono, clienteNombre, negocio.NegocioNombre, cita.NombreServicio, pago.Total, numRecibo); }
+                                catch { }
+                            });
+                        }
                     }
                     catch (Exception ex)
                     {

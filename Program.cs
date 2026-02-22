@@ -58,8 +58,8 @@ builder.Services.AddOptions<EmailSettings>()
     .Validate(s => !string.IsNullOrWhiteSpace(s.SmtpHost), "EmailSettings:SmtpHost is required")
     .ValidateOnStart();
 
-// Credenciales de la Meta Cloud API (WhatsApp Business):
-// token de acceso, número de teléfono, ID de plantillas, etc.
+// Credenciales de Twilio WhatsApp API:
+// Account SID, Auth Token, número de origen, etc.
 builder.Services.Configure<WhatsAppSettings>(
     builder.Configuration.GetSection("WhatsAppSettings"));
 
@@ -124,7 +124,7 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 // Sugerencias y feedback de los negocios hacia la plataforma
 builder.Services.AddScoped<ISugerenciaService, SugerenciaService>();
 
-// Envío de mensajes de WhatsApp vía Meta Cloud API
+// Envío de mensajes de WhatsApp vía Twilio API
 builder.Services.AddScoped<IWhatsAppService, WhatsAppService>();
 
 // Control de stock de productos: alta, baja, movimientos

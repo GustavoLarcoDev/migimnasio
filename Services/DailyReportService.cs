@@ -121,15 +121,9 @@ public class DailyReportService : BackgroundService
     // ═══════════════════════════════════════════════════════════
 
     /// <summary>
-    /// Itera sobre todos los negocios activos de tipo "membresias" y envía
-    /// un resumen del día por WhatsApp al número del dueño.
-    ///
-    /// Los negocios "artesanal" se omiten porque manejan citas, no membresías.
-    ///
-    /// El resumen contiene:
-    ///   - <c>ingresosDia</c>: suma de Logs con monto positivo creados hoy.
-    ///   - <c>nuevosClientes</c>: clientes registrados hoy en este negocio.
-    ///   - <c>porVencerManana</c>: clientes cuya membresía termina mañana.
+    /// Itera sobre TODOS los negocios activos y envía un resumen del día por WhatsApp.
+    /// - Negocios "membresias": resumen con ingresos, nuevos clientes y por vencer mañana.
+    /// - Negocios "artesanal", "tienda", "restaurante": resumen con ingresos, gastos y ganancia.
     ///
     /// Si un negocio no tiene teléfono registrado, se omite con un warning.
     /// Si WhatsApp falla para un negocio, se continúa con los siguientes.
@@ -149,10 +143,9 @@ public class DailyReportService : BackgroundService
         {
             var hoy = TimeHelper.Now.Date;
 
-            // Solo procesar negocios activos de tipo membresías.
-            // Los artesanales (peluquerías, spas) manejan citas, no membresías.
+            // Procesar TODOS los negocios activos, sin importar el tipo.
             var negociosActivos = await context.Negocios
-                .Where(n => n.IsActive && n.TipoNegocio == "membresias")
+                .Where(n => n.IsActive)
                 .ToListAsync(stoppingToken);
 
             _logger.LogInformation(
@@ -165,8 +158,6 @@ public class DailyReportService : BackgroundService
             foreach (var negocio in negociosActivos)
             {
                 // Verificar cancelación antes de procesar cada negocio.
-                // Esto permite que la app se apague limpiamente sin esperar
-                // a que termine el bucle completo.
                 if (stoppingToken.IsCancellationRequested)
                     break;
 
@@ -182,8 +173,6 @@ public class DailyReportService : BackgroundService
                     }
 
                     // Ingresos del día: suma de todos los Logs con monto positivo.
-                    // Los Logs son la fuente inmutable de verdad financiera —
-                    // si un cliente se elimina, su pago sigue registrado aquí.
                     var ingresosDia = await context.Logs
                         .Where(l => l.NegocioId == negocio.NegocioId
                                     && l.Fecha.Date == hoy
@@ -196,29 +185,51 @@ public class DailyReportService : BackgroundService
                                          && c.FechaDeCreacion.Date == hoy,
                             stoppingToken);
 
-                    // Clientes cuya membresía vence exactamente mañana.
-                    // Esto le da al dueño tiempo de contactarlos antes de que venzan.
-                    var manana = hoy.AddDays(1);
-                    var porVencerManana = await context.Clientes
-                        .CountAsync(c => c.NegocioId == negocio.NegocioId
-                                         && c.FechaQueTermina.Date == manana,
-                            stoppingToken);
+                    bool resultado;
 
-                    // Enviar el resumen por WhatsApp al número del dueño del negocio
-                    var resultado = await whatsAppService.EnviarResumenDiarioAsync(
-                        negocio.Telefono,
-                        negocio.NegocioNombre,
-                        ingresosDia,
-                        nuevosClientes,
-                        porVencerManana);
+                    if (negocio.TipoNegocio == "membresias")
+                    {
+                        // Membresías: resumen específico con vencimientos
+                        var manana = hoy.AddDays(1);
+                        var porVencerManana = await context.Clientes
+                            .CountAsync(c => c.NegocioId == negocio.NegocioId
+                                             && c.FechaQueTermina.Date == manana,
+                                stoppingToken);
+
+                        resultado = await whatsAppService.EnviarResumenDiarioAsync(
+                            negocio.Telefono,
+                            negocio.NegocioNombre,
+                            ingresosDia,
+                            nuevosClientes,
+                            porVencerManana);
+                    }
+                    else
+                    {
+                        // Artesanal, tienda, restaurante: resumen con ingresos, gastos y ganancia
+                        var gastosDia = await context.Logs
+                            .Where(l => l.NegocioId == negocio.NegocioId
+                                        && l.Fecha.Date == hoy
+                                        && l.Monto < 0)
+                            .SumAsync(l => Math.Abs(l.Monto), stoppingToken);
+
+                        var ganancia = ingresosDia - gastosDia;
+
+                        resultado = await whatsAppService.EnviarResumenDiarioGeneralWhatsAppAsync(
+                            negocio.Telefono,
+                            negocio.NegocioNombre,
+                            ingresosDia,
+                            gastosDia,
+                            ganancia,
+                            nuevosClientes);
+                    }
 
                     if (resultado)
                     {
                         enviados++;
                         _logger.LogInformation(
-                            "Resumen enviado a {Negocio} ({Telefono}) — Ingresos: ${Ingresos}, Nuevos: {Nuevos}, Por vencer: {PorVencer}",
-                            negocio.NegocioNombre, negocio.Telefono,
-                            ingresosDia, nuevosClientes, porVencerManana);
+                            "Resumen enviado a {Negocio} ({Telefono}) — Tipo: {Tipo}, Ingresos: ${Ingresos}, Nuevos: {Nuevos}",
+                            negocio.NegocioNombre, negocio.Telefono, negocio.TipoNegocio,
+                            ingresosDia, nuevosClientes);
                     }
                     else
                     {
@@ -234,9 +245,6 @@ public class DailyReportService : BackgroundService
                     _logger.LogError(ex,
                         "Error al enviar resumen diario al negocio {NegocioId} ({Nombre})",
                         negocio.NegocioId, negocio.NegocioNombre);
-
-                    // Capturar la excepción individualmente para que un fallo en un
-                    // negocio no detenga el proceso para los demás negocios.
                 }
             }
 

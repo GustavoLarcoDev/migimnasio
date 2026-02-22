@@ -250,6 +250,24 @@ public class AppointmentReminderService : BackgroundService
                         }
                     }
 
+                    // ENVÍO 5: WhatsApp de recordatorio al empleado (si tiene teléfono registrado).
+                    if (empleado != null && !string.IsNullOrWhiteSpace(empleado.Telefono))
+                    {
+                        try
+                        {
+                            await whatsAppService.EnviarRecordatorioCitaEmpleadoWhatsAppAsync(
+                                empleado.Telefono,
+                                cita.NombreEmpleado,
+                                cita.NombreCliente,
+                                cita.NombreServicio,
+                                hora);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Error enviando WhatsApp de recordatorio al empleado para cita {CitaId}", cita.CitaId);
+                        }
+                    }
+
                     // Marcar como enviada solo si ambos envíos de WhatsApp fueron exitosos.
                     // Si alguno falló, se reintentará en el próximo ciclo de 5 minutos.
                     if (envioExitoso)

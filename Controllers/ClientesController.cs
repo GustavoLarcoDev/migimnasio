@@ -42,14 +42,16 @@ public class ClientesController : Controller
     private readonly ApplicationDbContext _context;
     private readonly IEmailService _emailService;
     private readonly IReciboService _reciboService;
+    private readonly IWhatsAppService _whatsAppService;
 
-    public ClientesController(IClienteService clienteService, IAuthService authService, ApplicationDbContext context, IEmailService emailService, IReciboService reciboService)
+    public ClientesController(IClienteService clienteService, IAuthService authService, ApplicationDbContext context, IEmailService emailService, IReciboService reciboService, IWhatsAppService whatsAppService)
     {
         _clienteService = clienteService;
         _authService = authService;
         _context = context;
         _emailService = emailService;
         _reciboService = reciboService;
+        _whatsAppService = whatsAppService;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -355,6 +357,16 @@ public class ClientesController : Controller
                             negocio.Email, negocio.Telefono, numRecibo);
                         await _reciboService.CrearReciboAsync(model.NegocioId, numRecibo, "pago_cliente",
                             model.Email, nombreCompleto, negocio.NegocioNombre, concepto, model.Precio, html);
+
+                        // Enviar recibo por WhatsApp al cliente
+                        if (!string.IsNullOrWhiteSpace(model.Telefono))
+                        {
+                            _ = Task.Run(async () =>
+                            {
+                                try { await _whatsAppService.EnviarReciboPagoClienteWhatsAppAsync(model.Telefono, nombreCompleto, negocio.NegocioNombre, concepto, model.Precio, numRecibo); }
+                                catch { }
+                            });
+                        }
                     }
                     catch { }
                 }
@@ -493,6 +505,16 @@ public class ClientesController : Controller
                         concepto, precio, dias, negocio.Email, negocio.Telefono, numRecibo);
                     await _reciboService.CrearReciboAsync(negocioId, numRecibo, "pago_cliente",
                         cliente.Email, nombreCompleto, negocio.NegocioNombre, concepto, precio, html);
+
+                    // Enviar recibo de renovación por WhatsApp al cliente
+                    if (!string.IsNullOrWhiteSpace(cliente.Telefono))
+                    {
+                        _ = Task.Run(async () =>
+                        {
+                            try { await _whatsAppService.EnviarReciboPagoClienteWhatsAppAsync(cliente.Telefono, nombreCompleto, negocio.NegocioNombre, concepto, precio, numRecibo); }
+                            catch { }
+                        });
+                    }
                 }
             }
             catch { }

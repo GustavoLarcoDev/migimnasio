@@ -1,35 +1,31 @@
 // ═══════════════════════════════════════════════════════════════════════════
-// WhatsAppService.cs — Integración con Meta Cloud API (WhatsApp Business)
+// WhatsAppService.cs — Integración con Twilio WhatsApp API
 //
-// CÓMO FUNCIONA WHATSAPP BUSINESS API:
-//   Meta (Facebook) ofrece una API REST para enviar mensajes de WhatsApp desde
+// CÓMO FUNCIONA TWILIO WHATSAPP API:
+//   Twilio ofrece una API REST para enviar mensajes de WhatsApp desde
 //   aplicaciones. Para usarla necesitas:
-//     1. Una cuenta de Meta Business verificada
-//     2. Un número de teléfono registrado como WhatsApp Business
-//     3. Un Access Token permanente (generado en Meta Developer Console)
-//     4. El PhoneNumberId del número (no es el número en sí, es un ID interno de Meta)
+//     1. Una cuenta de Twilio (twilio.com)
+//     2. Un número de teléfono habilitado para WhatsApp (sandbox o propio)
+//     3. El Account SID y Auth Token del dashboard de Twilio
 //
 //   El endpoint de envío es:
-//   POST https://graph.facebook.com/{ApiVersion}/{PhoneNumberId}/messages
-//   Authorization: Bearer {AccessToken}
-//   Content-Type: application/json
+//   POST https://api.twilio.com/2010-04-01/Accounts/{AccountSid}/Messages.json
+//   Authorization: Basic base64(AccountSid:AuthToken)
+//   Content-Type: application/x-www-form-urlencoded
 //
 // CONFIGURACIÓN EN appsettings.json:
 //   "WhatsAppSettings": {
 //     "Enabled": true,
-//     "AccessToken": "EAABsm...",    ← Token de Meta (muy largo, ~200 caracteres)
-//     "PhoneNumberId": "12345678",   ← ID del número en Meta (NO el número en sí)
-//     "ApiVersion": "v19.0"          ← Versión de la Graph API
+//     "AccountSid": "ACxxxxxxxx...",       ← Account SID de Twilio
+//     "AuthToken": "xxxxxxxx...",           ← Auth Token de Twilio
+//     "FromNumber": "whatsapp:+14155238886" ← Número de origen (con prefijo whatsapp:)
 //   }
 //
 // NORMALIZACIÓN DE TELÉFONOS:
-//   La API de WhatsApp exige números en formato internacional sin el símbolo +:
-//   Correcto:   593987654321  (Ecuador, sin el +)
-//   Incorrecto: +593987654321 (con el +)
-//   Incorrecto: 0987654321    (con el 0 local de Ecuador)
-//
+//   La API de Twilio WhatsApp exige números en formato "whatsapp:+593987654321".
 //   El método LimpiarTelefono() convierte automáticamente cualquier formato:
 //   "0987 654-321" → eliminar espacios/guiones → "0987654321" → quitar 0 → "593987654321"
+//   Luego EnviarMensajeTwilioAsync() agrega el prefijo "whatsapp:+" al enviar.
 //
 // ARQUITECTURA DE UN SOLO NÚMERO:
 //   Todos los mensajes de todos los negocios salen desde el mismo número de
@@ -45,8 +41,8 @@
 //   - Se configura en Program.cs con: builder.Services.AddHttpClient("WhatsApp")
 // ═══════════════════════════════════════════════════════════════════════════
 
+using System.Net.Http.Headers;
 using System.Text;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using Gimnasio.Models;
 using Microsoft.Extensions.Options;
@@ -54,7 +50,7 @@ using Microsoft.Extensions.Options;
 namespace Gimnasio.Services;
 
 /// <summary>
-/// Implementación del servicio de mensajería de WhatsApp Business usando Meta Cloud API.
+/// Implementación del servicio de mensajería de WhatsApp Business usando Twilio API.
 /// Un solo número de WhatsApp (de la plataforma My-Negocio) envía todos los mensajes:
 /// recordatorios de membresía, resúmenes diarios y confirmaciones de citas.
 /// </summary>
@@ -91,16 +87,7 @@ public class WhatsAppService : IWhatsAppService
     ///   1. Si WhatsApp está deshabilitado en config → loguear y retornar true
     ///      (true porque no es un error, es configuración intencional en dev/staging)
     ///   2. Limpiar y normalizar el número de teléfono
-    ///   3. Construir el payload JSON que espera la API de Meta
-    ///   4. Enviar via EnviarPayloadAsync (que hace la llamada HTTP real)
-    ///
-    /// El payload JSON que se construye tiene esta forma:
-    /// {
-    ///   "messaging_product": "whatsapp",
-    ///   "to": "593987654321",
-    ///   "type": "text",
-    ///   "text": { "body": "El mensaje aquí" }
-    /// }
+    ///   3. Enviar via EnviarMensajeTwilioAsync (que hace la llamada HTTP real a Twilio)
     /// </summary>
     public async Task<bool> EnviarMensajeTextoAsync(string telefono, string mensaje)
     {
@@ -112,7 +99,7 @@ public class WhatsAppService : IWhatsAppService
             return true;  // true = no es un error, es una decisión de configuración
         }
 
-        // Normalizar el número de teléfono al formato que exige Meta API
+        // Normalizar el número de teléfono al formato internacional (solo dígitos)
         var telefonoLimpio = LimpiarTelefono(telefono);
         if (string.IsNullOrEmpty(telefonoLimpio))
         {
@@ -120,18 +107,7 @@ public class WhatsAppService : IWhatsAppService
             return false;
         }
 
-        // Estructura del payload según la especificación de Meta Cloud API
-        // La propiedad "type": "text" indica que es un mensaje de texto simple,
-        // a diferencia de templates, imágenes, documentos, etc.
-        var payload = new
-        {
-            messaging_product = "whatsapp",
-            to   = telefonoLimpio,
-            type = "text",
-            text = new { body = mensaje }
-        };
-
-        return await EnviarPayloadAsync(payload);
+        return await EnviarMensajeTwilioAsync(telefonoLimpio, mensaje);
     }
 
     /// <summary>
@@ -251,11 +227,164 @@ public class WhatsAppService : IWhatsAppService
     }
 
     // ═══════════════════════════════════════════════════════════════════════
-    // MÉTODOS PRIVADOS — COMUNICACIÓN HTTP CON META API
+    // MENSAJES PAREADOS CON EMAIL
+    // Cada uno de estos métodos se llama en paralelo con su email equivalente.
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <inheritdoc />
+    public async Task<bool> EnviarBienvenidaVendedorWhatsAppAsync(
+        string telefono, string nombre, string email, string password)
+    {
+        var mensaje = $"🎉 *¡Bienvenido a My-Negocio, {nombre}!*\n\n" +
+                      $"Ya puedes acceder al panel de vendedor con estas credenciales:\n" +
+                      $"📧 Email: {email}\n" +
+                      $"🔑 Contraseña: {password}\n\n" +
+                      $"Ingresa en: *app.mi-negocio.net*\n\n" +
+                      $"— My-Negocio";
+
+        return await EnviarMensajeTextoAsync(telefono, mensaje);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> EnviarBienvenidaNegocioWhatsAppAsync(
+        string telefono, string negocio, string dueno, string email, string password, string tipoNegocio)
+    {
+        var tipo = tipoNegocio switch
+        {
+            "artesanal" => "Servicios y Citas",
+            "tienda" => "Tienda e Inventario",
+            "restaurante" => "Restaurante",
+            _ => "Membresías"
+        };
+
+        var mensaje = $"🎉 *¡Bienvenido a My-Negocio, {dueno}!*\n\n" +
+                      $"Tu negocio *{negocio}* ({tipo}) ya está listo.\n\n" +
+                      $"📧 Email: {email}\n" +
+                      $"🔑 Contraseña: {password}\n\n" +
+                      $"Ingresa en: *app.mi-negocio.net*\n\n" +
+                      $"_Si tienes dudas, escríbenos. ¡Estamos para ayudarte!_\n\n" +
+                      $"— My-Negocio";
+
+        return await EnviarMensajeTextoAsync(telefono, mensaje);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> EnviarReciboPagoSuscripcionWhatsAppAsync(
+        string telefono, string negocio, int dias, decimal precio, string numRecibo)
+    {
+        var mensaje = $"🧾 *Recibo de Pago — My-Negocio*\n\n" +
+                      $"Negocio: *{negocio}*\n" +
+                      $"Concepto: Suscripción x{dias} días\n" +
+                      $"Monto: *${precio:N2}*\n" +
+                      $"Recibo #: {numRecibo}\n\n" +
+                      $"¡Gracias por tu pago! 🙌\n\n" +
+                      $"— My-Negocio";
+
+        return await EnviarMensajeTextoAsync(telefono, mensaje);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> EnviarReciboComisionWhatsAppAsync(
+        string telefono, string nombre, decimal monto, int cantidad, string numRecibo)
+    {
+        var mensaje = $"💰 *Pago de Comisión — My-Negocio*\n\n" +
+                      $"Vendedor: *{nombre}*\n" +
+                      $"Negocios: {cantidad}\n" +
+                      $"Total pagado: *${monto:N2}*\n" +
+                      $"Recibo #: {numRecibo}\n\n" +
+                      $"¡Gracias por tu trabajo! 🎯\n\n" +
+                      $"— My-Negocio";
+
+        return await EnviarMensajeTextoAsync(telefono, mensaje);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> EnviarReciboPagoClienteWhatsAppAsync(
+        string telefono, string cliente, string negocio, string concepto, decimal monto, string numRecibo)
+    {
+        var mensaje = $"🧾 *Recibo de Pago*\n\n" +
+                      $"Hola {cliente}, tu pago en *{negocio}* fue registrado:\n\n" +
+                      $"📋 Concepto: {concepto}\n" +
+                      $"💵 Monto: *${monto:N2}*\n" +
+                      $"#️⃣ Recibo: {numRecibo}\n\n" +
+                      $"¡Gracias! 🙌\n\n" +
+                      $"_Este es un mensaje automatizado de *{negocio}*. " +
+                      $"Por favor no responda a este número._";
+
+        return await EnviarMensajeTextoAsync(telefono, mensaje);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> EnviarConfirmacionReservaWhatsAppAsync(
+        string telefono, string cliente, string negocio, string servicio, string empleado, DateTime fechaHora, decimal precio)
+    {
+        var fecha = fechaHora.ToString("dd/MM/yyyy");
+        var hora = fechaHora.ToString("hh:mm tt", System.Globalization.CultureInfo.InvariantCulture);
+
+        var mensaje = $"✅ *Cita Confirmada*\n\n" +
+                      $"Hola {cliente}, tu cita en *{negocio}* está confirmada:\n\n" +
+                      $"💇 Servicio: {servicio}\n" +
+                      $"👤 Con: {empleado}\n" +
+                      $"📅 Fecha: {fecha}\n" +
+                      $"🕐 Hora: {hora}\n" +
+                      $"💵 Precio: ${precio:N2}\n\n" +
+                      $"Si necesitas cancelar, comunícate directamente con *{negocio}*.\n\n" +
+                      $"_Este es un mensaje automatizado. Por favor no responda a este número._";
+
+        return await EnviarMensajeTextoAsync(telefono, mensaje);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> EnviarReciboCitaCompletadaWhatsAppAsync(
+        string telefono, string cliente, string negocio, string servicio, decimal total, string numRecibo)
+    {
+        var mensaje = $"🧾 *Recibo de Servicio*\n\n" +
+                      $"Hola {cliente}, gracias por tu visita a *{negocio}*:\n\n" +
+                      $"💇 Servicio: {servicio}\n" +
+                      $"💵 Total: *${total:N2}*\n" +
+                      $"#️⃣ Recibo: {numRecibo}\n\n" +
+                      $"¡Esperamos verte pronto! 😊\n\n" +
+                      $"_Este es un mensaje automatizado de *{negocio}*. " +
+                      $"Por favor no responda a este número._";
+
+        return await EnviarMensajeTextoAsync(telefono, mensaje);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> EnviarResumenDiarioGeneralWhatsAppAsync(
+        string telefono, string negocio, decimal ingresos, decimal gastos, decimal ganancia, int nuevosClientes)
+    {
+        var mensaje = $"📊 *Resumen del día — {negocio}*\n\n" +
+                      $"💰 Ingresos: ${ingresos:N2}\n" +
+                      $"💸 Gastos: ${gastos:N2}\n" +
+                      $"📈 Ganancia: ${ganancia:N2}\n" +
+                      $"👤 Nuevos clientes: {nuevosClientes}\n\n" +
+                      $"— MiNegocio";
+
+        return await EnviarMensajeTextoAsync(telefono, mensaje);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> EnviarRecordatorioCitaEmpleadoWhatsAppAsync(
+        string telefono, string empleado, string cliente, string servicio, string hora)
+    {
+        var mensaje = $"⏰ *Recordatorio de Cita*\n\n" +
+                      $"Hola {empleado}, tienes una cita próxima:\n\n" +
+                      $"👤 Cliente: {cliente}\n" +
+                      $"💇 Servicio: {servicio}\n" +
+                      $"🕐 Hora: {hora}\n\n" +
+                      $"¡Prepárate! 💪\n\n" +
+                      $"— MiNegocio";
+
+        return await EnviarMensajeTextoAsync(telefono, mensaje);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // MÉTODOS PRIVADOS — COMUNICACIÓN HTTP CON TWILIO API
     // ═══════════════════════════════════════════════════════════════════════
 
     /// <summary>
-    /// Realiza la llamada HTTP POST a la API de Meta Cloud para enviar el mensaje.
+    /// Realiza la llamada HTTP POST a la API de Twilio para enviar el mensaje de WhatsApp.
     ///
     /// POR QUÉ IHttpClientFactory EN VEZ DE 'new HttpClient()':
     ///   Crear y destruir HttpClient en cada request agota los sockets del sistema
@@ -264,20 +393,21 @@ public class WhatsAppService : IWhatsAppService
     ///   Con CreateClient("WhatsApp") obtenemos un cliente pre-configurado
     ///   con el nombre "WhatsApp" definido en Program.cs (AddHttpClient).
     ///
-    /// AUTENTICACIÓN CON BEARER TOKEN:
-    ///   Meta API usa OAuth 2.0 Bearer tokens para autenticar.
-    ///   El token se agrega al header Authorization en cada request:
-    ///   "Authorization: Bearer EAABsm..."
-    ///   El token es de larga duración (no expira frecuentemente), pero debe
-    ///   mantenerse secreto (no subirlo a Git — usar appsettings secretos o variables de entorno).
+    /// AUTENTICACIÓN CON BASIC AUTH:
+    ///   Twilio usa HTTP Basic Authentication.
+    ///   El header Authorization contiene: "Basic base64(AccountSid:AuthToken)"
     ///
     /// URL DE LA API:
-    ///   https://graph.facebook.com/v19.0/{PhoneNumberId}/messages
-    ///   - v19.0 = versión de la Graph API (puede actualizarse)
-    ///   - PhoneNumberId = ID interno de Meta del número de WhatsApp Business
-    ///     (diferente al número de teléfono real)
+    ///   https://api.twilio.com/2010-04-01/Accounts/{AccountSid}/Messages.json
+    ///
+    /// CONTENT-TYPE:
+    ///   application/x-www-form-urlencoded (no JSON como Meta)
+    ///   Body: From=whatsapp:+NUMBER&amp;To=whatsapp:+{telefono}&amp;Body={mensaje}
+    ///
+    /// RESPUESTA EXITOSA:
+    ///   HTTP 201 Created (no 200 como Meta)
     /// </summary>
-    private async Task<bool> EnviarPayloadAsync(object payload)
+    private async Task<bool> EnviarMensajeTwilioAsync(string telefonoLimpio, string mensaje)
     {
         const int maxAttempts = 3;
 
@@ -286,20 +416,31 @@ public class WhatsAppService : IWhatsAppService
             try
             {
                 var client = _httpClientFactory.CreateClient("WhatsApp");
-                var url = $"https://graph.facebook.com/{_settings.ApiVersion}/{_settings.PhoneNumberId}/messages";
-                var json = JsonSerializer.Serialize(payload);
+                var url = $"https://api.twilio.com/2010-04-01/Accounts/{_settings.AccountSid}/Messages.json";
+
+                // Twilio usa Basic Auth: base64(AccountSid:AuthToken)
+                var authBytes = Encoding.ASCII.GetBytes($"{_settings.AccountSid}:{_settings.AuthToken}");
+                var authHeader = Convert.ToBase64String(authBytes);
+
+                // Twilio espera form-urlencoded, no JSON
+                var formData = new FormUrlEncodedContent(new[]
+                {
+                    new KeyValuePair<string, string>("From", _settings.FromNumber),
+                    new KeyValuePair<string, string>("To", $"whatsapp:+{telefonoLimpio}"),
+                    new KeyValuePair<string, string>("Body", mensaje)
+                });
 
                 using var request = new HttpRequestMessage(HttpMethod.Post, url);
-                request.Content = new StringContent(json, Encoding.UTF8, "application/json");
-                request.Headers.Authorization =
-                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _settings.AccessToken);
+                request.Content = formData;
+                request.Headers.Authorization = new AuthenticationHeaderValue("Basic", authHeader);
 
                 var response = await client.SendAsync(request);
                 var responseBody = await response.Content.ReadAsStringAsync();
 
-                if (response.IsSuccessStatusCode)
+                // Twilio retorna HTTP 201 Created para mensajes enviados exitosamente
+                if (response.StatusCode == System.Net.HttpStatusCode.Created || response.IsSuccessStatusCode)
                 {
-                    _logger.LogInformation("Mensaje de WhatsApp enviado exitosamente");
+                    _logger.LogInformation("Mensaje de WhatsApp enviado exitosamente vía Twilio");
                     return true;
                 }
 
@@ -312,7 +453,7 @@ public class WhatsAppService : IWhatsAppService
 
                     var delaySeconds = retryAfterSeconds > 0 ? retryAfterSeconds : (int)Math.Pow(2, attempt + 1);
                     _logger.LogWarning(
-                        "WhatsApp API rate limited (429). Reintentando en {Delay}s (intento {Attempt}/{Max})...",
+                        "Twilio WhatsApp API rate limited (429). Reintentando en {Delay}s (intento {Attempt}/{Max})...",
                         delaySeconds, attempt + 1, maxAttempts);
                     await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
                     continue;
@@ -322,14 +463,14 @@ public class WhatsAppService : IWhatsAppService
                 {
                     var delaySeconds = (int)Math.Pow(2, attempt + 1);
                     _logger.LogWarning(
-                        "Error WhatsApp API. Código: {StatusCode} (intento {Attempt}/{Max}). Reintentando en {Delay}s...",
+                        "Error Twilio WhatsApp API. Código: {StatusCode} (intento {Attempt}/{Max}). Reintentando en {Delay}s...",
                         (int)response.StatusCode, attempt + 1, maxAttempts, delaySeconds);
                     await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
                 }
                 else
                 {
                     _logger.LogError(
-                        "Error WhatsApp API tras {Max} intentos. Código: {StatusCode}, Respuesta: {ResponseBody}",
+                        "Error Twilio WhatsApp API tras {Max} intentos. Código: {StatusCode}, Respuesta: {ResponseBody}",
                         maxAttempts, (int)response.StatusCode, responseBody);
                     return false;
                 }
@@ -340,13 +481,13 @@ public class WhatsAppService : IWhatsAppService
                 {
                     var delaySeconds = (int)Math.Pow(2, attempt + 1);
                     _logger.LogWarning(ex,
-                        "Excepción WhatsApp (intento {Attempt}/{Max}). Reintentando en {Delay}s...",
+                        "Excepción Twilio WhatsApp (intento {Attempt}/{Max}). Reintentando en {Delay}s...",
                         attempt + 1, maxAttempts, delaySeconds);
                     await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
                 }
                 else
                 {
-                    _logger.LogError(ex, "Excepción al enviar WhatsApp tras {Max} intentos", maxAttempts);
+                    _logger.LogError(ex, "Excepción al enviar WhatsApp vía Twilio tras {Max} intentos", maxAttempts);
                     return false;
                 }
             }
@@ -357,7 +498,7 @@ public class WhatsAppService : IWhatsAppService
 
     /// <summary>
     /// Limpia y normaliza un número de teléfono para que cumpla el formato
-    /// que exige la API de Meta: solo dígitos, sin "+", en formato internacional.
+    /// internacional: solo dígitos, sin "+", con código de país.
     ///
     /// TRANSFORMACIONES QUE APLICA:
     ///   1. Eliminar caracteres no deseados: espacios, guiones, paréntesis, símbolo +

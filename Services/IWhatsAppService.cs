@@ -12,10 +12,10 @@
 //   "Hola María, tu membresía en *FitZone* vence en 3 días..."
 //   Pero el remitente técnico es el número de My-Negocio.
 //
-// API UTILIZADA: Meta Cloud API (WhatsApp Business Platform)
+// API UTILIZADA: Twilio WhatsApp API
 //   La implementación llama directamente a:
-//   https://graph.facebook.com/{versión}/{phoneNumberId}/messages
-//   con autenticación Bearer token.
+//   https://api.twilio.com/2010-04-01/Accounts/{AccountSid}/Messages.json
+//   con autenticación Basic Auth.
 //
 // TIPOS DE MENSAJE SOPORTADOS:
 //   - Texto plano: para recordatorios de membresía y resumen diario
@@ -28,7 +28,7 @@
 namespace Gimnasio.Services;
 
 /// <summary>
-/// Contrato del servicio de mensajería de WhatsApp Business (Meta Cloud API).
+/// Contrato del servicio de mensajería de WhatsApp Business (Twilio API).
 /// Un solo número de WhatsApp (el de la plataforma) envía todos los mensajes
 /// en nombre de cada negocio registrado en el sistema.
 /// Implementado por <see cref="WhatsAppService"/>.
@@ -107,4 +107,64 @@ public interface IWhatsAppService
     /// <param name="nombreNegocio">Nombre comercial de la tienda</param>
     /// <param name="linkCatalogo">URL pública para descargar/ver el PDF del catálogo</param>
     Task<bool> EnviarLinkCatalogoTiendaAsync(string telefono, string nombreNegocio, string linkCatalogo);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // MENSAJES PAREADOS CON EMAIL
+    // Cada uno de estos métodos se llama en paralelo con su email equivalente,
+    // para que el destinatario reciba la notificación por ambos canales.
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Envía bienvenida al vendedor con sus credenciales de acceso.
+    /// Se llama junto con EnviarBienvenidaVendedorAsync del EmailService.
+    /// </summary>
+    Task<bool> EnviarBienvenidaVendedorWhatsAppAsync(string telefono, string nombre, string email, string password);
+
+    /// <summary>
+    /// Envía bienvenida al negocio nuevo con sus credenciales de acceso.
+    /// Se llama junto con EnviarBienvenidaNegocioAsync del EmailService.
+    /// </summary>
+    Task<bool> EnviarBienvenidaNegocioWhatsAppAsync(string telefono, string negocio, string dueno, string email, string password, string tipoNegocio);
+
+    /// <summary>
+    /// Envía recibo de pago de suscripción SaaS al negocio.
+    /// Se llama junto con EnviarReciboPagoNegocioAsync del EmailService.
+    /// </summary>
+    Task<bool> EnviarReciboPagoSuscripcionWhatsAppAsync(string telefono, string negocio, int dias, decimal precio, string numRecibo);
+
+    /// <summary>
+    /// Envía recibo de pago de comisión al vendedor.
+    /// Se llama junto con EnviarReciboComisionAsync del EmailService.
+    /// </summary>
+    Task<bool> EnviarReciboComisionWhatsAppAsync(string telefono, string nombre, decimal monto, int cantidad, string numRecibo);
+
+    /// <summary>
+    /// Envía recibo de pago de membresía al cliente del negocio.
+    /// Se llama junto con EnviarReciboPagoClienteAsync del EmailService.
+    /// </summary>
+    Task<bool> EnviarReciboPagoClienteWhatsAppAsync(string telefono, string cliente, string negocio, string concepto, decimal monto, string numRecibo);
+
+    /// <summary>
+    /// Envía confirmación de reserva/cita al cliente.
+    /// Se llama junto con EnviarConfirmacionReservaAsync del EmailService.
+    /// </summary>
+    Task<bool> EnviarConfirmacionReservaWhatsAppAsync(string telefono, string cliente, string negocio, string servicio, string empleado, DateTime fechaHora, decimal precio);
+
+    /// <summary>
+    /// Envía recibo de servicio/cita completada al cliente.
+    /// Se llama junto con EnviarReciboCitaCompletadaAsync del EmailService.
+    /// </summary>
+    Task<bool> EnviarReciboCitaCompletadaWhatsAppAsync(string telefono, string cliente, string negocio, string servicio, decimal total, string numRecibo);
+
+    /// <summary>
+    /// Envía resumen diario para negocios artesanal/tienda/restaurante.
+    /// Versión genérica que incluye ingresos, gastos y ganancia neta.
+    /// </summary>
+    Task<bool> EnviarResumenDiarioGeneralWhatsAppAsync(string telefono, string negocio, decimal ingresos, decimal gastos, decimal ganancia, int nuevosClientes);
+
+    /// <summary>
+    /// Envía recordatorio de cita al empleado que atenderá al cliente.
+    /// Se llama junto con EnviarRecordatorioCitaEmpleadoAsync del EmailService.
+    /// </summary>
+    Task<bool> EnviarRecordatorioCitaEmpleadoWhatsAppAsync(string telefono, string empleado, string cliente, string servicio, string hora);
 }

@@ -1,23 +1,24 @@
 // ═══════════════════════════════════════════════════════════
-// WhatsAppSettings.cs — Configuración de la API de WhatsApp Business
+// WhatsAppSettings.cs — Configuración de Twilio WhatsApp API
 //
-// Esta clase se usa para leer la sección "WhatsApp" de appsettings.json.
+// Esta clase se usa para leer la sección "WhatsAppSettings" de appsettings.json.
 // Se inyecta en WhatsAppService via IOptions<WhatsAppSettings>.
 //
-// La plataforma usa la Meta Cloud API (WhatsApp Business API) para enviar:
+// La plataforma usa Twilio WhatsApp API para enviar:
 //   - Recordatorios de membresía próxima a vencer a los clientes.
 //   - Recordatorios de citas agendadas (negocios artesanales).
+//   - Recibos de pago, bienvenidas y resúmenes diarios.
 //
 // Para obtener estas credenciales:
-//   1. Crea una app en developers.facebook.com
-//   2. Agrega el producto "WhatsApp"
-//   3. Copia el PhoneNumberId y genera un AccessToken permanente.
+//   1. Crea una cuenta en twilio.com
+//   2. Activa el sandbox de WhatsApp o registra un número propio
+//   3. Copia el Account SID, Auth Token y el número From del dashboard
 //
 // Configuración en appsettings.json:
-//   "WhatsApp": {
-//     "PhoneNumberId": "123456789",
-//     "AccessToken": "EAAxxxxxxx...",
-//     "ApiVersion": "v21.0",
+//   "WhatsAppSettings": {
+//     "AccountSid": "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+//     "AuthToken": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+//     "FromNumber": "whatsapp:+14155238886",
 //     "Enabled": true
 //   }
 // ═══════════════════════════════════════════════════════════
@@ -25,7 +26,7 @@
 namespace Gimnasio.Models;
 
 /// <summary>
-/// Contiene la configuración necesaria para conectarse a la API de WhatsApp Business (Meta Cloud API).
+/// Contiene la configuración necesaria para conectarse a Twilio WhatsApp API.
 /// Esta clase no es una entidad de base de datos; es un objeto de configuración
 /// que se lee desde appsettings.json y se inyecta con el patrón IOptions de ASP.NET Core.
 ///
@@ -35,31 +36,32 @@ namespace Gimnasio.Models;
 public class WhatsAppSettings
 {
     /// <summary>
-    /// ID del número de teléfono de WhatsApp Business registrado en Meta.
-    /// Es un número numérico de varios dígitos, por ejemplo: "123456789012345".
-    /// Se obtiene en el panel de Meta for Developers al configurar la app de WhatsApp.
-    /// Se incluye en la URL del endpoint de la API: /v21.0/{PhoneNumberId}/messages
+    /// Account SID de Twilio. Es un identificador único de la cuenta.
+    /// Formato: "ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" (34 caracteres, empieza con "AC").
+    /// Se obtiene en el dashboard principal de Twilio (https://console.twilio.com).
+    /// Se usa como username en la autenticación Basic Auth de la API.
     /// Valor por defecto: cadena vacía (la integración no funciona sin este valor).
     /// </summary>
-    public string PhoneNumberId { get; set; } = "";
+    public string AccountSid { get; set; } = "";
 
     /// <summary>
-    /// Token de autenticación para la API de Meta (WhatsApp Business API).
-    /// Es un string largo que empieza con "EAA...".
-    /// Se genera en el panel de Meta for Developers. Puede ser temporal (24h) o permanente.
+    /// Auth Token de Twilio. Es la contraseña de la cuenta para la API.
+    /// Es un string alfanumérico de 32 caracteres.
+    /// Se obtiene en el dashboard principal de Twilio junto al Account SID.
     /// IMPORTANTE: tratar este token como contraseña; no incluir en repositorios públicos.
     /// Usar variables de entorno o appsettings.Production.json para producción.
     /// Valor por defecto: cadena vacía.
     /// </summary>
-    public string AccessToken { get; set; } = "";
+    public string AuthToken { get; set; } = "";
 
     /// <summary>
-    /// Versión de la API de Meta Graph que se usará para las peticiones.
-    /// Formato: "vXX.0" donde XX es el número de versión (ej: "v21.0", "v20.0").
-    /// Meta actualiza la API periódicamente; se recomienda revisar la versión más reciente.
-    /// Valor por defecto: "v21.0".
+    /// Número de teléfono de origen registrado en Twilio para WhatsApp.
+    /// Formato: "whatsapp:+14155238886" (incluye el prefijo "whatsapp:" y código de país con +).
+    /// En modo sandbox, Twilio asigna un número compartido.
+    /// En producción, se usa un número propio aprobado por Twilio/WhatsApp.
+    /// Valor por defecto: cadena vacía.
     /// </summary>
-    public string ApiVersion { get; set; } = "v21.0";
+    public string FromNumber { get; set; } = "";
 
     /// <summary>
     /// Interruptor principal de la integración con WhatsApp.

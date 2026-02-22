@@ -48,6 +48,7 @@ public class VendedorController : Controller
     private readonly IEmailService _emailService;
     private readonly IComisionService _comisionService;
     private readonly IReciboService _reciboService;
+    private readonly IWhatsAppService _whatsAppService;
 
     public VendedorController(
         IVendedorService vendedorService,
@@ -55,7 +56,8 @@ public class VendedorController : Controller
         INegocioService negocioService,
         IEmailService emailService,
         IComisionService comisionService,
-        IReciboService reciboService)
+        IReciboService reciboService,
+        IWhatsAppService whatsAppService)
     {
         _vendedorService = vendedorService;
         _authService = authService;
@@ -63,6 +65,7 @@ public class VendedorController : Controller
         _emailService = emailService;
         _comisionService = comisionService;
         _reciboService = reciboService;
+        _whatsAppService = whatsAppService;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -151,6 +154,16 @@ public class VendedorController : Controller
             try { await _emailService.EnviarBienvenidaVendedorAsync(correo, $"{nombre} {apellido}", correo, password); }
             catch { /* El EmailService ya loguea internamente */ }
         });
+
+        // Enviar WhatsApp de bienvenida al vendedor en segundo plano
+        if (!string.IsNullOrWhiteSpace(telefono))
+        {
+            _ = Task.Run(async () =>
+            {
+                try { await _whatsAppService.EnviarBienvenidaVendedorWhatsAppAsync(telefono, $"{nombre} {apellido}", correo, password); }
+                catch { }
+            });
+        }
 
         return Ok(new { success = true, message });
     }
@@ -454,6 +467,16 @@ public class VendedorController : Controller
             catch { }
         });
 
+        // Enviar WhatsApp de bienvenida al negocio en segundo plano
+        if (!string.IsNullOrWhiteSpace(telefono))
+        {
+            _ = Task.Run(async () =>
+            {
+                try { await _whatsAppService.EnviarBienvenidaNegocioWhatsAppAsync(telefono, NombreNegocio, duenoNegocio, EmailNegocio, passwordNegocio, tipoNegocio); }
+                catch { }
+            });
+        }
+
         // Enviar recibo de pago si no es prueba y guardarlo en BD (admin-scope)
         if (!esPrueba && precioSuscripcion.HasValue && precioSuscripcion.Value > 0)
         {
@@ -468,6 +491,16 @@ public class VendedorController : Controller
                     diasPagados ?? 30, precioSuscripcion.Value, vendedorNombre, vendedorTelefono, numRecibo);
                 await _reciboService.CrearReciboAsync(null, numRecibo, "suscripcion_negocio",
                     EmailNegocio, duenoNegocio, NombreNegocio, concepto, precioSuscripcion.Value, html);
+
+                // Enviar recibo de suscripción por WhatsApp
+                if (!string.IsNullOrWhiteSpace(telefono))
+                {
+                    _ = Task.Run(async () =>
+                    {
+                        try { await _whatsAppService.EnviarReciboPagoSuscripcionWhatsAppAsync(telefono, NombreNegocio, diasPagados ?? 30, precioSuscripcion.Value, numRecibo); }
+                        catch { }
+                    });
+                }
             }
             catch { }
         }
