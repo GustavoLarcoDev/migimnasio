@@ -1,0 +1,355 @@
+/* =============================================
+   Driver.js — Estilos personalizados My-Negocio
+   Tutorial interactivo con diseño Metronic
+   ============================================= */
+
+/* ---- Botón Tutorial en Topbar ---- */
+.mg-tutorial-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 14px;
+    border: 2px solid var(--mg-primary);
+    border-radius: 8px;
+    background: var(--mg-primary-light);
+    color: var(--mg-primary);
+    font-weight: 600;
+    font-size: 0.85rem;
+    font-family: var(--mg-font-family);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.mg-tutorial-btn:hover {
+    background: var(--mg-primary);
+    color: #fff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(62, 151, 255, 0.35);
+}
+
+.mg-tutorial-btn:active {
+    transform: translateY(0);
+}
+
+.mg-tutorial-btn .bi {
+    font-size: 1.1rem;
+}
+
+/* Mobile: solo mostrar icono */
+@media (max-width: 767.98px) {
+    .mg-tutorial-btn {
+        padding: 6px 10px;
+        border-radius: 50%;
+        width: 38px;
+        height: 38px;
+        justify-content: center;
+    }
+
+    .mg-tutorial-btn .bi {
+        margin: 0;
+    }
+}
+
+/* ---- Driver.js Popover Personalizado ---- */
+.driver-popover {
+    background: var(--mg-card-bg, #fff) !important;
+    border: none !important;
+    border-radius: 16px !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+    padding: 0 !important;
+    max-width: 380px !important;
+    font-family: var(--mg-font-family) !important;
+    overflow: hidden;
+}
+
+[data-theme="dark"] .driver-popover {
+    background: #1E1E2D !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Popover arrow */
+.driver-popover-arrow {
+    border: none !important;
+}
+
+.driver-popover-arrow-side-left,
+.driver-popover-arrow-side-right,
+.driver-popover-arrow-side-top,
+.driver-popover-arrow-side-bottom {
+    border-color: transparent !important;
+}
+
+.driver-popover .driver-popover-arrow-side-left {
+    border-right-color: var(--mg-card-bg, #fff) !important;
+}
+
+.driver-popover .driver-popover-arrow-side-right {
+    border-left-color: var(--mg-card-bg, #fff) !important;
+}
+
+.driver-popover .driver-popover-arrow-side-top {
+    border-bottom-color: var(--mg-card-bg, #fff) !important;
+}
+
+.driver-popover .driver-popover-arrow-side-bottom {
+    border-top-color: var(--mg-card-bg, #fff) !important;
+}
+
+[data-theme="dark"] .driver-popover .driver-popover-arrow-side-left {
+    border-right-color: #1E1E2D !important;
+}
+[data-theme="dark"] .driver-popover .driver-popover-arrow-side-right {
+    border-left-color: #1E1E2D !important;
+}
+[data-theme="dark"] .driver-popover .driver-popover-arrow-side-top {
+    border-bottom-color: #1E1E2D !important;
+}
+[data-theme="dark"] .driver-popover .driver-popover-arrow-side-bottom {
+    border-top-color: #1E1E2D !important;
+}
+
+/* Header con gradiente */
+.driver-popover-title {
+    font-size: 1.05rem !important;
+    font-weight: 700 !important;
+    color: var(--mg-text-color, #3F4254) !important;
+    padding: 20px 24px 8px !important;
+    line-height: 1.3 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+[data-theme="dark"] .driver-popover-title {
+    color: #E4E6EF !important;
+}
+
+/* Descripción */
+.driver-popover-description {
+    font-size: 0.88rem !important;
+    color: var(--mg-gray-600, #7E8299) !important;
+    padding: 0 24px 16px !important;
+    line-height: 1.6 !important;
+}
+
+[data-theme="dark"] .driver-popover-description {
+    color: #B5B5C3 !important;
+}
+
+/* Footer con botones */
+.driver-popover-footer {
+    padding: 12px 24px 20px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    border-top: 1px solid var(--mg-border-color, #EFF2F5) !important;
+}
+
+[data-theme="dark"] .driver-popover-footer {
+    border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Progress text */
+.driver-popover-progress-text {
+    font-size: 0.78rem !important;
+    color: var(--mg-gray-500, #A1A5B7) !important;
+    font-weight: 500 !important;
+}
+
+/* Botones de navegación */
+.driver-popover-navigation-btns {
+    display: flex !important;
+    gap: 8px !important;
+}
+
+.driver-popover-prev-btn,
+.driver-popover-next-btn {
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 8px 18px !important;
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+    font-family: var(--mg-font-family) !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    text-shadow: none !important;
+}
+
+.driver-popover-prev-btn {
+    background: var(--mg-gray-200, #EFF2F5) !important;
+    color: var(--mg-gray-700, #5E6278) !important;
+}
+
+.driver-popover-prev-btn:hover {
+    background: var(--mg-gray-300, #E4E6EF) !important;
+}
+
+[data-theme="dark"] .driver-popover-prev-btn {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #B5B5C3 !important;
+}
+
+[data-theme="dark"] .driver-popover-prev-btn:hover {
+    background: rgba(255, 255, 255, 0.14) !important;
+}
+
+.driver-popover-next-btn {
+    background: var(--mg-primary) !important;
+    color: #fff !important;
+}
+
+.driver-popover-next-btn:hover {
+    opacity: 0.9 !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(62, 151, 255, 0.35) !important;
+}
+
+/* Botón close */
+.driver-popover-close-btn {
+    position: absolute !important;
+    top: 14px !important;
+    right: 14px !important;
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 8px !important;
+    background: var(--mg-gray-200, #EFF2F5) !important;
+    color: var(--mg-gray-600, #7E8299) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 16px !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+}
+
+.driver-popover-close-btn:hover {
+    background: var(--mg-danger-light) !important;
+    color: var(--mg-danger) !important;
+}
+
+[data-theme="dark"] .driver-popover-close-btn {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: #B5B5C3 !important;
+}
+
+/* Overlay */
+.driver-overlay {
+    background: rgba(0, 0, 0, 0.55) !important;
+}
+
+[data-theme="dark"] .driver-overlay {
+    background: rgba(0, 0, 0, 0.7) !important;
+}
+
+/* Highlighted element */
+.driver-active-element {
+    border-radius: var(--mg-border-radius) !important;
+}
+
+/* ---- Responsive: Mobile ---- */
+@media (max-width: 767.98px) {
+    .driver-popover {
+        max-width: calc(100vw - 32px) !important;
+        margin: 0 16px !important;
+        border-radius: 14px !important;
+    }
+
+    .driver-popover-title {
+        font-size: 0.95rem !important;
+        padding: 16px 20px 6px !important;
+    }
+
+    .driver-popover-description {
+        font-size: 0.82rem !important;
+        padding: 0 20px 12px !important;
+    }
+
+    .driver-popover-footer {
+        padding: 10px 20px 16px !important;
+        flex-wrap: wrap !important;
+    }
+
+    .driver-popover-prev-btn,
+    .driver-popover-next-btn {
+        padding: 10px 16px !important;
+        font-size: 0.82rem !important;
+    }
+
+    .driver-popover-close-btn {
+        top: 10px !important;
+        right: 10px !important;
+    }
+}
+
+/* ---- Paso de bienvenida (sin elemento) ---- */
+.driver-popover:not(.driver-popover-side-left):not(.driver-popover-side-right):not(.driver-popover-side-top):not(.driver-popover-side-bottom) {
+    border-radius: 20px !important;
+}
+
+/* ---- Animaciones ---- */
+.driver-popover {
+    animation: mgTutorialFadeIn 0.25s ease-out !important;
+}
+
+@keyframes mgTutorialFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Pulse animation for tutorial button when first visit */
+@keyframes mgTutorialPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(62, 151, 255, 0.5); }
+    50% { box-shadow: 0 0 0 10px rgba(62, 151, 255, 0); }
+}
+
+.mg-tutorial-btn--pulse {
+    animation: mgTutorialPulse 2s ease-in-out 3;
+}
+
+/* ---- Step icons via data attribute ---- */
+.mg-tutorial-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.mg-tutorial-icon--primary {
+    background: var(--mg-primary-light);
+    color: var(--mg-primary);
+}
+
+.mg-tutorial-icon--success {
+    background: var(--mg-success-light);
+    color: var(--mg-success);
+}
+
+.mg-tutorial-icon--warning {
+    background: var(--mg-warning-light);
+    color: var(--mg-warning);
+}
+
+.mg-tutorial-icon--danger {
+    background: var(--mg-danger-light);
+    color: var(--mg-danger);
+}
+
+.mg-tutorial-icon--info {
+    background: var(--mg-info-light);
+    color: var(--mg-info);
+}
