@@ -162,10 +162,23 @@ public class AuthService : IAuthService
             return (false, null, null, null, null, "Su cuenta no está activa. Contacte al administrador.");
 
         // PASO 6: Validar que la suscripción no haya expirado.
-        // "EXPIRED" es un código especial que el controlador interpreta para
-        // redirigir al dueño a una página explicando que venció su plan.
+        // Si expiró, auto-bloquear el negocio en la BD y retornar "BLOCKED".
         if (negocio.FechaExpiracion.HasValue && negocio.FechaExpiracion.Value.Date < TimeHelper.Now.Date)
-            return (false, null, null, null, null, "EXPIRED");
+        {
+            if (!negocio.NegocioBloqueado)
+            {
+                negocio.NegocioBloqueado = true;
+                negocio.FechaDeActualizacion = TimeHelper.Now;
+                _context.Update(negocio);
+                await _context.SaveChangesAsync();
+            }
+            return (false, null, null, null, null, "BLOCKED");
+        }
+
+        // PASO 7: Verificar si el negocio está bloqueado manualmente.
+        // Un negocio puede ser bloqueado por admin/vendedor sin importar la fecha.
+        if (negocio.NegocioBloqueado)
+            return (false, null, null, null, null, "BLOCKED");
 
         return (true, "Negocio", negocio, null, null, null);
     }

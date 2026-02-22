@@ -714,9 +714,12 @@
                 }},
                 { data: 'totalClientes', render: function(d) { return '<span class="badge badge-light-info fs-7 fw-bold">' + d + '</span>'; } },
                 { data: null, render: function(d, t, r) {
-                    if (r.esPrueba) return '<span class="badge bg-warning text-dark">Prueba</span>';
-                    if (r.isActive) return '<span class="badge bg-success">Activo</span>';
-                    return '<span class="badge bg-danger">Inactivo</span>';
+                    var badges = '';
+                    if (r.negocioBloqueado) badges += '<span class="badge bg-danger"><i class="bi bi-lock-fill me-1"></i>Bloqueado</span> ';
+                    if (r.esPrueba) badges += '<span class="badge bg-warning text-dark">Prueba</span>';
+                    else if (r.isActive) badges += '<span class="badge bg-success">Activo</span>';
+                    else badges += '<span class="badge bg-danger">Inactivo</span>';
+                    return badges;
                 }},
                 { data: null, render: function(d, t, r) {
                     var tipo = r.esPrueba ? '<span class="badge badge-light-warning">Prueba</span>' : '<span class="badge badge-light-primary">Pago</span>';
@@ -740,9 +743,12 @@
                     var estadoBtn = r.isActive
                         ? '<button class="btn btn-icon btn-bg-light btn-sm" onclick="vendedorCambiarEstado(\'' + r.negocioId + '\')" title="Cambiar a Prueba"><i class="bi bi-toggle-on text-success fs-4"></i></button>'
                         : '<button class="btn btn-icon btn-bg-light btn-sm" onclick="vendedorCambiarEstado(\'' + r.negocioId + '\')" title="Cambiar a Activo"><i class="bi bi-toggle-off text-danger fs-4"></i></button>';
+                    var bloqueoBtn = r.negocioBloqueado
+                        ? '<button class="btn btn-icon btn-bg-light btn-sm" onclick="vendedorDesbloquearNegocio(\'' + r.negocioId + '\')" title="Desbloquear negocio"><i class="bi bi-unlock-fill text-success fs-5"></i></button>'
+                        : '<button class="btn btn-icon btn-bg-light btn-sm" onclick="vendedorBloquearNegocio(\'' + r.negocioId + '\')" title="Bloquear negocio"><i class="bi bi-lock-fill text-danger fs-5"></i></button>';
                     var editBtn = '<button class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm" onclick="vendedorEditarNegocio(\'' + r.negocioId + '\')" title="Editar"><i class="bi bi-pencil fs-5"></i></button>';
                     var deleteBtn = '<button class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm" onclick="vendedorEliminarNegocio(\'' + r.negocioId + '\', \'' + escHtml(r.negocioNombre).replace(/'/g, "\\'") + '\')" title="Eliminar"><i class="bi bi-trash fs-5"></i></button>';
-                    return '<div class="d-flex justify-content-end gap-1">' + impersonateBtn + estadoBtn + editBtn + deleteBtn + '</div>';
+                    return '<div class="d-flex justify-content-end gap-1">' + impersonateBtn + estadoBtn + bloqueoBtn + editBtn + deleteBtn + '</div>';
                 }}
             ],
             order: [[0, 'asc']]
@@ -889,6 +895,76 @@
                     },
                     error: function() {
                         toastr.error('Error al cambiar el estado');
+                    }
+                });
+            }
+        });
+    }
+
+    // ================================================================
+    // VENDEDOR: Bloquear negocio
+    // ================================================================
+    function vendedorBloquearNegocio(id) {
+        swalMG.fire({
+            title: 'Bloquear negocio?',
+            text: 'El negocio no podrá usar el sistema hasta que lo desbloquees.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, bloquear',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#F1416C'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '/Negocios/VendedorBloquearNegocio',
+                    type: 'POST',
+                    data: { id: id },
+                    success: function(res) {
+                        if (res.success) {
+                            toastr.success(res.message);
+                            if (tablaNegocios) tablaNegocios.ajax.reload(null, false);
+                            cargarStats();
+                        } else {
+                            toastr.error(res.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        toastr.error(xhr.responseJSON?.message || 'Error al bloquear el negocio');
+                    }
+                });
+            }
+        });
+    }
+
+    // ================================================================
+    // VENDEDOR: Desbloquear negocio
+    // ================================================================
+    function vendedorDesbloquearNegocio(id) {
+        swalMG.fire({
+            title: 'Desbloquear negocio?',
+            text: 'El negocio podrá volver a usar el sistema.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, desbloquear',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#50CD89'
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '/Negocios/VendedorDesbloquearNegocio',
+                    type: 'POST',
+                    data: { id: id },
+                    success: function(res) {
+                        if (res.success) {
+                            toastr.success(res.message);
+                            if (tablaNegocios) tablaNegocios.ajax.reload(null, false);
+                            cargarStats();
+                        } else {
+                            toastr.error(res.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        toastr.error(xhr.responseJSON?.message || 'Error al desbloquear el negocio');
                     }
                 });
             }

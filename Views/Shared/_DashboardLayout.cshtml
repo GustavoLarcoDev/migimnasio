@@ -503,5 +503,44 @@
     <script src="~/js/tutorials/tutorial-restaurante.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
+
+    @if (Context.Items["NegocioBloqueado"] is true)
+    {
+        <!-- Overlay de Bloqueo — No se puede cerrar ni interactuar con el sistema -->
+        <div id="bloqueoOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);">
+            <div style="background:#fff;border-radius:16px;padding:2.5rem;max-width:480px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                <div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,#F1416C,#E74C3C);display:flex;align-items:center;justify-content:center;margin:0 auto 1.5rem;">
+                    <i class="bi bi-lock-fill" style="font-size:2.2rem;color:#fff;"></i>
+                </div>
+                <h3 style="font-weight:700;color:#181C32;margin-bottom:0.75rem;">Cuenta Bloqueada</h3>
+                <p style="color:#7E8299;font-size:0.95rem;margin-bottom:0.5rem;">
+                    Tu suscripcion ha expirado y tu cuenta ha sido bloqueada.
+                </p>
+                <p style="color:#7E8299;font-size:0.95rem;margin-bottom:1.5rem;">
+                    Para seguir usando <strong>My-Negocio</strong>, contacta a tu asesor de ventas o al administrador para renovar tu servicio.
+                </p>
+                <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                    <a href="https://wa.me/593997143142?text=Hola%2C%20mi%20cuenta%20de%20My-Negocio%20est%C3%A1%20bloqueada.%20Necesito%20renovar%20mi%20suscripci%C3%B3n." target="_blank" rel="noopener" class="btn btn-success btn-lg w-100" style="font-weight:600;">
+                        <i class="bi bi-whatsapp me-2"></i>Contactar por WhatsApp
+                    </a>
+                    <a href="mailto:mynegociooficiall@gmail.com?subject=Cuenta%20bloqueada%20-%20Renovar%20suscripci%C3%B3n" class="btn btn-outline-primary w-100" style="font-weight:500;">
+                        <i class="bi bi-envelope me-2"></i>mynegociooficiall@gmail.com
+                    </a>
+                </div>
+                <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid #EFF2F5;">
+                    <form method="post" action="@Url.Action("Logout", "Auth")">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-light btn-sm" style="color:#7E8299;">
+                            <i class="bi bi-box-arrow-left me-1"></i>Cerrar Sesion
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <style>
+            #bloqueoOverlay ~ *, .mg-sidebar, .mg-topbar, .mg-content { pointer-events: none !important; }
+            #bloqueoOverlay, #bloqueoOverlay * { pointer-events: auto !important; }
+        </style>
+    }
 </body>
 </html>

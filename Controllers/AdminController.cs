@@ -457,6 +457,78 @@ public class AdminController : Controller
         }
     }
 
+    /// <summary>
+    /// Bloquea un negocio en la plataforma, impidiendo su acceso al sistema.
+    /// Se usa cuando la suscripción expira sin renovación o por decisión administrativa.
+    /// Registra la acción en el log de auditoría.
+    /// </summary>
+    /// <param name="id">GUID único del negocio a bloquear.</param>
+    /// <returns>
+    /// 200 OK con { success, message } si se bloqueó correctamente,
+    /// 404 si el negocio no existe, 403 si no es admin, o 500 ante error.
+    /// </returns>
+    [HttpPost("BloquearNegocio")]
+    public async Task<IActionResult> BloquearNegocio(Guid id)
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var (success, message) = await _negocioService.BloquearNegocioAsync(id);
+
+            if (!success)
+                return NotFound(new { success = false, message });
+
+            await _negocioService.RegistrarAdminLogAsync(
+                "BloquearNegocio",
+                $"Negocio bloqueado (ID: {id})",
+                null);
+
+            return Ok(new { success = true, message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Desbloquea un negocio previamente bloqueado, restaurando su acceso al sistema.
+    /// Se usa después de confirmar la renovación de pago o por decisión administrativa.
+    /// Registra la acción en el log de auditoría.
+    /// </summary>
+    /// <param name="id">GUID único del negocio a desbloquear.</param>
+    /// <returns>
+    /// 200 OK con { success, message } si se desbloqueó correctamente,
+    /// 404 si el negocio no existe, 403 si no es admin, o 500 ante error.
+    /// </returns>
+    [HttpPost("DesbloquearNegocio")]
+    public async Task<IActionResult> DesbloquearNegocio(Guid id)
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var (success, message) = await _negocioService.DesbloquearNegocioAsync(id);
+
+            if (!success)
+                return NotFound(new { success = false, message });
+
+            await _negocioService.RegistrarAdminLogAsync(
+                "DesbloquearNegocio",
+                $"Negocio desbloqueado (ID: {id})",
+                null);
+
+            return Ok(new { success = true, message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
     // ═══════════════════════════════════════════════════════════════════════════
     // EXPORTACIÓN EXCEL — Descarga de datos para análisis externo
     // ═══════════════════════════════════════════════════════════════════════════

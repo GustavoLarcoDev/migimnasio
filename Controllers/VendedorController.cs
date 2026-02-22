@@ -804,6 +804,74 @@ public class VendedorController : Controller
         return Ok(new { success = true, message, isActive, esPrueba });
     }
 
+    /// <summary>
+    /// Bloquea un negocio que pertenece al vendedor autenticado.
+    /// El negocio bloqueado no puede iniciar sesión ni operar hasta ser
+    /// desbloqueado. Solo el vendedor propietario puede ejecutar esta acción.
+    /// </summary>
+    [HttpPost("VendedorBloquearNegocio")]
+    public async Task<IActionResult> VendedorBloquearNegocio(Guid id)
+    {
+        var vendedorId = GetVendedorId();
+        if (!vendedorId.HasValue)
+            return Forbid();
+
+        var negocio = await _negocioService.GetNegocioForImpersonationAsync(id);
+        if (negocio == null)
+            return NotFound(new { success = false, message = "Negocio no encontrado" });
+
+        // Verificación de propiedad: solo el vendedor dueño puede bloquear.
+        if (negocio.VendedorId != vendedorId.Value)
+            return Forbid();
+
+        var (success, message) = await _negocioService.BloquearNegocioAsync(id);
+
+        if (!success)
+            return BadRequest(new { success = false, message });
+
+        var vendedorNombre = User.Identity?.Name ?? "Vendedor";
+        await _negocioService.RegistrarAdminLogAsync(
+            "VendedorBloquearNegocio",
+            $"Vendedor {vendedorNombre} bloqueó el negocio '{negocio.NegocioNombre}'",
+            negocio.NegocioNombre);
+
+        return Ok(new { success = true, message });
+    }
+
+    /// <summary>
+    /// Desbloquea un negocio que pertenece al vendedor autenticado.
+    /// Restaura el acceso operacional del negocio. Solo el vendedor
+    /// propietario puede ejecutar esta acción.
+    /// </summary>
+    [HttpPost("VendedorDesbloquearNegocio")]
+    public async Task<IActionResult> VendedorDesbloquearNegocio(Guid id)
+    {
+        var vendedorId = GetVendedorId();
+        if (!vendedorId.HasValue)
+            return Forbid();
+
+        var negocio = await _negocioService.GetNegocioForImpersonationAsync(id);
+        if (negocio == null)
+            return NotFound(new { success = false, message = "Negocio no encontrado" });
+
+        // Verificación de propiedad: solo el vendedor dueño puede desbloquear.
+        if (negocio.VendedorId != vendedorId.Value)
+            return Forbid();
+
+        var (success, message) = await _negocioService.DesbloquearNegocioAsync(id);
+
+        if (!success)
+            return BadRequest(new { success = false, message });
+
+        var vendedorNombre = User.Identity?.Name ?? "Vendedor";
+        await _negocioService.RegistrarAdminLogAsync(
+            "VendedorDesbloquearNegocio",
+            $"Vendedor {vendedorNombre} desbloqueó el negocio '{negocio.NegocioNombre}'",
+            negocio.NegocioNombre);
+
+        return Ok(new { success = true, message });
+    }
+
     // ═══════════════════════════════════════════════════════════
     // SECCIÓN 6 — VENDEDOR: LEADS (INTERESADOS DE LANDING PAGE)
     //

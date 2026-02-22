@@ -129,6 +129,23 @@ public interface INegocioService
     /// <returns>Tupla con (success, message, isActive, esPrueba) para que el frontend actualice la UI.</returns>
     Task<(bool success, string message, bool? isActive, bool? esPrueba)> CambiarEstadoAsync(Guid id);
 
+    /// <summary>
+    /// Bloquea un negocio para que no pueda usar el sistema.
+    /// Se usa cuando la suscripción expira o manualmente por admin/vendedor.
+    /// </summary>
+    Task<(bool success, string message)> BloquearNegocioAsync(Guid id);
+
+    /// <summary>
+    /// Desbloquea un negocio tras confirmar el pago de su suscripción.
+    /// </summary>
+    Task<(bool success, string message)> DesbloquearNegocioAsync(Guid id);
+
+    /// <summary>
+    /// Verifica si un negocio está bloqueado. Usado por el middleware de bloqueo.
+    /// Si el negocio está expirado pero no marcado como bloqueado, lo bloquea automáticamente.
+    /// </summary>
+    Task<bool> IsNegocioBloqueadoAsync(Guid negocioId);
+
     // ═══════════════════════════════════════════════════════════
     // EXPORTACIÓN
     // ═══════════════════════════════════════════════════════════

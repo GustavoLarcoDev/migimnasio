@@ -327,6 +327,7 @@ public class VendedorService : IVendedorService
                 n.Telefono,
                 n.IsActive,
                 n.EsPrueba,
+                n.NegocioBloqueado,
                 // Subconsulta: cuántos clientes tiene este negocio
                 totalClientes = _context.Clientes.Count(c => c.NegocioId == n.NegocioId),
                 fechaCreacion = n.FechaCreacion.ToString("yyyy-MM-dd"),

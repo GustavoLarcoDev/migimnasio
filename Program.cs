@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using System.Threading.RateLimiting;
 
 // WebApplication.CreateBuilder prepara el contenedor de DI y la
@@ -541,6 +542,54 @@ app.UseRouting();
 // redirige a LoginPath definida en la SECCIÓN 8.
 app.UseAuthentication();
 app.UseAuthorization();
+
+// ── Verificación de Bloqueo de Negocios ─────────────────
+// Después de autenticación y autorización, verificamos si el negocio
+// autenticado está bloqueado (suscripción expirada o bloqueado manualmente).
+// Si está bloqueado:
+//   - Requests AJAX → responde 423 Locked con mensaje JSON
+//   - Requests de página → marca HttpContext.Items["NegocioBloqueado"] = true
+//     para que _DashboardLayout.cshtml muestre el overlay de bloqueo
+// Los admins impersonando NO son afectados por el bloqueo.
+app.Use(async (context, next) =>
+{
+    var user = context.User;
+    if (user.Identity?.IsAuthenticated == true
+        && user.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Negocio")
+        && !user.Claims.Any(c => c.Type == "AdminImpersonating" && c.Value == "true")
+        && !user.Claims.Any(c => c.Type == "VendedorImpersonating" && c.Value == "true"))
+    {
+        var negocioIdClaim = user.Claims.FirstOrDefault(c => c.Type == "NegocioId");
+        if (negocioIdClaim != null && Guid.TryParse(negocioIdClaim.Value, out var negocioId))
+        {
+            var negocioService = context.RequestServices.GetRequiredService<INegocioService>();
+            var bloqueado = await negocioService.IsNegocioBloqueadoAsync(negocioId);
+
+            if (bloqueado)
+            {
+                // Para AJAX: devolver 423 Locked
+                if (context.Request.Headers["X-Requested-With"] == "XMLHttpRequest"
+                    || context.Request.Headers["Accept"].ToString().Contains("application/json"))
+                {
+                    context.Response.StatusCode = 423;
+                    context.Response.ContentType = "application/json";
+                    await context.Response.WriteAsJsonAsync(new
+                    {
+                        success = false,
+                        blocked = true,
+                        message = "Tu cuenta está bloqueada. Contacta a tu vendedor o administrador."
+                    });
+                    return;
+                }
+
+                // Para páginas: marcar para que el layout muestre el overlay
+                context.Items["NegocioBloqueado"] = true;
+            }
+        }
+    }
+
+    await next();
+});
 
 // ── Archivos Estáticos ─────────────────────────────────────
 // Sirve archivos de wwwroot/ (CSS, JS, imágenes, fuentes).

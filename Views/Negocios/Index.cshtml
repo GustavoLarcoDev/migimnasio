@@ -116,7 +116,7 @@
                     </div>
                 </div>
             </div>
-            <div class="col-xl-4 col-md-4 col-6">
+            <div class="col-xl-2 col-md-4 col-6">
                 <div class="mg-stat-card">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
@@ -125,6 +125,19 @@
                         </div>
                         <div class="stat-icon bg-light-danger">
                             <i class="bi bi-x-circle text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-2 col-md-4 col-6">
+                <div class="mg-stat-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="stat-label">Bloqueados</div>
+                            <div class="stat-value" id="resumenBloqueados">0</div>
+                        </div>
+                        <div class="stat-icon bg-light-danger">
+                            <i class="bi bi-lock-fill text-danger"></i>
                         </div>
                     </div>
                 </div>
@@ -876,10 +889,12 @@ function cargarResumen() {
         const ingresos = data.filter(g => g.isActive && g.precioSuscripcion > 0).reduce((sum, g) => sum + g.precioSuscripcion, 0);
         const porVencer = data.filter(g => g.diasRestantesSuscripcion !== null && g.diasRestantesSuscripcion >= 0 && g.diasRestantesSuscripcion <= 7 && !g.porEmpezar).length;
         const expirados = data.filter(g => g.diasRestantesSuscripcion !== null && g.diasRestantesSuscripcion < 0 && !g.porEmpezar).length;
+        const bloqueados = data.filter(g => g.negocioBloqueado).length;
 
         $('#resumenIngresosMensuales').text('$' + ingresos.toFixed(2));
         $('#resumenPorVencer').text(porVencer);
         $('#resumenExpirados').text(expirados);
+        $('#resumenBloqueados').text(bloqueados);
     }).fail(function () {
         console.warn('Error al cargar negocios para estadísticas de resumen');
     });
@@ -977,8 +992,12 @@ function cargarTablaNegocios() {
             },
             {
                 data: 'isActive',
-                render: function (data) {
-                    return data ? '<span class="badge badge-light-success">Activo</span>' : '<span class="badge badge-light-danger">Inactivo</span>';
+                render: function (data, type, row) {
+                    let badge = data ? '<span class="badge badge-light-success">Activo</span>' : '<span class="badge badge-light-danger">Inactivo</span>';
+                    if (row.negocioBloqueado) {
+                        badge += '<br><span class="badge bg-danger mt-1">Bloqueado</span>';
+                    }
+                    return badge;
                 }
             },
             {
@@ -1019,9 +1038,12 @@ function cargarTablaNegocios() {
                     const estadoBtn = row.isActive
                         ? '<button class="btn btn-icon btn-bg-light btn-sm me-1" onclick="cambiarEstado(\'' + row.negocioId + '\')" title="Desactivar"><i class="bi bi-toggle-on text-success fs-4"></i></button>'
                         : '<button class="btn btn-icon btn-bg-light btn-sm me-1" onclick="cambiarEstado(\'' + row.negocioId + '\')" title="Activar"><i class="bi bi-toggle-off text-danger fs-4"></i></button>';
+                    const bloqueoBtn = row.negocioBloqueado
+                        ? '<button class="btn btn-icon btn-bg-light btn-sm me-1" onclick="desbloquearNegocio(\'' + row.negocioId + '\')" title="Desbloquear"><i class="bi bi-unlock-fill text-success fs-4"></i></button>'
+                        : '<button class="btn btn-icon btn-bg-light btn-sm me-1" onclick="bloquearNegocio(\'' + row.negocioId + '\')" title="Bloquear"><i class="bi bi-lock-fill text-danger fs-4"></i></button>';
 
                     return '<div class="d-flex justify-content-end gap-1">' +
-                        whatsappBtn + impersonateBtn + estadoBtn +
+                        whatsappBtn + impersonateBtn + estadoBtn + bloqueoBtn +
                         '<button class="btn btn-icon btn-bg-light btn-active-color-primary btn-sm me-1" onclick="editarNegocio(\'' + row.negocioId + '\')" title="Editar"><i class="bi bi-pencil fs-5"></i></button>' +
                         '<button class="btn btn-icon btn-bg-light btn-active-color-danger btn-sm" onclick="confirmarEliminar(\'' + row.negocioId + '\', \'' + escHtml(row.negocioNombre).replace(/'/g, "\\'") + '\')" title="Eliminar"><i class="bi bi-trash fs-5"></i></button>' +
                         '</div>';
@@ -1178,6 +1200,68 @@ function cambiarEstado(id) {
                 error: function () {
                     toastr.error('Error al cambiar el estado');
                 }
+            });
+        }
+    });
+}
+
+// Bloquear negocio
+function bloquearNegocio(id) {
+    swalMG.fire({
+        title: 'Bloquear negocio?',
+        text: 'El negocio no podrá usar el sistema hasta que lo desbloquees.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, bloquear',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#F1416C'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '/Negocios/BloquearNegocio',
+                type: 'POST',
+                data: { id: id },
+                success: function(res) {
+                    if (res.success) {
+                        toastr.success(res.message);
+                        if (typeof tablaNegocios !== 'undefined' && tablaNegocios) tablaNegocios.ajax.reload(null, false);
+                        else location.reload();
+                    } else {
+                        toastr.error(res.message);
+                    }
+                },
+                error: function() { toastr.error('Error al bloquear el negocio'); }
+            });
+        }
+    });
+}
+
+// Desbloquear negocio
+function desbloquearNegocio(id) {
+    swalMG.fire({
+        title: 'Desbloquear negocio?',
+        text: 'El negocio podrá volver a usar el sistema.',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, desbloquear',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#50CD89'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '/Negocios/DesbloquearNegocio',
+                type: 'POST',
+                data: { id: id },
+                success: function(res) {
+                    if (res.success) {
+                        toastr.success(res.message);
+                        if (typeof tablaNegocios !== 'undefined' && tablaNegocios) tablaNegocios.ajax.reload(null, false);
+                        else location.reload();
+                    } else {
+                        toastr.error(res.message);
+                    }
+                },
+                error: function() { toastr.error('Error al desbloquear el negocio'); }
             });
         }
     });

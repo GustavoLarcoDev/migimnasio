@@ -68,7 +68,7 @@ public class AuthController : Controller
 
         if (!success)
         {
-            if (error == "EXPIRED")
+            if (error == "EXPIRED" || error == "BLOCKED")
             {
                 ViewBag.Expired = true;
             }

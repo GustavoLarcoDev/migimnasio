@@ -100,6 +100,16 @@ public class Gym
     /// </summary>
     public bool EsPrueba { get; set; }
 
+    /// <summary>
+    /// Indica si el negocio está bloqueado y no puede usar el sistema.
+    /// Se activa automáticamente cuando la suscripción expira (FechaExpiracion &lt; hoy)
+    /// o manualmente por el admin/vendedor.
+    /// Cuando está bloqueado, el dueño ve un modal indicando que debe contactar
+    /// a su vendedor o administrador para renovar el servicio.
+    /// El admin o vendedor desbloquea la cuenta tras confirmar el pago.
+    /// </summary>
+    public bool NegocioBloqueado { get; set; }
+
     // ═══════════════════════════════════════════════════════════
     // TIPO DE NEGOCIO
     // ═══════════════════════════════════════════════════════════

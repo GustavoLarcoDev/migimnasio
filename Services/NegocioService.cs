@@ -96,6 +96,7 @@ public class NegocioService : INegocioService
                 PorEmpezar = g.FechaPago.HasValue && g.FechaPago.Value.Date > now.Date,
                 // Subconsulta: cuántos clientes tiene este negocio
                 TotalClientes = _context.Clientes.Count(c => c.NegocioId == g.NegocioId),
+                g.NegocioBloqueado,
                 g.TipoNegocio,
                 g.VendedorId,
                 // Subconsulta: nombre del vendedor asignado (null si no tiene)
@@ -132,6 +133,7 @@ public class NegocioService : INegocioService
             negocio.Email,
             negocio.IsActive,
             negocio.EsPrueba,
+            negocio.NegocioBloqueado,
             negocio.DiasPagados,
             negocio.PrecioSuscripcion,
             negocio.FechaPago,
@@ -433,6 +435,67 @@ public class NegocioService : INegocioService
 
         string tipoActual = negocio.IsActive ? "Pago (Activo)" : "Prueba";
         return (true, $"Negocio cambiado a modo {tipoActual} exitosamente", negocio.IsActive, negocio.EsPrueba);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // BLOQUEO DE NEGOCIOS
+    // ═══════════════════════════════════════════════════════════
+
+    public async Task<(bool success, string message)> BloquearNegocioAsync(Guid id)
+    {
+        var negocio = await _context.Negocios.FindAsync(id);
+        if (negocio == null)
+            return (false, "Negocio no encontrado");
+
+        negocio.NegocioBloqueado = true;
+        negocio.FechaDeActualizacion = TimeHelper.Now;
+        _context.Update(negocio);
+        await _context.SaveChangesAsync();
+
+        return (true, "Negocio bloqueado exitosamente");
+    }
+
+    public async Task<(bool success, string message)> DesbloquearNegocioAsync(Guid id)
+    {
+        var negocio = await _context.Negocios.FindAsync(id);
+        if (negocio == null)
+            return (false, "Negocio no encontrado");
+
+        negocio.NegocioBloqueado = false;
+        negocio.FechaDeActualizacion = TimeHelper.Now;
+        _context.Update(negocio);
+        await _context.SaveChangesAsync();
+
+        return (true, "Negocio desbloqueado exitosamente");
+    }
+
+    public async Task<bool> IsNegocioBloqueadoAsync(Guid negocioId)
+    {
+        var negocio = await _context.Negocios
+            .AsNoTracking()
+            .Where(n => n.NegocioId == negocioId)
+            .Select(n => new { n.NegocioBloqueado, n.FechaExpiracion })
+            .FirstOrDefaultAsync();
+
+        if (negocio == null) return false;
+
+        // Si ya está bloqueado, retornar true directamente
+        if (negocio.NegocioBloqueado) return true;
+
+        // Auto-bloquear si la suscripción expiró
+        if (negocio.FechaExpiracion.HasValue && negocio.FechaExpiracion.Value.Date < TimeHelper.Now.Date)
+        {
+            var entity = await _context.Negocios.FindAsync(negocioId);
+            if (entity != null)
+            {
+                entity.NegocioBloqueado = true;
+                entity.FechaDeActualizacion = TimeHelper.Now;
+                await _context.SaveChangesAsync();
+            }
+            return true;
+        }
+
+        return false;
     }
 
     // ═══════════════════════════════════════════════════════════
