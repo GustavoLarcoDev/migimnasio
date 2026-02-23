@@ -62,7 +62,7 @@ public interface IComisionService
     ///   - totalPagado: suma de todas las comisiones que se marcaron como pagadas.
     ///   - detalleNegocios: lista de negocios cuyas comisiones se pagaron en esta operación.
     /// </returns>
-    Task<(bool success, string message, decimal totalPagado, List<object> detalleNegocios)> PagarComisionesVendedorAsync(Guid vendedorId);
+    Task<(bool success, string message, decimal totalPagado, List<object> detalleNegocios)> PagarComisionesVendedorAsync(Guid vendedorId, string metodoPago = "Efectivo");
 
     /// <summary>
     /// Obtiene el historial de todas las comisiones ya pagadas (Pagada = true),
@@ -71,4 +71,13 @@ public interface IComisionService
     /// </summary>
     /// <returns>Lista de comisiones pagadas con fecha, vendedor y monto.</returns>
     Task<object> GetHistorialComisionesAsync();
+
+    /// <summary>
+    /// Obtiene todas las comisiones de un vendedor específico (pendientes y pagadas),
+    /// con estadísticas de resumen. Incluye MetodoPagoPago en las comisiones pagadas.
+    /// Usado por el vendedor para ver sus propias comisiones en su dashboard.
+    /// </summary>
+    /// <param name="vendedorId">ID del vendedor autenticado.</param>
+    /// <returns>Objeto con pendientes, pagadas y estadísticas de resumen.</returns>
+    Task<object> GetComisionesVendedorAsync(Guid vendedorId);
 }

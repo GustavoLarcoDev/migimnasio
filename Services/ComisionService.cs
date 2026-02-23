@@ -215,7 +215,7 @@ public class ComisionService : IComisionService
     ///
     /// Falla si el vendedor no tiene comisiones pendientes (nada que pagar).
     /// </summary>
-    public async Task<(bool success, string message, decimal totalPagado, List<object> detalleNegocios)> PagarComisionesVendedorAsync(Guid vendedorId)
+    public async Task<(bool success, string message, decimal totalPagado, List<object> detalleNegocios)> PagarComisionesVendedorAsync(Guid vendedorId, string metodoPago = "Efectivo")
     {
         // Cargar todas las comisiones pendientes del vendedor
         var pendientes = await _context.ComisionesVendedor
@@ -245,6 +245,7 @@ public class ComisionService : IComisionService
         {
             comision.Pagada = true;
             comision.FechaPago = fechaPago;
+            comision.MetodoPagoPago = metodoPago;
         }
 
         // Persistir todos los cambios en una sola transacción
@@ -283,11 +284,71 @@ public class ComisionService : IComisionService
                 c.TipoComision,
                 c.DiasContratados,
                 c.PrecioNegocio,
+                metodoPagoPago = c.MetodoPagoPago ?? "",
                 fechaPago = c.FechaPago.HasValue
                     ? c.FechaPago.Value.ToString("dd/MM/yyyy HH:mm")
                     : "",
                 fechaCreacion = c.FechaCreacion.ToString("dd/MM/yyyy")
             })
             .ToListAsync();
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // CONSULTAS PARA EL PANEL DEL VENDEDOR
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Obtiene todas las comisiones de un vendedor específico,
+    /// separadas en pendientes y pagadas, con estadísticas de resumen.
+    /// Incluye MetodoPagoPago para que el vendedor vea cómo le pagaron.
+    /// </summary>
+    public async Task<object> GetComisionesVendedorAsync(Guid vendedorId)
+    {
+        var todas = await _context.ComisionesVendedor.AsNoTracking()
+            .Where(c => c.VendedorId == vendedorId)
+            .OrderByDescending(c => c.FechaCreacion)
+            .ToListAsync();
+
+        var pendientes = todas.Where(c => !c.Pagada).Select(c => new
+        {
+            c.Id,
+            c.NombreNegocio,
+            c.MontoComision,
+            c.TipoComision,
+            c.DiasContratados,
+            c.PrecioNegocio,
+            fechaCreacion = c.FechaCreacion.ToString("dd/MM/yyyy")
+        }).ToList();
+
+        var pagadas = todas.Where(c => c.Pagada)
+            .OrderByDescending(c => c.FechaPago)
+            .Select(c => new
+        {
+            c.Id,
+            c.NombreNegocio,
+            c.MontoComision,
+            c.TipoComision,
+            c.DiasContratados,
+            c.PrecioNegocio,
+            metodoPagoPago = c.MetodoPagoPago ?? "",
+            fechaPago = c.FechaPago.HasValue
+                ? c.FechaPago.Value.ToString("dd/MM/yyyy HH:mm")
+                : "",
+            fechaCreacion = c.FechaCreacion.ToString("dd/MM/yyyy")
+        }).ToList();
+
+        return new
+        {
+            pendientes,
+            pagadas,
+            resumen = new
+            {
+                totalPendiente = todas.Where(c => !c.Pagada).Sum(c => c.MontoComision),
+                totalPagado = todas.Where(c => c.Pagada).Sum(c => c.MontoComision),
+                cantidadPendientes = pendientes.Count,
+                cantidadPagadas = pagadas.Count,
+                totalComisiones = todas.Count
+            }
+        };
     }
 }

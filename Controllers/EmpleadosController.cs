@@ -332,6 +332,32 @@ public class EmpleadosController : Controller
     // ═══════════════════════════════════════════════════════════
 
     /// <summary>
+    /// Obtiene las excepciones de horario de un empleado, opcionalmente filtradas por rango de fechas.
+    /// Se usa para mostrar en el calendario del administrador los días libres o con horario especial.
+    /// </summary>
+    /// <param name="empleadoId">ID del empleado cuyas excepciones se consultan.</param>
+    /// <param name="negocioId">ID del negocio (verificación de pertenencia).</param>
+    /// <param name="desde">Fecha de inicio del rango (opcional).</param>
+    /// <param name="hasta">Fecha de fin del rango (opcional).</param>
+    [HttpGet("GetExcepciones")]
+    public async Task<IActionResult> GetExcepciones(Guid empleadoId, Guid negocioId, DateTime? desde, DateTime? hasta)
+    {
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+
+            var excepciones = await _empleadoService.GetExcepcionesAsync(empleadoId, negocioId, desde, hasta);
+            return Ok(excepciones);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
     /// Crea una excepción de horario para un día específico.
     ///
     /// Casos de uso típicos:
@@ -369,13 +395,13 @@ public class EmpleadosController : Controller
 
             // Los parámetros se pasan directamente al servicio porque son tipos primitivos.
             // Si fueran un objeto complejo, usaríamos un DTO con [FromBody] o [FromForm].
-            var (success, message) = await _empleadoService.CrearExcepcionAsync(
+            var (success, message, excepcionId) = await _empleadoService.CrearExcepcionAsync(
                 empleadoId, negocioId, fecha, esDiaLibre, horaInicio, horaFin, motivo);
 
             if (!success)
                 return BadRequest(new { success, message });
 
-            return Ok(new { success, message });
+            return Ok(new { success, message, excepcionId });
         }
         catch (Exception)
         {

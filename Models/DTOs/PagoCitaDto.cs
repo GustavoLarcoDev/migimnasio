@@ -47,14 +47,15 @@ public class PagoCitaDto
     public Guid NegocioId { get; set; }
 
     /// <summary>
-    /// Forma de pago con la que el cliente pagó la cita. Obligatorio, máximo 20 caracteres.
-    /// Valor por defecto: "efectivo".
-    /// Valores posibles típicos: "efectivo", "tarjeta", "transferencia", "qr".
+    /// Forma de pago con la que el cliente pagó la cita. Obligatorio, máximo 100 caracteres.
+    /// Valor por defecto: "Efectivo".
+    /// Ahora soporta nombres dinamicos de metodos de pago configurados por el negocio
+    /// (ej: "Banco Pichincha", "Tarjeta Visa", "Efectivo").
     /// Se registra en el historial de pagos y se muestra en los reportes de ingresos.
     /// </summary>
     [Required]
-    [MaxLength(20)]
-    public string MetodoPago { get; set; } = "efectivo";
+    [MaxLength(100)]
+    public string MetodoPago { get; set; } = "Efectivo";
 
     /// <summary>
     /// Monto adicional cobrado aparte del precio base del servicio. Opcional, por defecto 0.

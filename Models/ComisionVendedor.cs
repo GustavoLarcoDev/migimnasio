@@ -53,5 +53,13 @@ public class ComisionVendedor
     /// <summary>Fecha en que el admin pagó esta comisión al vendedor</summary>
     public DateTime? FechaPago { get; set; }
 
+    /// <summary>
+    /// Método de pago usado para pagar esta comisión al vendedor.
+    /// Ejemplo: "Transferencia Bancaria - Banco Pichincha", "PayPal", etc.
+    /// Se establece cuando el admin marca la comisión como pagada.
+    /// </summary>
+    [StringLength(200)]
+    public string MetodoPagoPago { get; set; }
+
     public DateTime FechaCreacion { get; set; } = TimeHelper.Now;
 }

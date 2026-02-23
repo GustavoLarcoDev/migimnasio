@@ -70,6 +70,14 @@
                 <i class="bi bi-plus-circle"></i>
                 <span>Crear Negocio</span>
             </a>
+            <a href="#comisionesTab" class="nav-link" data-mg-tab="comisionesTab">
+                <i class="bi bi-cash-coin"></i>
+                <span>Mis Comisiones</span>
+            </a>
+            <a href="#metodosPagoTab" class="nav-link" data-mg-tab="metodosPagoTab">
+                <i class="bi bi-wallet2"></i>
+                <span>Métodos de Pago</span>
+            </a>
         </nav>
 
         <div class="mg-sidebar-footer">
@@ -241,6 +249,232 @@
                                 </thead>
                                 <tbody></tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB MIS COMISIONES -->
+            <div class="tab-pane fade" id="comisionesTab" role="tabpanel">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+                    <div>
+                        <h3 class="fw-bold mb-0"><i class="bi bi-cash-coin text-primary me-2"></i>Mis Comisiones</h3>
+                        <p class="text-muted mb-0">Historial de comisiones generadas y pagadas</p>
+                    </div>
+                </div>
+
+                <!-- Resumen de comisiones -->
+                <div class="row g-3 mb-4">
+                    <div class="col-xl-3 col-md-6 col-6">
+                        <div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-primary) 0%, var(--mg-gradient-primary-end) 100%);">
+                            <div class="card-body text-white">
+                                <span class="d-block mb-1 opacity-75 small">Total Comisiones</span>
+                                <span class="fs-2x fw-bolder" id="comTotalComisiones">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 col-6">
+                        <div class="mg-stat-card">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="stat-label">Pendiente</div>
+                                    <div class="stat-value" id="comMontoPendiente" style="color: var(--mg-warning, #FFC700);">$0.00</div>
+                                </div>
+                                <div class="stat-icon bg-light-warning">
+                                    <i class="bi bi-clock-history text-warning"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 col-6">
+                        <div class="mg-stat-card">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="stat-label">Pagado</div>
+                                    <div class="stat-value" id="comMontoPagado" style="color: var(--mg-success, #50CD89);">$0.00</div>
+                                </div>
+                                <div class="stat-icon bg-light-success">
+                                    <i class="bi bi-check-circle text-success"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6 col-6">
+                        <div class="mg-stat-card">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div>
+                                    <div class="stat-label">Pendientes</div>
+                                    <div class="stat-value" id="comCantPendientes">0</div>
+                                </div>
+                                <div class="stat-icon bg-light-info">
+                                    <i class="bi bi-hourglass-split text-info"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comisiones Pendientes -->
+                <div class="mg-card mb-4">
+                    <div class="card-header border-0">
+                        <h5 class="fw-bold mb-0">
+                            <i class="bi bi-clock-history text-warning me-2"></i>Comisiones Pendientes
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-row-bordered align-middle gs-0 gy-3 mb-0" id="comisionesPendientesTable">
+                                <thead>
+                                    <tr class="fw-bold text-muted">
+                                        <th>Negocio</th>
+                                        <th>Monto</th>
+                                        <th>Tipo</th>
+                                        <th class="d-none d-md-table-cell">Días</th>
+                                        <th class="d-none d-md-table-cell">Precio Negocio</th>
+                                        <th>Fecha</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="comPendientesBody">
+                                    <tr><td colspan="6" class="text-center text-muted py-4">
+                                        <span class="spinner-border spinner-border-sm me-2"></span>Cargando...
+                                    </td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comisiones Pagadas (Historial) -->
+                <div class="mg-card">
+                    <div class="card-header border-0">
+                        <h5 class="fw-bold mb-0">
+                            <i class="bi bi-check-circle text-success me-2"></i>Comisiones Pagadas
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-row-bordered align-middle gs-0 gy-3 mb-0" id="comisionesPagadasTable">
+                                <thead>
+                                    <tr class="fw-bold text-muted">
+                                        <th>Negocio</th>
+                                        <th>Monto</th>
+                                        <th>Método de Pago</th>
+                                        <th class="d-none d-md-table-cell">Tipo</th>
+                                        <th class="d-none d-md-table-cell">Días</th>
+                                        <th>Fecha Pago</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="comPagadasBody">
+                                    <tr><td colspan="6" class="text-center text-muted py-4">
+                                        <span class="spinner-border spinner-border-sm me-2"></span>Cargando...
+                                    </td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB MÉTODOS DE PAGO -->
+            <div class="tab-pane fade" id="metodosPagoTab" role="tabpanel">
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+                    <div>
+                        <h3 class="fw-bold mb-0"><i class="bi bi-wallet2 text-primary me-2"></i>Mis Métodos de Cobro</h3>
+                        <p class="text-muted mb-0">Cuentas donde recibes tus comisiones</p>
+                    </div>
+                </div>
+
+                <!-- Sección 1: Métodos de cobro del vendedor (donde recibe comisiones) -->
+                <div class="row g-3 mb-4" id="vendedorMetodosCobro">
+                    <div class="text-center py-4" id="vendedorMetodosCobroLoading">
+                        <span class="spinner-border spinner-border-sm text-primary me-2"></span>Cargando métodos de cobro...
+                    </div>
+                </div>
+
+                <!-- Separador visual -->
+                <hr class="my-4" style="border-color: var(--mg-border-color, #E4E6EF);" />
+
+                <!-- Sección 2: Métodos de pago del Admin (referencia para el vendedor) -->
+                <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+                    <div>
+                        <h4 class="fw-bold mb-0"><i class="bi bi-bank text-info me-2"></i>Métodos de Pago del Admin</h4>
+                        <p class="text-muted mb-0 small">Comparte estos datos con los dueños de negocio para que paguen sus suscripciones</p>
+                    </div>
+                </div>
+
+                <div class="row g-3" id="adminMetodosPagoGrid">
+                    <!-- Tarjeta de Efectivo (siempre visible) -->
+                    <div class="col-md-6 col-lg-4">
+                        <div class="border rounded-3 p-3 h-100" style="background: var(--mg-card-bg); border-color: var(--mg-border-color) !important;">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width:42px;height:42px;background:rgba(80,205,137,0.1);">
+                                    <i class="bi bi-cash-stack text-success fs-5"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-0" style="color: var(--mg-text-color);">Efectivo</h6>
+                                    <small class="text-muted">Siempre aceptado</small>
+                                </div>
+                            </div>
+                            <p class="text-muted small mb-0">El pago en efectivo siempre es una opción disponible para las suscripciones.</p>
+                        </div>
+                    </div>
+                    <!-- Las tarjetas dinámicas se insertan aquí por JS -->
+                </div>
+                <div class="text-center py-3 d-none" id="adminMetodosPagoEmpty">
+                    <i class="bi bi-credit-card-2-front fs-1 text-muted d-block mb-2"></i>
+                    <p class="text-muted mb-0">No hay métodos de pago adicionales configurados</p>
+                </div>
+            </div>
+
+            <!-- Modal Detalle Método de Pago Admin -->
+            <div class="modal fade" id="detalleMetodoPagoModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+                    <div class="modal-content">
+                        <div class="modal-header bg-light">
+                            <h5 class="modal-title fw-bolder">
+                                <i class="bi bi-credit-card text-primary me-2"></i><span id="detalleMP_Nombre">Detalle</span>
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="detalleMP_Loading" class="text-center py-4">
+                                <span class="spinner-border spinner-border-sm text-primary me-2"></span>Cargando...
+                            </div>
+                            <div id="detalleMP_Content" class="d-none">
+                                <div class="mb-3" id="detalleMP_CuentaWrap">
+                                    <label class="form-label text-muted small fw-semibold">Número de Cuenta</label>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="fw-bold fs-6" id="detalleMP_Cuenta" style="color: var(--mg-text-color);"></span>
+                                        <button type="button" class="btn btn-sm btn-light" onclick="copiarTexto(document.getElementById('detalleMP_Cuenta').textContent)" title="Copiar">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mb-3" id="detalleMP_TitularWrap">
+                                    <label class="form-label text-muted small fw-semibold">Nombre del Titular</label>
+                                    <div class="fw-bold" id="detalleMP_Titular" style="color: var(--mg-text-color);"></div>
+                                </div>
+                                <div class="mb-3" id="detalleMP_CedulaWrap">
+                                    <label class="form-label text-muted small fw-semibold">Cédula</label>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="fw-bold" id="detalleMP_Cedula" style="color: var(--mg-text-color);"></span>
+                                        <button type="button" class="btn btn-sm btn-light" onclick="copiarTexto(document.getElementById('detalleMP_Cedula').textContent)" title="Copiar">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="mb-3" id="detalleMP_InstruccionesWrap">
+                                    <label class="form-label text-muted small fw-semibold">Instrucciones</label>
+                                    <div class="p-3 rounded-3" id="detalleMP_Instrucciones" style="background: var(--mg-body-bg); color: var(--mg-text-color); white-space: pre-wrap;"></div>
+                                </div>
+                                <div class="text-center" id="detalleMP_QRWrap">
+                                    <label class="form-label text-muted small fw-semibold d-block">Código QR</label>
+                                    <img id="detalleMP_QR" src="" alt="QR" class="img-fluid rounded-3 qr-zoomable" style="max-height:280px;" title="Click para ampliar" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
                         </div>
                     </div>
                 </div>
@@ -596,6 +830,13 @@
             if (!tablaNegocios) cargarTabla();
             else tablaNegocios.ajax.reload(null, false);
         }
+        else if (e.detail.tab === 'comisionesTab') {
+            cargarMisComisiones();
+        }
+        else if (e.detail.tab === 'metodosPagoTab') {
+            cargarVendedorMetodosCobro();
+            cargarMetodosPagoAdmin();
+        }
     });
 
     function cargarStats() {
@@ -700,6 +941,73 @@
                     toastr.error(xhr.responseJSON?.message || 'Error al marcar lead');
                 });
             }
+        });
+    }
+
+    // ================================================================
+    // MIS COMISIONES: Cargar comisiones del vendedor
+    // ================================================================
+    var comisionesCargadas = false;
+
+    function cargarMisComisiones() {
+        $.get('/Negocios/GetVendedorMisComisiones', function(data) {
+            // Actualizar stats
+            $('#comTotalComisiones').text(data.resumen.totalComisiones);
+            $('#comMontoPendiente').text('$' + data.resumen.totalPendiente.toFixed(2));
+            $('#comMontoPagado').text('$' + data.resumen.totalPagado.toFixed(2));
+            $('#comCantPendientes').text(data.resumen.cantidadPendientes);
+
+            // Renderizar pendientes
+            if (data.pendientes.length === 0) {
+                $('#comPendientesBody').html('<tr><td colspan="6" class="text-center text-muted py-4"><i class="bi bi-check-circle fs-3 d-block mb-2"></i>No tienes comisiones pendientes</td></tr>');
+            } else {
+                var html = '';
+                data.pendientes.forEach(function(c) {
+                    var tipoBadge = c.tipoComision === 'nueva'
+                        ? '<span class="badge bg-primary bg-opacity-10" style="color: var(--mg-primary, #3E97FF);">Nueva</span>'
+                        : '<span class="badge bg-info bg-opacity-10" style="color: var(--mg-info, #009EF7);">Renovación</span>';
+                    html += '<tr>'
+                        + '<td><strong>' + escHtml(c.nombreNegocio) + '</strong></td>'
+                        + '<td><span class="fw-bold" style="color: var(--mg-warning, #FFC700);">$' + c.montoComision.toFixed(2) + '</span></td>'
+                        + '<td>' + tipoBadge + '</td>'
+                        + '<td class="d-none d-md-table-cell">' + c.diasContratados + ' días</td>'
+                        + '<td class="d-none d-md-table-cell">$' + c.precioNegocio.toFixed(2) + '</td>'
+                        + '<td><small class="text-muted">' + escHtml(c.fechaCreacion) + '</small></td>'
+                        + '</tr>';
+                });
+                $('#comPendientesBody').html(html);
+            }
+
+            // Renderizar pagadas
+            if (data.pagadas.length === 0) {
+                $('#comPagadasBody').html('<tr><td colspan="6" class="text-center text-muted py-4"><i class="bi bi-inbox fs-3 d-block mb-2"></i>Aún no tienes comisiones pagadas</td></tr>');
+            } else {
+                var html2 = '';
+                data.pagadas.forEach(function(c) {
+                    var tipoBadge = c.tipoComision === 'nueva'
+                        ? '<span class="badge bg-primary bg-opacity-10" style="color: var(--mg-primary, #3E97FF);">Nueva</span>'
+                        : '<span class="badge bg-info bg-opacity-10" style="color: var(--mg-info, #009EF7);">Renovación</span>';
+
+                    var metodoPago = c.metodoPagoPago
+                        ? '<span class="badge bg-info bg-opacity-10" style="color: var(--mg-info, #009EF7);"><i class="bi bi-credit-card me-1"></i>' + escHtml(c.metodoPagoPago) + '</span>'
+                        : '<span class="text-muted fst-italic small">No registrado</span>';
+
+                    html2 += '<tr>'
+                        + '<td><strong>' + escHtml(c.nombreNegocio) + '</strong></td>'
+                        + '<td><span class="fw-bold" style="color: var(--mg-success, #50CD89);">$' + c.montoComision.toFixed(2) + '</span></td>'
+                        + '<td>' + metodoPago + '</td>'
+                        + '<td class="d-none d-md-table-cell">' + tipoBadge + '</td>'
+                        + '<td class="d-none d-md-table-cell">' + c.diasContratados + ' días</td>'
+                        + '<td><small class="text-muted">' + escHtml(c.fechaPago) + '</small></td>'
+                        + '</tr>';
+                });
+                $('#comPagadasBody').html(html2);
+            }
+
+            comisionesCargadas = true;
+        }).fail(function() {
+            $('#comPendientesBody').html('<tr><td colspan="6" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-2"></i>Error al cargar comisiones</td></tr>');
+            $('#comPagadasBody').html('<tr><td colspan="6" class="text-center text-danger py-4"><i class="bi bi-exclamation-triangle me-2"></i>Error al cargar comisiones</td></tr>');
         });
     }
 
@@ -1105,22 +1413,270 @@
         }
     });
 
-    $('#crearNegocioForm').on('submit', function(e) {
-        e.preventDefault();
+    // ================================================================
+    // CREAR NEGOCIO: Mostrar métodos de pago del admin para negocios de pago
+    // ================================================================
+    function mostrarMetodosPagoAdmin(callback) {
+        // Step 1: Load admin payment methods
+        $.get('/Negocios/GetAdminMetodosPagoParaVendedor', function(metodos) {
+            // Build cards HTML for each method
+            var cardsHtml = '';
 
-        // Validate subscription selection when "De Pago" is chosen
-        var esPrueba = $('input[name="esPrueba"]:checked').val() === 'true';
-        if (!esPrueba && !$('#crearDias').val()) {
-            toastr.warning('Por favor selecciona la duración de la suscripción.');
-            $('#crearDiasPagados').focus();
-            return;
-        }
+            // Always include "Efectivo" as first option
+            cardsHtml += '<div class="mp-select-card" data-metodo="Efectivo" data-id="" style="'
+                + 'display:flex;align-items:center;gap:12px;padding:14px 16px;margin-bottom:10px;'
+                + 'border:2px solid var(--mg-border-color, #E4E6EF);border-radius:10px;cursor:pointer;'
+                + 'background:var(--mg-card-bg, #fff);transition:all 0.2s ease;'
+                + '">'
+                + '<div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;'
+                + 'justify-content:center;background:rgba(80,205,137,0.12);flex-shrink:0;">'
+                + '<i class="bi bi-cash-stack" style="font-size:1.3rem;color:#50CD89;"></i>'
+                + '</div>'
+                + '<div style="flex:1;min-width:0;">'
+                + '<div style="font-weight:600;color:var(--mg-text-color, #181C32);font-size:0.95rem;">Efectivo</div>'
+                + '<div style="font-size:0.8rem;color:var(--mg-text-muted, #A1A5B7);">Pago en efectivo directo</div>'
+                + '</div>'
+                + '<i class="bi bi-chevron-right" style="color:var(--mg-text-muted, #A1A5B7);font-size:1.1rem;"></i>'
+                + '</div>';
 
+            // Add bank/digital methods from admin
+            metodos.forEach(function(mp) {
+                var iconClass = 'bi-bank';
+                var iconColor = '#3E97FF';
+                var iconBg = 'rgba(62,151,255,0.12)';
+                var nombreLower = mp.nombre.toLowerCase();
+
+                if (nombreLower.indexOf('paypal') >= 0) {
+                    iconClass = 'bi-paypal'; iconColor = '#009EF7'; iconBg = 'rgba(0,158,247,0.12)';
+                } else if (nombreLower.indexOf('nequi') >= 0 || nombreLower.indexOf('movil') >= 0 || nombreLower.indexOf('billetera') >= 0) {
+                    iconClass = 'bi-phone'; iconColor = '#50CD89'; iconBg = 'rgba(80,205,137,0.12)';
+                } else if (nombreLower.indexOf('tarjeta') >= 0) {
+                    iconClass = 'bi-credit-card-2-front'; iconColor = '#FFC700'; iconBg = 'rgba(255,199,0,0.12)';
+                }
+
+                var subtitulo = '';
+                if (mp.numeroCuenta) subtitulo = 'Cuenta: ' + mp.numeroCuenta;
+                else if (mp.nombreTitular) subtitulo = mp.nombreTitular;
+                else subtitulo = 'Ver detalles para transferir';
+
+                var qrBadge = mp.imagenQR
+                    ? '<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:4px;'
+                    + 'font-size:0.7rem;background:rgba(0,158,247,0.1);color:#009EF7;margin-left:6px;">'
+                    + '<i class="bi bi-qr-code"></i>QR</span>'
+                    : '';
+
+                cardsHtml += '<div class="mp-select-card" data-metodo="' + escHtml(mp.nombre) + '" data-id="' + mp.metodoPagoId + '" style="'
+                    + 'display:flex;align-items:center;gap:12px;padding:14px 16px;margin-bottom:10px;'
+                    + 'border:2px solid var(--mg-border-color, #E4E6EF);border-radius:10px;cursor:pointer;'
+                    + 'background:var(--mg-card-bg, #fff);transition:all 0.2s ease;'
+                    + '">'
+                    + '<div style="width:44px;height:44px;border-radius:50%;display:flex;align-items:center;'
+                    + 'justify-content:center;background:' + iconBg + ';flex-shrink:0;">'
+                    + '<i class="bi ' + iconClass + '" style="font-size:1.3rem;color:' + iconColor + ';"></i>'
+                    + '</div>'
+                    + '<div style="flex:1;min-width:0;">'
+                    + '<div style="font-weight:600;color:var(--mg-text-color, #181C32);font-size:0.95rem;">'
+                    + escHtml(mp.nombre) + qrBadge + '</div>'
+                    + '<div style="font-size:0.8rem;color:var(--mg-text-muted, #A1A5B7);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'
+                    + escHtml(subtitulo) + '</div>'
+                    + '</div>'
+                    + '<i class="bi bi-chevron-right" style="color:var(--mg-text-muted, #A1A5B7);font-size:1.1rem;"></i>'
+                    + '</div>';
+            });
+
+            var precio = $('#crearPrecio').val() || '0.00';
+
+            swalMG.fire({
+                title: '<i class="bi bi-credit-card-2-front me-2 text-primary"></i>Método de Pago',
+                html: '<div style="text-align:left;">'
+                    + '<div style="padding:10px 14px;margin-bottom:16px;border-radius:8px;'
+                    + 'background:rgba(62,151,255,0.06);border:1px solid rgba(62,151,255,0.15);">'
+                    + '<div style="font-size:0.82rem;color:var(--mg-text-muted, #A1A5B7);">Monto a cobrar</div>'
+                    + '<div style="font-size:1.4rem;font-weight:700;color:var(--mg-primary, #3E97FF);">$' + escHtml(precio) + '</div>'
+                    + '</div>'
+                    + '<p style="font-size:0.85rem;color:var(--mg-text-muted, #A1A5B7);margin-bottom:12px;">'
+                    + 'Selecciona cómo pagará el cliente:</p>'
+                    + '<div id="mpSelectContainer">' + cardsHtml + '</div>'
+                    + '</div>',
+                showConfirmButton: false,
+                showCancelButton: true,
+                cancelButtonText: '<i class="bi bi-arrow-left me-1"></i>Volver',
+                width: 480,
+                didOpen: function() {
+                    // Add hover + click effects to cards
+                    var popup = Swal.getPopup();
+                    $(popup).find('.mp-select-card').on('mouseenter', function() {
+                        $(this).css({ 'border-color': 'var(--mg-primary, #3E97FF)', 'box-shadow': '0 2px 12px rgba(62,151,255,0.15)' });
+                    }).on('mouseleave', function() {
+                        $(this).css({ 'border-color': 'var(--mg-border-color, #E4E6EF)', 'box-shadow': 'none' });
+                    }).on('click', function() {
+                        var metodo = $(this).data('metodo');
+                        var metodoId = $(this).data('id');
+
+                        if (metodo === 'Efectivo' || !metodoId) {
+                            // Efectivo: confirm directly
+                            Swal.close();
+                            callback({ metodoPago: 'Efectivo', numeroConfirmacion: '' });
+                        } else {
+                            // Bank method: show details step
+                            mostrarDetallePagoAdmin(metodoId, metodo, precio, callback);
+                        }
+                    });
+                }
+            });
+        }).fail(function() {
+            // If can't load methods, still allow with Efectivo as fallback
+            swalMG.fire({
+                title: 'Error',
+                html: 'No se pudieron cargar los métodos de pago.<br>¿Deseas registrar como <strong>Efectivo</strong>?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, Efectivo',
+                cancelButtonText: 'Cancelar'
+            }).then(function(result) {
+                if (result.isConfirmed) {
+                    callback({ metodoPago: 'Efectivo', numeroConfirmacion: '' });
+                }
+            });
+        });
+    }
+
+    // Step 2: Show bank details for a specific admin payment method
+    function mostrarDetallePagoAdmin(metodoPagoId, metodoNombre, precio, callback) {
+        Swal.fire({
+            title: '<i class="bi bi-bank me-2 text-primary"></i>' + escHtml(metodoNombre),
+            html: '<div style="text-align:center;padding:20px 0;">'
+                + '<span class="spinner-border spinner-border-sm text-primary me-2"></span>'
+                + '<span style="color:var(--mg-text-muted, #A1A5B7);">Cargando detalles...</span>'
+                + '</div>',
+            showConfirmButton: false,
+            showCancelButton: false,
+            allowOutsideClick: false,
+            width: 520,
+            didOpen: function() {
+                $.get('/Negocios/GetAdminMetodoPagoDetalle', { metodoPagoId: metodoPagoId }, function(data) {
+                    var detailHtml = '<div style="text-align:left;">';
+
+                    // Amount reminder
+                    detailHtml += '<div style="padding:10px 14px;margin-bottom:16px;border-radius:8px;'
+                        + 'background:rgba(62,151,255,0.06);border:1px solid rgba(62,151,255,0.15);">'
+                        + '<div style="font-size:0.82rem;color:var(--mg-text-muted, #A1A5B7);">Monto a transferir</div>'
+                        + '<div style="font-size:1.4rem;font-weight:700;color:var(--mg-primary, #3E97FF);">$' + escHtml(precio) + '</div>'
+                        + '</div>';
+
+                    // Bank details grid
+                    detailHtml += '<div style="border:1px solid var(--mg-border-color, #E4E6EF);border-radius:10px;overflow:hidden;margin-bottom:16px;">';
+
+                    if (data.numeroCuenta) {
+                        detailHtml += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;'
+                            + 'border-bottom:1px solid var(--mg-border-color, #E4E6EF);">'
+                            + '<div>'
+                            + '<div style="font-size:0.75rem;color:var(--mg-text-muted, #A1A5B7);text-transform:uppercase;letter-spacing:0.5px;">Número de Cuenta</div>'
+                            + '<div style="font-weight:600;font-size:1rem;color:var(--mg-text-color, #181C32);font-family:monospace;" id="swalCuenta">'
+                            + escHtml(data.numeroCuenta) + '</div>'
+                            + '</div>'
+                            + '<button type="button" class="btn btn-sm btn-light" onclick="copiarTexto(\'' + escHtml(data.numeroCuenta).replace(/'/g, "\\'") + '\')" '
+                            + 'style="flex-shrink:0;" title="Copiar">'
+                            + '<i class="bi bi-clipboard"></i>'
+                            + '</button>'
+                            + '</div>';
+                    }
+
+                    if (data.nombreTitular) {
+                        detailHtml += '<div style="padding:12px 16px;border-bottom:1px solid var(--mg-border-color, #E4E6EF);">'
+                            + '<div style="font-size:0.75rem;color:var(--mg-text-muted, #A1A5B7);text-transform:uppercase;letter-spacing:0.5px;">Titular</div>'
+                            + '<div style="font-weight:600;color:var(--mg-text-color, #181C32);">' + escHtml(data.nombreTitular) + '</div>'
+                            + '</div>';
+                    }
+
+                    if (data.cedula) {
+                        detailHtml += '<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;'
+                            + 'border-bottom:1px solid var(--mg-border-color, #E4E6EF);">'
+                            + '<div>'
+                            + '<div style="font-size:0.75rem;color:var(--mg-text-muted, #A1A5B7);text-transform:uppercase;letter-spacing:0.5px;">Cédula</div>'
+                            + '<div style="font-weight:600;color:var(--mg-text-color, #181C32);font-family:monospace;" id="swalCedula">'
+                            + escHtml(data.cedula) + '</div>'
+                            + '</div>'
+                            + '<button type="button" class="btn btn-sm btn-light" onclick="copiarTexto(\'' + escHtml(data.cedula).replace(/'/g, "\\'") + '\')" '
+                            + 'style="flex-shrink:0;" title="Copiar">'
+                            + '<i class="bi bi-clipboard"></i>'
+                            + '</button>'
+                            + '</div>';
+                    }
+
+                    detailHtml += '</div>'; // close details grid
+
+                    // Instructions
+                    if (data.instrucciones) {
+                        detailHtml += '<div style="padding:12px 14px;border-radius:8px;margin-bottom:16px;'
+                            + 'background:var(--mg-body-bg, #f5f8fa);border:1px solid var(--mg-border-color, #E4E6EF);">'
+                            + '<div style="font-size:0.75rem;color:var(--mg-text-muted, #A1A5B7);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">'
+                            + '<i class="bi bi-info-circle me-1"></i>Instrucciones</div>'
+                            + '<div style="font-size:0.88rem;color:var(--mg-text-color, #181C32);white-space:pre-wrap;">'
+                            + escHtml(data.instrucciones) + '</div>'
+                            + '</div>';
+                    }
+
+                    // QR image
+                    if (data.imagenQR) {
+                        var qrSrc = data.imagenQR.startsWith('data:') ? data.imagenQR : 'data:image/png;base64,' + data.imagenQR;
+                        detailHtml += '<div style="text-align:center;margin-bottom:16px;">'
+                            + '<div style="font-size:0.75rem;color:var(--mg-text-muted, #A1A5B7);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">'
+                            + '<i class="bi bi-qr-code me-1"></i>Código QR</div>'
+                            + '<img src="' + qrSrc + '" alt="QR" class="qr-zoomable" style="max-height:220px;border-radius:8px;border:1px solid var(--mg-border-color, #E4E6EF);" title="Click para ampliar" />'
+                            + '</div>';
+                    }
+
+                    // Confirmation number input (optional)
+                    detailHtml += '<div style="margin-bottom:8px;">'
+                        + '<label style="font-size:0.82rem;font-weight:600;color:var(--mg-text-color, #181C32);display:block;margin-bottom:6px;">'
+                        + '<i class="bi bi-hash me-1"></i>Número de Confirmación <span style="font-weight:400;color:var(--mg-text-muted, #A1A5B7);">(opcional)</span></label>'
+                        + '<input type="text" id="swalNumConfirmacion" class="form-control" placeholder="Ej: 12345678" '
+                        + 'style="font-size:0.95rem;" />'
+                        + '</div>';
+
+                    detailHtml += '</div>'; // close container
+
+                    Swal.update({
+                        html: detailHtml,
+                        showConfirmButton: true,
+                        showCancelButton: true,
+                        confirmButtonText: '<i class="bi bi-check-circle me-1"></i>Confirmar Pago',
+                        cancelButtonText: '<i class="bi bi-arrow-left me-1"></i>Volver',
+                        allowOutsideClick: true
+                    });
+
+                }).fail(function() {
+                    Swal.update({
+                        html: '<div style="text-align:center;color:#F1416C;"><i class="bi bi-exclamation-triangle fs-3 d-block mb-2"></i>'
+                            + 'Error al cargar los detalles del método de pago.</div>',
+                        showConfirmButton: false,
+                        showCancelButton: true,
+                        cancelButtonText: 'Volver',
+                        allowOutsideClick: true
+                    });
+                });
+            }
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                var numConf = $('#swalNumConfirmacion').val() || '';
+                callback({ metodoPago: metodoNombre, numeroConfirmacion: numConf.trim() });
+            } else if (result.dismiss === Swal.DismissReason.cancel) {
+                // Go back to method selection
+                mostrarMetodosPagoAdmin(callback);
+            }
+        });
+    }
+
+    // ================================================================
+    // CREAR NEGOCIO: Enviar formulario al servidor
+    // ================================================================
+    function enviarCreacionVendedor(formData) {
         var btn = $('#btnCrear');
         var originalHtml = btn.html();
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Creando...');
 
-        $.post('/Negocios/VendedorCrearNegocio', $(this).serialize(), function(r) {
+        $.post('/Negocios/VendedorCrearNegocio', formData, function(r) {
             if (r.success) {
                 swalMG.fire('Negocio creado', r.message, 'success');
                 $('#crearNegocioForm')[0].reset();
@@ -1139,11 +1695,412 @@
         }).always(function() {
             btn.prop('disabled', false).html(originalHtml);
         });
+    }
+
+    $('#crearNegocioForm').on('submit', function(e) {
+        e.preventDefault();
+
+        // Validate subscription selection when "De Pago" is chosen
+        var esPrueba = $('input[name="esPrueba"]:checked').val() === 'true';
+        if (!esPrueba && !$('#crearDias').val()) {
+            toastr.warning('Por favor selecciona la duración de la suscripción.');
+            $('#crearDiasPagados').focus();
+            return;
+        }
+
+        if (!esPrueba) {
+            // Paid business: show admin payment methods first
+            mostrarMetodosPagoAdmin(function(pagoInfo) {
+                var formDataStr = $('#crearNegocioForm').serialize()
+                    + '&metodoPago=' + encodeURIComponent(pagoInfo.metodoPago)
+                    + '&numeroConfirmacion=' + encodeURIComponent(pagoInfo.numeroConfirmacion || '');
+                enviarCreacionVendedor(formDataStr);
+            });
+        } else {
+            // Trial business: submit directly
+            enviarCreacionVendedor($('#crearNegocioForm').serialize() + '&metodoPago=N/A');
+        }
     });
 
     $('#btnCancelar').click(function() {
         document.querySelector('[data-mg-tab="resumenTab"]').click();
     });
+
+    // ================================================================
+    // MÉTODOS DE COBRO DEL VENDEDOR: Tarjetas con stats de comisiones
+    // ================================================================
+    var vendedorMetodosCobroCargados = false;
+
+    function cargarVendedorMetodosCobro() {
+        if (vendedorMetodosCobroCargados) return;
+
+        // Load both: vendor bank info AND commission history (to compute stats per method)
+        var bankPromise = $.get('/Negocios/GetVendedorDatosBancarios');
+        var comisionesPromise = $.get('/Negocios/GetVendedorMisComisiones');
+
+        $.when(bankPromise, comisionesPromise).done(function(bankResp, comResp) {
+            var bankData = bankResp[0];
+            var comData = comResp[0];
+            var container = $('#vendedorMetodosCobro');
+            container.empty();
+            $('#vendedorMetodosCobroLoading').remove();
+
+            // Build commission stats grouped by MetodoPagoPago
+            var statsByMethod = {};
+            var now = new Date();
+            var todayStr = now.toISOString().split('T')[0];
+
+            // Calculate start of week (Monday)
+            var weekStart = new Date(now);
+            var dayOfWeek = weekStart.getDay();
+            var diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+            weekStart.setDate(weekStart.getDate() - diff);
+            weekStart.setHours(0, 0, 0, 0);
+
+            // Calculate start of month
+            var monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+            if (comData && comData.pagadas) {
+                comData.pagadas.forEach(function(c) {
+                    var metodo = c.metodoPagoPago || 'Sin método';
+                    if (!statsByMethod[metodo]) {
+                        statsByMethod[metodo] = { total: 0, hoy: 0, semana: 0, mes: 0, count: 0 };
+                    }
+                    statsByMethod[metodo].total += c.montoComision;
+                    statsByMethod[metodo].count++;
+
+                    // Parse the date from "dd/MM/yyyy HH:mm" format
+                    if (c.fechaPago) {
+                        var parts = c.fechaPago.split(' ')[0].split('/');
+                        if (parts.length === 3) {
+                            var fechaPago = new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+
+                            if (fechaPago.toISOString().split('T')[0] === todayStr) {
+                                statsByMethod[metodo].hoy += c.montoComision;
+                            }
+                            if (fechaPago >= weekStart) {
+                                statsByMethod[metodo].semana += c.montoComision;
+                            }
+                            if (fechaPago >= monthStart) {
+                                statsByMethod[metodo].mes += c.montoComision;
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 1) Efectivo card (always present)
+            var efectivoStats = statsByMethod['Efectivo'] || { total: 0, hoy: 0, semana: 0, mes: 0, count: 0 };
+            container.append(buildVendedorMetodoCard(
+                'Efectivo',
+                'bi-cash-stack',
+                'rgba(80,205,137,0.1)',
+                '#50CD89',
+                'Comisiones pagadas en efectivo',
+                null, null, null,
+                efectivoStats
+            ));
+
+            // 2) Bank account card (from vendor profile)
+            var hasBankData = bankData.nombreBanco || bankData.numeroCuenta || bankData.numeroCedula;
+            if (hasBankData) {
+                // Find stats for this bank method (could match various names)
+                var bankStats = { total: 0, hoy: 0, semana: 0, mes: 0, count: 0 };
+                // Accumulate stats for any method that is NOT "Efectivo" and NOT empty
+                Object.keys(statsByMethod).forEach(function(key) {
+                    if (key !== 'Efectivo' && key !== 'Sin método') {
+                        bankStats.total += statsByMethod[key].total;
+                        bankStats.hoy += statsByMethod[key].hoy;
+                        bankStats.semana += statsByMethod[key].semana;
+                        bankStats.mes += statsByMethod[key].mes;
+                        bankStats.count += statsByMethod[key].count;
+                    }
+                });
+
+                container.append(buildVendedorMetodoCard(
+                    bankData.nombreBanco || 'Cuenta Bancaria',
+                    'bi-bank',
+                    'rgba(62,151,255,0.1)',
+                    '#3E97FF',
+                    bankData.nombreCompleto || 'Titular no registrado',
+                    bankData.numeroCuenta,
+                    bankData.numeroCedula,
+                    null,
+                    bankStats
+                ));
+            }
+
+            // 3) If no bank data, show empty state card prompting to contact admin
+            if (!hasBankData) {
+                container.append(
+                    '<div class="col-md-6 col-lg-4">'
+                    + '<div class="card border-0 shadow-sm h-100" style="border-radius: 16px; background: var(--mg-card-bg); border: 2px dashed var(--mg-border-color, #E4E6EF) !important;">'
+                    + '<div class="card-body text-center p-4 d-flex flex-column justify-content-center">'
+                    + '<div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"'
+                    + ' style="width: 60px; height: 60px; background: rgba(62,151,255,0.08);">'
+                    + '<i class="bi bi-plus-lg fs-4" style="color: var(--mg-primary, #3E97FF);"></i>'
+                    + '</div>'
+                    + '<h6 class="fw-bold mb-2" style="color: var(--mg-text-color);">Agrega tu cuenta bancaria</h6>'
+                    + '<p class="text-muted small mb-0">Contacta al administrador para registrar tus datos bancarios y recibir comisiones por transferencia.</p>'
+                    + '</div>'
+                    + '</div>'
+                    + '</div>'
+                );
+            }
+
+            // 4) Info note (only add if not already present)
+            if ($('#vendedorMetodosCobroNote').length === 0) {
+                container.after(
+                    '<div class="p-3 rounded-3 mb-4" id="vendedorMetodosCobroNote" style="background: rgba(62,151,255,0.04); border: 1px solid rgba(62,151,255,0.15);">'
+                    + '<div class="d-flex align-items-start">'
+                    + '<i class="bi bi-info-circle text-primary me-2 mt-1"></i>'
+                    + '<small style="color: var(--mg-text-color);">Las estadísticas se calculan a partir de tus comisiones pagadas. '
+                    + 'Si necesitas actualizar tus datos bancarios, contacta al administrador.</small>'
+                    + '</div>'
+                    + '</div>'
+                );
+            }
+
+            vendedorMetodosCobroCargados = true;
+        }).fail(function() {
+            var container = $('#vendedorMetodosCobro');
+            container.empty();
+            $('#vendedorMetodosCobroLoading').remove();
+            container.html(
+                '<div class="col-12 text-center text-danger py-4">'
+                + '<i class="bi bi-exclamation-triangle fs-3 d-block mb-2"></i>'
+                + 'Error al cargar métodos de cobro'
+                + '</div>'
+            );
+        });
+    }
+
+    /**
+     * Builds a unified payment method card with commission stats.
+     * Pattern matches the DashboardTienda stats+card approach.
+     */
+    function buildVendedorMetodoCard(nombre, iconClass, iconBg, iconColor, subtitulo, cuenta, cedula, instrucciones, stats) {
+        var card = '<div class="col-md-6 col-lg-4">'
+            + '<div class="card border-0 shadow-sm h-100" style="border-radius: 16px; background: var(--mg-card-bg);">'
+            + '<div class="card-body p-4">';
+
+        // Header: icon + name
+        card += '<div class="d-flex align-items-center mb-3">'
+            + '<div class="rounded-circle d-flex align-items-center justify-content-center me-3 flex-shrink-0"'
+            + ' style="width: 52px; height: 52px; background: ' + iconBg + ';">'
+            + '<i class="bi ' + iconClass + ' fs-4" style="color: ' + iconColor + ';"></i>'
+            + '</div>'
+            + '<div class="flex-grow-1 min-width-0">'
+            + '<h6 class="fw-bold mb-0" style="color: var(--mg-text-color);">' + escHtml(nombre) + '</h6>'
+            + '<small class="text-muted text-truncate d-block">' + escHtml(subtitulo) + '</small>'
+            + '</div>'
+            + '</div>';
+
+        // Bank details (if any)
+        if (cuenta || cedula) {
+            card += '<div class="mb-3 p-2 rounded-2" style="background: var(--mg-body-bg, #f5f8fa);">';
+            if (cuenta) {
+                card += '<div class="d-flex align-items-center justify-content-between mb-1">'
+                    + '<small class="text-muted">Cuenta:</small>'
+                    + '<div class="d-flex align-items-center gap-1">'
+                    + '<span class="fw-semibold small" style="color: var(--mg-text-color); font-family: monospace;">' + escHtml(cuenta) + '</span>'
+                    + '<button type="button" class="btn btn-sm p-0 border-0" onclick="copiarTexto(\'' + escHtml(cuenta).replace(/'/g, "\\'") + '\')" title="Copiar" style="line-height:1;">'
+                    + '<i class="bi bi-clipboard text-muted" style="font-size: 0.75rem;"></i>'
+                    + '</button>'
+                    + '</div>'
+                    + '</div>';
+            }
+            if (cedula) {
+                card += '<div class="d-flex align-items-center justify-content-between">'
+                    + '<small class="text-muted">Cedula:</small>'
+                    + '<div class="d-flex align-items-center gap-1">'
+                    + '<span class="fw-semibold small" style="color: var(--mg-text-color); font-family: monospace;">' + escHtml(cedula) + '</span>'
+                    + '<button type="button" class="btn btn-sm p-0 border-0" onclick="copiarTexto(\'' + escHtml(cedula).replace(/'/g, "\\'") + '\')" title="Copiar" style="line-height:1;">'
+                    + '<i class="bi bi-clipboard text-muted" style="font-size: 0.75rem;"></i>'
+                    + '</button>'
+                    + '</div>'
+                    + '</div>';
+            }
+            card += '</div>';
+        }
+
+        // Commission stats (hoy / semana / mes)
+        if (stats && stats.total > 0) {
+            card += '<div class="border-top pt-3 mt-2" style="border-color: var(--mg-border-color, #E4E6EF) !important;">'
+                + '<div class="row text-center g-0">'
+                + '<div class="col-4">'
+                + '<small class="text-muted d-block mb-1" style="font-size: 0.72rem;">Hoy</small>'
+                + '<strong style="color: var(--mg-success, #50CD89); font-size: 0.95rem;">$' + stats.hoy.toFixed(2) + '</strong>'
+                + '</div>'
+                + '<div class="col-4">'
+                + '<small class="text-muted d-block mb-1" style="font-size: 0.72rem;">Semana</small>'
+                + '<strong style="color: var(--mg-info, #009EF7); font-size: 0.95rem;">$' + stats.semana.toFixed(2) + '</strong>'
+                + '</div>'
+                + '<div class="col-4">'
+                + '<small class="text-muted d-block mb-1" style="font-size: 0.72rem;">Mes</small>'
+                + '<strong style="color: var(--mg-primary, #3E97FF); font-size: 0.95rem;">$' + stats.mes.toFixed(2) + '</strong>'
+                + '</div>'
+                + '</div>'
+                + '<div class="text-center mt-2">'
+                + '<small class="text-muted" style="font-size: 0.72rem;">' + stats.count + ' comision' + (stats.count !== 1 ? 'es' : '') + ' pagada' + (stats.count !== 1 ? 's' : '') + ' | Total: $' + stats.total.toFixed(2) + '</small>'
+                + '</div>'
+                + '</div>';
+        } else {
+            card += '<div class="border-top pt-3 mt-2 text-center" style="border-color: var(--mg-border-color, #E4E6EF) !important;">'
+                + '<small class="text-muted"><i class="bi bi-graph-up me-1"></i>Sin comisiones pagadas por este medio</small>'
+                + '</div>';
+        }
+
+        card += '</div></div></div>';
+        return card;
+    }
+
+    // ================================================================
+    // MÉTODOS DE PAGO: Cargar métodos de pago del admin (referencia)
+    // ================================================================
+    var metodosPagoCargados = false;
+
+    function cargarMetodosPagoAdmin() {
+        if (metodosPagoCargados) return;
+
+        $.get('/Negocios/GetAdminMetodosPagoParaVendedor', function(data) {
+            var grid = $('#adminMetodosPagoGrid');
+            // Quitar tarjetas dinámicas anteriores (mantener la de efectivo)
+            grid.children('.mp-dynamic').remove();
+
+            if (data.length === 0) {
+                $('#adminMetodosPagoEmpty').removeClass('d-none');
+            } else {
+                $('#adminMetodosPagoEmpty').addClass('d-none');
+            }
+
+            data.forEach(function(mp) {
+                var iconClass = 'bi-bank';
+                var iconColor = 'text-primary';
+                var iconBg = 'rgba(62,151,255,0.1)';
+                var nombre = escHtml(mp.nombre);
+                var nombreLower = mp.nombre.toLowerCase();
+
+                if (nombreLower.indexOf('transferencia') >= 0 || nombreLower.indexOf('banco') >= 0) {
+                    iconClass = 'bi-bank'; iconColor = 'text-primary'; iconBg = 'rgba(62,151,255,0.1)';
+                } else if (nombreLower.indexOf('paypal') >= 0) {
+                    iconClass = 'bi-paypal'; iconColor = 'text-info'; iconBg = 'rgba(0,158,247,0.1)';
+                } else if (nombreLower.indexOf('nequi') >= 0 || nombreLower.indexOf('movil') >= 0 || nombreLower.indexOf('billetera') >= 0) {
+                    iconClass = 'bi-phone'; iconColor = 'text-success'; iconBg = 'rgba(80,205,137,0.1)';
+                } else if (nombreLower.indexOf('tarjeta') >= 0) {
+                    iconClass = 'bi-credit-card-2-front'; iconColor = 'text-warning'; iconBg = 'rgba(255,199,0,0.1)';
+                }
+
+                var qrBadge = mp.imagenQR ? '<span class="badge bg-light-info text-info ms-2"><i class="bi bi-qr-code me-1"></i>QR</span>' : '';
+
+                var cuentaInfo = '';
+                if (mp.numeroCuenta) {
+                    cuentaInfo = '<div class="mt-2"><small class="text-muted">Cuenta:</small> <span class="fw-semibold" style="color: var(--mg-text-color);">' + escHtml(mp.numeroCuenta) + '</span></div>';
+                }
+                if (mp.nombreTitular) {
+                    cuentaInfo += '<div><small class="text-muted">Titular:</small> <span class="fw-semibold" style="color: var(--mg-text-color);">' + escHtml(mp.nombreTitular) + '</span></div>';
+                }
+
+                var card = '<div class="col-md-6 col-lg-4 mp-dynamic">'
+                    + '<div class="border rounded-3 p-3 h-100" style="background: var(--mg-card-bg); border-color: var(--mg-border-color) !important;">'
+                    + '<div class="d-flex align-items-center mb-2">'
+                    + '<div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width:42px;height:42px;background:' + iconBg + ';">'
+                    + '<i class="bi ' + iconClass + ' ' + iconColor + ' fs-5"></i>'
+                    + '</div>'
+                    + '<div class="flex-grow-1">'
+                    + '<h6 class="fw-bold mb-0" style="color: var(--mg-text-color);">' + nombre + qrBadge + '</h6>'
+                    + (mp.esPredeterminado ? '<small class="text-success"><i class="bi bi-star-fill me-1"></i>Predeterminado</small>' : '')
+                    + '</div>'
+                    + '</div>'
+                    + cuentaInfo
+                    + '<div class="mt-3 text-end">'
+                    + '<button class="btn btn-sm btn-light-primary" onclick="verDetalleMetodoPago(\'' + mp.metodoPagoId + '\')">'
+                    + '<i class="bi bi-eye me-1"></i>Ver Detalles'
+                    + '</button>'
+                    + '</div>'
+                    + '</div>'
+                    + '</div>';
+                grid.append(card);
+            });
+
+            metodosPagoCargados = true;
+        }).fail(function() {
+            toastr.error('Error al cargar métodos de pago del admin');
+        });
+    }
+
+    // ================================================================
+    // MÉTODOS DE PAGO: Ver detalle de un método de pago del admin
+    // ================================================================
+    function verDetalleMetodoPago(id) {
+        $('#detalleMP_Loading').removeClass('d-none');
+        $('#detalleMP_Content').addClass('d-none');
+        $('#detalleMetodoPagoModal').modal('show');
+
+        $.get('/Negocios/GetAdminMetodoPagoDetalle', { metodoPagoId: id }, function(data) {
+            $('#detalleMP_Nombre').text(data.nombre);
+
+            // Cuenta
+            if (data.numeroCuenta) {
+                $('#detalleMP_Cuenta').text(data.numeroCuenta);
+                $('#detalleMP_CuentaWrap').show();
+            } else {
+                $('#detalleMP_CuentaWrap').hide();
+            }
+
+            // Titular
+            if (data.nombreTitular) {
+                $('#detalleMP_Titular').text(data.nombreTitular);
+                $('#detalleMP_TitularWrap').show();
+            } else {
+                $('#detalleMP_TitularWrap').hide();
+            }
+
+            // Cédula
+            if (data.cedula) {
+                $('#detalleMP_Cedula').text(data.cedula);
+                $('#detalleMP_CedulaWrap').show();
+            } else {
+                $('#detalleMP_CedulaWrap').hide();
+            }
+
+            // Instrucciones
+            if (data.instrucciones) {
+                $('#detalleMP_Instrucciones').text(data.instrucciones);
+                $('#detalleMP_InstruccionesWrap').show();
+            } else {
+                $('#detalleMP_InstruccionesWrap').hide();
+            }
+
+            // QR
+            if (data.imagenQR) {
+                var src = data.imagenQR.startsWith('data:') ? data.imagenQR : 'data:image/png;base64,' + data.imagenQR;
+                $('#detalleMP_QR').attr('src', src);
+                $('#detalleMP_QRWrap').show();
+            } else {
+                $('#detalleMP_QRWrap').hide();
+            }
+
+            $('#detalleMP_Loading').addClass('d-none');
+            $('#detalleMP_Content').removeClass('d-none');
+        }).fail(function() {
+            $('#detalleMP_Loading').html('<div class="text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Error al cargar detalles</div>');
+        });
+    }
+
+    function copiarTexto(texto) {
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(texto).then(function() {
+                toastr.success('Copiado al portapapeles');
+            });
+        } else {
+            // Fallback para navegadores sin clipboard API
+            var temp = $('<textarea>').val(texto).appendTo('body').select();
+            document.execCommand('copy');
+            temp.remove();
+            toastr.success('Copiado al portapapeles');
+        }
+    }
     </script>
 
 </body>

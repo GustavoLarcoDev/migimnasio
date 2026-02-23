@@ -329,6 +329,24 @@ public class RestauranteCrudController : Controller
         }
     }
 
+    [HttpPost("CambiarDisponibilidadMenu")]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> CambiarDisponibilidadMenu([FromBody] EliminarMenuRequest req)
+    {
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue) return Forbid();
+
+            var (success, message, disponible) = await _menuService.CambiarDisponibilidadMenuAsync(req.MenuId, nId.Value);
+            return success ? Ok(new { success, message, disponible }) : BadRequest(new { success, message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
     [HttpPost("EliminarMenu")]
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> EliminarMenu([FromBody] EliminarMenuRequest req)

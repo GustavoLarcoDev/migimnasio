@@ -4,6 +4,7 @@ using Gimnasio.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Gimnasio.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260222121614_MetodoPagoNegocioIdNullable")]
+    partial class MetodoPagoNegocioIdNullable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -238,10 +241,6 @@ namespace Gimnasio.Migrations
 
                     b.Property<DateTime?>("FechaPago")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("MetodoPagoPago")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
 
                     b.Property<decimal>("MontoComision")
                         .HasPrecision(18, 2)
@@ -601,9 +600,6 @@ namespace Gimnasio.Migrations
 
                     b.Property<string>("ContenidoHtml")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("Disponible")
-                        .HasColumnType("bit");
 
                     b.Property<string>("Estilo")
                         .HasMaxLength(30)

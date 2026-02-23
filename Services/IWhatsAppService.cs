@@ -130,19 +130,19 @@ public interface IWhatsAppService
     /// Envía recibo de pago de suscripción SaaS al negocio.
     /// Se llama junto con EnviarReciboPagoNegocioAsync del EmailService.
     /// </summary>
-    Task<bool> EnviarReciboPagoSuscripcionWhatsAppAsync(string telefono, string negocio, int dias, decimal precio, string numRecibo);
+    Task<bool> EnviarReciboPagoSuscripcionWhatsAppAsync(string telefono, string negocio, int dias, decimal precio, string numRecibo, string metodoPago = "Efectivo");
 
     /// <summary>
     /// Envía recibo de pago de comisión al vendedor.
     /// Se llama junto con EnviarReciboComisionAsync del EmailService.
     /// </summary>
-    Task<bool> EnviarReciboComisionWhatsAppAsync(string telefono, string nombre, decimal monto, int cantidad, string numRecibo);
+    Task<bool> EnviarReciboComisionWhatsAppAsync(string telefono, string nombre, decimal monto, int cantidad, string numRecibo, string metodoPago = "Efectivo");
 
     /// <summary>
     /// Envía recibo de pago de membresía al cliente del negocio.
     /// Se llama junto con EnviarReciboPagoClienteAsync del EmailService.
     /// </summary>
-    Task<bool> EnviarReciboPagoClienteWhatsAppAsync(string telefono, string cliente, string negocio, string concepto, decimal monto, string numRecibo);
+    Task<bool> EnviarReciboPagoClienteWhatsAppAsync(string telefono, string cliente, string negocio, string concepto, decimal monto, string numRecibo, string metodoPago = "Efectivo");
 
     /// <summary>
     /// Envía confirmación de reserva/cita al cliente.
@@ -154,7 +154,7 @@ public interface IWhatsAppService
     /// Envía recibo de servicio/cita completada al cliente.
     /// Se llama junto con EnviarReciboCitaCompletadaAsync del EmailService.
     /// </summary>
-    Task<bool> EnviarReciboCitaCompletadaWhatsAppAsync(string telefono, string cliente, string negocio, string servicio, decimal total, string numRecibo);
+    Task<bool> EnviarReciboCitaCompletadaWhatsAppAsync(string telefono, string cliente, string negocio, string servicio, decimal total, string numRecibo, string metodoPago = "Efectivo");
 
     /// <summary>
     /// Envía resumen diario para negocios artesanal/tienda/restaurante.

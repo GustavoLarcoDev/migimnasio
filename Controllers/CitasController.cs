@@ -547,7 +547,8 @@ public class CitasController : Controller
                             clienteEmail, clienteNombre, negocio.NegocioNombre,
                             cita.NombreServicio, cita.NombreEmpleado,
                             pago.MontoServicio, pago.MontoExtra, pago.Propina, pago.Total,
-                            negocio.Email, negocio.Telefono, numRecibo);
+                            negocio.Email, negocio.Telefono, numRecibo,
+                            metodoPago: pago.MetodoPago ?? "Efectivo");
 
                         // Siempre almacenar el recibo en BD (aunque el email falle)
                         await _reciboService.CrearReciboAsync(dto.NegocioId, numRecibo, "pago_cita",
@@ -559,7 +560,7 @@ public class CitasController : Controller
                         {
                             _ = Task.Run(async () =>
                             {
-                                try { await _whatsAppService.EnviarReciboCitaCompletadaWhatsAppAsync(clienteTelefono, clienteNombre, negocio.NegocioNombre, cita.NombreServicio, pago.Total, numRecibo); }
+                                try { await _whatsAppService.EnviarReciboCitaCompletadaWhatsAppAsync(clienteTelefono, clienteNombre, negocio.NegocioNombre, cita.NombreServicio, pago.Total, numRecibo, metodoPago: pago.MetodoPago ?? "Efectivo"); }
                                 catch { }
                             });
                         }

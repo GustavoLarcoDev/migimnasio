@@ -264,7 +264,7 @@ public class InventarioService : IInventarioService
     ///   Capturamos esto y pedimos al usuario que recargue, en lugar de dejar que
     ///   el stock quede en un valor incorrecto.
     /// </summary>
-    public async Task<(bool success, string message)> VenderProductoAsync(Guid productoId, Guid negocioId, int cantidad)
+    public async Task<(bool success, string message)> VenderProductoAsync(Guid productoId, Guid negocioId, int cantidad, string metodoPago = "Efectivo", string numeroConfirmacion = null)
     {
         if (cantidad <= 0)
             return (false, "La cantidad debe ser mayor a 0");
@@ -298,6 +298,7 @@ public class InventarioService : IInventarioService
             Total          = total,
             StockAnterior  = stockAnterior,
             StockNuevo     = producto.Stock,
+            MetodoPago     = metodoPago ?? "Efectivo",
             Fecha          = TimeHelper.Now
         });
 
@@ -308,8 +309,9 @@ public class InventarioService : IInventarioService
             await _context.SaveChangesAsync();
 
             // El total es positivo porque es un ingreso para el negocio
+            var confirmInfo = !string.IsNullOrEmpty(numeroConfirmacion) ? $" (Ref: {numeroConfirmacion})" : "";
             await _logService.CreateLogAsync(negocioId, "venta_inventario",
-                $"Venta inventario: {cantidad}x {producto.Nombre} @ ${producto.PrecioVenta:F2} = ${total:F2}",
+                $"Venta inventario: {cantidad}x {producto.Nombre} @ ${producto.PrecioVenta:F2} = ${total:F2} [{metodoPago ?? "Efectivo"}]{confirmInfo}",
                 total);
 
             await transaction.CommitAsync();
@@ -570,6 +572,7 @@ public class InventarioService : IInventarioService
                 m.StockAnterior,
                 m.StockNuevo,
                 m.Nota,
+                m.MetodoPago,
                 m.Fecha
             })
             .ToListAsync();

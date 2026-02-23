@@ -58,7 +58,8 @@ public class VentaProductoService : IVentaProductoService
     public async Task<(bool success, string message, Guid? ordenId, Guid? reciboId)> RegistrarVentaAsync(
         Guid negocioId, string nombreCliente, string emailCliente,
         List<DetalleOrdenVentaDto> items, decimal descuentoAdicional, decimal porcentajeIva,
-        string tipoOrden = "local", Guid? mesaId = null, Guid? empleadoId = null, string direccionEntrega = null)
+        string tipoOrden = "local", Guid? mesaId = null, Guid? empleadoId = null, string direccionEntrega = null,
+        string metodoPago = "Efectivo", string numeroConfirmacion = null)
     {
         if (items == null || !items.Any()) return (false, "La orden no contiene productos", null, null);
 
@@ -86,6 +87,8 @@ public class VentaProductoService : IVentaProductoService
                 MesaId = mesaId,
                 EmpleadoId = empleadoId,
                 DireccionEntrega = direccionEntrega,
+                MetodoPago = metodoPago ?? "Efectivo",
+                NumeroConfirmacion = numeroConfirmacion,
                 Detalles = new List<DetalleOrdenVenta>()
             };
 
@@ -142,6 +145,7 @@ public class VentaProductoService : IVentaProductoService
                     Total = subtotalProd,
                     StockAnterior = stockAnterior,
                     StockNuevo = producto.Stock,
+                    MetodoPago = metodoPago ?? "Efectivo",
                     Fecha = TimeHelper.Now
                 });
 
@@ -194,8 +198,9 @@ public class VentaProductoService : IVentaProductoService
             }
 
             // Registrar log financiero de la venta (ingreso positivo)
+            var confirmInfo = !string.IsNullOrEmpty(numeroConfirmacion) ? $" (Ref: {numeroConfirmacion})" : "";
             await _logService.CreateLogAsync(negocioId, "venta_tienda_pos",
-                $"Venta POS Orden #{orden.NumeroOrden}, Cliente: {nombreCliente}, Total: ${orden.Total:F2}",
+                $"Venta POS Orden #{orden.NumeroOrden}, Cliente: {nombreCliente}, Total: ${orden.Total:F2} ({metodoPago ?? "Efectivo"}){confirmInfo}",
                 orden.Total);
 
             await transaction.CommitAsync();
@@ -284,6 +289,14 @@ public class VentaProductoService : IVentaProductoService
             altRow = !altRow;
         }
 
+        // Fila de numero de confirmacion (solo si existe)
+        var confirmacionHtml = !string.IsNullOrEmpty(orden.NumeroConfirmacion)
+            ? $@"<tr>
+                <td style='padding: 10px 12px; color: #666; font-weight: bold;'>N° Confirmación</td>
+                <td style='padding: 10px 12px; color: #333;'>{enc(orden.NumeroConfirmacion)}</td>
+            </tr>"
+            : "";
+
         // Fila de descuento (solo si aplica)
         var descuentoHtml = descuento > 0
             ? $"<tr><td style='padding: 10px 12px; color: #F1416C; font-weight: bold;' colspan='3'>Descuento</td><td style='padding: 10px 12px; color: #F1416C; font-weight: bold; text-align: right;'>-${descuento:F2}</td></tr>"
@@ -315,6 +328,11 @@ public class VentaProductoService : IVentaProductoService
                 <td style='padding: 10px 12px; color: #666; font-weight: bold;'>Fecha</td>
                 <td style='padding: 10px 12px; color: #333;'>{orden.FechaCreacion:dd/MM/yyyy HH:mm}</td>
             </tr>
+            <tr style='background: #f8f9fa;'>
+                <td style='padding: 10px 12px; color: #666; font-weight: bold;'>Método de Pago</td>
+                <td style='padding: 10px 12px; color: #333;'>{enc(orden.MetodoPago ?? "Efectivo")}</td>
+            </tr>
+            {confirmacionHtml}
         </table>
 
         <table style='width: 100%; border-collapse: collapse; font-size: 14px;'>

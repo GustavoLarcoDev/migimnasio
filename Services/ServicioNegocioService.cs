@@ -113,6 +113,12 @@ public class ServicioNegocioService : IServicioNegocioService
         // Validación del nombre: es el campo principal y obligatorio
         if (string.IsNullOrWhiteSpace(dto.Nombre))
             return (false, "El nombre del servicio es obligatorio");
+        if (dto.Nombre?.Length > 200)
+            return (false, "El nombre no puede exceder 200 caracteres");
+        if (dto.Descripcion?.Length > 1000)
+            return (false, "La descripción no puede exceder 1000 caracteres");
+        if (dto.ItemsIncluidos?.Length > 2000)
+            return (false, "Los items incluidos no pueden exceder 2000 caracteres");
 
         // El precio debe ser positivo. Los servicios "gratis" se gestionan
         // a nivel de pago (opción regalo), no a nivel de catálogo.
@@ -172,6 +178,12 @@ public class ServicioNegocioService : IServicioNegocioService
         // Esto garantiza que el catálogo siempre tenga datos consistentes.
         if (string.IsNullOrWhiteSpace(dto.Nombre))
             return (false, "El nombre del servicio es obligatorio");
+        if (dto.Nombre?.Length > 200)
+            return (false, "El nombre no puede exceder 200 caracteres");
+        if (dto.Descripcion?.Length > 1000)
+            return (false, "La descripción no puede exceder 1000 caracteres");
+        if (dto.ItemsIncluidos?.Length > 2000)
+            return (false, "Los items incluidos no pueden exceder 2000 caracteres");
         if (dto.Precio <= 0)
             return (false, "El precio debe ser mayor a 0");
         if (dto.DuracionMinutos <= 0)

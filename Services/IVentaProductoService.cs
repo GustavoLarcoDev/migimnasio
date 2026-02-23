@@ -19,7 +19,9 @@ public interface IVentaProductoService
         string tipoOrden = "local",
         Guid? mesaId = null,
         Guid? empleadoId = null,
-        string direccionEntrega = null
+        string direccionEntrega = null,
+        string metodoPago = "Efectivo",
+        string numeroConfirmacion = null
     );
 
     Task<OrdenVenta> GetOrdenVentaAsync(Guid ordenVentaId, Guid negocioId);
@@ -46,4 +48,8 @@ public class OrdenVentaCreateRequest
     public Guid? MesaId { get; set; }
     public Guid? EmpleadoId { get; set; }
     public string DireccionEntrega { get; set; }
+
+    // Metodo de pago
+    public string MetodoPago { get; set; } = "Efectivo";
+    public string NumeroConfirmacion { get; set; }
 }

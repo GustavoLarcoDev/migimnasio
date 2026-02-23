@@ -118,7 +118,7 @@ public interface IClienteService
     /// <param name="nuevaFechaFin">Nueva fecha hasta la que estará activo el cliente.</param>
     /// <param name="precio">Monto cobrado en esta renovación (se guarda en logs).</param>
     /// <returns>Tupla (success, message).</returns>
-    Task<(bool success, string message)> RenovarClienteAsync(Guid id, Guid negocioId, DateTime nuevaFechaFin, decimal precio);
+    Task<(bool success, string message)> RenovarClienteAsync(Guid id, Guid negocioId, DateTime nuevaFechaFin, decimal precio, string metodoPago = "Efectivo");
 
     // ═══════════════════════════════════════════════════════════
     // CLIENTES DIARIOS

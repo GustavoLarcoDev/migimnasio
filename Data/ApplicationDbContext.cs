@@ -222,6 +222,12 @@ public class ApplicationDbContext : DbContext
     /// </summary>
     public DbSet<PagoCita> PagosCita { get; set; }
 
+    /// <summary>
+    /// Métodos de pago configurados por cada negocio (transferencia, efectivo, QR, etc.).
+    /// Cada negocio puede tener múltiples métodos de pago con sus datos bancarios e instrucciones.
+    /// </summary>
+    public DbSet<MetodoPago> MetodosPago { get; set; }
+
     // ═══════════════════════════════════════════════════════════
     // CONFIGURACIÓN DEL MODELO (OnModelCreating)
     //
@@ -495,6 +501,22 @@ public class ApplicationDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(o => o.EmpleadoId)
                 .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // ── Configuración MetodoPago ──
+        modelBuilder.Entity<MetodoPago>(entity =>
+        {
+            entity.HasIndex(e => e.NegocioId)
+                .HasDatabaseName("IX_MetodosPago_NegocioId");
+
+            entity.HasIndex(e => new { e.NegocioId, e.IsActive })
+                .HasDatabaseName("IX_MetodosPago_NegocioId_IsActive");
+
+            entity.HasOne(e => e.Negocio)
+                .WithMany(g => g.MetodosPago)
+                .HasForeignKey(e => e.NegocioId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // ═══════════════════════════════════════════════════════════

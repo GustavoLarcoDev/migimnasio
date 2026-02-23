@@ -367,21 +367,30 @@ public class NegocioService : INegocioService
             }
 
             // ── Nivel 2: tablas que dependen directamente de Negocio ──
+            // ORDEN CRÍTICO: respetar dependencias FK entre tablas de nivel 2.
+            //
+            // OrdenesVenta tiene FK NoAction hacia Empleados y Mesas,
+            // por lo que OrdenesVenta DEBE eliminarse ANTES que Empleados y Mesas.
+            // Citas tiene FK NoAction hacia Clientes, Empleados y ServiciosNegocio,
+            // por lo que Citas DEBE eliminarse ANTES que esas tres tablas.
+            // Productos tiene FK hacia CategoriasProducto,
+            // por lo que Productos DEBE eliminarse ANTES que CategoriasProducto.
             await _context.Citas.Where(c => c.NegocioId == id).ExecuteDeleteAsync();
+            await _context.OrdenesVenta.Where(o => o.NegocioId == id).ExecuteDeleteAsync();
             await _context.Notificaciones.Where(n => n.NegocioId == id).ExecuteDeleteAsync();
             await _context.Clientes.Where(c => c.NegocioId == id).ExecuteDeleteAsync();
             await _context.Empleados.Where(e => e.NegocioId == id).ExecuteDeleteAsync();
             await _context.ServiciosNegocio.Where(s => s.NegocioId == id).ExecuteDeleteAsync();
-            await _context.OrdenesVenta.Where(o => o.NegocioId == id).ExecuteDeleteAsync();
+            await _context.Mesas.Where(m => m.NegocioId == id).ExecuteDeleteAsync();
+            await _context.Recibos.Where(r => r.NegocioId == id).ExecuteDeleteAsync();
             await _context.MovimientosInventario.Where(m => m.NegocioId == id).ExecuteDeleteAsync();
             await _context.Productos.Where(p => p.NegocioId == id).ExecuteDeleteAsync();
             await _context.CategoriasProducto.Where(c => c.NegocioId == id).ExecuteDeleteAsync();
             await _context.Logs.Where(l => l.NegocioId == id).ExecuteDeleteAsync();
             await _context.Sugerencias.Where(s => s.NegocioId == id).ExecuteDeleteAsync();
             await _context.ComisionesVendedor.Where(c => c.NegocioId == id).ExecuteDeleteAsync();
-            await _context.Recibos.Where(r => r.NegocioId == id).ExecuteDeleteAsync();
-            await _context.Mesas.Where(m => m.NegocioId == id).ExecuteDeleteAsync();
             await _context.MenusRestaurante.Where(m => m.NegocioId == id).ExecuteDeleteAsync();
+            await _context.MetodosPago.Where(m => m.NegocioId == id).ExecuteDeleteAsync();
 
             // ── Nivel 1: el negocio mismo ──
             await _context.Negocios.Where(n => n.NegocioId == id).ExecuteDeleteAsync();

@@ -125,6 +125,13 @@ public class MovimientoInventario
     public string Nota { get; set; }
 
     /// <summary>
+    /// Metodo de pago utilizado en la transaccion (solo para movimientos de tipo "venta" y "venta_tienda").
+    /// Null para ajustes, restocks y devoluciones que no involucran un pago del cliente.
+    /// </summary>
+    [MaxLength(100)]
+    public string MetodoPago { get; set; }
+
+    /// <summary>
     /// Fecha y hora en que se realizó el movimiento de inventario.
     /// Se asigna automáticamente con TimeHelper.Now al crear el registro.
     /// No se modifica después (inmutabilidad del historial de inventario).

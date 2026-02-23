@@ -433,6 +433,43 @@ public class CitaService : ICitaService
         // Calculamos la hora de fin sumando la duración del servicio al inicio.
         var fechaHoraFin = dto.FechaHoraInicio.AddMinutes(servicio.DuracionMinutos);
 
+        // --- VALIDAR HORARIO DEL EMPLEADO ---
+        // Verificamos que el empleado trabaje el día y hora solicitados.
+        // Prioridad: excepciones > horario semanal (misma lógica que GetSlotsDisponiblesAsync).
+        var diaSemana = (int)dto.FechaHoraInicio.DayOfWeek;
+        var excepcionHorario = await _context.HorariosExcepcion
+            .FirstOrDefaultAsync(h => h.EmpleadoId == dto.EmpleadoId && h.NegocioId == dto.NegocioId && h.Fecha.Date == dto.FechaHoraInicio.Date);
+
+        if (excepcionHorario != null && excepcionHorario.EsDiaLibre)
+            return (false, "El empleado no trabaja este día", null);
+
+        string horaInicioEmpleado, horaFinEmpleado;
+        if (excepcionHorario != null)
+        {
+            if (string.IsNullOrWhiteSpace(excepcionHorario.HoraInicio) || string.IsNullOrWhiteSpace(excepcionHorario.HoraFin))
+                return (false, "El empleado no tiene horario definido para este día", null);
+            horaInicioEmpleado = excepcionHorario.HoraInicio;
+            horaFinEmpleado = excepcionHorario.HoraFin;
+        }
+        else
+        {
+            var horarioEmpleado = await _context.HorariosEmpleado
+                .FirstOrDefaultAsync(h => h.EmpleadoId == dto.EmpleadoId && h.NegocioId == dto.NegocioId && h.DiaSemana == diaSemana);
+            if (horarioEmpleado == null || !horarioEmpleado.Activo)
+                return (false, "El empleado no trabaja este día", null);
+            horaInicioEmpleado = horarioEmpleado.HoraInicio;
+            horaFinEmpleado = horarioEmpleado.HoraFin;
+        }
+
+        // Verificar que la cita caiga dentro del horario del empleado
+        if (TimeSpan.TryParse(horaInicioEmpleado, out var hInicioEmp) && TimeSpan.TryParse(horaFinEmpleado, out var hFinEmp))
+        {
+            var horaCita = dto.FechaHoraInicio.TimeOfDay;
+            var horaFinCita = fechaHoraFin.TimeOfDay;
+            if (horaCita < hInicioEmp || horaFinCita > hFinEmp)
+                return (false, "La cita está fuera del horario del empleado", null);
+        }
+
         // --- ANTI-DOBLE-BOOKING ---
         // Verificamos si el empleado ya tiene alguna cita activa que se solape con este nuevo slot.
         // Excluimos las canceladas porque esas no ocupan el calendario.
@@ -508,6 +545,42 @@ public class CitaService : ICitaService
             return (false, "Servicio no encontrado");
 
         var fechaHoraFin = dto.FechaHoraInicio.AddMinutes(servicio.DuracionMinutos);
+
+        // --- VALIDAR HORARIO DEL EMPLEADO ---
+        // Verificamos que el empleado trabaje el día y hora solicitados.
+        // Prioridad: excepciones > horario semanal.
+        var diaSemana = (int)dto.FechaHoraInicio.DayOfWeek;
+        var excepcionHorario = await _context.HorariosExcepcion
+            .FirstOrDefaultAsync(h => h.EmpleadoId == dto.EmpleadoId && h.NegocioId == dto.NegocioId && h.Fecha.Date == dto.FechaHoraInicio.Date);
+
+        if (excepcionHorario != null && excepcionHorario.EsDiaLibre)
+            return (false, "El empleado no trabaja este día");
+
+        string horaInicioEmp, horaFinEmp;
+        if (excepcionHorario != null)
+        {
+            if (string.IsNullOrWhiteSpace(excepcionHorario.HoraInicio) || string.IsNullOrWhiteSpace(excepcionHorario.HoraFin))
+                return (false, "El empleado no tiene horario definido para este día");
+            horaInicioEmp = excepcionHorario.HoraInicio;
+            horaFinEmp = excepcionHorario.HoraFin;
+        }
+        else
+        {
+            var horarioEmpleado = await _context.HorariosEmpleado
+                .FirstOrDefaultAsync(h => h.EmpleadoId == dto.EmpleadoId && h.NegocioId == dto.NegocioId && h.DiaSemana == diaSemana);
+            if (horarioEmpleado == null || !horarioEmpleado.Activo)
+                return (false, "El empleado no trabaja este día");
+            horaInicioEmp = horarioEmpleado.HoraInicio;
+            horaFinEmp = horarioEmpleado.HoraFin;
+        }
+
+        if (TimeSpan.TryParse(horaInicioEmp, out var hInicioEmpTs) && TimeSpan.TryParse(horaFinEmp, out var hFinEmpTs))
+        {
+            var horaCita = dto.FechaHoraInicio.TimeOfDay;
+            var horaFinCita = fechaHoraFin.TimeOfDay;
+            if (horaCita < hInicioEmpTs || horaFinCita > hFinEmpTs)
+                return (false, "La cita está fuera del horario del empleado");
+        }
 
         // Prevención de doble-booking: el empleado no puede tener dos citas activas en el mismo horario.
         // SEGURIDAD MULTI-TENANT: Filtramos por NegocioId para aislamiento entre negocios.

@@ -49,6 +49,7 @@ public class VendedorController : Controller
     private readonly IComisionService _comisionService;
     private readonly IReciboService _reciboService;
     private readonly IWhatsAppService _whatsAppService;
+    private readonly IMetodoPagoService _metodoPagoService;
 
     public VendedorController(
         IVendedorService vendedorService,
@@ -57,7 +58,8 @@ public class VendedorController : Controller
         IEmailService emailService,
         IComisionService comisionService,
         IReciboService reciboService,
-        IWhatsAppService whatsAppService)
+        IWhatsAppService whatsAppService,
+        IMetodoPagoService metodoPagoService)
     {
         _vendedorService = vendedorService;
         _authService = authService;
@@ -66,6 +68,7 @@ public class VendedorController : Controller
         _comisionService = comisionService;
         _reciboService = reciboService;
         _whatsAppService = whatsAppService;
+        _metodoPagoService = metodoPagoService;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -412,7 +415,8 @@ public class VendedorController : Controller
         DateTime? fechaExpiracion,
         decimal? precioSuscripcion,
         int? diasPagados,
-        string tipoNegocio = "membresias")
+        string tipoNegocio = "membresias",
+        string metodoPago = "Efectivo")
     {
         var vendedorId = GetVendedorId();
         if (!vendedorId.HasValue)
@@ -485,10 +489,11 @@ public class VendedorController : Controller
                 var vendedor = await _vendedorService.GetVendedorAsync(vendedorId.Value);
                 var vendedorTelefono = vendedor?.Telefono;
                 var numRecibo = await _reciboService.ObtenerSiguienteNumeroAsync(null);
-                var concepto = $"Suscripción {NombreNegocio} x{diasPagados ?? 30} días";
+                var concepto = $"Suscripción {NombreNegocio} x{diasPagados ?? 30} días | Método: {metodoPago}";
                 var (enviado, html) = await _emailService.EnviarReciboPagoNegocioAsync(
                     EmailNegocio, NombreNegocio, duenoNegocio,
-                    diasPagados ?? 30, precioSuscripcion.Value, vendedorNombre, vendedorTelefono, numRecibo);
+                    diasPagados ?? 30, precioSuscripcion.Value, vendedorNombre, vendedorTelefono, numRecibo,
+                    metodoPago: metodoPago);
                 await _reciboService.CrearReciboAsync(null, numRecibo, "suscripcion_negocio",
                     EmailNegocio, duenoNegocio, NombreNegocio, concepto, precioSuscripcion.Value, html);
 
@@ -497,7 +502,7 @@ public class VendedorController : Controller
                 {
                     _ = Task.Run(async () =>
                     {
-                        try { await _whatsAppService.EnviarReciboPagoSuscripcionWhatsAppAsync(telefono, NombreNegocio, diasPagados ?? 30, precioSuscripcion.Value, numRecibo); }
+                        try { await _whatsAppService.EnviarReciboPagoSuscripcionWhatsAppAsync(telefono, NombreNegocio, diasPagados ?? 30, precioSuscripcion.Value, numRecibo, metodoPago: metodoPago); }
                         catch { }
                     });
                 }
@@ -936,6 +941,122 @@ public class VendedorController : Controller
 
         var count = await _vendedorService.GetLeadsCountAsync();
         return Ok(new { count });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // SECCIÓN 7 — VENDEDOR: MÉTODOS DE PAGO DEL ADMIN
+    //
+    // El vendedor necesita ver los métodos de pago que el admin
+    // acepta para las suscripciones, y también sus propios datos
+    // bancarios que el admin usará para pagarle comisiones.
+    //
+    // Los métodos de pago del admin se almacenan con
+    // NegocioId = Guid.Empty (00000000-...-000000000000).
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Devuelve la lista de métodos de pago del administrador.
+    /// Los vendedores necesitan esta información para indicar a los
+    /// dueños de negocio cómo pagar sus suscripciones.
+    /// Los métodos del admin usan NegocioId = Guid.Empty.
+    /// </summary>
+    [HttpGet("GetAdminMetodosPagoParaVendedor")]
+    [Authorize(Roles = "Vendedor,Admin")]
+    public async Task<IActionResult> GetAdminMetodosPagoParaVendedor()
+    {
+        var metodos = await _metodoPagoService.GetMetodosPagoAsync(Guid.Empty);
+        return Ok(metodos.Select(m => new
+        {
+            m.MetodoPagoId,
+            m.Nombre,
+            m.NumeroCuenta,
+            m.Cedula,
+            m.NombreTitular,
+            ImagenQR = m.ImagenQR != null,
+            m.Instrucciones,
+            m.EsPredeterminado,
+            m.Orden
+        }));
+    }
+
+    /// <summary>
+    /// Devuelve los datos completos de un método de pago del admin,
+    /// incluyendo la imagen QR en Base64. Se usa para mostrar el detalle
+    /// en un modal del dashboard del vendedor.
+    /// </summary>
+    [HttpGet("GetAdminMetodoPagoDetalle")]
+    [Authorize(Roles = "Vendedor,Admin")]
+    public async Task<IActionResult> GetAdminMetodoPagoDetalle(Guid metodoPagoId)
+    {
+        var metodo = await _metodoPagoService.GetMetodoPagoAsync(Guid.Empty, metodoPagoId);
+        if (metodo == null)
+            return NotFound(new { success = false, message = "Método de pago no encontrado" });
+
+        return Ok(new
+        {
+            metodo.MetodoPagoId,
+            metodo.Nombre,
+            metodo.NumeroCuenta,
+            metodo.Cedula,
+            metodo.NombreTitular,
+            metodo.ImagenQR,
+            metodo.Instrucciones
+        });
+    }
+
+    /// <summary>
+    /// Devuelve los datos bancarios del vendedor autenticado.
+    /// Estos datos son los que el admin usará para pagarle comisiones.
+    /// El vendedor puede verlos como referencia en su panel.
+    /// </summary>
+    [HttpGet("GetVendedorDatosBancarios")]
+    public async Task<IActionResult> GetVendedorDatosBancarios()
+    {
+        var vendedorId = GetVendedorId();
+        if (!vendedorId.HasValue)
+            return Forbid();
+
+        var vendedor = await _vendedorService.GetVendedorAsync(vendedorId.Value);
+        if (vendedor == null)
+            return NotFound(new { success = false, message = "Vendedor no encontrado" });
+
+        return Ok(new
+        {
+            vendedor.NombreBanco,
+            vendedor.NumeroCedula,
+            vendedor.NumeroCuenta,
+            NombreCompleto = $"{vendedor.Nombre} {vendedor.Apellido}"
+        });
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // SECCIÓN 8 — VENDEDOR: MIS COMISIONES
+    //
+    // El vendedor puede ver sus comisiones pendientes y pagadas,
+    // incluyendo el método de pago usado por el admin.
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Devuelve todas las comisiones del vendedor autenticado,
+    /// separadas en pendientes y pagadas, con estadísticas de resumen.
+    /// Incluye el campo MetodoPagoPago para las comisiones ya pagadas.
+    /// </summary>
+    [HttpGet("GetVendedorMisComisiones")]
+    public async Task<IActionResult> GetVendedorMisComisiones()
+    {
+        var vendedorId = GetVendedorId();
+        if (!vendedorId.HasValue)
+            return Forbid();
+
+        try
+        {
+            var comisiones = await _comisionService.GetComisionesVendedorAsync(vendedorId.Value);
+            return Ok(comisiones);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { success = false, message = "Error al cargar comisiones: " + ex.Message });
+        }
     }
 
     // ═══════════════════════════════════════════════════════════

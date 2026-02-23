@@ -45,8 +45,9 @@ public class AdminController : Controller
     private readonly IVendedorService _vendedorService;
     private readonly IReciboService _reciboService;
     private readonly IWhatsAppService _whatsAppService;
+    private readonly IMetodoPagoService _metodoPagoService;
 
-    public AdminController(INegocioService negocioService, IAuthService authService, IEmailService emailService, IComisionService comisionService, IVendedorService vendedorService, IReciboService reciboService, IWhatsAppService whatsAppService)
+    public AdminController(INegocioService negocioService, IAuthService authService, IEmailService emailService, IComisionService comisionService, IVendedorService vendedorService, IReciboService reciboService, IWhatsAppService whatsAppService, IMetodoPagoService metodoPagoService)
     {
         _negocioService = negocioService;
         _authService = authService;
@@ -55,6 +56,7 @@ public class AdminController : Controller
         _vendedorService = vendedorService;
         _reciboService = reciboService;
         _whatsAppService = whatsAppService;
+        _metodoPagoService = metodoPagoService;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -252,7 +254,7 @@ public class AdminController : Controller
     public async Task<IActionResult> Create(string NombreNegocio, string duenoNegocio, string telefono, string EmailNegocio,
         string passwordNegocio, bool isActive, bool esPrueba,
         DateTime? fechaPago, DateTime? fechaExpiracion, decimal? precioSuscripcion, int? diasPagados,
-        string tipoNegocio = "membresias")
+        string tipoNegocio = "membresias", string metodoPago = "Efectivo")
     {
         try
         {
@@ -297,10 +299,11 @@ public class AdminController : Controller
                 try
                 {
                     var numRecibo = await _reciboService.ObtenerSiguienteNumeroAsync(null);
-                    var concepto = $"Suscripción {NombreNegocio} x{diasPagados ?? 30} días";
+                    var concepto = $"Suscripción {NombreNegocio} x{diasPagados ?? 30} días | Método: {metodoPago}";
                     var (enviado, html) = await _emailService.EnviarReciboPagoNegocioAsync(
                         EmailNegocio, NombreNegocio, duenoNegocio,
-                        diasPagados ?? 30, precioSuscripcion.Value, null, null, numRecibo);
+                        diasPagados ?? 30, precioSuscripcion.Value, null, null, numRecibo,
+                        metodoPago: metodoPago);
                     await _reciboService.CrearReciboAsync(null, numRecibo, "suscripcion_negocio",
                         EmailNegocio, duenoNegocio, NombreNegocio, concepto, precioSuscripcion.Value, html);
 
@@ -309,7 +312,7 @@ public class AdminController : Controller
                     {
                         _ = Task.Run(async () =>
                         {
-                            try { await _whatsAppService.EnviarReciboPagoSuscripcionWhatsAppAsync(telefono, NombreNegocio, diasPagados ?? 30, precioSuscripcion.Value, numRecibo); }
+                            try { await _whatsAppService.EnviarReciboPagoSuscripcionWhatsAppAsync(telefono, NombreNegocio, diasPagados ?? 30, precioSuscripcion.Value, numRecibo, metodoPago: metodoPago); }
                             catch { }
                         });
                     }
@@ -713,7 +716,7 @@ public class AdminController : Controller
     /// 403 si no es admin, o 500 ante error.
     /// </returns>
     [HttpPost("PagarComisionesVendedor")]
-    public async Task<IActionResult> PagarComisionesVendedor(Guid vendedorId)
+    public async Task<IActionResult> PagarComisionesVendedor(Guid vendedorId, string metodoPago = "Efectivo")
     {
         try
         {
@@ -721,7 +724,7 @@ public class AdminController : Controller
                 return Forbid();
 
             var (success, message, totalPagado, detalleNegocios) =
-                await _comisionService.PagarComisionesVendedorAsync(vendedorId);
+                await _comisionService.PagarComisionesVendedorAsync(vendedorId, metodoPago);
 
             if (!success)
                 return BadRequest(new { success = false, message });
@@ -752,10 +755,11 @@ public class AdminController : Controller
                 try
                 {
                     var numRecibo = await _reciboService.ObtenerSiguienteNumeroAsync(null);
-                    var concepto = $"Comisión vendedor {vendedorNombre} ({detalleNegocios.Count} negocios)";
+                    var concepto = $"Comisión vendedor {vendedorNombre} ({detalleNegocios.Count} negocios) | Método: {metodoPago}";
                     var (enviado, html) = await _emailService.EnviarReciboComisionAsync(
                         vendedor.Correo, vendedorNombre, totalPagado,
-                        detalleNegocios.Count, detalle, numRecibo);
+                        detalleNegocios.Count, detalle, numRecibo,
+                        metodoPago: metodoPago);
                     await _reciboService.CrearReciboAsync(null, numRecibo, "pago_comision",
                         vendedor.Correo, vendedorNombre, "My-Negocio", concepto, totalPagado, html);
 
@@ -764,7 +768,7 @@ public class AdminController : Controller
                     {
                         _ = Task.Run(async () =>
                         {
-                            try { await _whatsAppService.EnviarReciboComisionWhatsAppAsync(vendedor.Telefono, vendedorNombre, totalPagado, detalleNegocios.Count, numRecibo); }
+                            try { await _whatsAppService.EnviarReciboComisionWhatsAppAsync(vendedor.Telefono, vendedorNombre, totalPagado, detalleNegocios.Count, numRecibo, metodoPago: metodoPago); }
                             catch { }
                         });
                     }
@@ -886,6 +890,266 @@ public class AdminController : Controller
             if (recibo == null)
                 return NotFound(new { success = false, message = "Recibo no encontrado" });
             return Ok(recibo);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // METODOS DE PAGO DEL ADMIN — Configuracion de metodos de pago a nivel plataforma
+    //
+    // El admin NO tiene NegocioId, por lo que usamos Guid.Empty como identificador
+    // especial para los metodos de pago del admin. Esto permite reutilizar el mismo
+    // MetodoPagoService sin necesidad de crear un servicio separado.
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Obtiene todos los metodos de pago configurados por el admin (nivel plataforma).
+    /// Usa Guid.Empty como NegocioId del admin.
+    /// </summary>
+    [HttpGet("GetAdminMetodosPago")]
+    public async Task<IActionResult> GetAdminMetodosPago()
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var metodos = await _metodoPagoService.GetMetodosPagoAsync(Guid.Empty);
+            return Ok(metodos.Select(m => new
+            {
+                m.MetodoPagoId,
+                m.Nombre,
+                m.NumeroCuenta,
+                m.Cedula,
+                m.NombreTitular,
+                ImagenQR = m.ImagenQR != null,
+                m.Instrucciones,
+                m.EsPredeterminado,
+                m.Orden,
+                FechaCreacion = m.FechaCreacion.ToString("dd/MM/yyyy")
+            }));
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Obtiene los datos completos de un metodo de pago del admin,
+    /// incluyendo la imagen QR en Base64 para el modal de edicion.
+    /// </summary>
+    [HttpGet("GetAdminMetodoPago")]
+    public async Task<IActionResult> GetAdminMetodoPago(Guid metodoPagoId)
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var metodo = await _metodoPagoService.GetMetodoPagoAsync(Guid.Empty, metodoPagoId);
+            if (metodo == null)
+                return NotFound(new { success = false, message = "Metodo de pago no encontrado" });
+
+            return Ok(new
+            {
+                metodo.MetodoPagoId,
+                metodo.Nombre,
+                metodo.NumeroCuenta,
+                metodo.Cedula,
+                metodo.NombreTitular,
+                metodo.ImagenQR,
+                metodo.Instrucciones,
+                metodo.EsPredeterminado,
+                metodo.Orden
+            });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Crea un nuevo metodo de pago a nivel plataforma (admin).
+    /// </summary>
+    [HttpPost("CrearAdminMetodoPago")]
+    public async Task<IActionResult> CrearAdminMetodoPago([FromForm] MetodoPagoCreateDto dto)
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var result = await _metodoPagoService.CrearMetodoPagoAsync(Guid.Empty, dto);
+
+            if (!result.success)
+                return BadRequest(new { result.success, result.message });
+
+            return Ok(new { result.success, result.message, result.metodoPagoId });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Edita un metodo de pago del admin.
+    /// </summary>
+    [HttpPost("EditarAdminMetodoPago")]
+    public async Task<IActionResult> EditarAdminMetodoPago([FromForm] MetodoPagoCreateDto dto)
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var result = await _metodoPagoService.EditarMetodoPagoAsync(Guid.Empty, dto);
+
+            if (!result.success)
+                return BadRequest(new { result.success, result.message });
+
+            return Ok(new { result.success, result.message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Elimina un metodo de pago del admin.
+    /// </summary>
+    [HttpPost("EliminarAdminMetodoPago")]
+    public async Task<IActionResult> EliminarAdminMetodoPago(Guid metodoPagoId)
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var result = await _metodoPagoService.EliminarMetodoPagoAsync(Guid.Empty, metodoPagoId);
+
+            if (!result.success)
+                return BadRequest(new { result.success, result.message });
+
+            return Ok(new { result.success, result.message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Sube una imagen QR para un metodo de pago del admin.
+    /// Validaciones: maximo 5MB, formatos PNG/JPG/GIF/WebP.
+    /// </summary>
+    [HttpPost("SubirAdminImagenQR")]
+    public async Task<IActionResult> SubirAdminImagenQR(Guid metodoPagoId, IFormFile imagen)
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            if (imagen == null || imagen.Length == 0)
+                return BadRequest(new { success = false, message = "No se proporciono imagen" });
+
+            var allowedTypes = new[] { "image/png", "image/jpeg", "image/jpg", "image/gif", "image/webp" };
+            if (!allowedTypes.Contains(imagen.ContentType.ToLower()))
+                return BadRequest(new { success = false, message = "Tipo de archivo no permitido. Use PNG, JPG, GIF o WebP." });
+
+            if (imagen.Length > 5 * 1024 * 1024)
+                return BadRequest(new { success = false, message = "La imagen no debe superar 5MB" });
+
+            using var ms = new MemoryStream();
+            await imagen.CopyToAsync(ms);
+            var base64 = $"data:{imagen.ContentType};base64,{Convert.ToBase64String(ms.ToArray())}";
+
+            var result = await _metodoPagoService.SubirImagenQRAsync(Guid.Empty, metodoPagoId, base64);
+
+            if (!result.success)
+                return BadRequest(new { result.success, result.message });
+
+            return Ok(new { result.success, result.message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Elimina la imagen QR de un metodo de pago del admin.
+    /// </summary>
+    [HttpPost("EliminarAdminImagenQR")]
+    public async Task<IActionResult> EliminarAdminImagenQR(Guid metodoPagoId)
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var result = await _metodoPagoService.SubirImagenQRAsync(Guid.Empty, metodoPagoId, null);
+
+            if (!result.success)
+                return BadRequest(new { result.success, result.message });
+
+            return Ok(new { result.success, result.message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Reordena los metodos de pago del admin (drag and drop).
+    /// </summary>
+    [HttpPost("ReordenarAdminMetodosPago")]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> ReordenarAdminMetodosPago([FromBody] List<Guid> orderedIds)
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var result = await _metodoPagoService.ReordenarMetodosPagoAsync(Guid.Empty, orderedIds);
+
+            if (!result.success)
+                return BadRequest(new { result.success, result.message });
+
+            return Ok(new { result.success, result.message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Establece un metodo de pago del admin como predeterminado.
+    /// </summary>
+    [HttpPost("SetAdminMetodoPagoPredeterminado")]
+    public async Task<IActionResult> SetAdminMetodoPagoPredeterminado(Guid metodoPagoId)
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var result = await _metodoPagoService.SetPredeterminadoAsync(Guid.Empty, metodoPagoId);
+
+            if (!result.success)
+                return BadRequest(new { result.success, result.message });
+
+            return Ok(new { result.success, result.message });
         }
         catch (Exception)
         {

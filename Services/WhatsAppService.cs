@@ -270,12 +270,13 @@ public class WhatsAppService : IWhatsAppService
 
     /// <inheritdoc />
     public async Task<bool> EnviarReciboPagoSuscripcionWhatsAppAsync(
-        string telefono, string negocio, int dias, decimal precio, string numRecibo)
+        string telefono, string negocio, int dias, decimal precio, string numRecibo, string metodoPago = "Efectivo")
     {
         var mensaje = $"🧾 *Recibo de Pago — My-Negocio*\n\n" +
                       $"Negocio: *{negocio}*\n" +
                       $"Concepto: Suscripción x{dias} días\n" +
                       $"Monto: *${precio:N2}*\n" +
+                      $"💳 Método de Pago: {metodoPago}\n" +
                       $"Recibo #: {numRecibo}\n\n" +
                       $"¡Gracias por tu pago! 🙌\n\n" +
                       $"— My-Negocio";
@@ -285,12 +286,13 @@ public class WhatsAppService : IWhatsAppService
 
     /// <inheritdoc />
     public async Task<bool> EnviarReciboComisionWhatsAppAsync(
-        string telefono, string nombre, decimal monto, int cantidad, string numRecibo)
+        string telefono, string nombre, decimal monto, int cantidad, string numRecibo, string metodoPago = "Efectivo")
     {
         var mensaje = $"💰 *Pago de Comisión — My-Negocio*\n\n" +
                       $"Vendedor: *{nombre}*\n" +
                       $"Negocios: {cantidad}\n" +
                       $"Total pagado: *${monto:N2}*\n" +
+                      $"💳 Método de Pago: {metodoPago}\n" +
                       $"Recibo #: {numRecibo}\n\n" +
                       $"¡Gracias por tu trabajo! 🎯\n\n" +
                       $"— My-Negocio";
@@ -300,12 +302,13 @@ public class WhatsAppService : IWhatsAppService
 
     /// <inheritdoc />
     public async Task<bool> EnviarReciboPagoClienteWhatsAppAsync(
-        string telefono, string cliente, string negocio, string concepto, decimal monto, string numRecibo)
+        string telefono, string cliente, string negocio, string concepto, decimal monto, string numRecibo, string metodoPago = "Efectivo")
     {
         var mensaje = $"🧾 *Recibo de Pago*\n\n" +
                       $"Hola {cliente}, tu pago en *{negocio}* fue registrado:\n\n" +
                       $"📋 Concepto: {concepto}\n" +
                       $"💵 Monto: *${monto:N2}*\n" +
+                      $"💳 Método de Pago: {metodoPago}\n" +
                       $"#️⃣ Recibo: {numRecibo}\n\n" +
                       $"¡Gracias! 🙌\n\n" +
                       $"_Este es un mensaje automatizado de *{negocio}*. " +
@@ -336,12 +339,13 @@ public class WhatsAppService : IWhatsAppService
 
     /// <inheritdoc />
     public async Task<bool> EnviarReciboCitaCompletadaWhatsAppAsync(
-        string telefono, string cliente, string negocio, string servicio, decimal total, string numRecibo)
+        string telefono, string cliente, string negocio, string servicio, decimal total, string numRecibo, string metodoPago = "Efectivo")
     {
         var mensaje = $"🧾 *Recibo de Servicio*\n\n" +
                       $"Hola {cliente}, gracias por tu visita a *{negocio}*:\n\n" +
                       $"💇 Servicio: {servicio}\n" +
                       $"💵 Total: *${total:N2}*\n" +
+                      $"💳 Método de Pago: {metodoPago}\n" +
                       $"#️⃣ Recibo: {numRecibo}\n\n" +
                       $"¡Esperamos verte pronto! 😊\n\n" +
                       $"_Este es un mensaje automatizado de *{negocio}*. " +

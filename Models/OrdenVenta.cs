@@ -58,6 +58,20 @@ public class OrdenVenta
     [StringLength(500)]
     public string DireccionEntrega { get; set; }
 
+    /// <summary>
+    /// Metodo de pago utilizado (ej: "Efectivo", "Banco Pichincha", "Tarjeta Visa").
+    /// Default "Efectivo" para retrocompatibilidad con ventas existentes.
+    /// </summary>
+    [StringLength(100)]
+    public string MetodoPago { get; set; } = "Efectivo";
+
+    /// <summary>
+    /// Numero de confirmacion/referencia de la transaccion (transferencia, deposito, etc).
+    /// Null para pagos en efectivo que no requieren confirmacion.
+    /// </summary>
+    [StringLength(100)]
+    public string NumeroConfirmacion { get; set; }
+
     public DateTime FechaCreacion { get; set; } = TimeHelper.Now;
 
     public Gym Negocio { get; set; }

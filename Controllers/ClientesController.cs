@@ -354,7 +354,8 @@ public class ClientesController : Controller
                         var (enviado, html) = await _emailService.EnviarReciboPagoClienteAsync(
                             model.Email, nombreCompleto, negocio.NegocioNombre,
                             concepto, model.Precio, model.Dias,
-                            negocio.Email, negocio.Telefono, numRecibo);
+                            negocio.Email, negocio.Telefono, numRecibo,
+                            metodoPago: model.MetodoPago ?? "Efectivo");
                         await _reciboService.CrearReciboAsync(model.NegocioId, numRecibo, "pago_cliente",
                             model.Email, nombreCompleto, negocio.NegocioNombre, concepto, model.Precio, html);
 
@@ -363,7 +364,7 @@ public class ClientesController : Controller
                         {
                             _ = Task.Run(async () =>
                             {
-                                try { await _whatsAppService.EnviarReciboPagoClienteWhatsAppAsync(model.Telefono, nombreCompleto, negocio.NegocioNombre, concepto, model.Precio, numRecibo); }
+                                try { await _whatsAppService.EnviarReciboPagoClienteWhatsAppAsync(model.Telefono, nombreCompleto, negocio.NegocioNombre, concepto, model.Precio, numRecibo, metodoPago: model.MetodoPago ?? "Efectivo"); }
                                 catch { }
                             });
                         }
@@ -471,7 +472,7 @@ public class ClientesController : Controller
     /// <param name="nuevaFechaFin">Nueva fecha hasta la que estará activa la membresía</param>
     /// <param name="precio">Monto cobrado por la renovación (se guarda en los logs)</param>
     [HttpPost("RenovarCliente")]
-    public async Task<IActionResult> RenovarCliente(Guid id, Guid negocioId, DateTime nuevaFechaFin, decimal precio)
+    public async Task<IActionResult> RenovarCliente(Guid id, Guid negocioId, DateTime nuevaFechaFin, decimal precio, string metodoPago = "Efectivo")
     {
         try
         {
@@ -479,7 +480,7 @@ public class ClientesController : Controller
             if (!nId.HasValue || negocioId != nId.Value)
                 return Forbid();
 
-            var (success, message) = await _clienteService.RenovarClienteAsync(id, negocioId, nuevaFechaFin, precio);
+            var (success, message) = await _clienteService.RenovarClienteAsync(id, negocioId, nuevaFechaFin, precio, metodoPago);
 
             if (!success)
             {
@@ -502,7 +503,8 @@ public class ClientesController : Controller
                     var numRecibo = await _reciboService.ObtenerSiguienteNumeroAsync(negocioId);
                     var (enviado, html) = await _emailService.EnviarReciboPagoClienteAsync(
                         cliente.Email, nombreCompleto, negocio.NegocioNombre,
-                        concepto, precio, dias, negocio.Email, negocio.Telefono, numRecibo);
+                        concepto, precio, dias, negocio.Email, negocio.Telefono, numRecibo,
+                        metodoPago: metodoPago);
                     await _reciboService.CrearReciboAsync(negocioId, numRecibo, "pago_cliente",
                         cliente.Email, nombreCompleto, negocio.NegocioNombre, concepto, precio, html);
 
@@ -511,7 +513,7 @@ public class ClientesController : Controller
                     {
                         _ = Task.Run(async () =>
                         {
-                            try { await _whatsAppService.EnviarReciboPagoClienteWhatsAppAsync(cliente.Telefono, nombreCompleto, negocio.NegocioNombre, concepto, precio, numRecibo); }
+                            try { await _whatsAppService.EnviarReciboPagoClienteWhatsAppAsync(cliente.Telefono, nombreCompleto, negocio.NegocioNombre, concepto, precio, numRecibo, metodoPago: metodoPago); }
                             catch { }
                         });
                     }

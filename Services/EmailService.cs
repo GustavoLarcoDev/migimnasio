@@ -707,7 +707,8 @@ public class EmailService : IEmailService
     // ═══════════════════════════════════════════════════════════
 
     public async Task<(bool enviado, string htmlBody)> EnviarReciboPagoNegocioAsync(string destinatario, string nombreNegocio, string nombreDueno,
-        int diasContratados, decimal precio, string? nombreVendedor, string? telefonoVendedor, string numeroRecibo)
+        int diasContratados, decimal precio, string? nombreVendedor, string? telefonoVendedor, string numeroRecibo,
+        string metodoPago = "Efectivo")
     {
         var fechaPago  = TimeHelper.Now;
         var fechaVence = fechaPago.AddDays(diasContratados);
@@ -749,6 +750,10 @@ public class EmailService : IEmailService
                 <td style='padding: 10px 12px; color: #666; font-weight: bold;'>Vendedor</td>
                 <td style='padding: 10px 12px; color: #333;'>{(string.IsNullOrWhiteSpace(nombreVendedor) ? "My-Negocio (Admin)" : nombreVendedor)}</td>
             </tr>
+            <tr>
+                <td style='padding: 10px 12px; color: #666; font-weight: bold;'>Método de Pago</td>
+                <td style='padding: 10px 12px; color: #333;'>{metodoPago}</td>
+            </tr>
             <tr style='border-top: 2px solid #ff6b35;'>
                 <td style='padding: 12px; color: #ff6b35; font-weight: bold; font-size: 17px;'>TOTAL PAGADO</td>
                 <td style='padding: 12px; color: #ff6b35; font-weight: bold; font-size: 17px;'>${precio:F2}</td>
@@ -778,7 +783,8 @@ public class EmailService : IEmailService
     // ═══════════════════════════════════════════════════════════
 
     public async Task<(bool enviado, string htmlBody)> EnviarReciboComisionAsync(string destinatario, string nombreVendedor,
-        decimal montoTotal, int cantidadNegocios, string detalleComisiones, string numeroRecibo)
+        decimal montoTotal, int cantidadNegocios, string detalleComisiones, string numeroRecibo,
+        string metodoPago = "Efectivo")
     {
         var body = $@"
 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>
@@ -799,6 +805,10 @@ public class EmailService : IEmailService
         <div style='background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 20px;'>
             <h3 style='color: #333; font-size: 15px; margin: 0 0 12px;'>Detalle de comisiones:</h3>
             <div style='color: #555; font-size: 14px; line-height: 1.8; white-space: pre-line;'>{detalleComisiones}</div>
+        </div>
+
+        <div style='background: #f8f9fa; border-radius: 8px; padding: 15px 20px; margin-bottom: 20px;'>
+            <p style='color: #666; font-size: 14px; margin: 0;'><strong>Método de Pago:</strong> {metodoPago}</p>
         </div>
 
         <p style='color: #888; font-size: 12px; margin: 20px 0 5px; text-align: center;'>
@@ -822,7 +832,8 @@ public class EmailService : IEmailService
     // ═══════════════════════════════════════════════════════════
 
     public async Task<(bool enviado, string htmlBody)> EnviarReciboPagoClienteAsync(string destinatario, string nombreCliente, string nombreNegocio,
-        string conceptoPago, decimal monto, int dias, string? emailNegocio, string? telefonoNegocio, string numeroRecibo)
+        string conceptoPago, decimal monto, int dias, string? emailNegocio, string? telefonoNegocio, string numeroRecibo,
+        string metodoPago = "Efectivo")
     {
         var fechaPago  = TimeHelper.Now;
         var fechaVence = fechaPago.AddDays(dias);
@@ -858,6 +869,10 @@ public class EmailService : IEmailService
             <tr style='background: #f8f9fa;'>
                 <td style='padding: 10px 12px; color: #666; font-weight: bold;'>Vence el</td>
                 <td style='padding: 10px 12px; color: #333;'>{fechaVence:dd/MM/yyyy}</td>
+            </tr>
+            <tr>
+                <td style='padding: 10px 12px; color: #666; font-weight: bold;'>Método de Pago</td>
+                <td style='padding: 10px 12px; color: #333;'>{metodoPago}</td>
             </tr>
             <tr style='border-top: 2px solid #ff6b35;'>
                 <td style='padding: 12px; color: #ff6b35; font-weight: bold; font-size: 17px;'>TOTAL PAGADO</td>
@@ -990,7 +1005,8 @@ public class EmailService : IEmailService
 
     public async Task<(bool enviado, string htmlBody)> EnviarReciboCitaCompletadaAsync(string destinatario, string nombreCliente, string nombreNegocio,
         string nombreServicio, string? nombreEmpleado, decimal montoServicio, decimal montoExtra,
-        decimal propina, decimal total, string? emailNegocio, string? telefonoNegocio, string numeroRecibo)
+        decimal propina, decimal total, string? emailNegocio, string? telefonoNegocio, string numeroRecibo,
+        string metodoPago = "Efectivo")
     {
         var linksContacto = GenerarLinksContacto(emailNegocio, telefonoNegocio);
 
@@ -1014,6 +1030,10 @@ public class EmailService : IEmailService
                 <td style='padding: 10px 12px; color: #666; font-weight: bold;'>Profesional</td>
                 <td style='padding: 10px 12px; color: #333;'>{nombreEmpleado}</td>
             </tr>")}
+            <tr>
+                <td style='padding: 10px 12px; color: #666; font-weight: bold;'>Método de Pago</td>
+                <td style='padding: 10px 12px; color: #333;'>{metodoPago}</td>
+            </tr>
             <tr style='background: #f8f9fa;'>
                 <td style='padding: 10px 12px; color: #555;'>Servicio</td>
                 <td style='padding: 10px 12px; color: #333; text-align: right;'>${montoServicio:F2}</td>

@@ -13,6 +13,7 @@ public interface IMenuRestauranteService
     Task<(bool success, string message)> CrearMenuAsync(MenuRestauranteDto dto);
     Task<(bool success, string message)> EditarMenuAsync(MenuRestauranteDto dto);
     Task<(bool success, string message)> EliminarMenuAsync(Guid menuId, Guid negocioId);
+    Task<(bool success, string message, bool? disponible)> CambiarDisponibilidadMenuAsync(Guid menuId, Guid negocioId);
     Task<string> GenerarHtmlMenuAsync(Guid menuId, Guid negocioId);
 }
 

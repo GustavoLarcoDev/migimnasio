@@ -236,11 +236,32 @@ public class ClienteService : IClienteService
     /// </summary>
     public async Task<(bool success, string message)> CrearClienteAsync(ClienteCreateDto model)
     {
+        // ─── Prevención de ghost clients ──────────────────────────────
+        // Si ClienteId no está vacío, el caller está intentando operar sobre un cliente
+        // que ya debería existir. Si no existe (fue eliminado), no creamos uno nuevo.
+        if (model.ClienteId != Guid.Empty)
+        {
+            var clienteExistente = await _context.Clientes
+                .AnyAsync(c => c.ClienteId == model.ClienteId && c.NegocioId == model.NegocioId);
+            if (!clienteExistente)
+                return (false, "Cliente no encontrado");
+        }
+
         // ─── Validaciones de campos obligatorios ──────────────────────
         if (string.IsNullOrWhiteSpace(model.Nombre) || string.IsNullOrWhiteSpace(model.Apellido))
             return (false, "Nombre y Apellido son obligatorios");
+        if (model.Nombre?.Length > 100)
+            return (false, "El nombre no puede exceder 100 caracteres");
+        if (model.Apellido?.Length > 100)
+            return (false, "El apellido no puede exceder 100 caracteres");
         if (string.IsNullOrWhiteSpace(model.Telefono))
             return (false, "Teléfono es obligatorio");
+        if (model.Telefono?.Length > 20)
+            return (false, "El teléfono no puede exceder 20 caracteres");
+        if (model.Email?.Length > 200)
+            return (false, "El email no puede exceder 200 caracteres");
+        if (model.Direccion?.Length > 500)
+            return (false, "La dirección no puede exceder 500 caracteres");
         if (model.Precio <= 0)
             return (false, "El precio debe ser mayor a 0");
 
@@ -303,7 +324,7 @@ public class ClienteService : IClienteService
             await _logService.CreateLogAsync(
                 model.NegocioId,
                 "cliente_creado",
-                $"Nuevo cliente registrado: {nombreCompleto}, {dias} días, ${model.Precio:F2}, vence {fechaFin:dd/MM/yyyy}",
+                $"Nuevo cliente registrado: {nombreCompleto}, {dias} días, ${model.Precio:F2}, vence {fechaFin:dd/MM/yyyy} ({model.MetodoPago ?? "Efectivo"})",
                 model.Precio,
                 cliente.ClienteId,
                 nombreCompleto);
@@ -346,8 +367,18 @@ public class ClienteService : IClienteService
             return (false, "Cliente no encontrado");
         if (string.IsNullOrWhiteSpace(model.Nombre) || string.IsNullOrWhiteSpace(model.Apellido))
             return (false, "Nombre y Apellido son obligatorios");
+        if (model.Nombre?.Length > 100)
+            return (false, "El nombre no puede exceder 100 caracteres");
+        if (model.Apellido?.Length > 100)
+            return (false, "El apellido no puede exceder 100 caracteres");
         if (string.IsNullOrWhiteSpace(model.Telefono))
             return (false, "Teléfono es obligatorio");
+        if (model.Telefono?.Length > 20)
+            return (false, "El teléfono no puede exceder 20 caracteres");
+        if (model.Email?.Length > 200)
+            return (false, "El email no puede exceder 200 caracteres");
+        if (model.Direccion?.Length > 500)
+            return (false, "La dirección no puede exceder 500 caracteres");
         if (model.Precio <= 0)
             return (false, "El precio debe ser mayor a 0");
 
@@ -525,7 +556,7 @@ public class ClienteService : IClienteService
     ///   - Precio: el monto cobrado en esta renovación específica
     /// </summary>
     public async Task<(bool success, string message)> RenovarClienteAsync(
-        Guid id, Guid negocioId, DateTime nuevaFechaFin, decimal precio)
+        Guid id, Guid negocioId, DateTime nuevaFechaFin, decimal precio, string metodoPago = "Efectivo")
     {
         var cliente = await _context.Clientes
             .FirstOrDefaultAsync(c => c.ClienteId == id && c.NegocioId == negocioId);
@@ -554,7 +585,7 @@ public class ClienteService : IClienteService
         await _logService.CreateLogAsync(
             negocioId,
             "cliente_renovado",
-            $"Cliente {nombreCompleto} renovó: +{diasAgregados} días, ${precio:F2}, nueva fecha fin {nuevaFechaFin:dd/MM/yyyy}",
+            $"Cliente {nombreCompleto} renovó: +{diasAgregados} días, ${precio:F2}, nueva fecha fin {nuevaFechaFin:dd/MM/yyyy} ({metodoPago})",
             precio,
             cliente.ClienteId,
             nombreCompleto);
@@ -668,6 +699,16 @@ public class ClienteService : IClienteService
     {
         if (string.IsNullOrWhiteSpace(model.Nombre) || string.IsNullOrWhiteSpace(model.Apellido))
             return (false, "Nombre y Apellido son obligatorios");
+        if (model.Nombre?.Length > 100)
+            return (false, "El nombre no puede exceder 100 caracteres");
+        if (model.Apellido?.Length > 100)
+            return (false, "El apellido no puede exceder 100 caracteres");
+        if (model.Telefono?.Length > 20)
+            return (false, "El teléfono no puede exceder 20 caracteres");
+        if (model.Email?.Length > 200)
+            return (false, "El email no puede exceder 200 caracteres");
+        if (model.Direccion?.Length > 500)
+            return (false, "La dirección no puede exceder 500 caracteres");
 
         var cliente = new Cliente
         {
@@ -712,6 +753,16 @@ public class ClienteService : IClienteService
     {
         if (string.IsNullOrWhiteSpace(model.Nombre))
             return (false, "El nombre es obligatorio");
+        if (model.Nombre?.Length > 100)
+            return (false, "El nombre no puede exceder 100 caracteres");
+        if (model.Apellido?.Length > 100)
+            return (false, "El apellido no puede exceder 100 caracteres");
+        if (model.Telefono?.Length > 20)
+            return (false, "El teléfono no puede exceder 20 caracteres");
+        if (model.Email?.Length > 200)
+            return (false, "El email no puede exceder 200 caracteres");
+        if (model.Direccion?.Length > 500)
+            return (false, "La dirección no puede exceder 500 caracteres");
 
         // Doble filtro para seguridad multi-tenant
         var cliente = await _context.Clientes

@@ -137,4 +137,22 @@ public class ClienteCreateDto
     [Required]
     [Range(0.01, double.MaxValue, ErrorMessage = "El precio debe ser mayor a 0")]
     public decimal Precio { get; set; }
+
+    // ───────────────────────────────────────────────────────────────────────
+    // MÉTODO DE PAGO
+    // ───────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Nombre del método de pago usado (ej: "Efectivo", "Banco Pichincha").
+    /// Se guarda como string en los logs y recibos para consistencia histórica.
+    /// </summary>
+    [StringLength(100)]
+    public string MetodoPago { get; set; } = "Efectivo";
+
+    /// <summary>
+    /// Número de confirmación o referencia de la transacción (opcional).
+    /// Se usa para transferencias bancarias o pagos electrónicos.
+    /// </summary>
+    [StringLength(200)]
+    public string NumeroConfirmacion { get; set; }
 }

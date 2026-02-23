@@ -32,6 +32,7 @@ public class MenuRestauranteService : IMenuRestauranteService
                 m.TipoMenu,
                 m.PrecioFijo,
                 m.Estilo,
+                m.Disponible,
                 m.FechaCreacion
             })
             .ToListAsync();
@@ -47,10 +48,15 @@ public class MenuRestauranteService : IMenuRestauranteService
     {
         if (string.IsNullOrWhiteSpace(dto.Nombre))
             return (false, "El nombre del menu es obligatorio");
+        if (dto.Nombre?.Length > 200)
+            return (false, "El nombre no puede exceder 200 caracteres");
 
         var tiposValidos = new[] { "desayuno", "almuerzo", "cena", "general" };
         if (!tiposValidos.Contains(dto.TipoMenu))
             return (false, "Tipo de menu no valido");
+
+        if (dto.PrecioFijo.HasValue && dto.PrecioFijo.Value < 0)
+            return (false, "El precio no puede ser negativo");
 
         var negocio = await _context.Negocios.FirstOrDefaultAsync(n => n.NegocioId == dto.NegocioId);
         if (negocio == null) return (false, "Negocio no encontrado");
@@ -77,6 +83,11 @@ public class MenuRestauranteService : IMenuRestauranteService
 
     public async Task<(bool success, string message)> EditarMenuAsync(MenuRestauranteDto dto)
     {
+        if (dto.Nombre?.Length > 200)
+            return (false, "El nombre no puede exceder 200 caracteres");
+        if (dto.PrecioFijo.HasValue && dto.PrecioFijo.Value < 0)
+            return (false, "El precio no puede ser negativo");
+
         var menu = await _context.MenusRestaurante
             .FirstOrDefaultAsync(m => m.MenuId == dto.MenuId && m.NegocioId == dto.NegocioId && m.IsActive);
         if (menu == null) return (false, "Menu no encontrado");
@@ -105,6 +116,19 @@ public class MenuRestauranteService : IMenuRestauranteService
         menu.IsActive = false;
         await _context.SaveChangesAsync();
         return (true, "Menu eliminado exitosamente");
+    }
+
+    public async Task<(bool success, string message, bool? disponible)> CambiarDisponibilidadMenuAsync(Guid menuId, Guid negocioId)
+    {
+        var menu = await _context.MenusRestaurante
+            .FirstOrDefaultAsync(m => m.MenuId == menuId && m.NegocioId == negocioId && m.IsActive);
+        if (menu == null) return (false, "Menu no encontrado", null);
+
+        menu.Disponible = !menu.Disponible;
+        await _context.SaveChangesAsync();
+
+        var estado = menu.Disponible ? "disponible" : "no disponible";
+        return (true, $"Menu marcado como {estado}", menu.Disponible);
     }
 
     public async Task<string> GenerarHtmlMenuAsync(Guid menuId, Guid negocioId)

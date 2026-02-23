@@ -31,7 +31,7 @@
                 element: '#sidebar',
                 popover: {
                     title: t.stepTitle('layout-sidebar', 'Menú de Navegación', 'primary'),
-                    description: 'Este es tu menú principal. Desde aquí puedes acceder a todas las secciones: Resumen, Clientes, Movimientos, Reportes, Inventario, Recibos, Notificaciones y Sugerencias.',
+                    description: 'Este es tu menú principal. Desde aquí puedes acceder a todas las secciones: Resumen, Clientes, Movimientos, Reportes, Inventario, Recibos, Métodos de Pago, Notificaciones y Sugerencias.',
                     side: 'right',
                     align: 'start'
                 },
@@ -306,7 +306,41 @@
             },
 
             // ───────────────────────────────────
-            // 29–31. TAB NOTIFICACIONES
+            // TAB METODOS DE PAGO
+            // ───────────────────────────────────
+            {
+                element: '#metodosPagoStats',
+                popover: {
+                    title: t.stepTitle('credit-card', 'Métodos de Pago', 'primary'),
+                    description: 'Aquí configuras los métodos de pago que aceptas en tu negocio. Las tarjetas superiores muestran cuántos métodos tienes activos, cuál es el predeterminado y si tienes códigos QR configurados.',
+                    side: 'bottom',
+                    align: 'center'
+                },
+                onHighlightStarted: function () {
+                    var link = document.querySelector('[data-mg-tab="metodosPagoTab"]');
+                    if (link && !link.classList.contains('active')) link.click();
+                }
+            },
+            {
+                element: '#metodosPagoGrid',
+                popover: {
+                    title: t.stepTitle('wallet2', 'Tarjetas de Métodos', 'info'),
+                    description: 'Cada método de pago aparece como una tarjeta con su nombre, cuenta bancaria y titular. Puedes agregar un código QR para que tus clientes escaneen y paguen fácilmente. Haz clic en el QR para verlo en grande.',
+                    side: 'top',
+                    align: 'center'
+                }
+            },
+            {
+                popover: {
+                    title: t.stepTitle('qr-code', 'Zoom de Código QR', 'success'),
+                    description: 'Cuando un método de pago tiene imagen QR, puedes hacer clic sobre ella para ampliarla a pantalla completa. Esto facilita que tus clientes la escaneen directamente desde su celular. Presiona Escape o haz clic afuera para cerrar.',
+                    side: 'over',
+                    align: 'center'
+                }
+            },
+
+            // ───────────────────────────────────
+            // TAB NOTIFICACIONES
             // ───────────────────────────────────
             {
                 element: '#notificacionesList',

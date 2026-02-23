@@ -172,7 +172,7 @@ public interface IEmpleadoService
     /// <param name="horaFin">Hora de fin en formato "HH:mm". Requerida si esDiaLibre=false.</param>
     /// <param name="motivo">Razón de la excepción (ej: "Vacaciones de verano"). Opcional.</param>
     /// <returns>Tupla con éxito/fallo y mensaje descriptivo.</returns>
-    Task<(bool success, string message)> CrearExcepcionAsync(
+    Task<(bool success, string message, Guid? excepcionId)> CrearExcepcionAsync(
         Guid empleadoId, Guid negocioId, DateTime fecha, bool esDiaLibre,
         string horaInicio, string horaFin, string motivo);
 

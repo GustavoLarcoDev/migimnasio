@@ -168,6 +168,10 @@ builder.Services.AddScoped<ICatalogoService, CatalogoService>();
 builder.Services.AddScoped<IMesaService, MesaService>();
 builder.Services.AddScoped<IMenuRestauranteService, MenuRestauranteService>();
 
+// ── Métodos de Pago ─────────────────────────────────────────
+// CRUD de métodos de pago por negocio (transferencia, QR, efectivo, etc.)
+builder.Services.AddScoped<IMetodoPagoService, MetodoPagoService>();
+
 // ═══════════════════════════════════════════════════════════
 // SECCIÓN 4 — CLIENTE HTTP (HttpClientFactory)
 //

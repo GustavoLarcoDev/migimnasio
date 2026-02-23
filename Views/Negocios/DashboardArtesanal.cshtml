@@ -199,6 +199,107 @@
         </div>
     </div>
 
+    <!-- ═══════════════ TAB: MÉTODOS DE PAGO ═══════════════ -->
+    <div class="tab-pane fade" id="metodosPagoTab" role="tabpanel">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h4 class="mb-1" style="color: var(--mg-text-color);">Métodos de Pago</h4>
+                <small class="text-muted">Configura los métodos de pago que aceptas en tu negocio</small>
+            </div>
+            <button class="btn btn-sm px-4 py-2" onclick="abrirModalMetodoPago()"
+                    style="background: var(--mg-primary); color: white; border-radius: 12px;">
+                <i class="bi bi-plus-lg me-1"></i> Nuevo Método
+            </button>
+        </div>
+
+        <div class="row g-3" id="metodosPagoGrid">
+            <!-- Dynamic cards loaded here -->
+        </div>
+    </div>
+
+    <!-- Modal: Crear/Editar Método de Pago -->
+    <div class="modal fade" id="modalMetodoPago" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+            <div class="modal-content border-0" style="border-radius: 20px; background: var(--mg-card-bg);">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title" id="modalMetodoPagoTitle" style="color: var(--mg-text-color);">
+                        Nuevo Método de Pago
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formMetodoPago">
+                        <input type="hidden" id="mpId" value="">
+                        <input type="hidden" name="NegocioId" value="@ViewBag.NegocioId">
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold" style="color: var(--mg-text-color);">Nombre del método *</label>
+                            <input type="text" class="form-control" name="Nombre" id="mpNombre"
+                                   placeholder="Ej: Banco Pichincha, DeUna!, Nequi" required
+                                   style="border-radius: 12px; background: var(--mg-card-bg); color: var(--mg-text-color); border-color: var(--mg-border-color);">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold" style="color: var(--mg-text-color);">Número de Cuenta</label>
+                            <input type="text" class="form-control" name="NumeroCuenta" id="mpNumeroCuenta"
+                                   placeholder="Número de cuenta bancaria"
+                                   style="border-radius: 12px; background: var(--mg-card-bg); color: var(--mg-text-color); border-color: var(--mg-border-color);">
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold" style="color: var(--mg-text-color);">Cédula del titular</label>
+                                <input type="text" class="form-control" name="Cedula" id="mpCedula"
+                                       placeholder="Ej: 0912345678"
+                                       style="border-radius: 12px; background: var(--mg-card-bg); color: var(--mg-text-color); border-color: var(--mg-border-color);">
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label small fw-semibold" style="color: var(--mg-text-color);">Nombre del titular</label>
+                                <input type="text" class="form-control" name="NombreTitular" id="mpNombreTitular"
+                                       placeholder="Nombre completo"
+                                       style="border-radius: 12px; background: var(--mg-card-bg); color: var(--mg-text-color); border-color: var(--mg-border-color);">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold" style="color: var(--mg-text-color);">Instrucciones adicionales</label>
+                            <textarea class="form-control" name="Instrucciones" id="mpInstrucciones" rows="2"
+                                      placeholder="Ej: Enviar comprobante al WhatsApp..."
+                                      style="border-radius: 12px; background: var(--mg-card-bg); color: var(--mg-text-color); border-color: var(--mg-border-color);"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold" style="color: var(--mg-text-color);">Imagen QR (opcional)</label>
+                            <div id="mpQrPreview" class="text-center mb-2" style="display:none;">
+                                <img id="mpQrImg" src="" alt="QR" class="qr-zoomable" style="max-width: 200px; max-height: 200px; border-radius: 12px;" title="Click para ampliar">
+                                <br>
+                                <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="eliminarQR()">
+                                    <i class="bi bi-trash me-1"></i> Eliminar QR
+                                </button>
+                            </div>
+                            <input type="file" class="form-control" id="mpQrFile" accept="image/*"
+                                   style="border-radius: 12px; background: var(--mg-card-bg); color: var(--mg-text-color); border-color: var(--mg-border-color);">
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="mpPredeterminado" name="EsPredeterminado">
+                            <label class="form-check-label small" for="mpPredeterminado" style="color: var(--mg-text-color);">
+                                Establecer como método predeterminado
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 12px;">Cancelar</button>
+                    <button type="button" class="btn px-4" onclick="guardarMetodoPago()"
+                            style="background: var(--mg-primary); color: white; border-radius: 12px;">
+                        <i class="bi bi-check-lg me-1"></i> Guardar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ═══════════════ TAB NOTIFICACIONES (reutilizado) ═══════════════ -->
     <div class="tab-pane fade" id="notificacionesTab" role="tabpanel">
         <div class="d-flex justify-content-between align-items-center mb-4"><h4 class="fw-bold mb-0">Notificaciones</h4><div class="d-flex gap-2"><button id="btnMarcarTodasLeidasTab" class="btn btn-outline-primary"><i class="bi bi-check-all me-2"></i>Marcar todas leidas</button></div></div>
@@ -341,7 +442,7 @@
         <input type="hidden" id="pagoCitaId" name="CitaId" />
         <input type="hidden" name="NegocioId" value="@negocioId" />
         <div class="mb-3"><label class="form-label fw-semibold">Precio del Servicio</label><input type="text" class="form-control" id="pagoMonto" readonly /></div>
-        <div class="mb-3"><label class="form-label fw-semibold">Metodo de Pago</label><select class="form-select" name="MetodoPago" id="pagoMetodo"><option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="transferencia">Transferencia</option></select></div>
+        <div class="mb-3"><label class="form-label fw-semibold">Metodo de Pago</label><input type="hidden" name="MetodoPago" id="pagoMetodoHidden" value="Efectivo" /><div class="input-group"><input type="text" class="form-control" id="pagoMetodoDisplay" value="Efectivo" readonly /><button type="button" class="btn btn-outline-primary" id="btnSeleccionarMetodoPago"><i class="bi bi-credit-card me-1"></i>Cambiar</button></div></div>
         <div class="row">
             <div class="col-md-6 mb-3"><label class="form-label fw-semibold">Cargos Extra ($)</label><input type="number" step="0.01" class="form-control" name="MontoExtra" id="pagoExtra" value="0" min="0" /></div>
             <div class="col-md-6 mb-3"><label class="form-label fw-semibold">Propina ($)</label><input type="number" step="0.01" class="form-control" name="Propina" id="pagoPropina" value="0" min="0" /></div>
@@ -557,6 +658,8 @@
 }
 </style>
 }
+
+@await Html.PartialAsync("_ModalSeleccionPago")
 
 @section Scripts {
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
@@ -1124,6 +1227,10 @@ function completarCita(citaId, precioServicio) {
         $('#pagoExtra').val(0); $('#pagoPropina').val(0);
         $('#pagoEsRegalo').prop('checked', false);
         $('#pagoRegaloGroup, #pagoDetalleExtraGroup').addClass('d-none');
+        // Resetear método de pago a Efectivo cada vez que se abre el modal
+        $('#pagoMetodoHidden').val('Efectivo');
+        $('#pagoMetodoDisplay').val('Efectivo');
+        $('#btnSeleccionarMetodoPago').prop('disabled', false);
         actualizarTotalPago(precioServicio);
         new bootstrap.Modal('#pagoModal').show();
     }, 500);
@@ -1164,9 +1271,26 @@ $('#pagoExtra').on('input', function() {
 $('#pagoEsRegalo').on('change', function() {
     var checked = $(this).is(':checked');
     $('#pagoRegaloGroup').toggleClass('d-none', !checked);
-    $('#pagoMetodo').prop('disabled', checked);
+    $('#btnSeleccionarMetodoPago').prop('disabled', checked);
     var base = parseFloat($('#pagoMonto').val().replace('$','')) || 0;
     actualizarTotalPago(base);
+});
+
+// Boton para seleccionar metodo de pago dinamico
+$('#btnSeleccionarMetodoPago').on('click', function() {
+    // Ocultar temporalmente el modal de pago para mostrar el de seleccion
+    var pagoModalEl = document.getElementById('pagoModal');
+    var pagoModalInstance = bootstrap.Modal.getInstance(pagoModalEl);
+    if (pagoModalInstance) pagoModalInstance.hide();
+
+    setTimeout(function() {
+        mostrarModalPago(function(resultado) {
+            $('#pagoMetodoHidden').val(resultado.metodoPago);
+            $('#pagoMetodoDisplay').val(resultado.metodoPago);
+            // Reabrir el modal de pago
+            new bootstrap.Modal(pagoModalEl).show();
+        });
+    }, 300);
 });
 
 $('#btnConfirmarPago').on('click', function() {
@@ -1526,19 +1650,28 @@ function venderRapido(productoId) {
     var stockEl = $('#stock-' + productoId);
     var stockActual = parseInt(stockEl.text());
     if (stockActual <= 0) { toastr.warning('No hay stock disponible'); return; }
-    var cardEl = stockEl.closest('.inv-card');
-    cardEl.addClass('inv-card-selling');
-    stockEl.text(parseInt(stockEl.text()) - 1);
-    $.post('/Negocios/VenderProducto', { productoId, negocioId, cantidad: 1 }, function(r) {
-        if (r.success) {
-            toastr.success(r.message);
-            cargarInventarioStats();
-            if (tablaMovimientos) tablaMovimientos.ajax.reload();
-            if (tablaLogs) tablaLogs.ajax.reload();
-            setTimeout(function() { cargarProductosGrid(); }, 300);
-        } else { toastr.error(r.message); cargarProductosGrid(); }
-    }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al vender'); cargarProductosGrid(); })
-      .always(function() { setTimeout(function() { cardEl.removeClass('inv-card-selling'); }, 300); });
+
+    mostrarModalPago(function(resultado) {
+        var cardEl = stockEl.closest('.inv-card');
+        cardEl.addClass('inv-card-selling');
+        stockEl.text(parseInt(stockEl.text()) - 1);
+        $.post('/Negocios/VenderProducto', {
+            productoId: productoId,
+            negocioId: negocioId,
+            cantidad: 1,
+            metodoPago: resultado.metodoPago,
+            numeroConfirmacion: resultado.numeroConfirmacion
+        }, function(r) {
+            if (r.success) {
+                toastr.success(r.message);
+                cargarInventarioStats();
+                if (tablaMovimientos) tablaMovimientos.ajax.reload();
+                if (tablaLogs) tablaLogs.ajax.reload();
+                setTimeout(function() { cargarProductosGrid(); }, 300);
+            } else { toastr.error(r.message); cargarProductosGrid(); }
+        }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al vender'); cargarProductosGrid(); })
+          .always(function() { setTimeout(function() { cardEl.removeClass('inv-card-selling'); }, 300); });
+    });
 }
 
 function accionSubir(productoId, nombre, precio, stockActual) {
@@ -1761,6 +1894,7 @@ document.addEventListener('mg-tab-shown', function(e) {
     else if (tab === 'inventarioTab') { cargarProductosGrid(); cargarInventarioStats(); }
     else if (tab === 'notificacionesTab') { cargarNotificacionesTab(); }
     else if (tab === 'recibosTab') { cargarRecibos(); verificarCleanupRecibos(); }
+    else if (tab === 'metodosPagoTab') { cargarMetodosPago(); }
 });
 
 // ═══════════════════════════════════════════════════════════
@@ -1851,6 +1985,193 @@ $('#btnExportarYLimpiar').on('click', function() {
         }
     });
 });
+
+// ═══════════════ MÉTODOS DE PAGO ═══════════════
+
+function cargarMetodosPago() {
+    Promise.all([
+        $.get('/Negocios/GetPaymentStatsByMethod', { negocioId: negocioId }),
+        $.get('/Negocios/GetMetodosPago', { negocioId: negocioId })
+    ]).then(function(results) {
+        var statsData = results[0];
+        var methods = results[1];
+        var statsMap = {};
+        statsData.forEach(function(s) { statsMap[s.metodoPago.toLowerCase()] = s; });
+        var grid = $('#metodosPagoGrid');
+        grid.empty();
+        var efectivoStats = statsMap['efectivo'] || { totalHoy: 0, totalSemana: 0, totalMes: 0, cantidadMes: 0 };
+        grid.append(renderMetodoPagoCard(null, 'Efectivo', null, null, true, false, efectivoStats));
+        methods.forEach(function(mp) {
+            var mpStats = statsMap[mp.nombre.toLowerCase()] || { totalHoy: 0, totalSemana: 0, totalMes: 0, cantidadMes: 0 };
+            grid.append(renderMetodoPagoCard(mp.metodoPagoId, mp.nombre, mp.numeroCuenta, mp.nombreTitular, false, mp.esPredeterminado, mpStats, mp.imagenQR));
+        });
+    }).fail(function() { toastr.error('Error al cargar métodos de pago'); });
+}
+
+function renderMetodoPagoCard(id, nombre, numeroCuenta, nombreTitular, isEfectivo, esPredeterminado, stats, imagenQR) {
+    var icon = isEfectivo ? 'bi-cash-stack' : 'bi-bank';
+    var qrIcon = imagenQR ? ' <i class="bi bi-qr-code ms-1 text-success" title="Tiene código QR"></i>' : '';
+    var defaultBadge = (isEfectivo || esPredeterminado) ? '<span class="badge bg-success bg-opacity-10 text-success mt-1">Predeterminado</span>' : '';
+    var menuHtml = '';
+    if (!isEfectivo) {
+        menuHtml = `<div class="dropdown position-absolute" style="top: 10px; right: 10px;"><button class="btn btn-sm btn-light" data-bs-toggle="dropdown" style="border-radius: 8px;"><i class="bi bi-three-dots-vertical"></i></button><ul class="dropdown-menu dropdown-menu-end"><li><a class="dropdown-item" href="#" onclick="editarMetodoPago('${id}')"><i class="bi bi-pencil me-2"></i>Editar</a></li>${!esPredeterminado ? `<li><a class="dropdown-item" href="#" onclick="setPredeterminado('${id}')"><i class="bi bi-star me-2"></i>Predeterminado</a></li>` : ''}<li><hr class="dropdown-divider"></li><li><a class="dropdown-item text-danger" href="#" onclick="eliminarMetodoPago('${id}', '${nombre}')"><i class="bi bi-trash me-2"></i>Eliminar</a></li></ul></div>`;
+    }
+    return `<div class="col-md-4 col-sm-6"><div class="card border-0 shadow-sm h-100" style="border-radius: 16px; background: var(--mg-card-bg);"><div class="card-body p-4 position-relative">${menuHtml}<div class="d-flex align-items-center mb-3"><div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; min-width: 48px; background: var(--mg-primary-light, rgba(62, 151, 255, 0.1));"><i class="bi ${icon} fs-5" style="color: var(--mg-primary);"></i></div><div><h6 class="mb-0 fw-bold" style="color: var(--mg-text-color);">${nombre}${qrIcon}</h6>${numeroCuenta ? `<small class="text-muted">${numeroCuenta}</small>` : ''}${nombreTitular ? `<small class="text-muted d-block">${nombreTitular}</small>` : ''}${defaultBadge}</div></div><div class="border-top pt-3" style="border-color: var(--mg-border-color) !important;"><div class="row text-center g-0"><div class="col-4"><small class="text-muted d-block" style="font-size: 0.7rem;">Hoy</small><strong class="d-block" style="color: var(--mg-primary); font-size: 1rem;">$${(stats.totalHoy || 0).toFixed(2)}</strong></div><div class="col-4"><small class="text-muted d-block" style="font-size: 0.7rem;">Semana</small><strong class="d-block" style="color: var(--mg-text-color); font-size: 1rem;">$${(stats.totalSemana || 0).toFixed(2)}</strong></div><div class="col-4"><small class="text-muted d-block" style="font-size: 0.7rem;">Mes</small><strong class="d-block" style="color: var(--mg-text-color); font-size: 1rem;">$${(stats.totalMes || 0).toFixed(2)}</strong></div></div><div class="text-center mt-2"><small class="text-muted" style="font-size: 0.7rem;">${stats.cantidadMes || 0} transacciones este mes</small></div></div></div></div></div>`;
+}
+
+function abrirModalMetodoPago() {
+    $('#mpId').val('');
+    $('#formMetodoPago')[0].reset();
+    $('#mpQrPreview').hide();
+    $('#modalMetodoPagoTitle').text('Nuevo Método de Pago');
+    new bootstrap.Modal('#modalMetodoPago').show();
+}
+
+function editarMetodoPago(id) {
+    $.get('/Negocios/GetMetodoPago', { negocioId: negocioId, metodoPagoId: id }, function(data) {
+        $('#mpId').val(data.metodoPagoId);
+        $('#mpNombre').val(data.nombre);
+        $('#mpNumeroCuenta').val(data.numeroCuenta || '');
+        $('#mpCedula').val(data.cedula || '');
+        $('#mpNombreTitular').val(data.nombreTitular || '');
+        $('#mpInstrucciones').val(data.instrucciones || '');
+        $('#mpPredeterminado').prop('checked', data.esPredeterminado);
+
+        if (data.imagenQR) {
+            $('#mpQrImg').attr('src', data.imagenQR);
+            $('#mpQrPreview').show();
+        } else {
+            $('#mpQrPreview').hide();
+        }
+
+        $('#modalMetodoPagoTitle').text('Editar Método de Pago');
+        new bootstrap.Modal('#modalMetodoPago').show();
+    });
+}
+
+function guardarMetodoPago() {
+    var nombre = $('#mpNombre').val().trim();
+    if (!nombre) { toastr.warning('El nombre es requerido'); return; }
+
+    var id = $('#mpId').val();
+    var url = id ? '/Negocios/EditarMetodoPago' : '/Negocios/CrearMetodoPago';
+
+    var formData = new FormData();
+    formData.append('NegocioId', negocioId);
+    formData.append('Nombre', nombre);
+    formData.append('NumeroCuenta', $('#mpNumeroCuenta').val());
+    formData.append('Cedula', $('#mpCedula').val());
+    formData.append('NombreTitular', $('#mpNombreTitular').val());
+    formData.append('Instrucciones', $('#mpInstrucciones').val());
+    formData.append('EsPredeterminado', $('#mpPredeterminado').is(':checked'));
+    if (id) formData.append('MetodoPagoId', id);
+
+    $.ajax({
+        url: url,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+        success: function(r) {
+            if (r.success) {
+                toastr.success(r.message);
+                bootstrap.Modal.getInstance('#modalMetodoPago')?.hide();
+                cargarMetodosPago();
+
+                var qrFile = $('#mpQrFile')[0].files[0];
+                var mpId = id || r.metodoPagoId;
+                if (qrFile && mpId) {
+                    subirQR(mpId, qrFile);
+                }
+            } else {
+                toastr.error(r.message);
+            }
+        },
+        error: function() { toastr.error('Error al guardar'); }
+    });
+}
+
+function subirQR(metodoPagoId, file) {
+    var fd = new FormData();
+    fd.append('negocioId', negocioId);
+    fd.append('metodoPagoId', metodoPagoId);
+    fd.append('imagen', file);
+
+    $.ajax({
+        url: '/Negocios/SubirImagenQR',
+        type: 'POST',
+        data: fd,
+        processData: false,
+        contentType: false,
+        headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() },
+        success: function(r) {
+            if (r.success) {
+                toastr.success('QR subido correctamente');
+                cargarMetodosPago();
+            }
+        }
+    });
+}
+
+function eliminarQR() {
+    var id = $('#mpId').val();
+    if (!id) return;
+
+    $.post('/Negocios/EliminarImagenQR', {
+        negocioId: negocioId,
+        metodoPagoId: id,
+        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+    }, function(r) {
+        if (r.success) {
+            $('#mpQrPreview').hide();
+            $('#mpQrFile').val('');
+            toastr.success('QR eliminado');
+        }
+    });
+}
+
+function eliminarMetodoPago(id, nombre) {
+    Swal.fire({
+        title: '¿Eliminar método de pago?',
+        text: `Se eliminará "${nombre}"`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+    }).then(result => {
+        if (result.isConfirmed) {
+            $.post('/Negocios/EliminarMetodoPago', {
+                negocioId: negocioId,
+                metodoPagoId: id,
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+            }, function(r) {
+                if (r.success) {
+                    toastr.success(r.message);
+                    cargarMetodosPago();
+                } else {
+                    toastr.error(r.message);
+                }
+            });
+        }
+    });
+}
+
+function setPredeterminado(id) {
+    $.post('/Negocios/SetMetodoPagoPredeterminado', {
+        negocioId: negocioId,
+        metodoPagoId: id,
+        __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+    }, function(r) {
+        if (r.success) {
+            toastr.success(r.message);
+            cargarMetodosPago();
+        } else {
+            toastr.error(r.message);
+        }
+    });
+}
 
 </script>
 }

@@ -33,15 +33,18 @@ public interface IEmailService
 
     // Recibo de pago cuando un negocio paga su suscripción SaaS
     Task<(bool enviado, string htmlBody)> EnviarReciboPagoNegocioAsync(string destinatario, string nombreNegocio, string nombreDueno,
-        int diasContratados, decimal precio, string? nombreVendedor, string? telefonoVendedor, string numeroRecibo);
+        int diasContratados, decimal precio, string? nombreVendedor, string? telefonoVendedor, string numeroRecibo,
+        string metodoPago = "Efectivo");
 
     // Recibo de pago de comisión al vendedor
     Task<(bool enviado, string htmlBody)> EnviarReciboComisionAsync(string destinatario, string nombreVendedor,
-        decimal montoTotal, int cantidadNegocios, string detalleComisiones, string numeroRecibo);
+        decimal montoTotal, int cantidadNegocios, string detalleComisiones, string numeroRecibo,
+        string metodoPago = "Efectivo");
 
     // Recibo de pago de cliente (membresía) enviado desde el negocio
     Task<(bool enviado, string htmlBody)> EnviarReciboPagoClienteAsync(string destinatario, string nombreCliente, string nombreNegocio,
-        string conceptoPago, decimal monto, int dias, string? emailNegocio, string? telefonoNegocio, string numeroRecibo);
+        string conceptoPago, decimal monto, int dias, string? emailNegocio, string? telefonoNegocio, string numeroRecibo,
+        string metodoPago = "Efectivo");
 
     // Confirmación de reserva para negocio artesanal
     Task<bool> EnviarConfirmacionReservaAsync(string destinatario, string nombreCliente, string nombreNegocio,
@@ -56,7 +59,8 @@ public interface IEmailService
     // Recibo al completar servicio artesanal
     Task<(bool enviado, string htmlBody)> EnviarReciboCitaCompletadaAsync(string destinatario, string nombreCliente, string nombreNegocio,
         string nombreServicio, string? nombreEmpleado, decimal montoServicio, decimal montoExtra,
-        decimal propina, decimal total, string? emailNegocio, string? telefonoNegocio, string numeroRecibo);
+        decimal propina, decimal total, string? emailNegocio, string? telefonoNegocio, string numeroRecibo,
+        string metodoPago = "Efectivo");
 
     // Recordatorio de cita al empleado — 30 minutos antes
     Task<bool> EnviarRecordatorioCitaEmpleadoAsync(string destinatario, string nombreEmpleado,

@@ -58,6 +58,12 @@ public class MenuRestaurante
     [StringLength(30)]
     public string Estilo { get; set; } = "moderno";
 
+    /// <summary>
+    /// Indica si el menu esta disponible para mostrar/compartir.
+    /// Se puede alternar sin eliminar el menu.
+    /// </summary>
+    public bool Disponible { get; set; } = true;
+
     public bool IsActive { get; set; } = true;
 
     public DateTime FechaCreacion { get; set; } = TimeHelper.Now;

@@ -1,0 +1,296 @@
+<!-- ═══════════════ MODAL: SELECCION DE METODO DE PAGO ═══════════════ -->
+<style>
+.metodo-pago-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+#tabsDetallePago .nav-link {
+    color: var(--mg-text-color);
+    border-color: var(--mg-border-color);
+    background: transparent;
+}
+#tabsDetallePago .nav-link.active {
+    color: var(--mg-primary);
+    background: var(--mg-card-bg);
+    border-bottom-color: var(--mg-card-bg);
+    font-weight: 600;
+}
+#tabsDetallePago {
+    border-bottom-color: var(--mg-border-color);
+}
+</style>
+
+<div class="modal fade" id="modalSeleccionPago" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+        <div class="modal-content border-0" style="border-radius: 20px; background: var(--mg-card-bg);">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title" style="color: var(--mg-text-color);">
+                    <i class="bi bi-credit-card me-2"></i>Seleccionar Método de Pago
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Step 1: Method Selection -->
+                <div id="pasoSeleccionMetodo">
+                    <p class="text-muted small mb-3">Selecciona cómo desea pagar el cliente:</p>
+                    <div id="metodosPagoSeleccion" class="row g-2">
+                        <!-- Cards loaded dynamically -->
+                    </div>
+                </div>
+
+                <!-- Step 2: Method Details + Confirmation -->
+                <div id="pasoDetalleMetodo" style="display:none;">
+                    <button class="btn btn-sm btn-light mb-3" onclick="volverSeleccionMetodo()" style="border-radius: 8px;">
+                        <i class="bi bi-arrow-left me-1"></i> Volver
+                    </button>
+
+                    <div class="text-center mb-3">
+                        <div class="rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center"
+                             style="width: 50px; height: 50px; background: var(--mg-primary-light, rgba(62, 151, 255, 0.1));">
+                            <i class="bi bi-bank fs-5" style="color: var(--mg-primary);" id="detalleMetodoIcon"></i>
+                        </div>
+                        <h6 id="detalleMetodoNombre" style="color: var(--mg-text-color);"></h6>
+                    </div>
+
+                    <!-- Tabs: Datos de Cuenta / Código QR (only shown when both exist) -->
+                    <ul class="nav nav-tabs mb-3" id="tabsDetallePago" role="tablist" style="display:none;">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="tabDatos-tab" type="button" role="tab"
+                                    onclick="mostrarTabDatos()"
+                                    style="border-radius: 8px 8px 0 0;">
+                                <i class="bi bi-card-text me-1"></i>Datos de Cuenta
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="tabQR-tab" type="button" role="tab"
+                                    onclick="mostrarTabQR()"
+                                    style="border-radius: 8px 8px 0 0;">
+                                <i class="bi bi-qr-code me-1"></i>Código QR
+                            </button>
+                        </li>
+                    </ul>
+
+                    <!-- Bank details (shown directly, no tab-pane wrapper) -->
+                    <div id="detalleBancario" style="display:none;">
+                        <div class="card border-0 p-3 mb-3" style="border-radius: 12px; background: var(--mg-body-bg);">
+                            <div class="row g-2">
+                                <div class="col-12" id="detalleCuentaRow" style="display:none;">
+                                    <small class="text-muted">Número de Cuenta</small>
+                                    <div class="d-flex align-items-center">
+                                        <strong id="detalleCuenta" style="color: var(--mg-text-color);"></strong>
+                                        <button class="btn btn-sm btn-light ms-2" onclick="copiarTexto('detalleCuenta')" title="Copiar">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-6" id="detalleCedulaRow" style="display:none;">
+                                    <small class="text-muted">Cédula</small>
+                                    <div><strong id="detalleCedula" style="color: var(--mg-text-color);"></strong></div>
+                                </div>
+                                <div class="col-6" id="detalleTitularRow" style="display:none;">
+                                    <small class="text-muted">Titular</small>
+                                    <div><strong id="detalleTitular" style="color: var(--mg-text-color);"></strong></div>
+                                </div>
+                                <div class="col-12" id="detalleInstruccionesRow" style="display:none;">
+                                    <small class="text-muted">Instrucciones</small>
+                                    <div><span id="detalleInstrucciones" style="color: var(--mg-text-color);"></span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- QR code large (shown directly, no tab-pane wrapper) -->
+                    <div id="detalleQR" class="text-center mb-3" style="display:none;">
+                        <div class="card border-0 p-4" style="border-radius: 12px; background: var(--mg-body-bg);">
+                            <img id="detalleQRImg" src="" alt="QR" class="img-fluid mx-auto d-block"
+                                 style="max-width: 100%; width: 320px; border-radius: 12px;"
+                                 title="Código QR">
+                            <p class="text-muted small mt-2 mb-0">Escanea el código QR para realizar el pago</p>
+                        </div>
+                    </div>
+
+                    <!-- Confirmation number (optional) -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold" style="color: var(--mg-text-color);">
+                            Número de confirmación <span class="text-muted">(opcional)</span>
+                        </label>
+                        <input type="text" class="form-control" id="numeroConfirmacionPago"
+                               placeholder="Ej: #12345, comprobante de transferencia"
+                               style="border-radius: 12px; background: var(--mg-card-bg); color: var(--mg-text-color); border-color: var(--mg-border-color);">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 12px;">Cancelar</button>
+                <button type="button" class="btn px-4" id="btnConfirmarCobro" onclick="confirmarCobroPago()"
+                        style="background: var(--mg-primary); color: white; border-radius: 12px;" disabled>
+                    <i class="bi bi-check-circle me-1"></i> Confirmar Cobro
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ═══════════════ SELECCION DE METODO DE PAGO ═══════════════
+var _pagoCallback = null;
+var _metodoSeleccionado = null;
+
+function mostrarModalPago(callback) {
+    _pagoCallback = callback;
+    _metodoSeleccionado = null;
+    $('#pasoSeleccionMetodo').show();
+    $('#pasoDetalleMetodo').hide();
+    $('#btnConfirmarCobro').prop('disabled', true);
+    $('#numeroConfirmacionPago').val('');
+
+    // Load payment methods
+    var grid = $('#metodosPagoSeleccion');
+    grid.empty();
+
+    // Always add "Efectivo" first
+    grid.append(`
+        <div class="col-6 col-md-4">
+            <div class="card border-0 shadow-sm metodo-pago-card" style="border-radius: 12px; background: var(--mg-body-bg); cursor: pointer; transition: all 0.2s;"
+                 onclick="seleccionarMetodoPago(null, 'Efectivo', true)">
+                <div class="card-body text-center p-3">
+                    <i class="bi bi-cash-stack fs-4 mb-1 d-block" style="color: var(--mg-primary);"></i>
+                    <small class="fw-semibold" style="color: var(--mg-text-color);">Efectivo</small>
+                </div>
+            </div>
+        </div>
+    `);
+
+    // Load custom methods
+    $.get('/Negocios/GetMetodosPago', { negocioId: negocioId }, function(data) {
+        data.forEach(function(mp) {
+            var nombreEscaped = $('<div>').text(mp.nombre).html();
+            grid.append(`
+                <div class="col-6 col-md-4">
+                    <div class="card border-0 shadow-sm metodo-pago-card" style="border-radius: 12px; background: var(--mg-body-bg); cursor: pointer; transition: all 0.2s;"
+                         onclick="seleccionarMetodoPago('${mp.metodoPagoId}', '${nombreEscaped}', false)">
+                        <div class="card-body text-center p-3">
+                            <i class="bi bi-bank fs-4 mb-1 d-block" style="color: var(--mg-primary);"></i>
+                            <small class="fw-semibold" style="color: var(--mg-text-color);">${nombreEscaped}</small>
+                            ${mp.imagenQR ? '<i class="bi bi-qr-code text-success" style="font-size: 0.7rem;"></i>' : ''}
+                        </div>
+                    </div>
+                </div>
+            `);
+        });
+
+        var modal = new bootstrap.Modal('#modalSeleccionPago');
+        modal.show();
+    });
+}
+
+function seleccionarMetodoPago(id, nombre, isEfectivo) {
+    _metodoSeleccionado = { id: id, nombre: nombre, isEfectivo: isEfectivo };
+
+    if (isEfectivo) {
+        // Efectivo: go straight to confirm
+        $('#pasoSeleccionMetodo').hide();
+        $('#pasoDetalleMetodo').show();
+        $('#detalleMetodoNombre').text('Efectivo');
+        $('#detalleMetodoIcon').removeClass().addClass('bi bi-cash-stack fs-5').css('color', 'var(--mg-primary)');
+        $('#detalleBancario').hide();
+        $('#detalleQR').hide();
+        $('#tabsDetallePago').hide();
+        $('#btnConfirmarCobro').prop('disabled', false);
+        return;
+    }
+
+    // Load full details for the selected method
+    $.get('/Negocios/GetMetodoPago', { negocioId: negocioId, metodoPagoId: id }, function(data) {
+        $('#pasoSeleccionMetodo').hide();
+        $('#pasoDetalleMetodo').show();
+        $('#detalleMetodoNombre').text(data.nombre);
+        $('#detalleMetodoIcon').removeClass().addClass('bi bi-bank fs-5').css('color', 'var(--mg-primary)');
+
+        var hasDatos = data.numeroCuenta || data.cedula || data.nombreTitular || data.instrucciones;
+        var hasQR = !!data.imagenQR;
+
+        // Populate bank detail fields
+        if (hasDatos) {
+            if (data.numeroCuenta) { $('#detalleCuenta').text(data.numeroCuenta); $('#detalleCuentaRow').show(); } else { $('#detalleCuentaRow').hide(); }
+            if (data.cedula) { $('#detalleCedula').text(data.cedula); $('#detalleCedulaRow').show(); } else { $('#detalleCedulaRow').hide(); }
+            if (data.nombreTitular) { $('#detalleTitular').text(data.nombreTitular); $('#detalleTitularRow').show(); } else { $('#detalleTitularRow').hide(); }
+            if (data.instrucciones) { $('#detalleInstrucciones').text(data.instrucciones); $('#detalleInstruccionesRow').show(); } else { $('#detalleInstruccionesRow').hide(); }
+        }
+
+        // Populate QR
+        if (hasQR) {
+            $('#detalleQRImg').attr('src', data.imagenQR);
+        }
+
+        // Show layout based on what data exists
+        if (hasDatos && hasQR) {
+            // Both: show tabs, start on Datos
+            $('#tabsDetallePago').show();
+            mostrarTabDatos();
+        } else if (hasDatos) {
+            // Only bank details: show directly, no tabs
+            $('#tabsDetallePago').hide();
+            $('#detalleBancario').show();
+            $('#detalleQR').hide();
+        } else if (hasQR) {
+            // Only QR: show directly, no tabs
+            $('#tabsDetallePago').hide();
+            $('#detalleBancario').hide();
+            $('#detalleQR').show();
+        } else {
+            // Neither: hide both
+            $('#tabsDetallePago').hide();
+            $('#detalleBancario').hide();
+            $('#detalleQR').hide();
+        }
+
+        $('#btnConfirmarCobro').prop('disabled', false);
+    });
+}
+
+
+function mostrarTabDatos() {
+    $('#detalleBancario').show();
+    $('#detalleQR').hide();
+    $('#tabDatos-tab').addClass('active');
+    $('#tabQR-tab').removeClass('active');
+}
+
+function mostrarTabQR() {
+    $('#detalleBancario').hide();
+    $('#detalleQR').show();
+    $('#tabQR-tab').addClass('active');
+    $('#tabDatos-tab').removeClass('active');
+}
+
+function volverSeleccionMetodo() {
+    _metodoSeleccionado = null;
+    $('#pasoSeleccionMetodo').show();
+    $('#pasoDetalleMetodo').hide();
+    $('#btnConfirmarCobro').prop('disabled', true);
+}
+
+function confirmarCobroPago() {
+    if (!_metodoSeleccionado) return;
+
+    var resultado = {
+        metodoPago: _metodoSeleccionado.nombre,
+        metodoPagoId: _metodoSeleccionado.id,
+        numeroConfirmacion: $('#numeroConfirmacionPago').val().trim()
+    };
+
+    bootstrap.Modal.getInstance('#modalSeleccionPago')?.hide();
+
+    if (_pagoCallback) {
+        _pagoCallback(resultado);
+    }
+}
+
+function copiarTexto(elementId) {
+    var text = document.getElementById(elementId).textContent;
+    navigator.clipboard.writeText(text).then(function() {
+        toastr.success('Copiado al portapapeles');
+    });
+}
+</script>

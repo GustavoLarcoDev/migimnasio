@@ -191,7 +191,7 @@ public class InventarioController : Controller
     /// Registra la venta de unidades de un producto. Reduce el stock y genera log de ingreso.
     /// </summary>
     [HttpPost("VenderProducto")]
-    public async Task<IActionResult> VenderProducto(Guid productoId, Guid negocioId, int cantidad)
+    public async Task<IActionResult> VenderProducto(Guid productoId, Guid negocioId, int cantidad, string metodoPago = "Efectivo", string numeroConfirmacion = null)
     {
         try
         {
@@ -199,7 +199,7 @@ public class InventarioController : Controller
             if (!nId.HasValue || negocioId != nId.Value)
                 return Forbid();
 
-            var (success, message) = await _inventarioService.VenderProductoAsync(productoId, negocioId, cantidad);
+            var (success, message) = await _inventarioService.VenderProductoAsync(productoId, negocioId, cantidad, metodoPago, numeroConfirmacion);
 
             if (!success)
                 return BadRequest(new { success = false, message });
@@ -579,7 +579,9 @@ public class InventarioController : Controller
                 request.TipoOrden,
                 request.MesaId,
                 request.EmpleadoId,
-                request.DireccionEntrega
+                request.DireccionEntrega,
+                request.MetodoPago,
+                request.NumeroConfirmacion
             );
 
             if (!res.success)
@@ -617,6 +619,7 @@ public class InventarioController : Controller
                 o.FechaCreacion,
                 o.ReciboId,
                 o.TipoOrden,
+                o.MetodoPago,
                 Items = o.Detalles.Count
             }));
         }

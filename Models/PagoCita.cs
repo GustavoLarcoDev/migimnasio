@@ -93,17 +93,15 @@ public class PagoCita
 
     /// <summary>
     /// Forma de pago utilizada por el cliente.
-    /// Valores válidos:
-    ///   "efectivo"      = el cliente pagó en billetes/monedas.
-    ///   "tarjeta"       = pago con tarjeta de débito o crédito.
-    ///   "transferencia" = pago por transferencia bancaria o app de pago (ej: CoDi, SPEI).
+    /// Ahora soporta nombres dinamicos de metodos de pago configurados por el negocio
+    /// (ej: "Banco Pichincha", "Tarjeta Visa", "Efectivo").
     /// [Required] = siempre se debe registrar el método de pago.
-    /// [MaxLength(20)] = suficiente para los valores enumerados.
-    /// Valor por defecto: "efectivo" (el más común en negocios artesanales).
+    /// [MaxLength(100)] = suficiente para nombres dinamicos de metodos de pago.
+    /// Valor por defecto: "Efectivo".
     /// </summary>
     [Required]
-    [MaxLength(20)]
-    public string MetodoPago { get; set; } = "efectivo";
+    [MaxLength(100)]
+    public string MetodoPago { get; set; } = "Efectivo";
 
     /// <summary>
     /// Indica si el servicio fue realizado como regalo (sin costo para el cliente).

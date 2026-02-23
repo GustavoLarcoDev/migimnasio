@@ -226,4 +226,10 @@ public class Gym
     /// Cada cita vincula un cliente con un empleado y un servicio en una fecha y hora.
     /// </summary>
     public ICollection<Cita> Citas { get; set; } = new List<Cita>();
+
+    /// <summary>
+    /// Lista de métodos de pago configurados por el negocio (transferencia, efectivo, QR, etc.).
+    /// Relación uno-a-muchos: un negocio tiene muchos métodos de pago.
+    /// </summary>
+    public virtual ICollection<MetodoPago> MetodosPago { get; set; } = new List<MetodoPago>();
 }

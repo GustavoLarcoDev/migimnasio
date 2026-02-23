@@ -123,6 +123,16 @@ public class EmpleadoService : IEmpleadoService
             return (false, "El nombre es obligatorio");
         if (string.IsNullOrWhiteSpace(dto.Apellido))
             return (false, "El apellido es obligatorio");
+        if (dto.Nombre?.Length > 100)
+            return (false, "El nombre no puede exceder 100 caracteres");
+        if (dto.Apellido?.Length > 100)
+            return (false, "El apellido no puede exceder 100 caracteres");
+        if (dto.Telefono?.Length > 20)
+            return (false, "El teléfono no puede exceder 20 caracteres");
+        if (dto.Email?.Length > 200)
+            return (false, "El email no puede exceder 200 caracteres");
+        if (dto.Especialidad?.Length > 100)
+            return (false, "La especialidad no puede exceder 100 caracteres");
 
         var empleado = new Empleado
         {
@@ -202,6 +212,16 @@ public class EmpleadoService : IEmpleadoService
             return (false, "El nombre es obligatorio");
         if (string.IsNullOrWhiteSpace(dto.Apellido))
             return (false, "El apellido es obligatorio");
+        if (dto.Nombre?.Length > 100)
+            return (false, "El nombre no puede exceder 100 caracteres");
+        if (dto.Apellido?.Length > 100)
+            return (false, "El apellido no puede exceder 100 caracteres");
+        if (dto.Telefono?.Length > 20)
+            return (false, "El teléfono no puede exceder 20 caracteres");
+        if (dto.Email?.Length > 200)
+            return (false, "El email no puede exceder 200 caracteres");
+        if (dto.Especialidad?.Length > 100)
+            return (false, "La especialidad no puede exceder 100 caracteres");
 
         // Actualizar solo los campos editables. No tocamos EmpleadoId, NegocioId, IsActive ni FechaCreacion.
         empleado.Nombre = dto.Nombre;
@@ -524,7 +544,7 @@ public class EmpleadoService : IEmpleadoService
     ///   Guardamos solo la parte de fecha (.Date) para ignorar la hora. Así, si el
     ///   frontend envía "2026-02-18T14:30:00", se normaliza a "2026-02-18T00:00:00".
     /// </summary>
-    public async Task<(bool success, string message)> CrearExcepcionAsync(
+    public async Task<(bool success, string message, Guid? excepcionId)> CrearExcepcionAsync(
         Guid empleadoId, Guid negocioId, DateTime fecha, bool esDiaLibre,
         string horaInicio, string horaFin, string motivo)
     {
@@ -533,15 +553,15 @@ public class EmpleadoService : IEmpleadoService
         {
             // Si no es día libre, las horas de entrada y salida son obligatorias
             if (string.IsNullOrWhiteSpace(horaInicio) || string.IsNullOrWhiteSpace(horaFin))
-                return (false, "Hora inicio y fin son obligatorias");
+                return (false, "Hora inicio y fin son obligatorias", null);
 
             // Verificar que el formato sea "HH:mm" válido
             if (!TimeSpan.TryParse(horaInicio, out var hi) || !TimeSpan.TryParse(horaFin, out var hf))
-                return (false, "Formato de hora inválido (use HH:mm)");
+                return (false, "Formato de hora inválido (use HH:mm)", null);
 
             // El inicio debe ser antes del fin (no pueden ser iguales ni invertidos)
             if (hi >= hf)
-                return (false, "La hora de inicio debe ser anterior a la hora de fin");
+                return (false, "La hora de inicio debe ser anterior a la hora de fin", null);
         }
 
         // Verificar que no exista ya una excepción para esta fecha.
@@ -551,7 +571,7 @@ public class EmpleadoService : IEmpleadoService
             .AnyAsync(h => h.EmpleadoId == empleadoId && h.NegocioId == negocioId && h.Fecha.Date == fecha.Date);
 
         if (existe)
-            return (false, "Ya existe una excepción para esta fecha");
+            return (false, "Ya existe una excepción para esta fecha", null);
 
         var excepcion = new HorarioExcepcion
         {
@@ -569,7 +589,7 @@ public class EmpleadoService : IEmpleadoService
         _context.HorariosExcepcion.Add(excepcion);
         await _context.SaveChangesAsync();
 
-        return (true, "Excepción creada exitosamente");
+        return (true, "Excepción creada exitosamente", excepcion.ExcepcionId);
     }
 
     /// <summary>

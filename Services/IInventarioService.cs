@@ -133,7 +133,7 @@ public interface IInventarioService
     /// Si dos usuarios intentan vender simultáneamente y el stock no alcanza para
     /// ambos, el segundo recibirá un error de concurrencia (no un número negativo).
     /// </summary>
-    Task<(bool success, string message)> VenderProductoAsync(Guid productoId, Guid negocioId, int cantidad);
+    Task<(bool success, string message)> VenderProductoAsync(Guid productoId, Guid negocioId, int cantidad, string metodoPago = "Efectivo", string numeroConfirmacion = null);
 
     /// <summary>
     /// Registra la devolución de <paramref name="cantidad"/> unidades de un producto.

@@ -126,6 +126,10 @@
                     <i class="bi bi-receipt"></i>
                     <span>Recibos</span>
                 </a>
+                <a href="#metodosPagoTab" class="nav-link" data-mg-tab="metodosPagoTab">
+                    <i class="bi bi-credit-card"></i>
+                    <span>Métodos de Pago</span>
+                </a>
                 <a href="#notificacionesTab" class="nav-link" data-mg-tab="notificacionesTab">
                     <i class="bi bi-bell-fill"></i>
                     <span>Notificaciones</span>
@@ -174,6 +178,10 @@
                     <i class="bi bi-receipt"></i>
                     <span>Recibos</span>
                 </a>
+                <a href="#metodosPagoTab" class="nav-link" data-mg-tab="metodosPagoTab">
+                    <i class="bi bi-credit-card"></i>
+                    <span>Métodos de Pago</span>
+                </a>
                 <a href="#notificacionesTab" class="nav-link" data-mg-tab="notificacionesTab">
                     <i class="bi bi-bell-fill"></i>
                     <span>Notificaciones</span>
@@ -214,6 +222,10 @@
                     <i class="bi bi-receipt"></i>
                     <span>Recibos</span>
                 </a>
+                <a href="#metodosPagoTab" class="nav-link" data-mg-tab="metodosPagoTab">
+                    <i class="bi bi-credit-card"></i>
+                    <span>Métodos de Pago</span>
+                </a>
                 <a href="#notificacionesTab" class="nav-link" data-mg-tab="notificacionesTab">
                     <i class="bi bi-bell-fill"></i>
                     <span>Notificaciones</span>
@@ -249,6 +261,10 @@
                 <a href="#recibosTab" class="nav-link" data-mg-tab="recibosTab">
                     <i class="bi bi-receipt"></i>
                     <span>Recibos</span>
+                </a>
+                <a href="#metodosPagoTab" class="nav-link" data-mg-tab="metodosPagoTab">
+                    <i class="bi bi-credit-card"></i>
+                    <span>Métodos de Pago</span>
                 </a>
                 <a href="#notificacionesTab" class="nav-link" data-mg-tab="notificacionesTab">
                     <i class="bi bi-bell-fill"></i>
@@ -542,5 +558,35 @@
             #bloqueoOverlay, #bloqueoOverlay * { pointer-events: auto !important; }
         </style>
     }
+
+    <!-- QR Zoom Overlay (global) -->
+    <div id="qrZoomOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;
+        background:rgba(0,0,0,0.85);cursor:zoom-out;align-items:center;justify-content:center;padding:20px;"
+         onclick="cerrarQrZoom()">
+        <img id="qrZoomImg" src="" alt="QR" style="max-width:90vw;max-height:90vh;border-radius:16px;
+            box-shadow:0 0 60px rgba(0,0,0,0.5);animation:qrZoomIn 0.25s ease-out;" />
+    </div>
+    <style>
+        .qr-zoomable { cursor: zoom-in; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .qr-zoomable:hover { transform: scale(1.05); box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+        @@keyframes qrZoomIn { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    </style>
+    <script>
+        function abrirQrZoom(src) {
+            if (!src) return;
+            document.getElementById('qrZoomImg').src = src;
+            var ov = document.getElementById('qrZoomOverlay');
+            ov.style.display = 'flex';
+        }
+        function cerrarQrZoom() {
+            document.getElementById('qrZoomOverlay').style.display = 'none';
+            document.getElementById('qrZoomImg').src = '';
+        }
+        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') cerrarQrZoom(); });
+        document.addEventListener('click', function(e) {
+            var img = e.target.closest('.qr-zoomable');
+            if (img) { e.preventDefault(); e.stopPropagation(); abrirQrZoom(img.src); }
+        });
+    </script>
 </body>
 </html>
