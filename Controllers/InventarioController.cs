@@ -204,6 +204,26 @@ public class InventarioController : Controller
             if (!success)
                 return BadRequest(new { success = false, message });
 
+            // Verificar stock bajo después de la venta y alertar al dueño
+            var producto = await _context.Productos.FindAsync(productoId);
+            if (producto != null && producto.Stock <= producto.StockMinimo)
+            {
+                var neg = await _context.Negocios.FindAsync(negocioId);
+                if (neg != null && !string.IsNullOrWhiteSpace(neg.Telefono))
+                {
+                    var tel = neg.Telefono;
+                    var nomNeg = neg.NegocioNombre;
+                    var nomProd = producto.Nombre;
+                    var stockAct = producto.Stock;
+                    var stockMin = producto.StockMinimo;
+                    _ = Task.Run(async () =>
+                    {
+                        try { await _whatsAppService.EnviarAlertaStockBajoWhatsAppAsync(tel, nomNeg, nomProd, stockAct, stockMin); }
+                        catch { }
+                    });
+                }
+            }
+
             return Ok(new { success = true, message });
         }
         catch (Exception)

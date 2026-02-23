@@ -840,6 +840,19 @@ public class VendedorController : Controller
             $"Vendedor {vendedorNombre} bloqueó el negocio '{negocio.NegocioNombre}'",
             negocio.NegocioNombre);
 
+        // Notificar al dueño del negocio por WhatsApp
+        if (!string.IsNullOrWhiteSpace(negocio.Telefono))
+        {
+            var tel = negocio.Telefono;
+            var nom = negocio.NegocioNombre;
+            var dueno = negocio.DuenoNegocio ?? "Estimado cliente";
+            _ = Task.Run(async () =>
+            {
+                try { await _whatsAppService.EnviarNotificacionNegocioBloqueadoWhatsAppAsync(tel, nom, dueno); }
+                catch { }
+            });
+        }
+
         return Ok(new { success = true, message });
     }
 
@@ -873,6 +886,19 @@ public class VendedorController : Controller
             "VendedorDesbloquearNegocio",
             $"Vendedor {vendedorNombre} desbloqueó el negocio '{negocio.NegocioNombre}'",
             negocio.NegocioNombre);
+
+        // Notificar al dueño del negocio por WhatsApp
+        if (!string.IsNullOrWhiteSpace(negocio.Telefono))
+        {
+            var tel = negocio.Telefono;
+            var nom = negocio.NegocioNombre;
+            var dueno = negocio.DuenoNegocio ?? "Estimado cliente";
+            _ = Task.Run(async () =>
+            {
+                try { await _whatsAppService.EnviarNotificacionNegocioDesbloqueadoWhatsAppAsync(tel, nom, dueno); }
+                catch { }
+            });
+        }
 
         return Ok(new { success = true, message });
     }

@@ -488,6 +488,20 @@ public class AdminController : Controller
                 $"Negocio bloqueado (ID: {id})",
                 null);
 
+            // Notificar al dueño del negocio por WhatsApp
+            var negocio = await _negocioService.GetNegocioForImpersonationAsync(id);
+            if (negocio != null && !string.IsNullOrWhiteSpace(negocio.Telefono))
+            {
+                var tel = negocio.Telefono;
+                var nom = negocio.NegocioNombre;
+                var dueno = negocio.DuenoNegocio ?? "Estimado cliente";
+                _ = Task.Run(async () =>
+                {
+                    try { await _whatsAppService.EnviarNotificacionNegocioBloqueadoWhatsAppAsync(tel, nom, dueno); }
+                    catch { }
+                });
+            }
+
             return Ok(new { success = true, message });
         }
         catch (Exception)
@@ -523,6 +537,20 @@ public class AdminController : Controller
                 "DesbloquearNegocio",
                 $"Negocio desbloqueado (ID: {id})",
                 null);
+
+            // Notificar al dueño del negocio por WhatsApp
+            var negocio = await _negocioService.GetNegocioForImpersonationAsync(id);
+            if (negocio != null && !string.IsNullOrWhiteSpace(negocio.Telefono))
+            {
+                var tel = negocio.Telefono;
+                var nom = negocio.NegocioNombre;
+                var dueno = negocio.DuenoNegocio ?? "Estimado cliente";
+                _ = Task.Run(async () =>
+                {
+                    try { await _whatsAppService.EnviarNotificacionNegocioDesbloqueadoWhatsAppAsync(tel, nom, dueno); }
+                    catch { }
+                });
+            }
 
             return Ok(new { success = true, message });
         }

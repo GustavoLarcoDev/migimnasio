@@ -167,4 +167,51 @@ public interface IWhatsAppService
     /// Se llama junto con EnviarRecordatorioCitaEmpleadoAsync del EmailService.
     /// </summary>
     Task<bool> EnviarRecordatorioCitaEmpleadoWhatsAppAsync(string telefono, string empleado, string cliente, string servicio, string hora);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // NOTIFICACIONES DE ESTADO DE CITAS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Notifica al cliente que su cita fue cancelada.
+    /// </summary>
+    Task<bool> EnviarNotificacionCitaCanceladaWhatsAppAsync(string telefono, string cliente, string negocio, string servicio, DateTime fechaHora, string motivo);
+
+    /// <summary>
+    /// Notifica al cliente que su cita fue reprogramada a una nueva fecha/hora.
+    /// </summary>
+    Task<bool> EnviarNotificacionCitaReprogramadaWhatsAppAsync(string telefono, string cliente, string negocio, string servicio, string empleado, DateTime nuevaFechaHora);
+
+    /// <summary>
+    /// Notifica al cliente que no asistió a su cita (no-show).
+    /// </summary>
+    Task<bool> EnviarNotificacionNoShowWhatsAppAsync(string telefono, string cliente, string negocio, string servicio, DateTime fechaHora);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // NOTIFICACIONES DE SUSCRIPCIÓN Y NEGOCIO
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Advierte al dueño que su suscripción está próxima a expirar.
+    /// </summary>
+    Task<bool> EnviarAdvertenciaSuscripcionWhatsAppAsync(string telefono, string negocio, string dueno, int diasRestantes, DateTime fechaExpiracion);
+
+    /// <summary>
+    /// Notifica al dueño que su negocio fue bloqueado.
+    /// </summary>
+    Task<bool> EnviarNotificacionNegocioBloqueadoWhatsAppAsync(string telefono, string negocio, string dueno);
+
+    /// <summary>
+    /// Notifica al dueño que su negocio fue desbloqueado.
+    /// </summary>
+    Task<bool> EnviarNotificacionNegocioDesbloqueadoWhatsAppAsync(string telefono, string negocio, string dueno);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // ALERTAS DE INVENTARIO
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Alerta al dueño que un producto tiene stock bajo.
+    /// </summary>
+    Task<bool> EnviarAlertaStockBajoWhatsAppAsync(string telefono, string negocio, string producto, int stockActual, int stockMinimo);
 }

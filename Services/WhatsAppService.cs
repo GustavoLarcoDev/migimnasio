@@ -384,6 +384,130 @@ public class WhatsAppService : IWhatsAppService
     }
 
     // ═══════════════════════════════════════════════════════════════════════
+    // NOTIFICACIONES DE ESTADO DE CITAS
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <inheritdoc />
+    public async Task<bool> EnviarNotificacionCitaCanceladaWhatsAppAsync(
+        string telefono, string cliente, string negocio, string servicio, DateTime fechaHora, string motivo)
+    {
+        var fecha = fechaHora.ToString("dd/MM/yyyy");
+        var hora = fechaHora.ToString("hh:mm tt", System.Globalization.CultureInfo.InvariantCulture);
+
+        var mensaje = $"❌ *Cita Cancelada*\n\n" +
+                      $"Hola {cliente}, tu cita en *{negocio}* ha sido cancelada:\n\n" +
+                      $"💇 Servicio: {servicio}\n" +
+                      $"📅 Fecha: {fecha}\n" +
+                      $"🕐 Hora: {hora}\n" +
+                      (!string.IsNullOrWhiteSpace(motivo) ? $"📝 Motivo: {motivo}\n\n" : "\n") +
+                      $"Si deseas reagendar, comunícate directamente con *{negocio}*.\n\n" +
+                      $"_Este es un mensaje automatizado. Por favor no responda a este número._";
+
+        return await EnviarMensajeTextoAsync(telefono, mensaje);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> EnviarNotificacionCitaReprogramadaWhatsAppAsync(
+        string telefono, string cliente, string negocio, string servicio, string empleado, DateTime nuevaFechaHora)
+    {
+        var fecha = nuevaFechaHora.ToString("dd/MM/yyyy");
+        var hora = nuevaFechaHora.ToString("hh:mm tt", System.Globalization.CultureInfo.InvariantCulture);
+
+        var mensaje = $"🔄 *Cita Reprogramada*\n\n" +
+                      $"Hola {cliente}, tu cita en *{negocio}* ha sido reprogramada:\n\n" +
+                      $"💇 Servicio: {servicio}\n" +
+                      $"👤 Con: {empleado}\n" +
+                      $"📅 Nueva fecha: {fecha}\n" +
+                      $"🕐 Nueva hora: {hora}\n\n" +
+                      $"Si no puedes asistir, comunícate directamente con *{negocio}*.\n\n" +
+                      $"_Este es un mensaje automatizado. Por favor no responda a este número._";
+
+        return await EnviarMensajeTextoAsync(telefono, mensaje);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> EnviarNotificacionNoShowWhatsAppAsync(
+        string telefono, string cliente, string negocio, string servicio, DateTime fechaHora)
+    {
+        var fecha = fechaHora.ToString("dd/MM/yyyy");
+        var hora = fechaHora.ToString("hh:mm tt", System.Globalization.CultureInfo.InvariantCulture);
+
+        var mensaje = $"📝 *Aviso de Inasistencia*\n\n" +
+                      $"Hola {cliente}, notamos que no asististe a tu cita en *{negocio}*:\n\n" +
+                      $"💇 Servicio: {servicio}\n" +
+                      $"📅 Fecha: {fecha}\n" +
+                      $"🕐 Hora: {hora}\n\n" +
+                      $"Si deseas reagendar, comunícate directamente con *{negocio}*.\n\n" +
+                      $"_Este es un mensaje automatizado. Por favor no responda a este número._";
+
+        return await EnviarMensajeTextoAsync(telefono, mensaje);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // NOTIFICACIONES DE SUSCRIPCIÓN Y NEGOCIO
+    // ═══════════════════════════════════════════════════════════════════════
+
+    /// <inheritdoc />
+    public async Task<bool> EnviarAdvertenciaSuscripcionWhatsAppAsync(
+        string telefono, string negocio, string dueno, int diasRestantes, DateTime fechaExpiracion)
+    {
+        var fecha = fechaExpiracion.ToString("dd/MM/yyyy");
+
+        var urgencia = diasRestantes switch
+        {
+            1 => "⚠️ *¡ATENCIÓN! Tu suscripción vence MAÑANA*",
+            3 => "📋 *Recordatorio de Suscripción*",
+            _ => "📋 *Recordatorio de Suscripción*"
+        };
+
+        var mensaje = $"{urgencia}\n\n" +
+                      $"Hola {dueno}, la suscripción de *{negocio}* en My-Negocio vence en *{diasRestantes} día(s)* ({fecha}).\n\n" +
+                      $"Renueva para seguir usando el sistema sin interrupciones.\n\n" +
+                      $"— My-Negocio";
+
+        return await EnviarMensajeTextoAsync(telefono, mensaje);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> EnviarNotificacionNegocioBloqueadoWhatsAppAsync(
+        string telefono, string negocio, string dueno)
+    {
+        var mensaje = $"🔒 *Negocio Bloqueado*\n\n" +
+                      $"Hola {dueno}, tu negocio *{negocio}* ha sido bloqueado en My-Negocio.\n\n" +
+                      $"Esto puede deberse a una suscripción vencida. " +
+                      $"Comunícate con nosotros para restaurar tu acceso.\n\n" +
+                      $"— My-Negocio";
+
+        return await EnviarMensajeTextoAsync(telefono, mensaje);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> EnviarNotificacionNegocioDesbloqueadoWhatsAppAsync(
+        string telefono, string negocio, string dueno)
+    {
+        var mensaje = $"✅ *Negocio Desbloqueado*\n\n" +
+                      $"Hola {dueno}, tu negocio *{negocio}* ha sido desbloqueado en My-Negocio.\n\n" +
+                      $"Ya puedes acceder normalmente al sistema. ¡Bienvenido de vuelta!\n\n" +
+                      $"— My-Negocio";
+
+        return await EnviarMensajeTextoAsync(telefono, mensaje);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> EnviarAlertaStockBajoWhatsAppAsync(
+        string telefono, string negocio, string producto, int stockActual, int stockMinimo)
+    {
+        var mensaje = $"🚨 *Alerta de Stock Bajo*\n\n" +
+                      $"*{negocio}* — El producto *{producto}* tiene stock bajo:\n\n" +
+                      $"📦 Stock actual: *{stockActual}* unidades\n" +
+                      $"⚠️ Stock mínimo: {stockMinimo} unidades\n\n" +
+                      $"Considera reabastecer pronto.\n\n" +
+                      $"— My-Negocio";
+
+        return await EnviarMensajeTextoAsync(telefono, mensaje);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
     // MÉTODOS PRIVADOS — COMUNICACIÓN HTTP CON TWILIO API
     // ═══════════════════════════════════════════════════════════════════════
 
