@@ -83,6 +83,9 @@ public static class BackgroundServicesRegistration
         // Reporte diario detallado al dueño por email: 11:00 PM Ecuador
         services.AddHostedService<DailyEmailReportService>();
 
+        // Recordatorios de cobro a clientes con membresía vencida: 9:00 AM Ecuador
+        services.AddHostedService<PaymentReminderService>();
+
         // Recordatorios de expiración de suscripción: 10:00 AM Ecuador
         services.AddHostedService<SubscriptionExpirationReminderService>();
 

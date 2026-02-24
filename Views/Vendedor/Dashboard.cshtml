@@ -268,7 +268,7 @@
                     <div class="col-xl-3 col-md-6 col-6">
                         <div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-primary) 0%, var(--mg-gradient-primary-end) 100%);">
                             <div class="card-body text-white">
-                                <span class="d-block mb-1 opacity-75 small">Total Comisiones</span>
+                                <span class="d-block mb-1 opacity-75 small">Negocios con Comision</span>
                                 <span class="fs-2x fw-bolder" id="comTotalComisiones">0</span>
                             </div>
                         </div>
@@ -1830,7 +1830,7 @@
                 ));
             }
 
-            // 3) If no bank data, show empty state card prompting to contact admin
+            // 3) If no bank data, show add bank account card with inline form
             if (!hasBankData) {
                 container.append(
                     '<div class="col-md-6 col-lg-4">'
@@ -1841,23 +1841,29 @@
                     + '<i class="bi bi-plus-lg fs-4" style="color: var(--mg-primary, #3E97FF);"></i>'
                     + '</div>'
                     + '<h6 class="fw-bold mb-2" style="color: var(--mg-text-color);">Agrega tu cuenta bancaria</h6>'
-                    + '<p class="text-muted small mb-0">Contacta al administrador para registrar tus datos bancarios y recibir comisiones por transferencia.</p>'
-                    + '</div>'
-                    + '</div>'
-                    + '</div>'
+                    + '<p class="text-muted small mb-3">Registra tus datos bancarios para recibir comisiones por transferencia.</p>'
+                    + '<button class="btn btn-sm px-4" onclick="abrirModalDatosBancarios()" style="background: var(--mg-primary); color: white; border-radius: 10px;">'
+                    + '<i class="bi bi-plus-lg me-1"></i>Agregar datos</button>'
+                    + '</div></div></div>'
+                );
+            } else {
+                // Add edit button to existing bank card
+                container.find('.col-md-6.col-lg-4:last .card-body').append(
+                    '<div class="mt-2 text-end">'
+                    + '<button class="btn btn-sm btn-outline-primary" onclick="abrirModalDatosBancarios(\'' + escHtml(bankData.nombreBanco || '') + '\',\'' + escHtml(bankData.numeroCuenta || '') + '\',\'' + escHtml(bankData.numeroCedula || '') + '\')" style="border-radius: 8px; font-size: 0.75rem;">'
+                    + '<i class="bi bi-pencil me-1"></i>Editar</button></div>'
                 );
             }
 
-            // 4) Info note (only add if not already present)
+            // 4) Info note
             if ($('#vendedorMetodosCobroNote').length === 0) {
                 container.after(
                     '<div class="p-3 rounded-3 mb-4" id="vendedorMetodosCobroNote" style="background: rgba(62,151,255,0.04); border: 1px solid rgba(62,151,255,0.15);">'
                     + '<div class="d-flex align-items-start">'
                     + '<i class="bi bi-info-circle text-primary me-2 mt-1"></i>'
                     + '<small style="color: var(--mg-text-color);">Las estadísticas se calculan a partir de tus comisiones pagadas. '
-                    + 'Si necesitas actualizar tus datos bancarios, contacta al administrador.</small>'
-                    + '</div>'
-                    + '</div>'
+                    + 'Puedes editar tus datos bancarios en cualquier momento.</small>'
+                    + '</div></div>'
                 );
             }
 
@@ -2101,7 +2107,84 @@
             toastr.success('Copiado al portapapeles');
         }
     }
+    // ================================================================
+    // MODAL DATOS BANCARIOS DEL VENDEDOR
+    // ================================================================
+    function abrirModalDatosBancarios(banco, cuenta, cedula) {
+        $('#dbNombreBanco').val(banco || '');
+        $('#dbNumeroCuenta').val(cuenta || '');
+        $('#dbNumeroCedula').val(cedula || '');
+        var modal = new bootstrap.Modal(document.getElementById('modalDatosBancarios'));
+        modal.show();
+    }
+
+    function guardarDatosBancarios() {
+        var banco = $('#dbNombreBanco').val().trim();
+        var cuenta = $('#dbNumeroCuenta').val().trim();
+        var cedula = $('#dbNumeroCedula').val().trim();
+
+        if (!banco && !cuenta) {
+            toastr.warning('Ingresa al menos el nombre del banco y numero de cuenta');
+            return;
+        }
+
+        $.post('/Negocios/ActualizarDatosBancarios', {
+            nombreBanco: banco,
+            numeroCuenta: cuenta,
+            numeroCedula: cedula
+        }, function(r) {
+            if (r.success) {
+                toastr.success(r.message);
+                bootstrap.Modal.getInstance(document.getElementById('modalDatosBancarios')).hide();
+                vendedorMetodosCobroCargados = false;
+                cargarVendedorMetodosCobro();
+            } else {
+                toastr.error(r.message);
+            }
+        }).fail(function() {
+            toastr.error('Error al guardar datos bancarios');
+        });
+    }
     </script>
+
+<!-- Modal: Datos Bancarios del Vendedor -->
+<div class="modal fade" id="modalDatosBancarios" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+        <div class="modal-content border-0" style="border-radius: 20px; background: var(--mg-card-bg);">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title" style="color: var(--mg-text-color);">
+                    <i class="bi bi-bank me-2"></i>Datos Bancarios
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted small">Ingresa tus datos bancarios para que el administrador pueda pagarte comisiones por transferencia.</p>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold" style="color: var(--mg-text-color);">Nombre del Banco</label>
+                    <input type="text" class="form-control" id="dbNombreBanco" placeholder="Ej: Banco Pichincha"
+                           style="border-radius: 10px; background: var(--mg-body-bg); border-color: var(--mg-border-color); color: var(--mg-text-color);">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold" style="color: var(--mg-text-color);">Numero de Cuenta</label>
+                    <input type="text" class="form-control" id="dbNumeroCuenta" placeholder="Ej: 2200123456"
+                           style="border-radius: 10px; background: var(--mg-body-bg); border-color: var(--mg-border-color); color: var(--mg-text-color);">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold" style="color: var(--mg-text-color);">Numero de Cedula</label>
+                    <input type="text" class="form-control" id="dbNumeroCedula" placeholder="Ej: 1712345678"
+                           style="border-radius: 10px; background: var(--mg-body-bg); border-color: var(--mg-border-color); color: var(--mg-text-color);">
+                </div>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 10px;">Cancelar</button>
+                <button type="button" class="btn px-4" onclick="guardarDatosBancarios()"
+                        style="background: var(--mg-primary); color: white; border-radius: 10px;">
+                    <i class="bi bi-check-lg me-1"></i>Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>

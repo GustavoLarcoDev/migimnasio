@@ -327,7 +327,8 @@ public class ClienteService : IClienteService
                 $"Nuevo cliente registrado: {nombreCompleto}, {dias} días, ${model.Precio:F2}, vence {fechaFin:dd/MM/yyyy} ({model.MetodoPago ?? "Efectivo"})",
                 model.Precio,
                 cliente.ClienteId,
-                nombreCompleto);
+                nombreCompleto,
+                metodoPago: model.MetodoPago ?? "Efectivo");
 
             await transaction.CommitAsync();
         }
@@ -588,7 +589,8 @@ public class ClienteService : IClienteService
             $"Cliente {nombreCompleto} renovó: +{diasAgregados} días, ${precio:F2}, nueva fecha fin {nuevaFechaFin:dd/MM/yyyy} ({metodoPago})",
             precio,
             cliente.ClienteId,
-            nombreCompleto);
+            nombreCompleto,
+            metodoPago: metodoPago);
 
         return (true, "Membresía renovada exitosamente");
     }

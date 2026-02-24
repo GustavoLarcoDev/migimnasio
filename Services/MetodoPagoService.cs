@@ -478,7 +478,29 @@ public class MetodoPagoService : IMetodoPagoService
                 })
                 .ToListAsync();
 
-            // ── Merge: combinar ambas fuentes sin doble conteo ───────────────────
+            // ── Fuente 4: Logs de membresías (cliente_creado, cliente_renovado) ──
+            // Los negocios de membresías registran pagos en la tabla Logs con
+            // tipo "cliente_creado" o "cliente_renovado" y MetodoPago no nulo.
+            var logMembresiaStats = await _context.Logs.AsNoTracking()
+                .Where(l => l.NegocioId == negocioId
+                          && l.MetodoPago != null
+                          && l.Monto > 0
+                          && l.Fecha >= startOfMonth
+                          && (l.Tipo == "cliente_creado" || l.Tipo == "cliente_renovado"))
+                .GroupBy(l => l.MetodoPago!)
+                .Select(g => new
+                {
+                    MetodoPago = g.Key,
+                    TotalHoy = g.Where(l => l.Fecha >= startOfDay).Sum(l => l.Monto),
+                    TotalSemana = g.Where(l => l.Fecha >= startOfWeek).Sum(l => l.Monto),
+                    TotalMes = g.Sum(l => l.Monto),
+                    CantidadHoy = g.Count(l => l.Fecha >= startOfDay),
+                    CantidadSemana = g.Count(l => l.Fecha >= startOfWeek),
+                    CantidadMes = g.Count()
+                })
+                .ToListAsync();
+
+            // ── Merge: combinar todas las fuentes sin doble conteo ──────────────
             var allStats = new Dictionary<string, MetodoPagoStatsDto>();
 
             // Agregar stats de OrdenVenta
@@ -541,6 +563,33 @@ public class MetodoPagoService : IMetodoPagoService
                 else
                 {
                     // Método de pago exclusivo de citas artesanales
+                    allStats[s.MetodoPago] = new MetodoPagoStatsDto
+                    {
+                        MetodoPago = s.MetodoPago,
+                        TotalHoy = s.TotalHoy,
+                        TotalSemana = s.TotalSemana,
+                        TotalMes = s.TotalMes,
+                        CantidadHoy = s.CantidadHoy,
+                        CantidadSemana = s.CantidadSemana,
+                        CantidadMes = s.CantidadMes
+                    };
+                }
+            }
+
+            // Sumar stats de Logs de membresías (cliente_creado + cliente_renovado)
+            foreach (var s in logMembresiaStats)
+            {
+                if (allStats.TryGetValue(s.MetodoPago, out var existing))
+                {
+                    existing.TotalHoy += s.TotalHoy;
+                    existing.TotalSemana += s.TotalSemana;
+                    existing.TotalMes += s.TotalMes;
+                    existing.CantidadHoy += s.CantidadHoy;
+                    existing.CantidadSemana += s.CantidadSemana;
+                    existing.CantidadMes += s.CantidadMes;
+                }
+                else
+                {
                     allStats[s.MetodoPago] = new MetodoPagoStatsDto
                     {
                         MetodoPago = s.MetodoPago,

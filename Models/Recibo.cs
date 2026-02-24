@@ -70,6 +70,13 @@ public class Recibo
     public decimal Monto { get; set; }
 
     /// <summary>
+    /// Metodo de pago utilizado en la transaccion (Efectivo, Transferencia, etc.).
+    /// Se usa para generar estadisticas de ingresos por metodo de pago.
+    /// </summary>
+    [StringLength(100)]
+    public string MetodoPago { get; set; } = "Efectivo";
+
+    /// <summary>
     /// HTML renderizado del recibo para preview, envio por email o descarga.
     /// </summary>
     public string ContenidoHtml { get; set; } = "";

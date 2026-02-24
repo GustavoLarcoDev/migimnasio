@@ -496,16 +496,6 @@ public class VendedorController : Controller
                     metodoPago: metodoPago);
                 await _reciboService.CrearReciboAsync(null, numRecibo, "suscripcion_negocio",
                     EmailNegocio, duenoNegocio, NombreNegocio, concepto, precioSuscripcion.Value, html);
-
-                // Enviar recibo de suscripción por WhatsApp
-                if (!string.IsNullOrWhiteSpace(telefono))
-                {
-                    _ = Task.Run(async () =>
-                    {
-                        try { await _whatsAppService.EnviarReciboPagoSuscripcionWhatsAppAsync(telefono, NombreNegocio, diasPagados ?? 30, precioSuscripcion.Value, numRecibo, metodoPago: metodoPago); }
-                        catch { }
-                    });
-                }
             }
             catch { }
         }
@@ -1053,6 +1043,20 @@ public class VendedorController : Controller
             vendedor.NumeroCuenta,
             NombreCompleto = $"{vendedor.Nombre} {vendedor.Apellido}"
         });
+    }
+
+    [HttpPost("ActualizarDatosBancarios")]
+    public async Task<IActionResult> ActualizarDatosBancarios(string nombreBanco, string numeroCuenta, string numeroCedula)
+    {
+        var vendedorId = GetVendedorId();
+        if (!vendedorId.HasValue)
+            return Forbid();
+
+        var result = await _vendedorService.ActualizarDatosBancariosAsync(
+            vendedorId.Value, nombreBanco, numeroCuenta, numeroCedula);
+        if (!result.success)
+            return BadRequest(new { result.success, result.message });
+        return Ok(new { result.success, result.message });
     }
 
     // ═══════════════════════════════════════════════════════════

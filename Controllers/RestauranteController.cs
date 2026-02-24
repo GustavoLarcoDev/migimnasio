@@ -22,18 +22,15 @@ public class RestauranteController : Controller
     private readonly IAuthService _authService;
     private readonly IMenuRestauranteService _menuService;
     private readonly IEmailService _emailService;
-    private readonly IWhatsAppService _whatsappService;
 
     public RestauranteController(
         IAuthService authService,
         IMenuRestauranteService menuService,
-        IEmailService emailService,
-        IWhatsAppService whatsappService)
+        IEmailService emailService)
     {
         _authService = authService;
         _menuService = menuService;
         _emailService = emailService;
-        _whatsappService = whatsappService;
     }
 
     /// <summary>
@@ -103,11 +100,6 @@ public class RestauranteController : Controller
 
             var enviado = await _emailService.EnviarReciboPorEmailGenericoAsync(destino, $"Menu de {companyName}", htmlBody);
             return Json(new { success = enviado, message = enviado ? "Menu enviado por correo." : "Error al enviar el correo." });
-        }
-        else if (tipo == "whatsapp")
-        {
-            var enviado = await _whatsappService.EnviarLinkCatalogoTiendaAsync(destino, companyName, menuUrl);
-            return Json(new { success = enviado, message = enviado ? "Link del menu enviado por WhatsApp." : "Error al enviar el WhatsApp." });
         }
 
         return Json(new { success = false, message = "Metodo de envio no soportado." });

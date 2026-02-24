@@ -196,4 +196,10 @@ public interface IVendedorService
     /// </summary>
     /// <returns>Número de leads pendientes de atención.</returns>
     Task<int> GetLeadsCountAsync();
+
+    /// <summary>
+    /// Permite al vendedor actualizar sus propios datos bancarios para recibir comisiones.
+    /// </summary>
+    Task<(bool success, string message)> ActualizarDatosBancariosAsync(
+        Guid vendedorId, string nombreBanco, string numeroCuenta, string numeroCedula);
 }

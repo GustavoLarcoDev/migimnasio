@@ -53,7 +53,7 @@ public class ReciboService : IReciboService
 
     public async Task CrearReciboAsync(Guid? negocioId, string numeroRecibo, string tipoRecibo,
         string destinatarioEmail, string destinatarioNombre, string negocioNombre,
-        string concepto, decimal monto, string contenidoHtml)
+        string concepto, decimal monto, string contenidoHtml, string metodoPago = "Efectivo")
     {
         var recibo = new Recibo
         {
@@ -66,6 +66,7 @@ public class ReciboService : IReciboService
             NegocioNombre = negocioNombre,
             Concepto = concepto,
             Monto = monto,
+            MetodoPago = metodoPago ?? "Efectivo",
             ContenidoHtml = contenidoHtml,
             FechaCreacion = TimeHelper.Now
         };
@@ -240,5 +241,34 @@ public class ReciboService : IReciboService
                 r.FechaCreacion
             })
             .FirstOrDefaultAsync();
+    }
+
+    public async Task<List<object>> GetAdminPaymentStatsAsync()
+    {
+        var now = TimeHelper.Now;
+        var startOfDay = now.Date;
+        var startOfWeek = now.Date.AddDays(-(int)now.DayOfWeek);
+        var startOfMonth = new DateTime(now.Year, now.Month, 1);
+
+        var stats = await _context.Recibos.AsNoTracking()
+            .Where(r => r.NegocioId == null && r.FechaCreacion >= startOfMonth)
+            .GroupBy(r => r.MetodoPago ?? "Efectivo")
+            .Select(g => new
+            {
+                MetodoPago = g.Key,
+                TotalHoy = g.Where(r => r.FechaCreacion >= startOfDay).Sum(r => r.Monto),
+                TotalSemana = g.Where(r => r.FechaCreacion >= startOfWeek).Sum(r => r.Monto),
+                TotalMes = g.Sum(r => r.Monto),
+                CantidadMes = g.Count()
+            })
+            .ToListAsync();
+
+        // Asegurar que Efectivo siempre aparezca
+        if (!stats.Any(s => s.MetodoPago == "Efectivo"))
+        {
+            stats.Add(new { MetodoPago = "Efectivo", TotalHoy = 0m, TotalSemana = 0m, TotalMes = 0m, CantidadMes = 0 });
+        }
+
+        return stats.OrderByDescending(s => s.TotalMes).Cast<object>().ToList();
     }
 }

@@ -347,7 +347,7 @@ public class ComisionService : IComisionService
                 totalPagado = todas.Where(c => c.Pagada).Sum(c => c.MontoComision),
                 cantidadPendientes = pendientes.Count,
                 cantidadPagadas = pagadas.Count,
-                totalComisiones = todas.Count
+                totalComisiones = todas.Select(c => c.NegocioId).Distinct().Count()
             }
         };
     }

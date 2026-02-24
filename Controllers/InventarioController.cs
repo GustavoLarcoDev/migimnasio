@@ -29,22 +29,19 @@ public class InventarioController : Controller
     private readonly IAuthService _authService;
     private readonly ApplicationDbContext _context;
     private readonly IEmailService _emailService;
-    private readonly IWhatsAppService _whatsAppService;
 
     public InventarioController(
         IInventarioService inventarioService,
         IVentaProductoService ventaService,
         IAuthService authService,
         ApplicationDbContext context,
-        IEmailService emailService,
-        IWhatsAppService whatsAppService)
+        IEmailService emailService)
     {
         _inventarioService = inventarioService;
         _ventaService = ventaService;
         _authService = authService;
         _context = context;
         _emailService = emailService;
-        _whatsAppService = whatsAppService;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -203,26 +200,6 @@ public class InventarioController : Controller
 
             if (!success)
                 return BadRequest(new { success = false, message });
-
-            // Verificar stock bajo después de la venta y alertar al dueño
-            var producto = await _context.Productos.FindAsync(productoId);
-            if (producto != null && producto.Stock <= producto.StockMinimo)
-            {
-                var neg = await _context.Negocios.FindAsync(negocioId);
-                if (neg != null && !string.IsNullOrWhiteSpace(neg.Telefono))
-                {
-                    var tel = neg.Telefono;
-                    var nomNeg = neg.NegocioNombre;
-                    var nomProd = producto.Nombre;
-                    var stockAct = producto.Stock;
-                    var stockMin = producto.StockMinimo;
-                    _ = Task.Run(async () =>
-                    {
-                        try { await _whatsAppService.EnviarAlertaStockBajoWhatsAppAsync(tel, nomNeg, nomProd, stockAct, stockMin); }
-                        catch { }
-                    });
-                }
-            }
 
             return Ok(new { success = true, message });
         }
@@ -726,13 +703,6 @@ public class InventarioController : Controller
                     $"Tu recibo de compra #{recibo.NumeroRecibo:D6} - {recibo.NegocioNombre}",
                     recibo.ContenidoHtml);
                 return Ok(new { success = enviado, message = enviado ? "Recibo enviado por email" : "Error al enviar email" });
-            }
-            else if (tipo == "whatsapp")
-            {
-                // Por WhatsApp solo se envia un resumen de texto (no soporta HTML)
-                var msg = $"Hola! Aqui esta tu recibo de compra #{recibo.NumeroRecibo:D6} de {recibo.NegocioNombre} por ${recibo.Monto:F2}. Gracias por tu compra!";
-                var enviado = await _whatsAppService.EnviarMensajeTextoAsync(destino, msg);
-                return Ok(new { success = enviado, message = enviado ? "Recibo enviado por WhatsApp" : "Error al enviar WhatsApp" });
             }
 
             return BadRequest(new { success = false, message = "Tipo de envio no soportado" });

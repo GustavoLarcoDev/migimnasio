@@ -110,6 +110,15 @@ public class Logs
     public string NombreCliente { get; set; }
 
     /// <summary>
+    /// Método de pago utilizado en esta transacción (si aplica).
+    /// Ejemplos: "Efectivo", "Transferencia", "De Una", etc.
+    /// Nullable porque no todos los logs tienen un pago asociado (ej: inicio de sesión, ediciones).
+    /// Se usa para generar estadísticas de ingresos por método de pago en el dashboard.
+    /// </summary>
+    [MaxLength(100)]
+    public string MetodoPago { get; set; }
+
+    /// <summary>
     /// Fecha y hora exacta en que ocurrió el evento registrado.
     /// Se asigna automáticamente con TimeHelper.Now al crear el log.
     /// No se modifica después (inmutabilidad).

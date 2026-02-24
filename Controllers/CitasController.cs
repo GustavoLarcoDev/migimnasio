@@ -286,6 +286,7 @@ public class CitasController : Controller
                         // Enviar confirmación de reserva por WhatsApp al cliente
                         if (!string.IsNullOrWhiteSpace(cliente.Telefono))
                         {
+                            var negTelefono = negocio.Telefono;
                             _ = Task.Run(async () =>
                             {
                                 try
@@ -293,7 +294,7 @@ public class CitasController : Controller
                                     await _whatsAppService.EnviarConfirmacionReservaWhatsAppAsync(
                                         cliente.Telefono, cita.NombreCliente, negocio.NegocioNombre,
                                         cita.NombreServicio, cita.NombreEmpleado, cita.FechaHoraInicio,
-                                        cita.PrecioServicio);
+                                        cita.PrecioServicio, negTelefono);
                                 }
                                 catch { }
                             });
@@ -404,6 +405,7 @@ public class CitasController : Controller
                     // Enviar confirmación de reserva por WhatsApp al cliente
                     if (!string.IsNullOrWhiteSpace(cliente.Telefono))
                     {
+                        var negTelefono = negocio.Telefono;
                         _ = Task.Run(async () =>
                         {
                             try
@@ -411,7 +413,7 @@ public class CitasController : Controller
                                 await _whatsAppService.EnviarConfirmacionReservaWhatsAppAsync(
                                     cliente.Telefono, cita.NombreCliente, negocio.NegocioNombre,
                                     cita.NombreServicio, cita.NombreEmpleado, cita.FechaHoraInicio,
-                                    cita.PrecioServicio);
+                                    cita.PrecioServicio, negTelefono);
                             }
                             catch { }
                         });
@@ -450,30 +452,6 @@ public class CitasController : Controller
             if (!success)
                 return BadRequest(new { success, message });
 
-            // Enviar notificación WhatsApp al cliente de cita reprogramada
-            var cita = await _context.Citas.FindAsync(dto.CitaId);
-            if (cita != null)
-            {
-                var cliente = await _context.Clientes.FindAsync(cita.ClienteId);
-                var negocio = await _context.Negocios.FindAsync(cita.NegocioId);
-                var clienteTelefono = cliente?.Telefono;
-
-                if (!string.IsNullOrWhiteSpace(clienteTelefono))
-                {
-                    var clienteNombre = cita.NombreCliente ?? "Cliente";
-                    var negocioNombre = negocio?.NegocioNombre ?? "Tu negocio";
-                    var servicioNombre = cita.NombreServicio ?? "Servicio";
-                    var empleadoNombre = cita.NombreEmpleado ?? "Tu profesional";
-                    var nuevaFechaHora = cita.FechaHoraInicio;
-
-                    _ = Task.Run(async () =>
-                    {
-                        try { await _whatsAppService.EnviarNotificacionCitaReprogramadaWhatsAppAsync(clienteTelefono, clienteNombre, negocioNombre, servicioNombre, empleadoNombre, nuevaFechaHora); }
-                        catch { }
-                    });
-                }
-            }
-
             return Ok(new { success, message });
         }
         catch (Exception)
@@ -508,43 +486,6 @@ public class CitasController : Controller
             var (success, message) = await _citaService.CambiarEstadoCitaAsync(citaId, negocioId, nuevoEstado, motivoCancelacion);
             if (!success)
                 return BadRequest(new { success, message });
-
-            // Enviar notificación WhatsApp al cliente según el nuevo estado
-            if (nuevoEstado?.ToLower() is "cancelada" or "no_asistio")
-            {
-                var cita = await _context.Citas.FindAsync(citaId);
-                if (cita != null)
-                {
-                    var cliente = await _context.Clientes.FindAsync(cita.ClienteId);
-                    var negocio = await _context.Negocios.FindAsync(cita.NegocioId);
-                    var clienteTelefono = cliente?.Telefono;
-                    var clienteNombre = cita.NombreCliente ?? "Cliente";
-                    var negocioNombre = negocio?.NegocioNombre ?? "Tu negocio";
-                    var servicioNombre = cita.NombreServicio ?? "Servicio";
-                    var fechaHoraCita = cita.FechaHoraInicio;
-
-                    if (!string.IsNullOrWhiteSpace(clienteTelefono))
-                    {
-                        if (nuevoEstado.ToLower() == "cancelada")
-                        {
-                            var motivo = motivoCancelacion ?? "";
-                            _ = Task.Run(async () =>
-                            {
-                                try { await _whatsAppService.EnviarNotificacionCitaCanceladaWhatsAppAsync(clienteTelefono, clienteNombre, negocioNombre, servicioNombre, fechaHoraCita, motivo); }
-                                catch { }
-                            });
-                        }
-                        else // no_asistio
-                        {
-                            _ = Task.Run(async () =>
-                            {
-                                try { await _whatsAppService.EnviarNotificacionNoShowWhatsAppAsync(clienteTelefono, clienteNombre, negocioNombre, servicioNombre, fechaHoraCita); }
-                                catch { }
-                            });
-                        }
-                    }
-                }
-            }
 
             return Ok(new { success, message });
         }
@@ -614,17 +555,6 @@ public class CitasController : Controller
                         // Siempre almacenar el recibo en BD (aunque el email falle)
                         await _reciboService.CrearReciboAsync(dto.NegocioId, numRecibo, "pago_cita",
                             clienteEmail, clienteNombre, negocio.NegocioNombre, concepto, pago.Total, html);
-
-                        // Enviar recibo de servicio completado por WhatsApp al cliente
-                        var clienteTelefono = cliente?.Telefono;
-                        if (!string.IsNullOrWhiteSpace(clienteTelefono))
-                        {
-                            _ = Task.Run(async () =>
-                            {
-                                try { await _whatsAppService.EnviarReciboCitaCompletadaWhatsAppAsync(clienteTelefono, clienteNombre, negocio.NegocioNombre, cita.NombreServicio, pago.Total, numRecibo, metodoPago: pago.MetodoPago ?? "Efectivo"); }
-                                catch { }
-                            });
-                        }
                     }
                     catch (Exception ex)
                     {
@@ -699,29 +629,6 @@ public class CitasController : Controller
             var (success, message) = await _clienteService.CrearClienteArtesanalAsync(dto);
             if (!success)
                 return BadRequest(new { success, message });
-
-            // Enviar mensaje de bienvenida al cliente por WhatsApp
-            if (!string.IsNullOrWhiteSpace(dto.Telefono))
-            {
-                var negocio = await _context.Negocios.FindAsync(dto.NegocioId);
-                var negocioNombre = negocio?.NegocioNombre ?? "Tu negocio";
-                var clienteNombre = $"{dto.Nombre} {dto.Apellido}".Trim();
-                var tel = dto.Telefono;
-
-                _ = Task.Run(async () =>
-                {
-                    try
-                    {
-                        await _whatsAppService.EnviarMensajeTextoAsync(tel,
-                            $"👋 *¡Hola {clienteNombre}!*\n\n" +
-                            $"Gracias por registrarte en *{negocioNombre}*. " +
-                            $"Ya puedes agendar tus citas con nosotros.\n\n" +
-                            $"_Este es un mensaje automatizado de *{negocioNombre}*. " +
-                            $"Por favor no responda a este número._");
-                    }
-                    catch { }
-                });
-            }
 
             return Ok(new { success, message });
         }

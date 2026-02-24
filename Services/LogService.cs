@@ -67,7 +67,7 @@ public class LogService : ILogService
     /// <param name="monto">Monto del movimiento: positivo = ingreso, negativo = gasto, 0 = sin movimiento.</param>
     /// <param name="clienteId">ID del cliente relacionado (opcional, para trazabilidad).</param>
     /// <param name="nombreCliente">Nombre del cliente (se guarda desnormalizado para que no cambie al editar el cliente).</param>
-    public async Task CreateLogAsync(Guid negocioId, string tipo, string message, decimal monto = 0, Guid? clienteId = null, string nombreCliente = null)
+    public async Task CreateLogAsync(Guid negocioId, string tipo, string message, decimal monto = 0, Guid? clienteId = null, string nombreCliente = null, string metodoPago = null)
     {
         try
         {
@@ -79,9 +79,8 @@ public class LogService : ILogService
                 Monto = monto,
                 Tipo = tipo,
                 ClienteId = clienteId,
-                // Se guarda el nombre en el momento de la operación para que
-                // si el cliente cambia de nombre más adelante, el log conserve el original.
                 NombreCliente = nombreCliente,
+                MetodoPago = metodoPago,
                 Fecha = TimeHelper.Now
             };
 

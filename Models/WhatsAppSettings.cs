@@ -71,4 +71,33 @@ public class WhatsAppSettings
     /// Valor por defecto: false (desactivado por seguridad; se activa explícitamente en producción).
     /// </summary>
     public bool Enabled { get; set; } = false;
+
+    /// <summary>
+    /// Content Template SIDs de Twilio para mensajes aprobados por Meta/WhatsApp.
+    /// Sin templates aprobados, solo se pueden enviar mensajes dentro de la ventana de 24h.
+    /// Con templates, los mensajes se pueden enviar en cualquier momento (business-initiated).
+    /// </summary>
+    public WhatsAppTemplates Templates { get; set; } = new();
+}
+
+/// <summary>
+/// Mapea los Content SIDs de los templates de Twilio registrados para WhatsApp Business.
+/// Cada propiedad corresponde a un tipo de mensaje y contiene el SID del template (HXxxxxxxxxx).
+/// </summary>
+public class WhatsAppTemplates
+{
+    public string RecordatorioMembresia { get; set; } = "";
+    public string ConfirmacionCita { get; set; } = "";
+    public string RecordatorioCita { get; set; } = "";
+    public string RecordatorioCobro { get; set; } = "";
+    public string ResumenDiario { get; set; } = "";
+    public string ResumenDiarioGeneral { get; set; } = "";
+    public string RecordatorioCitaNegocio { get; set; } = "";
+    public string RecordatorioCitaEmpleado { get; set; } = "";
+    public string BienvenidaVendedor { get; set; } = "";
+    public string BienvenidaNegocio { get; set; } = "";
+    public string AdvertenciaSuscripcion { get; set; } = "";
+    public string NegocioBloqueado { get; set; } = "";
+    public string NegocioDesbloqueado { get; set; } = "";
+    public string Promocion { get; set; } = "";
 }

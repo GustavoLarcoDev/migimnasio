@@ -340,38 +340,33 @@ public class ClientesController : Controller
             if (!success)
                 return BadRequest(new { success = false, message });
 
-            // Enviar recibo al cliente si tiene email registrado y guardar en BD
-            if (!string.IsNullOrWhiteSpace(model.Email))
+            // Generar recibo SIEMPRE (con o sin email) y enviar por email si tiene
+            try
             {
                 var negocio = await _context.Negocios.FindAsync(model.NegocioId);
                 if (negocio != null)
                 {
                     var concepto = $"Membresía x{model.Dias} días";
                     var nombreCompleto = $"{model.Nombre} {model.Apellido}";
-                    try
+                    var numRecibo = await _reciboService.ObtenerSiguienteNumeroAsync(model.NegocioId);
+                    var metodo = model.MetodoPago ?? "Efectivo";
+                    var email = model.Email?.Trim();
+
+                    string html = "";
+                    if (!string.IsNullOrWhiteSpace(email))
                     {
-                        var numRecibo = await _reciboService.ObtenerSiguienteNumeroAsync(model.NegocioId);
-                        var (enviado, html) = await _emailService.EnviarReciboPagoClienteAsync(
-                            model.Email, nombreCompleto, negocio.NegocioNombre,
+                        var (enviado, htmlEmail) = await _emailService.EnviarReciboPagoClienteAsync(
+                            email, nombreCompleto, negocio.NegocioNombre,
                             concepto, model.Precio, model.Dias,
                             negocio.Email, negocio.Telefono, numRecibo,
-                            metodoPago: model.MetodoPago ?? "Efectivo");
-                        await _reciboService.CrearReciboAsync(model.NegocioId, numRecibo, "pago_cliente",
-                            model.Email, nombreCompleto, negocio.NegocioNombre, concepto, model.Precio, html);
-
-                        // Enviar recibo por WhatsApp al cliente
-                        if (!string.IsNullOrWhiteSpace(model.Telefono))
-                        {
-                            _ = Task.Run(async () =>
-                            {
-                                try { await _whatsAppService.EnviarReciboPagoClienteWhatsAppAsync(model.Telefono, nombreCompleto, negocio.NegocioNombre, concepto, model.Precio, numRecibo, metodoPago: model.MetodoPago ?? "Efectivo"); }
-                                catch { }
-                            });
-                        }
+                            metodoPago: metodo);
+                        html = htmlEmail;
                     }
-                    catch { }
+                    await _reciboService.CrearReciboAsync(model.NegocioId, numRecibo, "pago_cliente",
+                        email ?? "", nombreCompleto, negocio.NegocioNombre, concepto, model.Precio, html, metodo);
                 }
             }
+            catch { }
 
             return Ok(new { success = true, message });
         }
@@ -489,34 +484,31 @@ public class ClientesController : Controller
                 return BadRequest(new { success = false, message });
             }
 
-            // Enviar recibo de renovación y guardarlo en BD
+            // Generar recibo SIEMPRE y enviar email si tiene
             try
             {
                 var cliente = await _context.Clientes.FindAsync(id);
                 var negocio = await _context.Negocios.FindAsync(negocioId);
-                if (cliente != null && negocio != null && !string.IsNullOrWhiteSpace(cliente.Email))
+                if (cliente != null && negocio != null)
                 {
                     var dias = (int)(nuevaFechaFin.Date - TimeHelper.Now.Date).TotalDays;
                     if (dias < 1) dias = 1;
                     var concepto = $"Renovación membresía x{dias} días";
                     var nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}";
                     var numRecibo = await _reciboService.ObtenerSiguienteNumeroAsync(negocioId);
-                    var (enviado, html) = await _emailService.EnviarReciboPagoClienteAsync(
-                        cliente.Email, nombreCompleto, negocio.NegocioNombre,
-                        concepto, precio, dias, negocio.Email, negocio.Telefono, numRecibo,
-                        metodoPago: metodoPago);
-                    await _reciboService.CrearReciboAsync(negocioId, numRecibo, "pago_cliente",
-                        cliente.Email, nombreCompleto, negocio.NegocioNombre, concepto, precio, html);
+                    var email = cliente.Email?.Trim();
 
-                    // Enviar recibo de renovación por WhatsApp al cliente
-                    if (!string.IsNullOrWhiteSpace(cliente.Telefono))
+                    string html = "";
+                    if (!string.IsNullOrWhiteSpace(email))
                     {
-                        _ = Task.Run(async () =>
-                        {
-                            try { await _whatsAppService.EnviarReciboPagoClienteWhatsAppAsync(cliente.Telefono, nombreCompleto, negocio.NegocioNombre, concepto, precio, numRecibo, metodoPago: metodoPago); }
-                            catch { }
-                        });
+                        var (enviado, htmlEmail) = await _emailService.EnviarReciboPagoClienteAsync(
+                            email, nombreCompleto, negocio.NegocioNombre,
+                            concepto, precio, dias, negocio.Email, negocio.Telefono, numRecibo,
+                            metodoPago: metodoPago);
+                        html = htmlEmail;
                     }
+                    await _reciboService.CrearReciboAsync(negocioId, numRecibo, "pago_cliente",
+                        email ?? "", nombreCompleto, negocio.NegocioNombre, concepto, precio, html, metodoPago);
                 }
             }
             catch { }
@@ -803,6 +795,131 @@ public class ClientesController : Controller
                 return Forbid();
             var eliminados = await _reciboService.EliminarRecibosAntiguosAsync(negocioId, anteriorA);
             return Ok(new { success = true, eliminados });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // SECCION 8 — PROMOCIONES MASIVAS POR WHATSAPP
+    //
+    // Permite al dueño del negocio enviar un mensaje promocional a todos sus
+    // clientes (o a un filtro de ellos) por WhatsApp. Maximo 200 destinatarios
+    // con delay de 1 segundo entre envios para no saturar la API de Twilio.
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Cuenta cuantos clientes recibirian la promocion segun el filtro indicado.
+    /// Se usa como preview antes de confirmar el envio masivo.
+    /// </summary>
+    [HttpGet("ContarDestinatariosPromocion")]
+    public async Task<IActionResult> ContarDestinatariosPromocion(Guid negocioId, string filtro = "todos")
+    {
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+
+            var hoy = TimeHelper.Now.Date;
+            var query = _context.Clientes
+                .Where(c => c.NegocioId == negocioId && !c.EsDiario && !string.IsNullOrEmpty(c.Telefono));
+
+            if (filtro == "activos")
+                query = query.Where(c => c.FechaQueTermina.Date >= hoy);
+            else if (filtro == "vencidos")
+                query = query.Where(c => c.FechaQueTermina.Date < hoy);
+
+            var count = await query.CountAsync();
+            return Ok(new { count });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    /// <summary>
+    /// Envia un mensaje promocional masivo por WhatsApp a los clientes del negocio.
+    /// Maximo 200 destinatarios. Delay de 1 segundo entre envios.
+    /// El mensaje incluye el nombre del negocio y un link wa.me/ para contacto.
+    /// </summary>
+    [HttpPost("EnviarPromocionMasiva")]
+    public async Task<IActionResult> EnviarPromocionMasiva(Guid negocioId, string mensaje, string filtro = "todos")
+    {
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+
+            if (string.IsNullOrWhiteSpace(mensaje))
+                return BadRequest(new { success = false, message = "El mensaje no puede estar vacío" });
+
+            var negocio = await _context.Negocios.FindAsync(negocioId);
+            if (negocio == null)
+                return NotFound(new { success = false, message = "Negocio no encontrado" });
+
+            var hoy = TimeHelper.Now.Date;
+            var query = _context.Clientes
+                .Where(c => c.NegocioId == negocioId && !c.EsDiario && !string.IsNullOrEmpty(c.Telefono));
+
+            if (filtro == "activos")
+                query = query.Where(c => c.FechaQueTermina.Date >= hoy);
+            else if (filtro == "vencidos")
+                query = query.Where(c => c.FechaQueTermina.Date < hoy);
+
+            var clientes = await query
+                .Select(c => new { c.Telefono, c.Nombre, c.Apellido })
+                .Take(200)
+                .ToListAsync();
+
+            if (clientes.Count == 0)
+                return BadRequest(new { success = false, message = "No hay clientes con teléfono para enviar" });
+
+            // Construir disclaimer con link wa.me del negocio
+            var disclaimer = "";
+            if (!string.IsNullOrWhiteSpace(negocio.Telefono))
+            {
+                var numLimpio = negocio.Telefono.Replace(" ", "").Replace("-", "").Replace("(", "").Replace(")", "");
+                if (numLimpio.StartsWith("0") && numLimpio.Length == 10)
+                    numLimpio = "593" + numLimpio.Substring(1);
+                disclaimer = $"\n\n_Para comunicarte con *{negocio.NegocioNombre}*, escríbeles aquí:_ https://wa.me/{numLimpio}";
+            }
+            else
+            {
+                disclaimer = $"\n\n_Si tiene alguna duda, comuníquese directamente con *{negocio.NegocioNombre}*._";
+            }
+
+            var enviados = 0;
+            var errores = 0;
+            var negocioNombre = negocio.NegocioNombre;
+
+            // Enviar en fire-and-forget para no bloquear la respuesta HTTP
+            var telefonos = clientes.Select(c => c.Telefono).ToList();
+            _ = Task.Run(async () =>
+            {
+                foreach (var telefono in telefonos)
+                {
+                    try
+                    {
+                        var mensajeCompleto = $"*{negocioNombre}*\n\n{mensaje}{disclaimer}";
+                        await _whatsAppService.EnviarMensajeTextoAsync(telefono, mensajeCompleto);
+                        Interlocked.Increment(ref enviados);
+                    }
+                    catch
+                    {
+                        Interlocked.Increment(ref errores);
+                    }
+
+                    // Delay de 1 segundo entre envíos
+                    await Task.Delay(1000);
+                }
+            });
+
+            return Ok(new { success = true, message = $"Enviando promoción a {clientes.Count} clientes...", total = clientes.Count });
         }
         catch (Exception)
         {

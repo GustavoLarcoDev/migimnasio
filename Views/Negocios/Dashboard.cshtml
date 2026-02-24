@@ -119,6 +119,7 @@
             <button id="btnCrearCliente" class="btn btn-primary"><i class="bi bi-plus-circle me-2"></i>Nuevo Cliente</button>
             <button id="btnExportClientesExcel" class="btn btn-success"><i class="bi bi-file-earmark-excel me-2"></i>Exportar</button>
             <button id="btnImportarExcel" class="btn btn-outline-primary"><i class="bi bi-upload me-2"></i>Importar Excel</button>
+            <button id="btnEnviarPromocion" class="btn btn-warning"><i class="bi bi-megaphone me-2"></i>Enviar Promocion</button>
         </div>
         <div class="row g-3 mb-4">
             <div class="col-xl-3 col-md-6 col-6"><div class="mg-stat-card"><div class="d-flex align-items-center justify-content-between"><div><div class="stat-label">Total Clientes</div><div class="stat-value" id="totalClientes">0</div></div><div class="stat-icon bg-light-primary"><i class="bi bi-people-fill text-primary"></i></div></div></div></div>
@@ -454,6 +455,46 @@
 <button type="button" class="btn btn-primary" id="waSiguienteBtn"><i class="bi bi-arrow-right me-2"></i>Siguiente</button>
 <button type="button" class="btn btn-success d-none" id="waFinalizarBtn"><i class="bi bi-check-lg me-2"></i>Finalizar y limpiar lista</button>
 </div></div></div></div>
+
+<!-- Modal Promoción Masiva -->
+<div class="modal fade" id="modalPromocion" tabindex="-1" aria-hidden="true">
+<div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+<div class="modal-content mg-card">
+<div class="modal-header border-0 pb-0">
+    <h5 class="modal-title fw-bold"><i class="bi bi-megaphone me-2 text-warning"></i>Enviar Promocion Masiva</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+<div class="modal-body">
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Destinatarios</label>
+        <select id="promoFiltro" class="form-select">
+            <option value="todos">Todos los clientes</option>
+            <option value="activos">Solo activos (membresía vigente)</option>
+            <option value="vencidos">Solo vencidos (membresía expirada)</option>
+        </select>
+        <div class="mt-2">
+            <span class="badge bg-primary" id="promoConteo">Cargando...</span>
+        </div>
+    </div>
+    <div class="mb-3">
+        <label class="form-label fw-semibold">Mensaje</label>
+        <textarea id="promoMensaje" class="form-control" rows="5" maxlength="500" placeholder="Escribe tu promocion aqui..."></textarea>
+        <div class="form-text"><span id="promoChars">0</span>/500 caracteres</div>
+    </div>
+    <div class="mg-card bg-light p-3 rounded-3">
+        <small class="fw-semibold d-block mb-2"><i class="bi bi-eye me-1"></i>Vista previa del mensaje:</small>
+        <div id="promoPreview" class="small text-muted" style="white-space: pre-wrap;">Escribe un mensaje para ver la vista previa...</div>
+    </div>
+</div>
+<div class="modal-footer border-0 pt-0">
+    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+    <button type="button" class="btn btn-warning" id="btnConfirmarPromocion" disabled>
+        <i class="bi bi-send me-2"></i>Enviar a <span id="promoEnviarCount">0</span> clientes
+    </button>
+</div>
+</div>
+</div>
+</div>
 
 @await Html.PartialAsync("_ModalSeleccionPago")
 
@@ -1703,7 +1744,7 @@ function cargarMetodosPago() {
             var mpStats = statsMap[mp.nombre.toLowerCase()] || { totalHoy: 0, totalSemana: 0, totalMes: 0, cantidadMes: 0 };
             grid.append(renderMetodoPagoCard(mp.metodoPagoId, mp.nombre, mp.numeroCuenta, mp.nombreTitular, false, mp.esPredeterminado, mpStats, mp.imagenQR));
         });
-    }).fail(function() {
+    }).catch(function() {
         toastr.error('Error al cargar métodos de pago');
     });
 }
@@ -1922,6 +1963,92 @@ function setPredeterminado(id) {
         }
     });
 }
+
+// ═══════════════════════════════════════════════════════════
+// PROMOCIÓN MASIVA
+// ═══════════════════════════════════════════════════════════
+$('#btnEnviarPromocion').on('click', function() {
+    actualizarConteoPromocion();
+    $('#promoMensaje').val('');
+    $('#promoChars').text('0');
+    $('#promoPreview').text('Escribe un mensaje para ver la vista previa...');
+    $('#btnConfirmarPromocion').prop('disabled', true);
+    new bootstrap.Modal('#modalPromocion').show();
+});
+
+$('#promoFiltro').on('change', actualizarConteoPromocion);
+
+$('#promoMensaje').on('input', function() {
+    var texto = $(this).val();
+    $('#promoChars').text(texto.length);
+    $('#btnConfirmarPromocion').prop('disabled', texto.trim().length === 0);
+    if (texto.trim()) {
+        $('#promoPreview').html(
+            '<strong>' + $('<span>').text(negocioNombre).html() + ':</strong>\n' +
+            $('<span>').text(texto).html() +
+            '\n\n<em>Este es un mensaje automatizado.</em>'
+        );
+    } else {
+        $('#promoPreview').text('Escribe un mensaje para ver la vista previa...');
+    }
+});
+
+function actualizarConteoPromocion() {
+    var filtro = $('#promoFiltro').val();
+    $('#promoConteo').text('Cargando...');
+    $.get('/Negocios/ContarDestinatariosPromocion', { negocioId: negocioId, filtro: filtro }, function(r) {
+        if (r.success) {
+            $('#promoConteo').text(r.total + ' clientes con telefono');
+            $('#promoEnviarCount').text(r.total);
+            if (r.total === 0) {
+                $('#promoConteo').removeClass('bg-primary').addClass('bg-secondary');
+            } else {
+                $('#promoConteo').removeClass('bg-secondary').addClass('bg-primary');
+            }
+        }
+    }).fail(function() {
+        $('#promoConteo').text('Error al contar');
+    });
+}
+
+$('#btnConfirmarPromocion').on('click', function() {
+    var mensaje = $('#promoMensaje').val().trim();
+    var filtro = $('#promoFiltro').val();
+    var total = $('#promoEnviarCount').text();
+    if (!mensaje) return;
+
+    swalMG.fire({
+        title: 'Confirmar envio',
+        html: 'Se enviara el mensaje a <strong>' + total + '</strong> clientes por WhatsApp.<br><br><small class="text-muted">Este proceso puede tardar varios minutos.</small>',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Si, enviar',
+        showLoaderOnConfirm: true,
+        preConfirm: function() {
+            return $.post('/Negocios/EnviarPromocionMasiva', {
+                negocioId: negocioId,
+                mensaje: mensaje,
+                filtro: filtro,
+                __RequestVerificationToken: $('input[name="__RequestVerificationToken"]').val()
+            }).then(function(r) {
+                return r;
+            }).catch(function() {
+                Swal.showValidationMessage('Error de conexion');
+            });
+        },
+        allowOutsideClick: function() { return !Swal.isLoading(); }
+    }).then(function(result) {
+        if (result.isConfirmed && result.value) {
+            var r = result.value;
+            bootstrap.Modal.getInstance(document.getElementById('modalPromocion'))?.hide();
+            if (r.success) {
+                swalMG.fire('Enviado', 'Se enviaron ' + r.enviados + ' de ' + r.total + ' mensajes.' + (r.errores > 0 ? ' (' + r.errores + ' errores)' : ''), 'success');
+            } else {
+                swalMG.fire('Error', r.message || 'No se pudo enviar', 'error');
+            }
+        }
+    });
+});
 
 </script>
 }

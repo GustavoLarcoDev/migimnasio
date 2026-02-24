@@ -169,7 +169,7 @@ public class MetodoPagoController : Controller
     /// Elimina un metodo de pago del negocio.
     /// </summary>
     [HttpPost("EliminarMetodoPago")]
-    public async Task<IActionResult> EliminarMetodoPago(Guid negocioId, Guid metodoPagoId)
+    public async Task<IActionResult> EliminarMetodoPago([FromForm] Guid negocioId, [FromForm] Guid metodoPagoId)
     {
         try
         {

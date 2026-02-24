@@ -11,7 +11,7 @@ public interface ILogService
     /// <summary>
     /// Crea un log automático (llamado desde ClienteService al crear/editar/renovar/eliminar clientes)
     /// </summary>
-    Task CreateLogAsync(Guid negocioId, string tipo, string message, decimal monto = 0, Guid? clienteId = null, string nombreCliente = null);
+    Task CreateLogAsync(Guid negocioId, string tipo, string message, decimal monto = 0, Guid? clienteId = null, string nombreCliente = null, string metodoPago = null);
 
     /// <summary>
     /// Obtiene todos los logs del negocio ordenados por fecha descendente

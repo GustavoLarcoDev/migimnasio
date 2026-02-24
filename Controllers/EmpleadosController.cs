@@ -43,18 +43,15 @@ public class EmpleadosController : Controller
 
     private readonly IEmpleadoService _empleadoService;
     private readonly IAuthService _authService;
-    private readonly IWhatsAppService _whatsAppService;
     private readonly ApplicationDbContext _context;
 
     public EmpleadosController(
         IEmpleadoService empleadoService,
         IAuthService authService,
-        IWhatsAppService whatsAppService,
         ApplicationDbContext context)
     {
         _empleadoService = empleadoService;
         _authService = authService;
-        _whatsAppService = whatsAppService;
         _context = context;
     }
 
@@ -144,27 +141,6 @@ public class EmpleadosController : Controller
             var (success, message) = await _empleadoService.CrearEmpleadoAsync(dto);
             if (!success)
                 return BadRequest(new { success, message });
-
-            // Enviar mensaje de bienvenida al empleado por WhatsApp
-            if (!string.IsNullOrWhiteSpace(dto.Telefono))
-            {
-                var negocio = await _context.Negocios.FindAsync(dto.NegocioId);
-                var negocioNombre = negocio?.NegocioNombre ?? "Tu negocio";
-                var empleadoNombre = $"{dto.Nombre} {dto.Apellido}".Trim();
-                var tel = dto.Telefono;
-
-                _ = Task.Run(async () =>
-                {
-                    try
-                    {
-                        await _whatsAppService.EnviarMensajeTextoAsync(tel,
-                            $"👋 *¡Bienvenido/a al equipo de {negocioNombre}, {empleadoNombre}!*\n\n" +
-                            $"Ya estás registrado/a en el sistema. Tu agenda de citas está lista.\n\n" +
-                            $"— My-Negocio");
-                    }
-                    catch { }
-                });
-            }
 
             return Ok(new { success, message });
         }

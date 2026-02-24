@@ -192,7 +192,8 @@ public class AppointmentReminderService : BackgroundService
                             cita.NombreCliente,
                             negocio.NegocioNombre,
                             cita.NombreEmpleado,
-                            hora);
+                            hora,
+                            negocio.Telefono);
                         if (!resultCliente) envioExitoso = false;
                     }
 

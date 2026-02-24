@@ -305,17 +305,7 @@ public class AdminController : Controller
                         diasPagados ?? 30, precioSuscripcion.Value, null, null, numRecibo,
                         metodoPago: metodoPago);
                     await _reciboService.CrearReciboAsync(null, numRecibo, "suscripcion_negocio",
-                        EmailNegocio, duenoNegocio, NombreNegocio, concepto, precioSuscripcion.Value, html);
-
-                    // Enviar recibo de suscripción por WhatsApp
-                    if (!string.IsNullOrWhiteSpace(telefono))
-                    {
-                        _ = Task.Run(async () =>
-                        {
-                            try { await _whatsAppService.EnviarReciboPagoSuscripcionWhatsAppAsync(telefono, NombreNegocio, diasPagados ?? 30, precioSuscripcion.Value, numRecibo, metodoPago: metodoPago); }
-                            catch { }
-                        });
-                    }
+                        EmailNegocio, duenoNegocio, NombreNegocio, concepto, precioSuscripcion.Value, html, metodoPago);
                 }
                 catch { }
             }
@@ -790,16 +780,6 @@ public class AdminController : Controller
                         metodoPago: metodoPago);
                     await _reciboService.CrearReciboAsync(null, numRecibo, "pago_comision",
                         vendedor.Correo, vendedorNombre, "My-Negocio", concepto, totalPagado, html);
-
-                    // Enviar recibo de comisión por WhatsApp
-                    if (!string.IsNullOrWhiteSpace(vendedor.Telefono))
-                    {
-                        _ = Task.Run(async () =>
-                        {
-                            try { await _whatsAppService.EnviarReciboComisionWhatsAppAsync(vendedor.Telefono, vendedorNombre, totalPagado, detalleNegocios.Count, numRecibo, metodoPago: metodoPago); }
-                            catch { }
-                        });
-                    }
                 }
                 catch { }
             }
@@ -937,6 +917,22 @@ public class AdminController : Controller
     /// Obtiene todos los metodos de pago configurados por el admin (nivel plataforma).
     /// Usa Guid.Empty como NegocioId del admin.
     /// </summary>
+    [HttpGet("GetAdminPaymentStats")]
+    public async Task<IActionResult> GetAdminPaymentStats()
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+            var stats = await _reciboService.GetAdminPaymentStatsAsync();
+            return Ok(stats);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
     [HttpGet("GetAdminMetodosPago")]
     public async Task<IActionResult> GetAdminMetodosPago()
     {

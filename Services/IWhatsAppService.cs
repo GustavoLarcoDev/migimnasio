@@ -7,22 +7,10 @@
 //   Los mensajes incluyen el nombre del negocio para que el cliente final sepa
 //   de qué empresa le está escribiendo.
 //
-//   Ejemplo: el gimnasio "FitZone" no tiene su propio número de WhatsApp Business.
-//   El mensaje que recibe su cliente dice:
-//   "Hola María, tu membresía en *FitZone* vence en 3 días..."
-//   Pero el remitente técnico es el número de My-Negocio.
-//
 // API UTILIZADA: Twilio WhatsApp API
-//   La implementación llama directamente a:
-//   https://api.twilio.com/2010-04-01/Accounts/{AccountSid}/Messages.json
-//   con autenticación Basic Auth.
 //
-// TIPOS DE MENSAJE SOPORTADOS:
-//   - Texto plano: para recordatorios de membresía y resumen diario
-//   - Recordatorio de cita (cliente): avisa de una cita próxima al cliente final
-//   - Recordatorio de cita (negocio): avisa al dueño sobre citas del día siguiente
-//
-// VER: WhatsAppService.cs para la implementación y configuración de appsettings.json
+// MENSAJES A CLIENTES incluyen un link wa.me/ para contactar al negocio.
+// MENSAJES AL DUEÑO/ADMIN no incluyen link wa.me/.
 // ═══════════════════════════════════════════════════════════════════════════
 
 namespace Gimnasio.Services;
@@ -35,161 +23,85 @@ namespace Gimnasio.Services;
 /// </summary>
 public interface IWhatsAppService
 {
+    // ═══════════════════════════════════════════════════════════
+    // MÉTODO BASE
+    // ═══════════════════════════════════════════════════════════
+
     /// <summary>
     /// Envía un mensaje de texto plano a cualquier número de teléfono.
     /// Es el método base que todos los demás métodos usan internamente.
-    /// El número de teléfono se limpia y normaliza automáticamente:
-    ///   - Se eliminan espacios, guiones, paréntesis y el símbolo +
-    ///   - Si empieza con "0" (formato Ecuador), se reemplaza con "593"
     /// </summary>
-    /// <param name="telefono">Número de teléfono (cualquier formato: +593987654321, 0987654321, etc.)</param>
-    /// <param name="mensaje">Texto del mensaje. Soporta formato de WhatsApp: *negrita*, _cursiva_</param>
-    /// <returns><c>true</c> si la API de Meta respondió con éxito. <c>false</c> si hubo error de red o API.</returns>
     Task<bool> EnviarMensajeTextoAsync(string telefono, string mensaje);
 
-    /// <summary>
-    /// Envía un recordatorio de vencimiento de membresía al cliente final.
-    /// El mensaje varía según cuántos días faltan:
-    ///   - 1 día: alerta urgente con "vence MAÑANA"
-    ///   - 3 días: recordatorio anticipado con días específicos
-    ///   - Otros: mensaje genérico con la cantidad de días
-    /// El mensaje siempre aclara que es automatizado y que no deben responder
-    /// al número (ya que es el número de My-Negocio, no del negocio directamente).
-    /// </summary>
-    /// <param name="telefono">Número del cliente</param>
-    /// <param name="nombreCliente">Nombre del cliente para personalizar el saludo</param>
-    /// <param name="nombreNegocio">Nombre del negocio (ej. "Gimnasio FitZone") para identificación</param>
-    /// <param name="diasRestantes">Días que faltan para que venza la membresía (0, 1, 2 o 3)</param>
-    Task<bool> EnviarRecordatorioMembresiaAsync(string telefono, string nombreCliente, string nombreNegocio, int diasRestantes);
+    // ═══════════════════════════════════════════════════════════
+    // MENSAJES A CLIENTES (incluyen link wa.me/ del negocio)
+    // ═══════════════════════════════════════════════════════════
 
     /// <summary>
-    /// Envía el resumen diario del negocio al dueño.
-    /// Se llama desde el servicio de reporte diario (DailyReportService) en un
-    /// horario programado (típicamente al cierre del día o a primera hora).
-    /// Incluye: ingresos del día, nuevos clientes y membresías que vencen mañana.
+    /// Envía un recordatorio de vencimiento de membresía al cliente.
+    /// Incluye link wa.me/ del negocio para contacto directo.
     /// </summary>
-    /// <param name="telefono">Número del dueño del negocio</param>
-    /// <param name="nombreNegocio">Nombre del negocio para el encabezado del mensaje</param>
-    /// <param name="ingresosDia">Suma total de ingresos del día</param>
-    /// <param name="nuevosClientes">Cantidad de clientes nuevos registrados hoy</param>
-    /// <param name="porVencerManana">Membresías que vencen el día siguiente</param>
-    Task<bool> EnviarResumenDiarioAsync(string telefono, string nombreNegocio, decimal ingresosDia, int nuevosClientes, int porVencerManana);
+    Task<bool> EnviarRecordatorioMembresiaAsync(string telefono, string nombreCliente, string nombreNegocio, int diasRestantes, string telefonoNegocio = null);
+
+    /// <summary>
+    /// Envía confirmación de reserva/cita al cliente.
+    /// Incluye link wa.me/ del negocio para contacto directo.
+    /// </summary>
+    Task<bool> EnviarConfirmacionReservaWhatsAppAsync(string telefono, string cliente, string negocio, string servicio, string empleado, DateTime fechaHora, decimal precio, string telefonoNegocio = null);
 
     /// <summary>
     /// Envía un recordatorio de cita al CLIENTE antes de su turno.
-    /// Informa el negocio, el empleado que lo atenderá y la hora.
-    /// Aclara que es un mensaje automatizado y que contacten al negocio si necesitan cancelar.
-    /// Usado por negocios de tipo "artesanal" (peluquerías, spas, etc.) que manejan citas.
+    /// Incluye link wa.me/ del negocio para contacto directo.
     /// </summary>
-    /// <param name="telefono">Número del cliente</param>
-    /// <param name="nombreCliente">Nombre del cliente para el saludo</param>
-    /// <param name="nombreNegocio">Nombre del negocio para identificación</param>
-    /// <param name="nombreEmpleado">Nombre del empleado/profesional que atenderá al cliente</param>
-    /// <param name="hora">Hora de la cita en formato legible (ej. "10:30 AM")</param>
-    Task<bool> EnviarRecordatorioCitaClienteAsync(string telefono, string nombreCliente, string nombreNegocio, string nombreEmpleado, string hora);
+    Task<bool> EnviarRecordatorioCitaClienteAsync(string telefono, string nombreCliente, string nombreNegocio, string nombreEmpleado, string hora, string telefonoNegocio = null);
 
     /// <summary>
-    /// Envía un recordatorio de cita al DUEÑO del negocio para que esté preparado.
-    /// Informa el servicio que se realizará, la hora y el empleado que lo ejecutará.
-    /// Firmado con "— MiNegocio" ya que es un mensaje administrativo interno.
+    /// Envía un recordatorio de cobro al cliente con membresía vencida.
+    /// Incluye link wa.me/ del negocio para contacto directo.
     /// </summary>
-    /// <param name="telefono">Número del dueño del negocio</param>
-    /// <param name="nombreDueno">Nombre del dueño para el saludo</param>
-    /// <param name="nombreServicio">Nombre del servicio a realizar (ej. "Corte + Color")</param>
-    /// <param name="hora">Hora de la cita</param>
-    /// <param name="nombreEmpleado">Nombre del empleado que realizará el servicio</param>
+    Task<bool> EnviarRecordatorioCobroWhatsAppAsync(string telefono, string nombreCliente, string nombreNegocio, int diasVencido, string telefonoNegocio = null);
+
+    // ═══════════════════════════════════════════════════════════
+    // MENSAJES AL DUEÑO/ADMIN (NO incluyen link wa.me/)
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Envía el resumen diario del negocio al dueño (tipo membresías).
+    /// </summary>
+    Task<bool> EnviarResumenDiarioAsync(string telefono, string nombreNegocio, decimal ingresosDia, int nuevosClientes, int porVencerManana);
+
+    /// <summary>
+    /// Envía resumen diario para negocios artesanal/tienda/restaurante.
+    /// </summary>
+    Task<bool> EnviarResumenDiarioGeneralWhatsAppAsync(string telefono, string negocio, decimal ingresos, decimal gastos, decimal ganancia, int nuevosClientes);
+
+    /// <summary>
+    /// Envía un recordatorio de cita al DUEÑO del negocio.
+    /// </summary>
     Task<bool> EnviarRecordatorioCitaNegocioAsync(string telefono, string nombreDueno, string nombreServicio, string hora, string nombreEmpleado);
 
     /// <summary>
-    /// Envía el link del Catálogo de la Tienda al cliente vía WhatsApp.
+    /// Envía recordatorio de cita al empleado que atenderá al cliente.
     /// </summary>
-    /// <param name="telefono">Número del cliente</param>
-    /// <param name="nombreNegocio">Nombre comercial de la tienda</param>
-    /// <param name="linkCatalogo">URL pública para descargar/ver el PDF del catálogo</param>
-    Task<bool> EnviarLinkCatalogoTiendaAsync(string telefono, string nombreNegocio, string linkCatalogo);
+    Task<bool> EnviarRecordatorioCitaEmpleadoWhatsAppAsync(string telefono, string empleado, string cliente, string servicio, string hora);
 
-    // ═══════════════════════════════════════════════════════════════════════
-    // MENSAJES PAREADOS CON EMAIL
-    // Cada uno de estos métodos se llama en paralelo con su email equivalente,
-    // para que el destinatario reciba la notificación por ambos canales.
-    // ═══════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════
+    // MENSAJES PAREADOS CON EMAIL (al dueño/vendedor)
+    // ═══════════════════════════════════════════════════════════
 
     /// <summary>
     /// Envía bienvenida al vendedor con sus credenciales de acceso.
-    /// Se llama junto con EnviarBienvenidaVendedorAsync del EmailService.
     /// </summary>
     Task<bool> EnviarBienvenidaVendedorWhatsAppAsync(string telefono, string nombre, string email, string password);
 
     /// <summary>
     /// Envía bienvenida al negocio nuevo con sus credenciales de acceso.
-    /// Se llama junto con EnviarBienvenidaNegocioAsync del EmailService.
     /// </summary>
     Task<bool> EnviarBienvenidaNegocioWhatsAppAsync(string telefono, string negocio, string dueno, string email, string password, string tipoNegocio);
 
-    /// <summary>
-    /// Envía recibo de pago de suscripción SaaS al negocio.
-    /// Se llama junto con EnviarReciboPagoNegocioAsync del EmailService.
-    /// </summary>
-    Task<bool> EnviarReciboPagoSuscripcionWhatsAppAsync(string telefono, string negocio, int dias, decimal precio, string numRecibo, string metodoPago = "Efectivo");
-
-    /// <summary>
-    /// Envía recibo de pago de comisión al vendedor.
-    /// Se llama junto con EnviarReciboComisionAsync del EmailService.
-    /// </summary>
-    Task<bool> EnviarReciboComisionWhatsAppAsync(string telefono, string nombre, decimal monto, int cantidad, string numRecibo, string metodoPago = "Efectivo");
-
-    /// <summary>
-    /// Envía recibo de pago de membresía al cliente del negocio.
-    /// Se llama junto con EnviarReciboPagoClienteAsync del EmailService.
-    /// </summary>
-    Task<bool> EnviarReciboPagoClienteWhatsAppAsync(string telefono, string cliente, string negocio, string concepto, decimal monto, string numRecibo, string metodoPago = "Efectivo");
-
-    /// <summary>
-    /// Envía confirmación de reserva/cita al cliente.
-    /// Se llama junto con EnviarConfirmacionReservaAsync del EmailService.
-    /// </summary>
-    Task<bool> EnviarConfirmacionReservaWhatsAppAsync(string telefono, string cliente, string negocio, string servicio, string empleado, DateTime fechaHora, decimal precio);
-
-    /// <summary>
-    /// Envía recibo de servicio/cita completada al cliente.
-    /// Se llama junto con EnviarReciboCitaCompletadaAsync del EmailService.
-    /// </summary>
-    Task<bool> EnviarReciboCitaCompletadaWhatsAppAsync(string telefono, string cliente, string negocio, string servicio, decimal total, string numRecibo, string metodoPago = "Efectivo");
-
-    /// <summary>
-    /// Envía resumen diario para negocios artesanal/tienda/restaurante.
-    /// Versión genérica que incluye ingresos, gastos y ganancia neta.
-    /// </summary>
-    Task<bool> EnviarResumenDiarioGeneralWhatsAppAsync(string telefono, string negocio, decimal ingresos, decimal gastos, decimal ganancia, int nuevosClientes);
-
-    /// <summary>
-    /// Envía recordatorio de cita al empleado que atenderá al cliente.
-    /// Se llama junto con EnviarRecordatorioCitaEmpleadoAsync del EmailService.
-    /// </summary>
-    Task<bool> EnviarRecordatorioCitaEmpleadoWhatsAppAsync(string telefono, string empleado, string cliente, string servicio, string hora);
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // NOTIFICACIONES DE ESTADO DE CITAS
-    // ═══════════════════════════════════════════════════════════════════════
-
-    /// <summary>
-    /// Notifica al cliente que su cita fue cancelada.
-    /// </summary>
-    Task<bool> EnviarNotificacionCitaCanceladaWhatsAppAsync(string telefono, string cliente, string negocio, string servicio, DateTime fechaHora, string motivo);
-
-    /// <summary>
-    /// Notifica al cliente que su cita fue reprogramada a una nueva fecha/hora.
-    /// </summary>
-    Task<bool> EnviarNotificacionCitaReprogramadaWhatsAppAsync(string telefono, string cliente, string negocio, string servicio, string empleado, DateTime nuevaFechaHora);
-
-    /// <summary>
-    /// Notifica al cliente que no asistió a su cita (no-show).
-    /// </summary>
-    Task<bool> EnviarNotificacionNoShowWhatsAppAsync(string telefono, string cliente, string negocio, string servicio, DateTime fechaHora);
-
-    // ═══════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════
     // NOTIFICACIONES DE SUSCRIPCIÓN Y NEGOCIO
-    // ═══════════════════════════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════════════
 
     /// <summary>
     /// Advierte al dueño que su suscripción está próxima a expirar.
@@ -205,13 +117,4 @@ public interface IWhatsAppService
     /// Notifica al dueño que su negocio fue desbloqueado.
     /// </summary>
     Task<bool> EnviarNotificacionNegocioDesbloqueadoWhatsAppAsync(string telefono, string negocio, string dueno);
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // ALERTAS DE INVENTARIO
-    // ═══════════════════════════════════════════════════════════════════════
-
-    /// <summary>
-    /// Alerta al dueño que un producto tiene stock bajo.
-    /// </summary>
-    Task<bool> EnviarAlertaStockBajoWhatsAppAsync(string telefono, string negocio, string producto, int stockActual, int stockMinimo);
 }

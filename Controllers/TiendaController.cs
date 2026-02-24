@@ -25,18 +25,15 @@ public class TiendaController : Controller
     // ── Dependencias inyectadas ──────────────────────────────────────────────
     private readonly IAuthService _authService;
     private readonly ICatalogoService _catalogoService;
-    private readonly IWhatsAppService _whatsappService;
     private readonly IEmailService _emailService;
 
     public TiendaController(
         IAuthService authService,
         ICatalogoService catalogoService,
-        IWhatsAppService whatsappService,
         IEmailService emailService)
     {
         _authService = authService;
         _catalogoService = catalogoService;
-        _whatsappService = whatsappService;
         _emailService = emailService;
     }
 
@@ -129,16 +126,6 @@ public class TiendaController : Controller
 
             var enviado = await _emailService.EnviarReciboPorEmailGenericoAsync(destino, $"Catalogo de {companyName}", htmlBody);
             return Json(new { success = enviado, message = enviado ? "Catalogo enviado por correo exitosamente." : "Hubo un error al enviar el correo." });
-        }
-        else if (tipo == "whatsapp")
-        {
-            // Construir la URL publica y enviar por WhatsApp Cloud API
-            var host = Request.Host.Value;
-            var scheme = Request.Scheme;
-            var url = $"{scheme}://{host}/Tienda/VerCatalogo?negocioId={nId.Value}&estilo={estilo}";
-
-            var enviado = await _whatsappService.EnviarLinkCatalogoTiendaAsync(destino, companyName, url);
-            return Json(new { success = enviado, message = enviado ? "Link del catálogo enviado por WhatsApp." : "Hubo un error al enviar el WhatsApp." });
         }
 
         return Json(new { success = false, message = "Método de envío no soportado." });

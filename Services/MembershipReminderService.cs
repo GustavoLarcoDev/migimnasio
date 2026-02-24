@@ -150,13 +150,14 @@ public class MembershipReminderService : BackgroundService
             // Los artesanales no tienen membresías — usan citas (AppointmentReminderService).
             var negociosActivos = await context.Negocios
                 .Where(n => n.IsActive && n.TipoNegocio == "membresias")
-                .Select(n => new { n.NegocioId, n.NegocioNombre })
+                .Select(n => new { n.NegocioId, n.NegocioNombre, n.Telefono })
                 .ToListAsync(stoppingToken);
 
             // Preparar estructuras de datos eficientes para el bucle siguiente.
             // Esto evita consultar el nombre del negocio por cada cliente individualmente.
             var negocioIds = negociosActivos.Select(n => n.NegocioId).ToList();
             var negocioNombres = negociosActivos.ToDictionary(n => n.NegocioId, n => n.NegocioNombre);
+            var negocioTelefonos = negociosActivos.ToDictionary(n => n.NegocioId, n => n.Telefono);
 
             // Cargar todos los clientes de estos negocios en una sola consulta.
             // El filtrado de días se hace en memoria (más flexible que SQL para lógica de fechas).
@@ -208,6 +209,7 @@ public class MembershipReminderService : BackgroundService
                     // Buscar el nombre del negocio al que pertenece este cliente.
                     // Si por alguna razón no se encuentra, usar un texto genérico.
                     var negocioNombre = negocioNombres.GetValueOrDefault(cliente.NegocioId, "Tu negocio");
+                    var negocioTelefono = negocioTelefonos.GetValueOrDefault(cliente.NegocioId);
 
                     // Enviar el recordatorio al cliente. El mensaje se personaliza en WhatsAppService:
                     // 1 día = mensaje urgente, 3 días = aviso preventivo.
@@ -215,7 +217,8 @@ public class MembershipReminderService : BackgroundService
                         cliente.Telefono,
                         nombreCompleto,
                         negocioNombre,
-                        diasRestantes);
+                        diasRestantes,
+                        negocioTelefono);
 
                     if (resultado)
                     {

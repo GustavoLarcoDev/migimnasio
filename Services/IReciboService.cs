@@ -22,7 +22,7 @@ public interface IReciboService
     /// </summary>
     Task CrearReciboAsync(Guid? negocioId, string numeroRecibo, string tipoRecibo,
         string destinatarioEmail, string destinatarioNombre, string negocioNombre,
-        string concepto, decimal monto, string contenidoHtml);
+        string concepto, decimal monto, string contenidoHtml, string metodoPago = "Efectivo");
 
     /// <summary>
     /// Obtiene todos los recibos del negocio ordenados del mas reciente al mas antiguo.
@@ -63,4 +63,9 @@ public interface IReciboService
     /// Obtiene un recibo especifico del admin con su contenido HTML completo.
     /// </summary>
     Task<object?> GetReciboAdminAsync(Guid reciboId);
+
+    /// <summary>
+    /// Obtiene estadísticas de pagos de suscripción agrupados por método de pago (admin scope).
+    /// </summary>
+    Task<List<object>> GetAdminPaymentStatsAsync();
 }

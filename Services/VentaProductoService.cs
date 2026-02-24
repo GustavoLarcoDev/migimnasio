@@ -273,12 +273,11 @@ public class VentaProductoService : IVentaProductoService
             var nombre = enc(prod?.Nombre ?? "Producto");
             var bg = altRow ? "background: #f8f9fa;" : "";
 
-            // Imagen del producto (Base64 data URI) o placeholder
-            var imgHtml = "";
-            if (!string.IsNullOrEmpty(prod?.ImagenUrl))
-                imgHtml = $"<img src='{prod.ImagenUrl}' style='width:40px;height:40px;object-fit:cover;border-radius:6px;margin-right:10px;vertical-align:middle;' alt=''>";
-            else
-                imgHtml = "<div style='display:inline-block;width:40px;height:40px;border-radius:6px;background:#e9ecef;vertical-align:middle;margin-right:10px;text-align:center;line-height:40px;color:#adb5bd;font-size:18px;'>&#128722;</div>";
+            // Icono del producto (NO usar Base64 en emails — los clientes de correo no lo renderizan)
+            var hasImg = !string.IsNullOrEmpty(prod?.ImagenUrl);
+            var imgHtml = hasImg
+                ? "<div style='display:inline-block;width:40px;height:40px;border-radius:6px;background:linear-gradient(135deg,#3E97FF,#1B74E4);vertical-align:middle;margin-right:10px;text-align:center;line-height:40px;color:white;font-size:18px;'>&#128230;</div>"
+                : "<div style='display:inline-block;width:40px;height:40px;border-radius:6px;background:#e9ecef;vertical-align:middle;margin-right:10px;text-align:center;line-height:40px;color:#adb5bd;font-size:18px;'>&#128722;</div>";
 
             itemsHtml += $@"<tr style='{bg}'>
                 <td style='padding: 10px 12px; color: #333;'>{imgHtml}<span style='vertical-align:middle;'>{nombre}</span></td>

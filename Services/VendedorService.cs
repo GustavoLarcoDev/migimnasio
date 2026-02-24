@@ -467,4 +467,29 @@ public class VendedorService : IVendedorService
     {
         return await _context.LeadsVendedor.CountAsync(l => !l.Atendido);
     }
+
+    public async Task<(bool success, string message)> ActualizarDatosBancariosAsync(
+        Guid vendedorId, string nombreBanco, string numeroCuenta, string numeroCedula)
+    {
+        try
+        {
+            var vendedor = await _context.Vendedores.FindAsync(vendedorId);
+            if (vendedor == null)
+                return (false, "Vendedor no encontrado");
+
+            vendedor.NombreBanco = nombreBanco?.Trim();
+            vendedor.NumeroCuenta = numeroCuenta?.Trim();
+            vendedor.NumeroCedula = numeroCedula?.Trim();
+
+            _context.Update(vendedor);
+            await _context.SaveChangesAsync();
+
+            return (true, "Datos bancarios actualizados exitosamente");
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error al actualizar datos bancarios del vendedor {vendedorId}: {ex.Message}");
+            return (false, "Error al actualizar los datos bancarios");
+        }
+    }
 }

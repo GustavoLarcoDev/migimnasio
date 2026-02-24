@@ -134,6 +134,13 @@ public class Cliente
     /// </summary>
     public decimal Precio { get; set; }
 
+    /// <summary>
+    /// Fecha del último recordatorio de cobro enviado por WhatsApp.
+    /// Se usa para evitar enviar duplicados el mismo día.
+    /// Null indica que nunca se ha enviado un recordatorio de cobro.
+    /// </summary>
+    public DateTime? UltimoRecordatorioCobro { get; set; }
+
     // ═══════════════════════════════════════════════════════════
     // RELACIONES (navigation properties de Entity Framework)
     // ═══════════════════════════════════════════════════════════
