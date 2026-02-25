@@ -2409,7 +2409,7 @@ function cargarAdminMetodosPago() {
         statsRow.empty();
         var allNames = ['Efectivo'];
         if (methods) methods.forEach(function(m) { allNames.push(m.nombre); });
-        var colors = ['#50CD89', 'var(--mg-primary)', '#7239EA', '#F1416C', '#FFC700'];
+        var colors = ['#50CD89', '#3E97FF', '#7239EA', '#F1416C', '#FFC700'];
         allNames.forEach(function(name, idx) {
             var s = statsMap[name.toLowerCase()] || { totalHoy: 0, totalSemana: 0, totalMes: 0 };
             var color = colors[idx % colors.length];
