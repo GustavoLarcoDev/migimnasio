@@ -889,25 +889,38 @@
                 var atendidoClass = l.atendido ? 'opacity-50' : '';
                 var nombreStyle = l.atendido ? 'text-decoration: line-through;' : '';
 
+                // Badge de origen
+                var origenBadge = l.origen === 'whatsapp'
+                    ? ' <span class="badge bg-success bg-opacity-10 text-success ms-1"><i class="bi bi-whatsapp me-1"></i>WhatsApp</span>'
+                    : '';
+
                 // Contact buttons
                 var telLimpio = l.telefono ? l.telefono.replace(/[^0-9+]/g, '') : '';
                 var msgWa = encodeURIComponent('Hola ' + l.nombre + ', soy ' + vendedorNombreActual + ' de Mi Negocio. Vi que estás interesado en nuestra plataforma, ¿te puedo ayudar?');
                 var waBtn = telLimpio
                     ? '<a href="https://wa.me/' + telLimpio + '?text=' + msgWa + '" target="_blank" class="btn btn-icon btn-sm" style="background:#25D366;color:#fff;" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>'
                     : '';
-                var emailBtn = '<a href="mailto:' + escHtml(l.email) + '" class="btn btn-icon btn-bg-light btn-sm" title="Email"><i class="bi bi-envelope text-primary"></i></a>';
+                var emailBtn = l.email
+                    ? '<a href="mailto:' + escHtml(l.email) + '" class="btn btn-icon btn-bg-light btn-sm" title="Email"><i class="bi bi-envelope text-primary"></i></a>'
+                    : '';
 
                 var atendidoBtn = l.atendido
                     ? '<span class="badge bg-light-success text-success"><i class="bi bi-check-circle me-1"></i>' + escHtml(l.atendidoPorNombre) + '</span>'
                     : '<button class="btn btn-icon btn-bg-light btn-sm" onclick="marcarLeadAtendido(\'' + l.id + '\')" title="Marcar atendido"><i class="bi bi-check-lg text-success fs-5"></i></button>';
 
-                var contactoHtml = escHtml(l.email);
-                if (l.telefono) contactoHtml += '<br><small class="text-muted">' + escHtml(l.telefono) + '</small>';
+                // Contacto: teléfono siempre, email solo si existe
+                var contactoHtml = '';
+                if (l.email) contactoHtml += escHtml(l.email);
+                if (l.telefono) {
+                    if (contactoHtml) contactoHtml += '<br>';
+                    contactoHtml += '<small class="text-muted">' + escHtml(l.telefono) + '</small>';
+                }
+                if (!contactoHtml) contactoHtml = '<span class="text-muted">-</span>';
 
                 var mensajeTruncado = l.mensaje ? (l.mensaje.length > 60 ? escHtml(l.mensaje.substring(0, 60)) + '... <a href="javascript:void(0)" class="text-primary fw-semibold" onclick="verMensajeCompleto(\'' + l.id + '\')">Leer mas</a>' : escHtml(l.mensaje)) : '<span class="text-muted">-</span>';
 
                 html += '<tr class="' + atendidoClass + '">'
-                    + '<td style="' + nombreStyle + '"><strong>' + escHtml(l.nombre) + '</strong></td>'
+                    + '<td style="' + nombreStyle + '"><strong>' + escHtml(l.nombre) + '</strong>' + origenBadge + '</td>'
                     + '<td style="' + nombreStyle + '">' + escHtml(l.nombreNegocio) + '</td>'
                     + '<td>' + contactoHtml + '</td>'
                     + '<td class="d-none d-md-table-cell"><small>' + mensajeTruncado + '</small></td>'

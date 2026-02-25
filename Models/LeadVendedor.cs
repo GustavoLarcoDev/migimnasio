@@ -50,12 +50,11 @@ public class LeadVendedor
     public string NombreNegocio { get; set; } = "";
 
     /// <summary>
-    /// Correo electrónico del contacto. Es el canal principal de seguimiento.
-    /// [Required] = obligatorio para poder responder al prospecto.
+    /// Correo electrónico del contacto (opcional para leads de WhatsApp).
     /// [MaxLength(180)] = límite estándar para emails con algo de margen.
     /// </summary>
-    [Required, MaxLength(180)]
-    public string Email { get; set; } = "";
+    [MaxLength(180)]
+    public string Email { get; set; }
 
     /// <summary>
     /// Número de teléfono del contacto (opcional).
@@ -94,6 +93,12 @@ public class LeadVendedor
     /// Es null mientras el lead no ha sido atendido.
     /// </summary>
     public string AtendidoPorNombre { get; set; }
+
+    /// <summary>
+    /// Origen del lead: "web" (formulario landing) o "whatsapp" (respuesta a promo).
+    /// </summary>
+    [MaxLength(20)]
+    public string Origen { get; set; } = "web";
 
     /// <summary>
     /// Fecha y hora en que el prospecto envió el formulario de contacto.

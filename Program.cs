@@ -279,6 +279,17 @@ builder.Services.AddRateLimiter(options =>
                 PermitLimit = isDev ? 500 : 3,      // más restrictivo que login
                 Window = TimeSpan.FromMinutes(1)
             }));
+
+    // Política para webhooks externos (Twilio WhatsApp, etc.)
+    // Dev: 500/min → sin restricción; Prod: 30/min → protección contra abuso
+    options.AddPolicy("webhook", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = isDev ? 500 : 30,
+                Window = TimeSpan.FromMinutes(1)
+            }));
 });
 
 // ═══════════════════════════════════════════════════════════

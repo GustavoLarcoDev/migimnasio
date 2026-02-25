@@ -342,6 +342,40 @@ public class WhatsAppService : IWhatsAppService
     }
 
     // ═══════════════════════════════════════════════════════════
+    // MARKETING / PROMOCIÓN
+    // ═══════════════════════════════════════════════════════════
+
+    /// <inheritdoc />
+    public async Task<bool> EnviarPromocionWhatsAppAsync(string telefono, string nombreNegocio)
+    {
+        var mensajePreLlenado = Uri.EscapeDataString(
+            "Hola, vi lo de My-Negocio.com y me interesa saber más sobre el sistema con IA para mi negocio. ¿Me pueden dar más información?");
+        var linkWhatsApp = $"https://wa.me/593988757851?text={mensajePreLlenado}";
+
+        var fallback =
+            $"Hola *{nombreNegocio}* 👋\n\n" +
+            "Te saludamos de *My-Negocio.com*\n\n" +
+            "Somos un sistema con *Inteligencia Artificial* diseñado para negocios en Ecuador que *automatiza todo* por ti:\n\n" +
+            "🤖 *IA que trabaja por ti* — reportes automáticos, recordatorios a clientes y análisis inteligente sin que hagas nada\n" +
+            "📲 *WhatsApp automático* — tu negocio le escribe a tus clientes solo, recordándoles citas, pagos y más\n" +
+            "📊 *Dashboard en tiempo real* — ventas, clientes, inventario, citas, todo en un solo lugar desde tu celular\n" +
+            "💰 *Control total* — ingresos, gastos, membresías, empleados y reportes diarios automáticos\n\n" +
+            "Estamos en *precio de lanzamiento* 🚀\n\n" +
+            $"Escríbenos al link o *responde este mensaje* para que un agente se ponga en contacto contigo:\n👉 {linkWhatsApp}\n\n" +
+            "— *My-Negocio.com* | Sistema inteligente para tu negocio";
+
+        return await EnviarConTemplateAsync(
+            telefono,
+            _settings.Templates.Promocion,
+            new Dictionary<string, string>
+            {
+                ["1"] = nombreNegocio
+            },
+            fallback
+        );
+    }
+
+    // ═══════════════════════════════════════════════════════════
     // MÉTODOS PRIVADOS
     // ═══════════════════════════════════════════════════════════
 

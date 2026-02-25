@@ -117,4 +117,14 @@ public interface IWhatsAppService
     /// Notifica al dueño que su negocio fue desbloqueado.
     /// </summary>
     Task<bool> EnviarNotificacionNegocioDesbloqueadoWhatsAppAsync(string telefono, string negocio, string dueno);
+
+    // ═══════════════════════════════════════════════════════════
+    // MARKETING / PROMOCIÓN
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Envía un mensaje promocional de My-Negocio a un potencial cliente.
+    /// Usa el template de Promoción con link de WhatsApp para responder.
+    /// </summary>
+    Task<bool> EnviarPromocionWhatsAppAsync(string telefono, string nombreNegocio);
 }

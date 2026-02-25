@@ -822,6 +822,207 @@
         </div>
     </div>
 
+    <!-- ============================================================== -->
+    <!-- TAB PROMOCIONAR — Envío masivo de WhatsApp marketing            -->
+    <!-- ============================================================== -->
+    <div class="tab-pane fade" id="promocionarTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-0"><i class="bi bi-megaphone text-primary me-2"></i>Promocionar My-Negocio</h3>
+                <p class="text-muted mb-0">Envío masivo de WhatsApp marketing desde archivo Excel</p>
+            </div>
+        </div>
+
+        <!-- Fase 1: Upload -->
+        <div id="promoFaseUpload">
+            <div class="mg-card">
+                <div class="card-body p-5">
+                    <div id="promoDropZone" class="border border-2 border-dashed rounded-3 p-5 text-center" style="cursor:pointer; transition: all 0.3s ease;">
+                        <i class="bi bi-file-earmark-excel fs-1 text-success d-block mb-3"></i>
+                        <h5 class="fw-bold mb-2">Arrastra tu archivo Excel aquí</h5>
+                        <p class="text-muted mb-3">o haz clic para seleccionar</p>
+                        <p class="text-muted small mb-0">Formato: Columna A = Nombre del Negocio, Columna B = Teléfono</p>
+                        <p class="text-muted small">Archivos .xlsx o .xls, máximo 500 contactos, 10MB</p>
+                        <input type="file" id="promoFileInput" accept=".xlsx,.xls" class="d-none" />
+                    </div>
+                    <div id="promoFileInfo" class="d-none mt-3">
+                        <div class="d-flex align-items-center justify-content-between bg-light rounded-3 p-3">
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-file-earmark-excel text-success fs-4 me-3"></i>
+                                <span id="promoFileName" class="fw-semibold"></span>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-light-danger" onclick="limpiarPromoArchivo()">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-end mt-4">
+                        <button type="button" id="btnProcesarPromo" class="btn btn-primary btn-lg" disabled onclick="procesarExcelPromocion()">
+                            <i class="bi bi-search me-2"></i>Procesar y Previsualizar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fase 2: Preview -->
+        <div id="promoFasePreview" class="d-none">
+            <div class="row g-3 mb-4">
+                <div class="col-md-4 col-6">
+                    <div class="mg-stat-card">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="stat-label">Total Contactos</div>
+                                <div class="stat-value" id="promoTotalContactos">0</div>
+                            </div>
+                            <div class="stat-icon bg-light-primary">
+                                <i class="bi bi-people text-primary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-6">
+                    <div class="mg-stat-card">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="stat-label">Válidos</div>
+                                <div class="stat-value text-success" id="promoValidos">0</div>
+                            </div>
+                            <div class="stat-icon bg-light-success">
+                                <i class="bi bi-check-circle text-success"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-6">
+                    <div class="mg-stat-card">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <div class="stat-label">Inválidos</div>
+                                <div class="stat-value text-danger" id="promoInvalidos">0</div>
+                            </div>
+                            <div class="stat-icon bg-light-danger">
+                                <i class="bi bi-x-circle text-danger"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mg-card mb-4">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="promoPreviewTable" class="table table-row-dashed align-middle gs-0 gy-4" style="width:100%">
+                            <thead>
+                                <tr class="fw-bold text-muted bg-light">
+                                    <th class="ps-4">Fila</th>
+                                    <th>Negocio</th>
+                                    <th>Tel. Original</th>
+                                    <th>Tel. Normalizado</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <button type="button" class="btn btn-light btn-lg" onclick="volverUploadPromo()">
+                    <i class="bi bi-arrow-left me-2"></i>Volver
+                </button>
+                <button type="button" class="btn btn-success btn-lg" id="btnEnviarPromo" onclick="confirmarEnvioPromocion()">
+                    <i class="bi bi-whatsapp me-2"></i>Enviar Promoción
+                </button>
+            </div>
+        </div>
+
+        <!-- Fase 3: Progreso -->
+        <div id="promoFaseProgreso" class="d-none">
+            <div class="mg-card">
+                <div class="card-body p-5 text-center">
+                    <div class="spinner-border text-primary mb-4" style="width:3rem;height:3rem;" role="status">
+                        <span class="visually-hidden">Enviando...</span>
+                    </div>
+                    <h4 class="fw-bold mb-3">Enviando mensajes de WhatsApp...</h4>
+                    <p class="text-muted mb-4">No cierres esta pestaña. Esto puede tomar varios minutos.</p>
+                    <div class="progress mb-3" style="height:12px;">
+                        <div id="promoProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width:0%">0%</div>
+                    </div>
+                    <p class="fw-semibold" id="promoProgressText">0 / 0 enviados</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fase 4: Resultados -->
+        <div id="promoFaseResultados" class="d-none">
+            <div class="row g-3 mb-4">
+                <div class="col-md-4 col-6">
+                    <div class="mg-card h-100" style="background: linear-gradient(135deg, #50cd89 0%, #2ba56a 100%);">
+                        <div class="card-body text-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="d-block mb-1 opacity-75 small">Enviados</span>
+                                    <span class="fs-2x fw-bolder" id="promoResultEnviados">0</span>
+                                </div>
+                                <i class="bi bi-check-circle fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-6">
+                    <div class="mg-card h-100" style="background: linear-gradient(135deg, #f1416c 0%, #d9214e 100%);">
+                        <div class="card-body text-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="d-block mb-1 opacity-75 small">Fallidos</span>
+                                    <span class="fs-2x fw-bolder" id="promoResultFallidos">0</span>
+                                </div>
+                                <i class="bi bi-x-circle fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 col-6">
+                    <div class="mg-card h-100" style="background: linear-gradient(135deg, var(--mg-primary) 0%, var(--mg-gradient-primary-end) 100%);">
+                        <div class="card-body text-white">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="d-block mb-1 opacity-75 small">Total</span>
+                                    <span class="fs-2x fw-bolder" id="promoResultTotal">0</span>
+                                </div>
+                                <i class="bi bi-people fs-1 opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mg-card mb-4">
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="promoResultTable" class="table table-row-dashed align-middle gs-0 gy-4" style="width:100%">
+                            <thead>
+                                <tr class="fw-bold text-muted bg-light">
+                                    <th class="ps-4">Negocio</th>
+                                    <th>Teléfono</th>
+                                    <th>Estado</th>
+                                    <th>Detalle</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <button type="button" class="btn btn-primary btn-lg" onclick="reiniciarPromocion()">
+                    <i class="bi bi-arrow-repeat me-2"></i>Nueva Promoción
+                </button>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <!-- ================================================================ -->
@@ -979,6 +1180,8 @@ document.addEventListener('mg-tab-shown', function (e) {
         cargarAdminMetodosPago();
     } else if (tab === 'recibosTab') {
         cargarRecibosAdmin();
+    } else if (tab === 'promocionarTab') {
+        // Sin carga automática — el usuario sube el archivo manualmente
     }
 });
 
@@ -2683,6 +2886,251 @@ function verAdminQR(id, nombre) {
         toastr.error('Error al cargar QR');
     });
 }
+
+// ================================================================
+// TAB PROMOCIONAR — Envío masivo de WhatsApp marketing desde Excel
+// ================================================================
+let promoPreviewTable = null;
+let promoResultTable = null;
+let promoContactosValidos = [];
+
+function actualizarArchivoPromo() {
+    const input = document.getElementById('promoFileInput');
+    if (input.files.length > 0) {
+        $('#promoFileName').text(input.files[0].name);
+        $('#promoFileInfo').removeClass('d-none');
+        $('#btnProcesarPromo').prop('disabled', false);
+    }
+}
+
+function limpiarPromoArchivo() {
+    $('#promoFileInput').val('');
+    $('#promoFileInfo').addClass('d-none');
+    $('#btnProcesarPromo').prop('disabled', true);
+}
+
+function procesarExcelPromocion() {
+    const input = document.getElementById('promoFileInput');
+    if (!input.files.length) {
+        toastr.warning('Selecciona un archivo Excel');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('archivo', input.files[0]);
+
+    $('#btnProcesarPromo').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Procesando...');
+
+    $.ajax({
+        url: '/Negocios/ProcesarExcelPromocion',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (data) {
+            if (!data.success) {
+                toastr.error(data.message);
+                $('#btnProcesarPromo').prop('disabled', false).html('<i class="bi bi-search me-2"></i>Procesar y Previsualizar');
+                return;
+            }
+
+            $('#promoTotalContactos').text(data.totalFilas);
+            $('#promoValidos').text(data.validos);
+            $('#promoInvalidos').text(data.invalidos);
+
+            promoContactosValidos = data.contactos.filter(c => c.valido);
+
+            if (promoPreviewTable) {
+                promoPreviewTable.destroy();
+                $('#promoPreviewTable').empty();
+            }
+
+            promoPreviewTable = $('#promoPreviewTable').DataTable({
+                data: data.contactos,
+                columns: [
+                    { data: 'fila', className: 'ps-4' },
+                    { data: 'nombre', render: function (d) { return escHtml(d); } },
+                    { data: 'telefonoOriginal', render: function (d) { return escHtml(d); } },
+                    { data: 'telefonoNormalizado', render: function (d) { return escHtml(d); } },
+                    {
+                        data: 'valido',
+                        render: function (d) {
+                            return d
+                                ? '<span class="badge bg-light-success text-success">Válido</span>'
+                                : '<span class="badge bg-light-danger text-danger">Inválido</span>';
+                        }
+                    }
+                ],
+                pageLength: 25,
+                ordering: true,
+                searching: true
+            });
+
+            $('#btnEnviarPromo').prop('disabled', data.validos === 0);
+
+            $('#promoFaseUpload').addClass('d-none');
+            $('#promoFasePreview').removeClass('d-none');
+
+            $('#btnProcesarPromo').prop('disabled', false).html('<i class="bi bi-search me-2"></i>Procesar y Previsualizar');
+        },
+        error: function (xhr) {
+            var msg = xhr.responseJSON?.message || 'Error al procesar el archivo';
+            toastr.error(msg);
+            $('#btnProcesarPromo').prop('disabled', false).html('<i class="bi bi-search me-2"></i>Procesar y Previsualizar');
+        }
+    });
+}
+
+function volverUploadPromo() {
+    $('#promoFasePreview').addClass('d-none');
+    $('#promoFaseUpload').removeClass('d-none');
+}
+
+function confirmarEnvioPromocion() {
+    if (promoContactosValidos.length === 0) {
+        toastr.warning('No hay contactos válidos para enviar');
+        return;
+    }
+
+    var tiempoEstimado = Math.ceil(promoContactosValidos.length * 1.5 / 60);
+    swalMG.fire({
+        title: 'Confirmar envío',
+        html: '<p>Se enviarán <b>' + promoContactosValidos.length + '</b> mensajes de WhatsApp.</p>' +
+              '<p class="text-muted">Tiempo estimado: ~' + tiempoEstimado + ' minuto(s)</p>' +
+              '<p class="text-muted small">Cada mensaje incluye promoción de 50% de descuento con link de contacto.</p>',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Enviar',
+        cancelButtonText: 'Cancelar'
+    }).then(function (result) {
+        if (result.isConfirmed) {
+            enviarPromocion();
+        }
+    });
+}
+
+function enviarPromocion() {
+    var contactos = promoContactosValidos.map(function (c) {
+        return { nombre: c.nombre, telefono: c.telefonoNormalizado };
+    });
+
+    var total = contactos.length;
+
+    $('#promoFasePreview').addClass('d-none');
+    $('#promoFaseProgreso').removeClass('d-none');
+    $('#promoProgressBar').css('width', '0%').text('0%');
+    $('#promoProgressText').text('0 / ' + total + ' enviados');
+
+    // Simular progreso durante el envío (1 por segundo aproximadamente)
+    var progreso = 0;
+    var promoInterval = setInterval(function () {
+        progreso++;
+        if (progreso >= total) {
+            clearInterval(promoInterval);
+            return;
+        }
+        var pct = Math.round((progreso / total) * 100);
+        $('#promoProgressBar').css('width', pct + '%').text(pct + '%');
+        $('#promoProgressText').text(progreso + ' / ' + total + ' enviados');
+    }, 1100);
+
+    $.ajax({
+        url: '/Negocios/EnviarPromocion',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(contactos),
+        success: function (data) {
+            clearInterval(promoInterval);
+
+            $('#promoProgressBar').css('width', '100%').text('100%');
+            $('#promoProgressText').text(total + ' / ' + total + ' completados');
+
+            setTimeout(function () {
+                $('#promoResultEnviados').text(data.totalEnviados);
+                $('#promoResultFallidos').text(data.totalFallidos);
+                $('#promoResultTotal').text(data.total);
+
+                if (promoResultTable) {
+                    promoResultTable.destroy();
+                    $('#promoResultTable').empty();
+                }
+
+                promoResultTable = $('#promoResultTable').DataTable({
+                    data: data.resultados,
+                    columns: [
+                        { data: 'nombre', className: 'ps-4 fw-semibold', render: function (d) { return escHtml(d); } },
+                        { data: 'telefono', render: function (d) { return escHtml(d); } },
+                        {
+                            data: 'estado',
+                            render: function (d) {
+                                return d === 'enviado'
+                                    ? '<span class="badge bg-light-success text-success">Enviado</span>'
+                                    : '<span class="badge bg-light-danger text-danger">Fallido</span>';
+                            }
+                        },
+                        { data: 'detalle', render: function (d) { return '<span class="text-muted small">' + escHtml(d) + '</span>'; } }
+                    ],
+                    pageLength: 25,
+                    ordering: true,
+                    searching: true
+                });
+
+                $('#promoFaseProgreso').addClass('d-none');
+                $('#promoFaseResultados').removeClass('d-none');
+
+                if (data.totalFallidos === 0)
+                    toastr.success('Todos los mensajes fueron enviados exitosamente');
+                else
+                    toastr.warning(data.totalEnviados + ' enviados, ' + data.totalFallidos + ' fallidos');
+            }, 500);
+        },
+        error: function (xhr) {
+            clearInterval(promoInterval);
+            var msg = xhr.responseJSON?.message || 'Error al enviar promociones';
+            toastr.error(msg);
+            $('#promoFaseProgreso').addClass('d-none');
+            $('#promoFasePreview').removeClass('d-none');
+        }
+    });
+}
+
+function reiniciarPromocion() {
+    promoContactosValidos = [];
+    limpiarPromoArchivo();
+    $('#promoFaseResultados').addClass('d-none');
+    $('#promoFaseUpload').removeClass('d-none');
+}
+
+// Drag and drop para la zona de upload
+(function () {
+    var dropZone = document.getElementById('promoDropZone');
+    var fileInput = document.getElementById('promoFileInput');
+    if (!dropZone || !fileInput) return;
+
+    dropZone.addEventListener('click', function () { fileInput.click(); });
+    fileInput.addEventListener('change', actualizarArchivoPromo);
+
+    dropZone.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        dropZone.style.borderColor = 'var(--mg-primary, #3E97FF)';
+        dropZone.style.backgroundColor = 'var(--mg-primary-light, rgba(62,151,255,0.05))';
+    });
+    dropZone.addEventListener('dragleave', function (e) {
+        e.preventDefault();
+        dropZone.style.borderColor = '';
+        dropZone.style.backgroundColor = '';
+    });
+    dropZone.addEventListener('drop', function (e) {
+        e.preventDefault();
+        dropZone.style.borderColor = '';
+        dropZone.style.backgroundColor = '';
+        if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            actualizarArchivoPromo();
+        }
+    });
+})();
+
 </script>
 
 <style>

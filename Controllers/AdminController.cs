@@ -16,6 +16,8 @@
 // Ruta base: /Negocios  (compatible con los AJAX del frontend)
 // ═══════════════════════════════════════════════════════════════════════════
 
+using ClosedXML.Excel;
+using Gimnasio.Helpers;
 using Gimnasio.Models;
 using Gimnasio.Models.DTOs;
 using Gimnasio.Services;
@@ -1180,4 +1182,154 @@ public class AdminController : Controller
             return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // PROMOCIÓN MASIVA POR WHATSAPP — Envío de marketing desde Excel
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Procesa un archivo Excel (.xlsx/.xls) con contactos para promoción.
+    /// Columna 1 = nombre del negocio, Columna 2 = teléfono.
+    /// Normaliza y valida los teléfonos al formato ecuatoriano (+593).
+    /// </summary>
+    [HttpPost("ProcesarExcelPromocion")]
+    public IActionResult ProcesarExcelPromocion(IFormFile archivo)
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            if (archivo == null || archivo.Length == 0)
+                return BadRequest(new { success = false, message = "No se proporcionó archivo" });
+
+            if (archivo.Length > 10 * 1024 * 1024)
+                return BadRequest(new { success = false, message = "El archivo no debe superar 10MB" });
+
+            var ext = Path.GetExtension(archivo.FileName).ToLower();
+            if (ext != ".xlsx" && ext != ".xls")
+                return BadRequest(new { success = false, message = "Solo se permiten archivos Excel (.xlsx, .xls)" });
+
+            var contactos = new List<object>();
+            int validos = 0, invalidos = 0;
+
+            using var stream = archivo.OpenReadStream();
+            using var workbook = new XLWorkbook(stream);
+            var ws = workbook.Worksheets.First();
+
+            var firstRow = 1;
+            var firstCell = ws.Cell(1, 1).GetString().Trim().ToLower();
+            if (firstCell.Contains("nombre") || firstCell.Contains("negocio") || firstCell.Contains("empresa"))
+                firstRow = 2;
+
+            var lastRow = ws.LastRowUsed()?.RowNumber() ?? 0;
+            var totalFilas = lastRow - firstRow + 1;
+
+            if (totalFilas <= 0)
+                return BadRequest(new { success = false, message = "El archivo no contiene datos" });
+
+            if (totalFilas > 500)
+                return BadRequest(new { success = false, message = "Máximo 500 contactos por archivo" });
+
+            for (int row = firstRow; row <= lastRow; row++)
+            {
+                var nombre = ws.Cell(row, 1).GetString().Trim();
+                var telefonoOriginal = ws.Cell(row, 2).GetString().Trim();
+
+                if (string.IsNullOrWhiteSpace(nombre) && string.IsNullOrWhiteSpace(telefonoOriginal))
+                    continue;
+
+                var telefonoNormalizado = PhoneHelper.NormalizeEcuador(telefonoOriginal);
+                var esValido = telefonoNormalizado.StartsWith("+593") && telefonoNormalizado.Length == 13;
+
+                if (esValido) validos++;
+                else invalidos++;
+
+                contactos.Add(new
+                {
+                    fila = row,
+                    nombre,
+                    telefonoOriginal,
+                    telefonoNormalizado,
+                    valido = esValido
+                });
+            }
+
+            return Ok(new { success = true, totalFilas = contactos.Count, validos, invalidos, contactos });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error al procesar el archivo Excel" });
+        }
+    }
+
+    /// <summary>
+    /// Envía mensajes promocionales de WhatsApp a una lista de contactos validados.
+    /// Delay de 1 segundo entre cada mensaje para respetar rate limits de Twilio.
+    /// </summary>
+    [HttpPost("EnviarPromocion")]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> EnviarPromocion([FromBody] List<ContactoPromocionDto> contactos)
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            if (contactos == null || contactos.Count == 0)
+                return BadRequest(new { success = false, message = "No se proporcionaron contactos" });
+
+            if (contactos.Count > 500)
+                return BadRequest(new { success = false, message = "Máximo 500 contactos por envío" });
+
+            var resultados = new List<object>();
+            int totalEnviados = 0, totalFallidos = 0;
+
+            for (int i = 0; i < contactos.Count; i++)
+            {
+                var contacto = contactos[i];
+                try
+                {
+                    var enviado = await _whatsAppService.EnviarPromocionWhatsAppAsync(
+                        contacto.Telefono, contacto.Nombre);
+
+                    if (enviado)
+                    {
+                        totalEnviados++;
+                        resultados.Add(new { contacto.Nombre, contacto.Telefono, estado = "enviado", detalle = "Mensaje enviado exitosamente" });
+                    }
+                    else
+                    {
+                        totalFallidos++;
+                        resultados.Add(new { contacto.Nombre, contacto.Telefono, estado = "fallido", detalle = "Error al enviar mensaje" });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    totalFallidos++;
+                    resultados.Add(new { contacto.Nombre, contacto.Telefono, estado = "fallido", detalle = ex.Message });
+                }
+
+                if (i < contactos.Count - 1)
+                    await Task.Delay(1000);
+            }
+
+            await _negocioService.RegistrarAdminLogAsync(
+                "PromocionWhatsApp",
+                $"Promoción enviada: {totalEnviados} exitosos, {totalFallidos} fallidos de {contactos.Count} contactos",
+                null);
+
+            return Ok(new { success = true, totalEnviados, totalFallidos, total = contactos.Count, resultados });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error al enviar promociones" });
+        }
+    }
+}
+
+public class ContactoPromocionDto
+{
+    public string Nombre { get; set; } = "";
+    public string Telefono { get; set; } = "";
 }

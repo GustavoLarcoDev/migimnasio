@@ -119,8 +119,9 @@ public class HomeController : Controller
                 Nombre = Name.Trim(),
                 NombreNegocio = GymName.Trim(),
                 Email = Email.Trim(),
-                Telefono = Phone?.Trim(),    // ?. evita NullReferenceException si Phone es null
-                Mensaje = Message?.Trim(),   // ídem para Message
+                Telefono = Phone?.Trim(),
+                Mensaje = Message?.Trim(),
+                Origen = "web",
                 FechaCreacion = TimeHelper.Now
             };
 

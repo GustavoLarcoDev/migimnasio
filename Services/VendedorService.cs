@@ -413,6 +413,7 @@ public class VendedorService : IVendedorService
             l.Mensaje,
             l.Atendido,
             l.AtendidoPorNombre,
+            l.Origen,
             // Formato legible: "2026-02-18 14:30" en lugar de DateTime completo
             fechaCreacion = l.FechaCreacion.ToString("yyyy-MM-dd HH:mm")
         }).ToList();
