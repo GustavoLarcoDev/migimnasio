@@ -99,7 +99,7 @@ public class TiendaController : Controller
         if (nId == null) return Forbid();
 
         // Obtener el nombre del negocio desde los claims para personalizar el mensaje
-        var companyName = User.Identity?.Name ?? "Mi Negocio";
+        var companyName = User.Identity?.Name ?? "My-Negocio";
 
         if (string.IsNullOrWhiteSpace(destino) || string.IsNullOrWhiteSpace(tipo))
             return Json(new { success = false, message = "Datos de destino inválidos." });

@@ -12,7 +12,7 @@ DB_PASSWORD="${2:?Falta DB_PASSWORD}"
 ADMIN_HASH="${3:?Falta ADMIN_HASH}"
 
 echo "══════════════════════════════════════════"
-echo " Configurando servidor para MiNegocio"
+echo " Configurando servidor para My-Negocio"
 echo " Dominio: $DOMAIN"
 echo "══════════════════════════════════════════"
 
@@ -248,7 +248,7 @@ chmod +x /opt/myapp/deploy.sh
 echo "[7/9] Configurando servicio systemd..."
 cat > /etc/systemd/system/myapp.service << 'SERVICE'
 [Unit]
-Description=MiNegocio ASP.NET Core App
+Description=My-Negocio ASP.NET Core App
 After=network.target mssql-server.service
 
 [Service]

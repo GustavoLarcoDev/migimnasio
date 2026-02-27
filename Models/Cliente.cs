@@ -13,7 +13,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Gimnasio.Models;
 
 /// <summary>
-/// Representa un cliente registrado en un negocio de la plataforma MiNegocio.
+/// Representa un cliente registrado en un negocio de la plataforma My-Negocio.
 /// Es la entidad principal del modelo de membresías.
 ///
 /// Un cliente siempre pertenece a un único negocio (definido por NegocioId).

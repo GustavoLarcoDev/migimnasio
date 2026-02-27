@@ -1383,7 +1383,7 @@ function cargarTablaNegocios() {
                 data: null, orderable: false, className: 'text-end',
                 render: function (data, type, row) {
                     const cleanPhone = (row.telefono || '').replace(/[\s\-\+\(\)]/g, '');
-                    const waMessage = encodeURIComponent('Hola ' + (row.duenoNegocio || '') + ', mi nombre es Gustavo Larco el dueño de MiNegocio.com y quería saber cómo iba todo, si había algún feedback o algo que mencionar.');
+                    const waMessage = encodeURIComponent('Hola ' + (row.duenoNegocio || '') + ', mi nombre es Gustavo Larco el dueño de My-Negocio.com y quería saber cómo iba todo, si había algún feedback o algo que mencionar.');
                     const whatsappBtn = cleanPhone
                         ? '<a href="https://wa.me/' + escHtml(cleanPhone) + '?text=' + waMessage + '" target="_blank" rel="noopener" class="btn btn-icon btn-bg-light btn-sm me-1" title="WhatsApp"><i class="bi bi-whatsapp text-success fs-5"></i></a>'
                         : '';

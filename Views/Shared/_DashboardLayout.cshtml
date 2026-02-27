@@ -1,6 +1,6 @@
 @{
     var negocioId = ViewData["NegocioId"]?.ToString() ?? "";
-    var negocioNombre = ViewData["NegocioNombre"]?.ToString() ?? "Mi Negocio";
+    var negocioNombre = ViewData["NegocioNombre"]?.ToString() ?? "My-Negocio";
     var duenoNombre = ViewData["DuenoNombre"]?.ToString() ?? "";
 }
 <!DOCTYPE html>
@@ -8,7 +8,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>@ViewData["Title"] - Mi Negocio</title>
+    <title>@ViewData["Title"] - My-Negocio</title>
     <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
 
     <!-- Bootstrap 5 CSS -->
@@ -88,7 +88,7 @@
     <aside class="mg-sidebar" id="sidebar">
         <div class="mg-sidebar-brand">
             <i class="bi bi-shop"></i>
-            <h4>Mi Negocio</h4>
+            <h4>My-Negocio</h4>
         </div>
 
         <nav class="mg-sidebar-menu">

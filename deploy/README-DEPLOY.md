@@ -1,4 +1,4 @@
-# Deploy MiNegocio a Amazon Lightsail — Guía Paso a Paso
+# Deploy My-Negocio a Amazon Lightsail — Guía Paso a Paso
 
 ## Costo: $24/mes (todo incluido)
 

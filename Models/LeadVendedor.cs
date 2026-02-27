@@ -17,7 +17,7 @@ namespace Gimnasio.Models;
 
 /// <summary>
 /// Representa un prospecto o "lead" de ventas: una empresa o persona interesada
-/// en contratar la plataforma MiNegocio.
+/// en contratar la plataforma My-Negocio.
 ///
 /// Los leads son gestionados por los vendedores desde su panel de control.
 /// Un lead atendido puede convertirse en un negocio registrado (clase Gym).

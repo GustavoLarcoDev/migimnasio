@@ -28,7 +28,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Gimnasio.Data;
 
 /// <summary>
-/// Contexto principal de Entity Framework Core para la aplicación MiNegocio.
+/// Contexto principal de Entity Framework Core para la aplicación My-Negocio.
 /// Hereda de DbContext y expone todas las tablas de la base de datos SQL Server
 /// como propiedades fuertemente tipadas (DbSet&lt;T&gt;).
 /// </summary>
@@ -88,7 +88,7 @@ public class ApplicationDbContext : DbContext
 
     /// <summary>
     /// Tabla de sugerencias y feedback enviado por los negocios hacia
-    /// la plataforma MiNegocio. Permite recopilar mejoras y reportar bugs.
+    /// la plataforma My-Negocio. Permite recopilar mejoras y reportar bugs.
     /// </summary>
     public DbSet<Sugerencia> Sugerencias { get; set; }
 

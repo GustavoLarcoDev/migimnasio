@@ -2,7 +2,7 @@
 // Negocio.cs — Modelo principal del negocio registrado en la plataforma
 //
 // Esta es la entidad central del sistema multi-tenant. Cada "negocio"
-// es un cliente de MiNegocio: puede ser una barbería, un spa, un gimnasio, etc.
+// es un cliente de My-Negocio: puede ser una barbería, un spa, un gimnasio, etc.
 // El negocio tiene sus propios clientes, empleados, servicios y citas.
 //
 // NOTA HISTÓRICA: La clase se llama "Gym" porque el sistema nació como
@@ -14,7 +14,7 @@ using System.ComponentModel.DataAnnotations;
 namespace Gimnasio.Models;
 
 /// <summary>
-/// Representa un negocio registrado en la plataforma MiNegocio.
+/// Representa un negocio registrado en la plataforma My-Negocio.
 /// Cada negocio es un tenant independiente con su propio panel de control,
 /// clientes, empleados y servicios.
 ///

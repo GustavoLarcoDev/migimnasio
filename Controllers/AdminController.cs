@@ -31,7 +31,7 @@ using System.Text.Json;
 namespace Gimnasio.Controllers;
 
 /// <summary>
-/// Controlador exclusivo del superadministrador de la plataforma MiNegocio.
+/// Controlador exclusivo del superadministrador de la plataforma My-Negocio.
 /// Gestiona negocios, estadísticas, logs, exportaciones e impersonación de sesiones.
 /// Todos sus endpoints son protegidos: requieren sesión activa y rol de Admin.
 /// </summary>

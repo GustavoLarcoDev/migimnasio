@@ -216,9 +216,9 @@ public class ClientesController : Controller
     }
 
     /// <summary>
-    /// Obtiene el estado actual de la suscripción del NEGOCIO al sistema MiNegocio.
+    /// Obtiene el estado actual de la suscripción del NEGOCIO al sistema My-Negocio.
     /// Esto es diferente a las membresías de los clientes: aquí se consulta
-    /// si el dueño del negocio tiene su plan de MiNegocio activo o vencido.
+    /// si el dueño del negocio tiene su plan de My-Negocio activo o vencido.
     ///
     /// Devuelve:
     ///   - diasRestantes: cuántos días faltan para que expire el plan
