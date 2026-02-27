@@ -13,7 +13,7 @@
 //     "Enabled": true,
 //     "AccountSid": "ACxxxxxxxx...",
 //     "AuthToken": "xxxxxxxx...",
-//     "FromNumber": "whatsapp:+593997143142",
+//     "FromNumber": "whatsapp:+593988757851",
 //     "Templates": { "RecordatorioMembresia": "HXxxxxxxxx", ... }
 //   }
 // ═══════════════════════════════════════════════════════════════════════════
