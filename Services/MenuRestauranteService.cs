@@ -137,17 +137,33 @@ public class MenuRestauranteService : IMenuRestauranteService
             .FirstOrDefaultAsync(m => m.MenuId == menuId && m.NegocioId == negocioId && m.IsActive);
         if (menu == null) return null;
 
-        if (!string.IsNullOrWhiteSpace(menu.ContenidoHtml)) return menu.ContenidoHtml;
+        // Obtener stock actual de los productos vinculados al menú
+        // para ocultar platos agotados en la vista pública
+        var secciones = ParseItemsJson(menu.ItemsJson);
+        var productoIds = secciones
+            .SelectMany(s => s.Items)
+            .Where(i => i.ProductoId.HasValue && i.ProductoId != Guid.Empty)
+            .Select(i => i.ProductoId.Value)
+            .Distinct()
+            .ToList();
+
+        var stockMap = new Dictionary<Guid, int>();
+        if (productoIds.Any())
+        {
+            stockMap = await _context.Productos
+                .Where(p => productoIds.Contains(p.ProductoId) && p.IsActive)
+                .ToDictionaryAsync(p => p.ProductoId, p => p.Stock);
+        }
 
         var negocio = await _context.Negocios.FirstOrDefaultAsync(n => n.NegocioId == negocioId);
-        return GenerarHtml(menu, negocio);
+        return GenerarHtml(menu, negocio, secciones, stockMap);
     }
 
     // ═══════════════════════════════════════════════════════════
     // GENERACIÓN DE HTML CON 5 ESTILOS
     // ═══════════════════════════════════════════════════════════
 
-    private string GenerarHtml(MenuRestaurante menu, Gym negocio)
+    private string GenerarHtml(MenuRestaurante menu, Gym negocio, List<MenuSeccion> secciones = null, Dictionary<Guid, int> stockMap = null)
     {
         Func<string, string> enc = System.Net.WebUtility.HtmlEncode;
         var nombreNeg = enc(negocio?.NegocioNombre ?? "Restaurante");
@@ -156,8 +172,9 @@ public class MenuRestauranteService : IMenuRestauranteService
         var estilo = menu.Estilo ?? "moderno";
         var esPrecioFijo = (tipo == "almuerzo" || tipo == "cena") && menu.PrecioFijo.HasValue;
 
-        // Parse items JSON
-        var secciones = ParseItemsJson(menu.ItemsJson);
+        // Parse items JSON si no se pasaron
+        secciones ??= ParseItemsJson(menu.ItemsJson);
+        stockMap ??= new Dictionary<Guid, int>();
 
         var sb = new StringBuilder();
         sb.AppendLine("<!DOCTYPE html>");
@@ -186,6 +203,11 @@ public class MenuRestauranteService : IMenuRestauranteService
 
             foreach (var item in seccion.Items)
             {
+                // Ocultar platos agotados (stock = 0) del menú público
+                if (item.ProductoId.HasValue && item.ProductoId != Guid.Empty
+                    && stockMap.TryGetValue(item.ProductoId.Value, out var stock) && stock <= 0)
+                    continue;
+
                 var itemNombre = enc(item.Nombre ?? "");
                 sb.AppendLine("<div class='menu-item'>");
                 sb.AppendLine($"<span class='item-name'>{itemNombre}</span>");

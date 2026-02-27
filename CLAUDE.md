@@ -150,7 +150,7 @@ This is a **3-phase testing pipeline** that creates fake data, tests every endpo
 
 All test agents use `curl -b /tmp/p002-agentN.cookies -c /tmp/p002-agentN.cookies` for sessions and `TestAgentController` for JSON auth (no CSRF needed). Parse responses with `jq`. Report every test as PASS/FAIL with HTTP status and response body.
 
-### Phase 1 — Launch 6 Test Agents in Parallel (all Opus)
+### Phase 1 — Launch 8 Test Agents in Parallel (all Opus)
 
 **Test Agent 1 — Auth & Security Testing:**
 ```
@@ -329,14 +329,21 @@ Products:
 - GET GetProducto → verify fields
 - POST EditarProducto → change price → verify
 
+Stock via EditarProducto (CRITICAL — recently fixed):
+- POST EditarProducto with Stock:80 (was 100) → verify success message includes "stock: 100 → 80"
+- GET GetProducto → verify stock=80
+- GET GetMovimientos → verify a new "ajuste" movement was created with StockAnterior=100, StockNuevo=80
+- POST EditarProducto with SAME Stock:80, SAME everything → must return "No se detectaron cambios"
+- POST EditarProducto with Stock:80 but Nombre changed → verify success (nombre changed, stock stays)
+
 Stock operations:
-- POST VenderProducto (qty:5) → verify stock=95
-- POST DevolverProducto (qty:2) → verify stock=97
-- POST RestockProducto (qty:50) → verify stock=147
+- POST VenderProducto (qty:5) → verify stock=75
+- POST DevolverProducto (qty:2) → verify stock=77
+- POST RestockProducto (qty:50) → verify stock=127
 - POST AjustarStock (newStock:100) → verify stock=100
 
 Movements audit:
-- GET GetMovimientos → verify 4 movements in order
+- GET GetMovimientos → verify movements in order (should include the "ajuste" from EditarProducto)
 
 Negative stock test (CRITICAL):
 - POST VenderProducto (qty:999) → MUST fail or prevent negative
@@ -391,12 +398,104 @@ Suggestions:
 - As admin: GET GetSugerencias → verify appears
 - POST MarcarSugerenciaLeida → verify
 
+Reserva edge cases:
+- POST CrearReserva with empty NombreCliente → must fail
+- POST CrearReserva with same mesa + overlapping time (±2h) → must fail with conflict
+- POST CambiarEstadoReserva with invalid estado → must fail
+- POST CancelarReserva on already-cancelled reserva → verify graceful handling
+- POST CrearReserva with non-existent MesaId → must fail
+
+Notification consistency:
+- Login as restaurante business, POST GenerarNotificaciones
+- GET GetNotificacionesCount → verify count > 0
+- GET GetNotificaciones → verify returned array has items (CRITICAL — previously broken for non-membresias dashboards)
+
 Report: PASS/FAIL for each test with response details.
+```
+
+**Test Agent 7 — Restaurante Reservas Testing:**
+```
+Test the full reservation system: CRUD, mesa integration, status lifecycle.
+BASE_URL=http://localhost:5170, COOKIES=/tmp/p002-agent7.cookies
+
+Login as a restaurante business from seed data.
+Read SeedController.cs to find exact credentials.
+
+Mesas setup:
+- POST CrearMesa (Nombre:"Mesa Test 1", Numero:99, Capacidad:4) → capture mesaId1
+- POST CrearMesa (Nombre:"Mesa Test 2", Numero:98, Capacidad:6) → capture mesaId2
+- GET GetMesas → verify both exist and estado="libre"
+
+Reserva CRUD:
+- POST CrearReserva (NombreCliente:"Juan Pérez", Telefono:"0991234567", FechaHoraReserva:today+2h, CantidadPersonas:3, MesaId:mesaId1, Notas:"Cumpleaños") → verify success
+- GET GetReservasHoy → verify reserva appears with estado="confirmada"
+- GET GetMesas → verify mesaId1 estado="reservada" (auto-set for today's reservas)
+- GET GetReservas with fecha=today → verify filtered correctly
+- GET GetReservas with fecha=tomorrow → verify empty or different results
+
+Reserva without mesa:
+- POST CrearReserva (NombreCliente:"Ana López", FechaHoraReserva:today+3h, CantidadPersonas:2, MesaId:null) → verify success
+- GET GetReservasHoy → verify appears without mesa assignment
+
+Double-booking prevention (CRITICAL):
+- POST CrearReserva with SAME mesaId1 and overlapping time (within ±2h) → MUST fail with conflict message
+- POST CrearReserva with mesaId2 and same time → MUST succeed (different mesa)
+
+Edit reserva:
+- POST EditarReserva → change NombreCliente, CantidadPersonas → verify success
+- POST EditarReserva → change MesaId from mesaId1 to mesaId2 → verify mesaId1 freed, mesaId2 reserved
+
+Status lifecycle:
+- POST CambiarEstadoReserva → "completada" (cliente llegó) → verify mesa freed to "libre"
+- Create new reserva on mesaId1 → POST CambiarEstadoReserva → "cancelada" → verify mesa freed
+- Create new reserva on mesaId1 → POST CambiarEstadoReserva → "no_presentado" → verify mesa freed
+
+Cancel reserva:
+- POST CancelarReserva → verify estado="cancelada" and mesa freed
+
+Cleanup:
+- POST EliminarMesa for test mesas
+
+Report: PASS/FAIL for each test.
+```
+
+**Test Agent 8 — Restaurante Menú & Recibos Testing:**
+```
+Test menu stock filtering and receipt logo integration.
+BASE_URL=http://localhost:5170, COOKIES=/tmp/p002-agent8.cookies
+
+Login as a restaurante business from seed data.
+
+Menu stock filtering (CRITICAL — recently fixed):
+- Create a product (plato): POST CrearProducto (Nombre:"Plato Test", Stock:10, Precio:8.50, Costo:3) → capture productoId
+- Create a menu with that product in ItemsJson
+- GET VerMenu (anonymous) → verify "Plato Test" appears in HTML
+- POST VenderProducto (qty:10) → stock becomes 0
+- GET VerMenu (anonymous) → verify "Plato Test" does NOT appear (CRITICAL: out-of-stock items must be hidden)
+- POST RestockProducto (qty:5) → stock becomes 5
+- GET VerMenu (anonymous) → verify "Plato Test" appears again
+- POST EditarProducto with Stock:0 → verify stock updated to 0
+- GET VerMenu (anonymous) → verify "Plato Test" hidden again
+
+Receipt logo (recently added):
+- Login as a tienda/membresias business that has LogoUrl set
+- Read SeedController.cs to find if seed data includes LogoUrl
+- If seed has logo: Create a sale (POST ProcesarVentaPOS) → GET the recibo → verify HTML contains <img> tag with the logo
+- If seed has no logo: Verify receipt HTML does NOT contain broken <img> tag (graceful fallback)
+
+Notification dropdown (CRITICAL — recently fixed):
+- Login as restaurante business
+- POST GenerarNotificaciones → verify created
+- GET GetNotificacionesCount → verify count > 0
+- GET GetNotificaciones → verify array returned with items
+- The bell dropdown in the layout loads via the shared _DashboardLayout.cshtml script — verify the endpoint works from any business type
+
+Report: PASS/FAIL for each test.
 ```
 
 ### Phase 2 — Fix Agents (only if errors found)
 
-After ALL 6 test agents complete, compile results. If there are FAILED tests:
+After ALL 8 test agents complete, compile results. If there are FAILED tests:
 
 **Fix Agent A — Backend Fixes (Opus):**
 ```
@@ -432,3 +531,82 @@ After fix agents complete, report:
 - Remaining issues (if any): list with explanations
 
 See `docs/PROTOCOLO_002.md` for full protocol documentation.
+
+## Protocolo 004 — Smart Development Pipeline
+
+When the user says **"run protocolo 004"** or **"protocolo 004"**, execute the following:
+
+A 6-phase pipeline that takes a todo list → classifies tasks → implements with parallel agents → updates tutorials/changelog → runs focused tests/audits.
+
+### Fase 0 — Clasificación de Tareas
+
+1. Ask the user for their todo list if not provided
+2. Launch **4 parallel Opus 4.6 agents** to classify tasks:
+   - **Clasificador A** — Backend: Models, Services, DbContext, Migrations
+   - **Clasificador B** — Controllers: endpoints, auth, routing, validation
+   - **Clasificador C** — Frontend: Views, JS, CSS, modals, tables
+   - **Clasificador D** — Integration: Background services, email, WhatsApp, config
+3. Each agent identifies: affected files, complexity (low/med/high), dependencies
+4. Compile unified table and present to user for approval
+5. If ambiguity exists → ask before proceeding
+
+### Fase 1 — Implementación
+
+Launch **4 parallel Opus 4.6 agents** with full read/write permissions:
+
+- **Agente A — Backend:** Models, Services, ApplicationDbContext, Migrations
+- **Agente B — Controllers:** All controllers, endpoints, auth, routing
+- **Agente C — Frontend:** Views (.cshtml), JavaScript, CSS, UI components
+- **Agente D — Integration:** Background services, email, WhatsApp, config, Program.cs
+
+Coordination rules:
+- Lower-letter agent has priority on shared files
+- Each agent runs `dotnet build` after completing
+- Each agent reports: files created/modified, tests needed
+
+### Fase 2 — Actualización Post-Implementación
+
+1. **Tutorials:** If visual changes → update the 4 tutorial files (`wwwroot/js/tutorials/tutorial-*.js`)
+2. **Changelog:** Generate JSON entry with all changes, auto-increment version
+3. **Prepend** new entry to `wwwroot/data/changelog.json`
+
+Changelog entry schema:
+```json
+{
+  "version": "1.x.0",
+  "fecha": "YYYY-MM-DD",
+  "titulo": "Release title",
+  "cambios": [
+    { "tipo": "feature|fix|mejora|eliminado", "descripcion": "..." }
+  ]
+}
+```
+
+### Fase 3 — Protocolo 002 Focalizado (opcional)
+
+Ask user: "¿Quieres ejecutar tests focalizados en los cambios?"
+
+If yes:
+- Generate test cases ONLY for new/changed features
+- If changes affect existing functionality, include those tests too
+- Run Phase 0 of Protocolo 002 (build + start + seed)
+- Launch only relevant test agents (not all 8)
+- If failures → run Fix Agents
+
+### Fase 4 — Protocolo 001 Focalizado (opcional)
+
+Ask user: "¿Quieres auditoría de seguridad del código nuevo?"
+
+If yes:
+- Identify which Protocolo 001 agents are relevant to the changes
+- Launch only those agents focused on new code
+- Report findings and offer auto-fix
+
+### Fase 5 — Tab Admin Changelog
+
+- Prepend new entry to `wwwroot/data/changelog.json`
+- The "Actualizaciones" tab in admin sidebar loads this static JSON file
+- Renders Bootstrap 5 accordions with color-coded badges per change type
+- No controller endpoint needed — static file served by ASP.NET
+
+See `docs/PROTOCOLO_004.md` for full protocol documentation.

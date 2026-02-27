@@ -184,6 +184,64 @@
             <div class="col-auto"><span class="badge bg-warning text-dark fs-6 px-3 py-2"><i class="bi bi-circle-fill me-1"></i>Reservada</span></div>
         </div>
         <div class="row g-3" id="mesasGrid"></div>
+
+        <!-- ── Sección Reservas ── -->
+        <hr class="my-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <h5 class="fw-bold mb-0"><i class="bi bi-calendar-check me-2"></i>Reservas de Hoy</h5>
+            <div class="d-flex gap-2">
+                <input type="date" class="form-control form-control-sm" id="reservasFechaFiltro" style="width:auto;">
+                <button class="btn btn-primary btn-sm" id="btnNuevaReserva"><i class="bi bi-plus-circle me-1"></i>Nueva Reserva</button>
+            </div>
+        </div>
+        <div id="reservasList"></div>
+    </div>
+
+    <!-- Modal Nueva/Editar Reserva -->
+    <div class="modal fade" id="modalReserva" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalReservaTitle"><i class="bi bi-calendar-check me-2"></i>Nueva Reserva</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="reservaId">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Nombre del cliente *</label>
+                        <input type="text" class="form-control" id="reservaNombre" maxlength="100" placeholder="Ej: Juan Pérez">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Teléfono</label>
+                        <input type="tel" class="form-control" id="reservaTelefono" maxlength="20" placeholder="Ej: 0991234567">
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-7">
+                            <label class="form-label fw-semibold">Fecha y hora *</label>
+                            <input type="datetime-local" class="form-control" id="reservaFechaHora">
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label fw-semibold">Personas</label>
+                            <input type="number" class="form-control" id="reservaPersonas" min="1" max="100" value="2">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Mesa (opcional)</label>
+                        <select class="form-select" id="reservaMesa">
+                            <option value="">Sin asignar</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Notas</label>
+                        <textarea class="form-control" id="reservaNotas" rows="2" maxlength="500" placeholder="Alergias, celebración, etc."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary" id="btnGuardarReserva"><i class="bi bi-check-lg me-1"></i>Guardar</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- ═══════════════ TAB MENUS ═══════════════ -->
@@ -397,6 +455,9 @@
             </button>
         </div>
 
+        <!-- Resumen de ingresos por método de pago -->
+        <div class="row g-3 mb-4" id="paymentStatsRow"></div>
+
         <div class="row g-3" id="metodosPagoGrid">
             <!-- Cards loaded dynamically by cargarMetodosPago() -->
         </div>
@@ -462,8 +523,9 @@
                                     <i class="bi bi-trash me-1"></i> Eliminar QR
                                 </button>
                             </div>
-                            <input type="file" class="form-control" id="mpQrFile" accept="image/*"
+                            <input type="file" class="form-control" id="mpQrFile" accept="image/png,image/jpeg,image/gif,image/webp"
                                    style="border-radius: 12px; background: var(--mg-card-bg); color: var(--mg-text-color); border-color: var(--mg-border-color);">
+                            <small class="text-muted d-block mt-1"><i class="bi bi-info-circle me-1"></i>Formatos: PNG, JPG, GIF, WebP. Máx. 5 MB.</small>
                         </div>
 
                         <div class="form-check mb-3">
@@ -480,6 +542,21 @@
                             style="background: var(--mg-primary); color: white; border-radius: 12px;">
                         <i class="bi bi-check-lg me-1"></i> Guardar
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Ver QR -->
+    <div class="modal fade" id="modalVerQR" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0" style="border-radius: 20px; background: var(--mg-card-bg);">
+                <div class="modal-header border-0 pb-0">
+                    <h6 class="modal-title" id="modalVerQRTitle" style="color: var(--mg-text-color);"></h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center pb-4">
+                    <img id="modalVerQRImg" src="" style="max-width: 100%; border-radius: 12px;">
                 </div>
             </div>
         </div>
@@ -1904,7 +1981,7 @@ $('#btnExportRecibos').on('click', function() { window.location.href = '/Negocio
 document.addEventListener('mg-tab-shown', function(e) {
     var tab = e.detail.tab;
     if (tab === 'posTab') { cargarPOS(); actualizarIndicadorMesa(); }
-    else if (tab === 'mesasTab') { if (mesaActiva) { ordenesMesa[mesaActiva] = posCart.slice(); guardarOrdenesMesa(); } cargarMesas(); }
+    else if (tab === 'mesasTab') { if (mesaActiva) { ordenesMesa[mesaActiva] = posCart.slice(); guardarOrdenesMesa(); } cargarMesas(); cargarReservas(); }
     else if (tab === 'menusTab') cargarMenus();
     else if (tab === 'inventarioTab') cargarInventario();
     else if (tab === 'proveedoresTab') cargarProveedores();
@@ -1915,6 +1992,158 @@ document.addEventListener('mg-tab-shown', function(e) {
     else if (tab === 'notificacionesTab') cargarNotificaciones();
     else if (tab === 'metodosPagoTab') cargarMetodosPago();
 });
+
+// ═══════════════ RESERVAS ═══════════════
+
+var reservaModal;
+$(function() { reservaModal = new bootstrap.Modal('#modalReserva'); });
+
+// Inicializar fecha filtro a hoy
+$('#reservasFechaFiltro').val(new Date().toISOString().split('T')[0]);
+
+function cargarReservas(fecha) {
+    fecha = fecha || $('#reservasFechaFiltro').val() || '';
+    var url = fecha ? '/Negocios/GetReservas?negocioId=' + negocioId + '&fecha=' + fecha : '/Negocios/GetReservas?negocioId=' + negocioId;
+    $.get(url, function(data) {
+        var c = $('#reservasList');
+        if (!data || !data.length) {
+            c.html('<div class="text-center py-4 text-muted"><i class="bi bi-calendar-x fs-1 d-block mb-2"></i><p>No hay reservas para esta fecha</p></div>');
+            return;
+        }
+        var html = '<div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr>' +
+            '<th>Cliente</th><th>Hora</th><th>Personas</th><th>Mesa</th><th>Estado</th><th>Notas</th><th>Acciones</th>' +
+            '</tr></thead><tbody>';
+        data.forEach(function(r) {
+            var hora = new Date(r.fechaHoraReserva).toLocaleTimeString('es-EC', { hour: '2-digit', minute: '2-digit' });
+            var fecha2 = new Date(r.fechaHoraReserva).toLocaleDateString('es-EC');
+            var estadoBadge = { confirmada: 'warning', completada: 'success', cancelada: 'secondary', no_presentado: 'danger' };
+            var badge = '<span class="badge bg-' + (estadoBadge[r.estado] || 'info') + '">' + escHtml(r.estado) + '</span>';
+            var mesa = r.mesaNombre ? escHtml(r.mesaNombre) : '<span class="text-muted">-</span>';
+            var tel = r.telefono ? ' <a href="https://wa.me/' + escHtml(r.telefono.replace(/\D/g, '')) + '" target="_blank" class="text-success"><i class="bi bi-whatsapp"></i></a>' : '';
+            var acciones = '';
+            if (r.estado === 'confirmada') {
+                acciones = '<div class="btn-group btn-group-sm">' +
+                    '<button class="btn btn-outline-success" onclick="cambiarEstadoReserva(\'' + r.reservaId + '\', \'completada\')" title="Llegó"><i class="bi bi-check-lg"></i></button>' +
+                    '<button class="btn btn-outline-primary" onclick="editarReserva(\'' + r.reservaId + '\')" title="Editar"><i class="bi bi-pencil"></i></button>' +
+                    '<button class="btn btn-outline-danger" onclick="cambiarEstadoReserva(\'' + r.reservaId + '\', \'cancelada\')" title="Cancelar"><i class="bi bi-x-lg"></i></button>' +
+                    '<button class="btn btn-outline-warning" onclick="cambiarEstadoReserva(\'' + r.reservaId + '\', \'no_presentado\')" title="No se presentó"><i class="bi bi-person-x"></i></button>' +
+                    '</div>';
+            }
+            html += '<tr><td><strong>' + escHtml(r.nombreCliente) + '</strong>' + tel + '</td>' +
+                '<td>' + fecha2 + ' ' + hora + '</td><td class="text-center">' + r.cantidadPersonas + '</td>' +
+                '<td>' + mesa + '</td><td>' + badge + '</td>' +
+                '<td><small>' + escHtml(r.notas || '') + '</small></td><td>' + acciones + '</td></tr>';
+        });
+        html += '</tbody></table></div>';
+        c.html(html);
+    }).fail(function() {
+        $('#reservasList').html('<div class="text-center py-4 text-danger">Error al cargar reservas</div>');
+    });
+}
+
+$('#reservasFechaFiltro').on('change', function() { cargarReservas($(this).val()); });
+
+$('#btnNuevaReserva').on('click', function() {
+    $('#reservaId').val('');
+    $('#reservaNombre').val('');
+    $('#reservaTelefono').val('');
+    $('#reservaPersonas').val(2);
+    $('#reservaNotas').val('');
+    $('#modalReservaTitle').text('Nueva Reserva');
+    // Default: hoy + próxima hora entera
+    var now = new Date();
+    now.setHours(now.getHours() + 1, 0, 0, 0);
+    var local = new Date(now - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+    $('#reservaFechaHora').val(local);
+    // Cargar mesas disponibles
+    cargarMesasSelect();
+    reservaModal.show();
+});
+
+function cargarMesasSelect(selectedId) {
+    $.get('/Negocios/GetMesas', { negocioId: negocioId }, function(mesas) {
+        var sel = $('#reservaMesa');
+        sel.html('<option value="">Sin asignar</option>');
+        mesas.forEach(function(m) {
+            var estado = m.estado !== 'libre' ? ' (' + m.estado + ')' : '';
+            sel.append('<option value="' + m.mesaId + '"' + (selectedId === m.mesaId ? ' selected' : '') + '>' +
+                escHtml(m.nombre) + ' — ' + m.capacidad + ' personas' + estado + '</option>');
+        });
+    });
+}
+
+$('#btnGuardarReserva').on('click', function() {
+    var nombre = $('#reservaNombre').val().trim();
+    if (!nombre) { toastr.error('El nombre del cliente es obligatorio'); return; }
+    var fechaHora = $('#reservaFechaHora').val();
+    if (!fechaHora) { toastr.error('La fecha y hora son obligatorias'); return; }
+
+    var data = {
+        ReservaId: $('#reservaId').val() || '00000000-0000-0000-0000-000000000000',
+        NombreCliente: nombre,
+        Telefono: $('#reservaTelefono').val().trim(),
+        FechaHoraReserva: fechaHora,
+        CantidadPersonas: parseInt($('#reservaPersonas').val()) || 2,
+        MesaId: $('#reservaMesa').val() || null,
+        Notas: $('#reservaNotas').val().trim()
+    };
+
+    var url = $('#reservaId').val() ? '/Negocios/EditarReserva' : '/Negocios/CrearReserva';
+    var btn = $(this);
+    btn.prop('disabled', true);
+    $.ajax({
+        url: url, type: 'POST', contentType: 'application/json', data: JSON.stringify(data),
+        success: function(r) {
+            if (r.success) { toastr.success(r.message); reservaModal.hide(); cargarReservas(); cargarMesas(); }
+            else toastr.error(r.message);
+        },
+        error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al guardar reserva'); },
+        complete: function() { btn.prop('disabled', false); }
+    });
+});
+
+function editarReserva(reservaId) {
+    var fecha = $('#reservasFechaFiltro').val() || '';
+    var url = '/Negocios/GetReservas?negocioId=' + negocioId + (fecha ? '&fecha=' + fecha : '');
+    $.get(url, function(data) {
+        var r = data.find(function(x) { return x.reservaId === reservaId; });
+        if (!r) { toastr.error('Reserva no encontrada'); return; }
+        $('#reservaId').val(r.reservaId);
+        $('#reservaNombre').val(r.nombreCliente);
+        $('#reservaTelefono').val(r.telefono || '');
+        var dt = new Date(r.fechaHoraReserva);
+        var local = new Date(dt - dt.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        $('#reservaFechaHora').val(local);
+        $('#reservaPersonas').val(r.cantidadPersonas);
+        $('#reservaNotas').val(r.notas || '');
+        $('#modalReservaTitle').text('Editar Reserva');
+        cargarMesasSelect(r.mesaId);
+        reservaModal.show();
+    });
+}
+
+function cambiarEstadoReserva(reservaId, estado) {
+    var labels = { completada: 'completada (cliente llegó)', cancelada: 'cancelada', no_presentado: 'no presentado' };
+    Swal.fire({
+        title: 'Cambiar estado',
+        text: '¿Marcar reserva como ' + (labels[estado] || estado) + '?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, cambiar',
+        cancelButtonText: 'No'
+    }).then(function(result) {
+        if (!result.isConfirmed) return;
+        $.ajax({
+            url: '/Negocios/CambiarEstadoReserva', type: 'POST', contentType: 'application/json',
+            data: JSON.stringify({ ReservaId: reservaId, Estado: estado }),
+            success: function(r) {
+                if (r.success) { toastr.success(r.message); cargarReservas(); cargarMesas(); }
+                else toastr.error(r.message);
+            },
+            error: function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error'); }
+        });
+    });
+}
 
 // ═══════════════ MÉTODOS DE PAGO ═══════════════
 
@@ -1927,26 +2156,63 @@ function cargarMetodosPago() {
         var methods = results[1];
         var statsMap = {};
         statsData.forEach(function(s) { statsMap[s.metodoPago.toLowerCase()] = s; });
+
+        var statsRow = $('#paymentStatsRow');
+        statsRow.empty();
+        var allNames = ['Efectivo'];
+        if (methods) methods.forEach(function(m) { allNames.push(m.nombre); });
+        var colors = ['#50CD89', '#3E97FF', '#7239EA', '#F1416C', '#FFC700'];
+        allNames.forEach(function(name, idx) {
+            var s = statsMap[name.toLowerCase()] || { totalHoy: 0, totalSemana: 0, totalMes: 0 };
+            var color = colors[idx % colors.length];
+            statsRow.append(
+                '<div class="col-md-4 col-sm-6"><div class="card border-0 shadow-sm" style="border-radius: 16px; background: linear-gradient(135deg, ' + color + ', ' + color + 'cc);"><div class="card-body p-3"><div class="d-flex align-items-center gap-2 mb-2"><i class="bi ' + (name === 'Efectivo' ? 'bi-cash-stack' : 'bi-bank') + ' text-white"></i><h6 class="mb-0 text-white fw-bold">' + escHtml(name) + '</h6></div><div class="d-flex justify-content-between"><div class="text-center"><small class="text-white-50 d-block" style="font-size:0.65rem;">Hoy</small><span class="text-white fw-bold" style="font-size:0.9rem;">$' + (s.totalHoy || 0).toFixed(2) + '</span></div><div class="text-center"><small class="text-white-50 d-block" style="font-size:0.65rem;">Semana</small><span class="text-white fw-bold" style="font-size:0.9rem;">$' + (s.totalSemana || 0).toFixed(2) + '</span></div><div class="text-center"><small class="text-white-50 d-block" style="font-size:0.65rem;">Mes</small><span class="text-white fw-bold" style="font-size:0.9rem;">$' + (s.totalMes || 0).toFixed(2) + '</span></div></div></div></div></div>'
+            );
+        });
+
         var grid = $('#metodosPagoGrid');
         grid.empty();
         var efectivoStats = statsMap['efectivo'] || { totalHoy: 0, totalSemana: 0, totalMes: 0, cantidadMes: 0 };
-        grid.append(renderMetodoPagoCard(null, 'Efectivo', null, null, true, false, efectivoStats));
+        grid.append(renderMetodoPagoCard(null, 'Efectivo', null, null, null, true, false, efectivoStats));
         methods.forEach(function(mp) {
             var mpStats = statsMap[mp.nombre.toLowerCase()] || { totalHoy: 0, totalSemana: 0, totalMes: 0, cantidadMes: 0 };
-            grid.append(renderMetodoPagoCard(mp.metodoPagoId, mp.nombre, mp.numeroCuenta, mp.nombreTitular, false, mp.esPredeterminado, mpStats, mp.imagenQR));
+            grid.append(renderMetodoPagoCard(mp.metodoPagoId, mp.nombre, mp.numeroCuenta, mp.nombreTitular, mp.cedula, false, mp.esPredeterminado, mpStats, mp.imagenQR));
         });
     }).fail(function() { toastr.error('Error al cargar métodos de pago'); });
 }
 
-function renderMetodoPagoCard(id, nombre, numeroCuenta, nombreTitular, isEfectivo, esPredeterminado, stats, imagenQR) {
+function renderMetodoPagoCard(id, nombre, numeroCuenta, nombreTitular, cedula, isEfectivo, esPredeterminado, stats, imagenQR) {
     var icon = isEfectivo ? 'bi-cash-stack' : 'bi-bank';
-    var qrIcon = imagenQR ? ' <i class="bi bi-qr-code ms-1 text-success" title="Tiene código QR"></i>' : '';
-    var defaultBadge = (isEfectivo || esPredeterminado) ? '<span class="badge bg-success bg-opacity-10 text-success mt-1">Predeterminado</span>' : '';
+    var qrIndicator = imagenQR ? '<i class="bi bi-qr-code ms-1 text-success" style="font-size:0.85rem;"></i>' : '';
+    var defaultBadge = (isEfectivo || esPredeterminado) ? '<span class="badge bg-success bg-opacity-10 text-success" style="font-size:0.7rem;">Predeterminado</span>' : '';
     var menuHtml = '';
     if (!isEfectivo) {
-        menuHtml = `<div class="dropdown position-absolute" style="top: 10px; right: 10px;"><button class="btn btn-sm btn-light" data-bs-toggle="dropdown" style="border-radius: 8px;"><i class="bi bi-three-dots-vertical"></i></button><ul class="dropdown-menu dropdown-menu-end"><li><a class="dropdown-item" href="#" onclick="editarMetodoPago('${id}')"><i class="bi bi-pencil me-2"></i>Editar</a></li>${!esPredeterminado ? `<li><a class="dropdown-item" href="#" onclick="setPredeterminado('${id}')"><i class="bi bi-star me-2"></i>Predeterminado</a></li>` : ''}<li><hr class="dropdown-divider"></li><li><a class="dropdown-item text-danger" href="#" onclick="eliminarMetodoPago('${id}', '${nombre}')"><i class="bi bi-trash me-2"></i>Eliminar</a></li></ul></div>`;
+        menuHtml = '<div class="dropdown position-absolute" style="top:12px;right:12px;"><button class="btn btn-sm btn-light" data-bs-toggle="dropdown" style="border-radius:8px;padding:2px 8px;"><i class="bi bi-three-dots-vertical"></i></button><ul class="dropdown-menu dropdown-menu-end" style="border-radius:12px;background:var(--mg-card-bg);border:1px solid var(--mg-border-color);">';
+        if (imagenQR) {
+            menuHtml += '<li><a class="dropdown-item" href="#" onclick="verQR(\'' + id + '\',\'' + escHtml(nombre).replace(/'/g,"\\'") + '\')"><i class="bi bi-qr-code me-2"></i>Ver QR</a></li>';
+        }
+        menuHtml += '<li><a class="dropdown-item" href="#" onclick="editarMetodoPago(\'' + id + '\')"><i class="bi bi-pencil me-2"></i>Editar</a></li>';
+        if (!esPredeterminado) {
+            menuHtml += '<li><a class="dropdown-item" href="#" onclick="setPredeterminado(\'' + id + '\')"><i class="bi bi-star me-2"></i>Predeterminado</a></li>';
+        }
+        menuHtml += '<li><hr class="dropdown-divider"></li><li><a class="dropdown-item text-danger" href="#" onclick="eliminarMetodoPago(\'' + id + '\',\'' + escHtml(nombre).replace(/'/g,"\\'") + '\')"><i class="bi bi-trash me-2"></i>Eliminar</a></li></ul></div>';
     }
-    return `<div class="col-md-4 col-sm-6"><div class="card border-0 shadow-sm h-100" style="border-radius: 16px; background: var(--mg-card-bg);"><div class="card-body p-4 position-relative">${menuHtml}<div class="d-flex align-items-center mb-3"><div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; min-width: 48px; background: var(--mg-primary-light, rgba(62, 151, 255, 0.1));"><i class="bi ${icon} fs-5" style="color: var(--mg-primary);"></i></div><div><h6 class="mb-0 fw-bold" style="color: var(--mg-text-color);">${nombre}${qrIcon}</h6>${numeroCuenta ? `<small class="text-muted">${numeroCuenta}</small>` : ''}${nombreTitular ? `<small class="text-muted d-block">${nombreTitular}</small>` : ''}${defaultBadge}</div></div><div class="border-top pt-3" style="border-color: var(--mg-border-color) !important;"><div class="row text-center g-0"><div class="col-4"><small class="text-muted d-block" style="font-size: 0.7rem;">Hoy</small><strong class="d-block" style="color: var(--mg-primary); font-size: 1rem;">$${(stats.totalHoy || 0).toFixed(2)}</strong></div><div class="col-4"><small class="text-muted d-block" style="font-size: 0.7rem;">Semana</small><strong class="d-block" style="color: var(--mg-text-color); font-size: 1rem;">$${(stats.totalSemana || 0).toFixed(2)}</strong></div><div class="col-4"><small class="text-muted d-block" style="font-size: 0.7rem;">Mes</small><strong class="d-block" style="color: var(--mg-text-color); font-size: 1rem;">$${(stats.totalMes || 0).toFixed(2)}</strong></div></div><div class="text-center mt-2"><small class="text-muted" style="font-size: 0.7rem;">${stats.cantidadMes || 0} transacciones este mes</small></div></div></div></div></div>`;
+    var infoHtml = '';
+    if (numeroCuenta) infoHtml += '<div class="d-flex align-items-center gap-2 mb-1"><i class="bi bi-credit-card-2-front text-muted" style="font-size:0.8rem;width:16px;"></i><small style="color:var(--mg-text-color);">' + escHtml(numeroCuenta) + '</small></div>';
+    if (nombreTitular) infoHtml += '<div class="d-flex align-items-center gap-2 mb-1"><i class="bi bi-person text-muted" style="font-size:0.8rem;width:16px;"></i><small style="color:var(--mg-text-color);">' + escHtml(nombreTitular) + '</small></div>';
+    if (cedula) infoHtml += '<div class="d-flex align-items-center gap-2 mb-1"><i class="bi bi-card-text text-muted" style="font-size:0.8rem;width:16px;"></i><small style="color:var(--mg-text-color);">' + escHtml(cedula) + '</small></div>';
+    var earningsHtml = '<div class="d-flex justify-content-between mt-2 pt-2" style="border-top:1px dashed var(--mg-border-color);"><div class="text-center"><small class="text-muted d-block" style="font-size:0.65rem;">Hoy</small><span class="fw-bold" style="font-size:0.85rem;color:var(--mg-text-color);">$' + (stats.totalHoy || 0).toFixed(2) + '</span></div><div class="text-center"><small class="text-muted d-block" style="font-size:0.65rem;">Semana</small><span class="fw-bold" style="font-size:0.85rem;color:var(--mg-text-color);">$' + (stats.totalSemana || 0).toFixed(2) + '</span></div><div class="text-center"><small class="text-muted d-block" style="font-size:0.65rem;">Mes</small><span class="fw-bold" style="font-size:0.85rem;color:var(--mg-text-color);">$' + (stats.totalMes || 0).toFixed(2) + '</span></div></div>';
+    return '<div class="col-md-4 col-sm-6"><div class="card border-0 shadow-sm h-100" style="border-radius:16px;background:var(--mg-card-bg);"><div class="card-body p-4 position-relative">' + menuHtml + '<div class="d-flex align-items-start gap-3"><div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:52px;height:52px;background:' + (isEfectivo ? 'rgba(80,205,137,0.12)' : 'var(--mg-primary-light, rgba(62,151,255,0.1))') + ';"><i class="bi ' + icon + ' fs-4" style="color:' + (isEfectivo ? '#50CD89' : 'var(--mg-primary)') + ';"></i></div><div class="flex-grow-1 min-width-0"><h6 class="mb-1 fw-bold" style="color:var(--mg-text-color);">' + escHtml(nombre) + qrIndicator + '</h6>' + defaultBadge + '</div></div>' + (infoHtml ? '<hr class="my-3" style="border-color:var(--mg-border-color);opacity:0.3;">' + infoHtml : '') + earningsHtml + '</div></div></div>';
+}
+
+function verQR(id, nombre) {
+    $.get('/Negocios/GetMetodoPago', { negocioId: negocioId, metodoPagoId: id }, function(data) {
+        if (data.imagenQR) {
+            $('#modalVerQRTitle').text(nombre);
+            $('#modalVerQRImg').attr('src', data.imagenQR);
+            new bootstrap.Modal('#modalVerQR').show();
+        }
+    });
 }
 
 function abrirModalMetodoPago() {

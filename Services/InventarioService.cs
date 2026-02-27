@@ -146,10 +146,9 @@ public class InventarioService : IInventarioService
     }
 
     /// <summary>
-    /// Edita los metadatos de un producto existente (nombre, precios, stock mínimo).
-    /// IMPORTANTE: El stock actual NUNCA se modifica aquí — cualquier cambio de
-    /// cantidad debe hacerse a través de VenderProductoAsync, RestockAsync, etc.
-    /// Esto mantiene el historial de movimientos íntegro.
+    /// Edita los metadatos de un producto existente (nombre, precios, stock mínimo, stock).
+    /// Si el stock cambió, se crea un movimiento de ajuste automático para mantener
+    /// el historial de movimientos íntegro.
     ///
     /// El sistema de diff detecta exactamente qué cambió para escribir un log
     /// legible: "precio venta: $10.00 → $12.00, stock mínimo: 5 → 10".
@@ -175,6 +174,11 @@ public class InventarioService : IInventarioService
         if (producto.StockMinimo != model.StockMinimo)
             cambios.Add($"stock mínimo: {producto.StockMinimo} → {model.StockMinimo}");
 
+        // Detectar cambio de stock — si cambió, crear movimiento de ajuste
+        var stockCambio = model.Stock >= 0 && producto.Stock != model.Stock;
+        if (stockCambio)
+            cambios.Add($"stock: {producto.Stock} → {model.Stock}");
+
         var nuevaCat = model.CategoriaProductoId == Guid.Empty ? null : model.CategoriaProductoId;
         if (producto.CategoriaProductoId != nuevaCat)
             cambios.Add("categoría actualizada");
@@ -187,6 +191,30 @@ public class InventarioService : IInventarioService
 
         // Guardamos el nombre anterior para el log (puede haber cambiado)
         var nombreAnterior = producto.Nombre;
+
+        // Si el stock cambió, registrar movimiento de ajuste para mantener audit trail
+        if (stockCambio)
+        {
+            var stockAnterior = producto.Stock;
+            var diferencia = model.Stock - producto.Stock;
+            producto.Stock = model.Stock;
+
+            _context.MovimientosInventario.Add(new MovimientoInventario
+            {
+                MovimientoId   = Guid.NewGuid(),
+                NegocioId      = model.NegocioId,
+                ProductoId     = producto.ProductoId,
+                NombreProducto = producto.Nombre,
+                Tipo           = "ajuste",
+                Cantidad       = Math.Abs(diferencia),
+                PrecioUnitario = producto.PrecioVenta,
+                Total          = Math.Abs(diferencia) * producto.PrecioVenta,
+                StockAnterior  = stockAnterior,
+                StockNuevo     = model.Stock,
+                Nota           = "Ajuste desde edición de producto",
+                Fecha          = TimeHelper.Now
+            });
+        }
 
         producto.Nombre              = model.Nombre;
         producto.PrecioVenta         = model.PrecioVenta;

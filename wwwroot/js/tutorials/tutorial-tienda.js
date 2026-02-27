@@ -31,7 +31,7 @@
                 element: '#sidebar',
                 popover: {
                     title: t.stepTitle('layout-sidebar', 'Menu de Navegacion', 'primary'),
-                    description: 'Este es tu menu principal. Desde aqui accedes a todas las secciones: POS, Inventario, Proveedores, Catalogo, Movimientos, Reportes, Recibos, Metodos de Pago, Notificaciones y Sugerencias.',
+                    description: 'Este es tu menu principal. Desde aqui accedes a todas las secciones: POS, Inventario, Proveedores, Catalogo, Movimientos, Reportes, Recibos, Metodos de Pago, Notificaciones, Perfil y Sugerencias.',
                     side: 'right',
                     align: 'start'
                 },
@@ -118,6 +118,24 @@
                     description: 'Campo opcional para identificar al cliente en el recibo. Util para llevar registro de quien compro, especialmente para clientes frecuentes.',
                     side: 'bottom',
                     align: 'start'
+                }
+            },
+            {
+                element: '#btnAgregarCargoExtra',
+                popover: {
+                    title: t.stepTitle('plus-square', 'Cargos Extra', 'warning'),
+                    description: 'Agrega cargos adicionales a la venta actual: envio, empaque, servicio especial, etc. Cada cargo tiene descripcion y monto, y se suma al total del recibo. Puedes agregar multiples cargos y eliminarlos individualmente.',
+                    side: 'left',
+                    align: 'center'
+                }
+            },
+            {
+                element: '#posCargosExtraContainer',
+                popover: {
+                    title: t.stepTitle('list-check', 'Lista de Cargos Extra', 'info'),
+                    description: 'Aqui aparecen los cargos extra que has agregado a la venta. Cada uno muestra su descripcion, monto y un boton para eliminarlo. El subtotal de cargos se muestra al final de la lista.',
+                    side: 'left',
+                    align: 'center'
                 }
             },
             {
@@ -393,7 +411,7 @@
                 element: '#tablaRecibos',
                 popover: {
                     title: t.stepTitle('receipt', 'Tabla de Recibos', 'primary'),
-                    description: 'Todos los recibos generados automaticamente por cada venta POS y movimiento. Puedes ver el detalle completo de cada recibo haciendo clic en "Ver".',
+                    description: 'Todos los recibos generados automaticamente por cada venta POS y movimiento. Los recibos incluyen el logo de tu negocio si lo tienes configurado, los cargos extra y el metodo de pago utilizado. Haz clic en "Ver" para ver el detalle completo.',
                     side: 'top',
                     align: 'center'
                 },
@@ -499,8 +517,65 @@
             },
 
             // ═══════════════════════════════════
-            // 41–43. TOPBAR — Elementos superiores
+            // TAB PERFIL
             // ═══════════════════════════════════
+            {
+                element: '#perfilLogoImg, #perfilLogoPlaceholder',
+                popover: {
+                    title: t.stepTitle('image', 'Logo de tu Negocio', 'primary'),
+                    description: 'Sube el logo de tu tienda haciendo clic sobre la imagen. Acepta JPG, PNG y WebP (maximo 2 MB). Tu logo aparecera en la barra superior del panel y en todos los recibos de ventas POS.',
+                    side: 'right',
+                    align: 'center'
+                },
+                onHighlightStarted: function () {
+                    var link = document.querySelector('[data-mg-tab="perfilTab"]');
+                    if (link && !link.classList.contains('active')) link.click();
+                }
+            },
+            {
+                element: '#perfilEmail',
+                popover: {
+                    title: t.stepTitle('envelope', 'Datos de Contacto', 'info'),
+                    description: 'Actualiza el email, telefono y direccion de tu tienda. Esta informacion se usa para los recibos y las comunicaciones automaticas con tus clientes.',
+                    side: 'left',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#perfilPassActual',
+                popover: {
+                    title: t.stepTitle('shield-lock', 'Cambiar Contrasena', 'warning'),
+                    description: 'Cambia tu contrasena de acceso ingresando la contrasena actual y la nueva dos veces. Recomendamos cambiarla periodicamente para mantener tu cuenta segura.',
+                    side: 'left',
+                    align: 'center'
+                }
+            },
+            {
+                element: '#perfilDiasRestantes',
+                popover: {
+                    title: t.stepTitle('calendar-check', 'Info de Suscripcion', 'success'),
+                    description: 'Aqui ves los dias restantes de tu suscripcion a My-Negocio, la fecha de registro y el tipo de negocio. Si estas en periodo de prueba, aparecera una etiqueta indicandolo.',
+                    side: 'left',
+                    align: 'center'
+                }
+            },
+
+            // ═══════════════════════════════════
+            // TOPBAR — Elementos superiores
+            // ═══════════════════════════════════
+            {
+                element: '#topbarLogoContainer',
+                popover: {
+                    title: t.stepTitle('shop', 'Logo en la Barra Superior', 'primary'),
+                    description: 'Si subiste un logo desde el tab Perfil, aparecera aqui en la barra superior. Haz clic sobre el para ir directamente a la configuracion de tu perfil.',
+                    side: 'bottom',
+                    align: 'start'
+                },
+                onHighlightStarted: function () {
+                    var link = document.querySelector('[data-mg-tab="posTab"]');
+                    if (link && !link.classList.contains('active')) link.click();
+                }
+            },
             {
                 element: '#bellBtn',
                 popover: {
@@ -508,10 +583,6 @@
                     description: 'Acceso rapido a tus notificaciones desde cualquier pestana. El contador rojo indica cuantas notificaciones sin leer tienes.',
                     side: 'bottom',
                     align: 'end'
-                },
-                onHighlightStarted: function () {
-                    var link = document.querySelector('[data-mg-tab="posTab"]');
-                    if (link && !link.classList.contains('active')) link.click();
                 }
             },
             {

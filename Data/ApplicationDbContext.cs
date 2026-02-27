@@ -128,7 +128,7 @@ public class ApplicationDbContext : DbContext
     /// <summary>
     /// Tabla de comisiones generadas para los vendedores.
     /// Cada registro representa una comisión ganada al crear un negocio
-    /// que cumple los requisitos mínimos ($15+ de precio, 30+ días).
+    /// que cumple los requisitos mínimos.
     /// El admin marca las comisiones como pagadas al transferir el dinero.
     /// </summary>
     public DbSet<ComisionVendedor> ComisionesVendedor { get; set; }
@@ -159,6 +159,11 @@ public class ApplicationDbContext : DbContext
     /// Mesas fisicas del restaurante con estado visual (libre/ocupada/reservada).
     /// </summary>
     public DbSet<Mesa> Mesas { get; set; }
+
+    /// <summary>
+    /// Reservas de mesas del restaurante con datos del cliente y horario.
+    /// </summary>
+    public DbSet<Reserva> Reservas { get; set; }
 
     /// <summary>
     /// Menus guardados por el restaurante (desayuno, almuerzo, cena, general)
@@ -476,6 +481,25 @@ public class ApplicationDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(m => m.NegocioId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Reserva>(entity =>
+        {
+            entity.HasIndex(r => r.NegocioId)
+                .HasDatabaseName("IX_Reservas_NegocioId");
+
+            entity.HasIndex(r => new { r.NegocioId, r.FechaHoraReserva })
+                .HasDatabaseName("IX_Reservas_NegocioId_FechaHora");
+
+            entity.HasOne(r => r.Negocio)
+                .WithMany()
+                .HasForeignKey(r => r.NegocioId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(r => r.Mesa)
+                .WithMany()
+                .HasForeignKey(r => r.MesaId)
+                .OnDelete(DeleteBehavior.NoAction);
         });
 
         modelBuilder.Entity<MenuRestaurante>(entity =>

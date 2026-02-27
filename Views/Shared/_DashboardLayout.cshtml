@@ -703,6 +703,57 @@
 
     @await RenderSectionAsync("Scripts", required: false)
 
+    <!-- Notification Bell Dropdown (shared across all dashboards) -->
+    <script>
+    (function() {
+        var nId = '@(ViewData["NegocioId"]?.ToString() ?? "")';
+        if (!nId) return;
+
+        // Load badge count on page load
+        function _mgLoadNotifCount() {
+            $.get('/Negocios/GetNotificacionesCount', { negocioId: nId }, function(d) {
+                var count = d.count || 0;
+                if (count > 0) { $('#topbarNotifBadge, #sidebarNotifBadge').text(count).removeClass('d-none'); }
+                else { $('#topbarNotifBadge, #sidebarNotifBadge').addClass('d-none'); }
+            });
+        }
+
+        // Load dropdown content when bell is clicked
+        function _mgLoadNotifDropdown() {
+            $.get('/Negocios/GetNotificaciones', { negocioId: nId }, function(data) {
+                var html = '';
+                if (!data || data.length === 0) {
+                    html = '<div class="text-center py-4 text-muted"><i class="bi bi-bell-slash fs-2 d-block mb-2"></i>Sin notificaciones</div>';
+                } else {
+                    data.slice(0, 10).forEach(function(n) {
+                        var readClass = n.leida ? '' : 'unread';
+                        var iconClass = n.leida ? 'text-muted' : 'text-warning';
+                        var textClass = n.leida ? 'text-muted' : 'fw-semibold';
+                        html += '<div class="mg-notification-item ' + readClass + '" data-id="' + escHtml(n.id) + '">' +
+                            '<div class="d-flex align-items-start gap-2"><i class="bi bi-clock-fill ' + iconClass + ' mt-1"></i>' +
+                            '<div><p class="mb-1 small ' + textClass + '">' + escHtml(n.mensaje) + '</p>' +
+                            '<small class="text-muted">' + new Date(n.fechaCreacion).toLocaleString('es-MX') + '</small></div></div></div>';
+                    });
+                }
+                $('#notifDropdownBody').html(html);
+            });
+        }
+
+        // Bind bell dropdown open event
+        $('#bellBtn').off('show.bs.dropdown.mgNotif').on('show.bs.dropdown.mgNotif', function() { _mgLoadNotifDropdown(); });
+
+        // Bind "mark all read" button
+        $('#btnMarcarTodasLeidas').off('click.mgNotif').on('click.mgNotif', function() {
+            $.post('/Negocios/MarcarTodasNotificacionesLeidas', { negocioId: nId }, function(r) {
+                if (r.success) { _mgLoadNotifCount(); _mgLoadNotifDropdown(); }
+            });
+        });
+
+        // Initial badge load
+        _mgLoadNotifCount();
+    })();
+    </script>
+
     @if (Context.Items["NegocioBloqueado"] is true)
     {
         <!-- Overlay de Bloqueo — No se puede cerrar ni interactuar con el sistema -->

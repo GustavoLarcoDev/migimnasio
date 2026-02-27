@@ -743,8 +743,9 @@
                                     <i class="bi bi-trash me-1"></i> Eliminar QR
                                 </button>
                             </div>
-                            <input type="file" class="form-control" id="adminMpQrFile" accept="image/*"
+                            <input type="file" class="form-control" id="adminMpQrFile" accept="image/png,image/jpeg,image/gif,image/webp"
                                    style="border-radius: 12px; background: var(--mg-card-bg); color: var(--mg-text-color); border-color: var(--mg-border-color);">
+                            <small class="text-muted d-block mt-1"><i class="bi bi-info-circle me-1"></i>Formatos: PNG, JPG, GIF, WebP. Máx. 5 MB.</small>
                         </div>
 
                         <div class="form-check mb-3">
@@ -1120,6 +1121,26 @@
     </div>
 </div>
 
+    <!-- ============================================================== -->
+    <!-- TAB ACTUALIZACIONES — Changelog del sistema                    -->
+    <!-- ============================================================== -->
+    <div class="tab-pane fade" id="actualizacionesTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-0"><i class="bi bi-journal-bookmark text-primary me-2"></i>Actualizaciones</h3>
+                <p class="text-muted mb-0">Historial de cambios y mejoras de My-Negocio</p>
+            </div>
+        </div>
+        <div id="changelogContainer">
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="text-muted mt-2">Cargando actualizaciones...</p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
 @section Scripts {
 <script>
 // ================================================================
@@ -1182,6 +1203,8 @@ document.addEventListener('mg-tab-shown', function (e) {
         cargarRecibosAdmin();
     } else if (tab === 'promocionarTab') {
         // Sin carga automática — el usuario sube el archivo manualmente
+    } else if (tab === 'actualizacionesTab') {
+        cargarActualizaciones();
     }
 });
 
@@ -2229,6 +2252,76 @@ function cargarSugerenciasBadge() {
         }
     }).fail(function () {
         console.warn('No se pudo cargar conteo de sugerencias');
+    });
+}
+
+// ================================================================
+// ACTUALIZACIONES (CHANGELOG)
+// ================================================================
+var changelogCargado = false;
+
+function cargarActualizaciones() {
+    if (changelogCargado) return;
+
+    $.getJSON('/data/changelog.json?_=' + Date.now(), function (data) {
+        changelogCargado = true;
+        if (!data || !data.length) {
+            $('#changelogContainer').html('<div class="text-center py-5"><i class="bi bi-journal-x fs-1 text-muted d-block mb-3"></i><p class="text-muted">No hay actualizaciones registradas.</p></div>');
+            return;
+        }
+
+        var tipoBadge = {
+            'feature': 'bg-primary',
+            'fix': 'bg-danger',
+            'mejora': 'bg-success',
+            'eliminado': 'bg-warning text-dark'
+        };
+        var tipoLabel = {
+            'feature': 'Nueva función',
+            'fix': 'Corrección',
+            'mejora': 'Mejora',
+            'eliminado': 'Eliminado'
+        };
+
+        var html = '<div class="accordion" id="changelogAccordion">';
+        data.forEach(function (release, idx) {
+            var collapseId = 'changelog_' + idx;
+            var show = idx === 0 ? ' show' : '';
+            var collapsed = idx === 0 ? '' : ' collapsed';
+
+            html += '<div class="accordion-item border-0 mb-3" style="border-radius:0.75rem;overflow:hidden;">';
+            html += '<h2 class="accordion-header">';
+            html += '<button class="accordion-button' + collapsed + ' fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#' + collapseId + '" style="background:var(--mg-gray-100,#F5F8FA);color:var(--mg-text,#181C32);">';
+            html += '<span class="badge bg-primary me-2">v' + escHtml(release.version) + '</span> ';
+            html += escHtml(release.titulo);
+            html += '<small class="text-muted ms-auto me-3">' + escHtml(release.fecha) + '</small>';
+            html += '</button></h2>';
+            html += '<div id="' + collapseId + '" class="accordion-collapse collapse' + show + '" data-bs-parent="#changelogAccordion">';
+            html += '<div class="accordion-body" style="background:var(--mg-card-bg,#fff);">';
+
+            if (release.cambios && release.cambios.length) {
+                html += '<ul class="list-unstyled mb-0">';
+                release.cambios.forEach(function (c) {
+                    var badge = tipoBadge[c.tipo] || 'bg-secondary';
+                    var label = tipoLabel[c.tipo] || c.tipo;
+                    html += '<li class="d-flex align-items-start mb-2">';
+                    html += '<span class="badge ' + badge + ' me-2" style="min-width:100px;font-size:0.75rem;">' + escHtml(label) + '</span>';
+                    html += '<span>' + escHtml(c.descripcion) + '</span>';
+                    html += '</li>';
+                });
+                html += '</ul>';
+            } else {
+                html += '<p class="text-muted mb-0">Sin cambios detallados.</p>';
+            }
+
+            html += '</div></div></div>';
+        });
+        html += '</div>';
+
+        $('#changelogContainer').html(html);
+    }).fail(function () {
+        changelogCargado = false;
+        $('#changelogContainer').html('<div class="text-center py-5"><i class="bi bi-exclamation-triangle fs-1 text-warning d-block mb-3"></i><p class="text-muted">No se pudieron cargar las actualizaciones.</p></div>');
     });
 }
 

@@ -331,6 +331,7 @@ public class VentaProductoService : IVentaProductoService
 </head><body>
 <div style='max-width: 600px; margin: 0 auto; padding: 20px;'>
     <div style='background: linear-gradient(135deg, #3E97FF, #1B74E4); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;'>
+        {(!string.IsNullOrEmpty(negocio.LogoUrl) ? $"<img src='{enc(negocio.LogoUrl)}' alt='Logo' style='width: 70px; height: 70px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,255,255,0.3); margin-bottom: 12px;' />" : "")}
         <h1 style='color: white; margin: 0; font-size: 24px;'>Recibo de Venta</h1>
         <p style='color: rgba(255,255,255,0.9); margin: 8px 0 0; font-size: 15px;'>{nombreNeg}</p>
         <p style='color: rgba(255,255,255,0.75); margin: 6px 0 0; font-size: 13px;'>#{orden.NumeroOrden:D6}</p>

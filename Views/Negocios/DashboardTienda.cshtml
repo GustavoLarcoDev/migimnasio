@@ -310,6 +310,9 @@
             </button>
         </div>
 
+        <!-- Resumen de ingresos por método de pago -->
+        <div class="row g-3 mb-4" id="paymentStatsRow"></div>
+
         <div class="row g-3" id="metodosPagoGrid">
             <!-- Dynamic cards loaded here -->
         </div>
@@ -375,8 +378,9 @@
                                     <i class="bi bi-trash me-1"></i> Eliminar QR
                                 </button>
                             </div>
-                            <input type="file" class="form-control" id="mpQrFile" accept="image/*"
+                            <input type="file" class="form-control" id="mpQrFile" accept="image/png,image/jpeg,image/gif,image/webp"
                                    style="border-radius: 12px; background: var(--mg-card-bg); color: var(--mg-text-color); border-color: var(--mg-border-color);">
+                            <small class="text-muted d-block mt-1"><i class="bi bi-info-circle me-1"></i>Formatos: PNG, JPG, GIF, WebP. Máx. 5 MB.</small>
                         </div>
 
                         <div class="form-check mb-3">
@@ -393,6 +397,21 @@
                             style="background: var(--mg-primary); color: white; border-radius: 12px;">
                         <i class="bi bi-check-lg me-1"></i> Guardar
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Ver QR -->
+    <div class="modal fade" id="modalVerQR" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0" style="border-radius: 20px; background: var(--mg-card-bg);">
+                <div class="modal-header border-0 pb-0">
+                    <h6 class="modal-title" id="modalVerQRTitle" style="color: var(--mg-text-color);"></h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center pb-4">
+                    <img id="modalVerQRImg" src="" style="max-width: 100%; border-radius: 12px;">
                 </div>
             </div>
         </div>
@@ -2399,26 +2418,63 @@ function cargarMetodosPago() {
         var methods = results[1];
         var statsMap = {};
         statsData.forEach(function(s) { statsMap[s.metodoPago.toLowerCase()] = s; });
+
+        var statsRow = $('#paymentStatsRow');
+        statsRow.empty();
+        var allNames = ['Efectivo'];
+        if (methods) methods.forEach(function(m) { allNames.push(m.nombre); });
+        var colors = ['#50CD89', '#3E97FF', '#7239EA', '#F1416C', '#FFC700'];
+        allNames.forEach(function(name, idx) {
+            var s = statsMap[name.toLowerCase()] || { totalHoy: 0, totalSemana: 0, totalMes: 0 };
+            var color = colors[idx % colors.length];
+            statsRow.append(
+                '<div class="col-md-4 col-sm-6"><div class="card border-0 shadow-sm" style="border-radius: 16px; background: linear-gradient(135deg, ' + color + ', ' + color + 'cc);"><div class="card-body p-3"><div class="d-flex align-items-center gap-2 mb-2"><i class="bi ' + (name === 'Efectivo' ? 'bi-cash-stack' : 'bi-bank') + ' text-white"></i><h6 class="mb-0 text-white fw-bold">' + escHtml(name) + '</h6></div><div class="d-flex justify-content-between"><div class="text-center"><small class="text-white-50 d-block" style="font-size:0.65rem;">Hoy</small><span class="text-white fw-bold" style="font-size:0.9rem;">$' + (s.totalHoy || 0).toFixed(2) + '</span></div><div class="text-center"><small class="text-white-50 d-block" style="font-size:0.65rem;">Semana</small><span class="text-white fw-bold" style="font-size:0.9rem;">$' + (s.totalSemana || 0).toFixed(2) + '</span></div><div class="text-center"><small class="text-white-50 d-block" style="font-size:0.65rem;">Mes</small><span class="text-white fw-bold" style="font-size:0.9rem;">$' + (s.totalMes || 0).toFixed(2) + '</span></div></div></div></div></div>'
+            );
+        });
+
         var grid = $('#metodosPagoGrid');
         grid.empty();
         var efectivoStats = statsMap['efectivo'] || { totalHoy: 0, totalSemana: 0, totalMes: 0, cantidadMes: 0 };
-        grid.append(renderMetodoPagoCard(null, 'Efectivo', null, null, true, false, efectivoStats));
+        grid.append(renderMetodoPagoCard(null, 'Efectivo', null, null, null, true, false, efectivoStats));
         methods.forEach(function(mp) {
             var mpStats = statsMap[mp.nombre.toLowerCase()] || { totalHoy: 0, totalSemana: 0, totalMes: 0, cantidadMes: 0 };
-            grid.append(renderMetodoPagoCard(mp.metodoPagoId, mp.nombre, mp.numeroCuenta, mp.nombreTitular, false, mp.esPredeterminado, mpStats, mp.imagenQR));
+            grid.append(renderMetodoPagoCard(mp.metodoPagoId, mp.nombre, mp.numeroCuenta, mp.nombreTitular, mp.cedula, false, mp.esPredeterminado, mpStats, mp.imagenQR));
         });
     }).fail(function() { toastr.error('Error al cargar métodos de pago'); });
 }
 
-function renderMetodoPagoCard(id, nombre, numeroCuenta, nombreTitular, isEfectivo, esPredeterminado, stats, imagenQR) {
+function renderMetodoPagoCard(id, nombre, numeroCuenta, nombreTitular, cedula, isEfectivo, esPredeterminado, stats, imagenQR) {
     var icon = isEfectivo ? 'bi-cash-stack' : 'bi-bank';
-    var qrIcon = imagenQR ? ' <i class="bi bi-qr-code ms-1 text-success" title="Tiene código QR"></i>' : '';
-    var defaultBadge = (isEfectivo || esPredeterminado) ? '<span class="badge bg-success bg-opacity-10 text-success mt-1">Predeterminado</span>' : '';
+    var qrIndicator = imagenQR ? '<i class="bi bi-qr-code ms-1 text-success" style="font-size:0.85rem;"></i>' : '';
+    var defaultBadge = (isEfectivo || esPredeterminado) ? '<span class="badge bg-success bg-opacity-10 text-success" style="font-size:0.7rem;">Predeterminado</span>' : '';
     var menuHtml = '';
     if (!isEfectivo) {
-        menuHtml = `<div class="dropdown position-absolute" style="top: 10px; right: 10px;"><button class="btn btn-sm btn-light" data-bs-toggle="dropdown" style="border-radius: 8px;"><i class="bi bi-three-dots-vertical"></i></button><ul class="dropdown-menu dropdown-menu-end"><li><a class="dropdown-item" href="#" onclick="editarMetodoPago('${id}')"><i class="bi bi-pencil me-2"></i>Editar</a></li>${!esPredeterminado ? `<li><a class="dropdown-item" href="#" onclick="setPredeterminado('${id}')"><i class="bi bi-star me-2"></i>Predeterminado</a></li>` : ''}<li><hr class="dropdown-divider"></li><li><a class="dropdown-item text-danger" href="#" onclick="eliminarMetodoPago('${id}', '${nombre}')"><i class="bi bi-trash me-2"></i>Eliminar</a></li></ul></div>`;
+        menuHtml = '<div class="dropdown position-absolute" style="top:12px;right:12px;"><button class="btn btn-sm btn-light" data-bs-toggle="dropdown" style="border-radius:8px;padding:2px 8px;"><i class="bi bi-three-dots-vertical"></i></button><ul class="dropdown-menu dropdown-menu-end" style="border-radius:12px;background:var(--mg-card-bg);border:1px solid var(--mg-border-color);">';
+        if (imagenQR) {
+            menuHtml += '<li><a class="dropdown-item" href="#" onclick="verQR(\'' + id + '\',\'' + escHtml(nombre).replace(/'/g,"\\'") + '\')"><i class="bi bi-qr-code me-2"></i>Ver QR</a></li>';
+        }
+        menuHtml += '<li><a class="dropdown-item" href="#" onclick="editarMetodoPago(\'' + id + '\')"><i class="bi bi-pencil me-2"></i>Editar</a></li>';
+        if (!esPredeterminado) {
+            menuHtml += '<li><a class="dropdown-item" href="#" onclick="setPredeterminado(\'' + id + '\')"><i class="bi bi-star me-2"></i>Predeterminado</a></li>';
+        }
+        menuHtml += '<li><hr class="dropdown-divider"></li><li><a class="dropdown-item text-danger" href="#" onclick="eliminarMetodoPago(\'' + id + '\',\'' + escHtml(nombre).replace(/'/g,"\\'") + '\')"><i class="bi bi-trash me-2"></i>Eliminar</a></li></ul></div>';
     }
-    return `<div class="col-md-4 col-sm-6"><div class="card border-0 shadow-sm h-100" style="border-radius: 16px; background: var(--mg-card-bg);"><div class="card-body p-4 position-relative">${menuHtml}<div class="d-flex align-items-center mb-3"><div class="rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px; min-width: 48px; background: var(--mg-primary-light, rgba(62, 151, 255, 0.1));"><i class="bi ${icon} fs-5" style="color: var(--mg-primary);"></i></div><div><h6 class="mb-0 fw-bold" style="color: var(--mg-text-color);">${nombre}${qrIcon}</h6>${numeroCuenta ? `<small class="text-muted">${numeroCuenta}</small>` : ''}${nombreTitular ? `<small class="text-muted d-block">${nombreTitular}</small>` : ''}${defaultBadge}</div></div><div class="border-top pt-3" style="border-color: var(--mg-border-color) !important;"><div class="row text-center g-0"><div class="col-4"><small class="text-muted d-block" style="font-size: 0.7rem;">Hoy</small><strong class="d-block" style="color: var(--mg-primary); font-size: 1rem;">$${(stats.totalHoy || 0).toFixed(2)}</strong></div><div class="col-4"><small class="text-muted d-block" style="font-size: 0.7rem;">Semana</small><strong class="d-block" style="color: var(--mg-text-color); font-size: 1rem;">$${(stats.totalSemana || 0).toFixed(2)}</strong></div><div class="col-4"><small class="text-muted d-block" style="font-size: 0.7rem;">Mes</small><strong class="d-block" style="color: var(--mg-text-color); font-size: 1rem;">$${(stats.totalMes || 0).toFixed(2)}</strong></div></div><div class="text-center mt-2"><small class="text-muted" style="font-size: 0.7rem;">${stats.cantidadMes || 0} transacciones este mes</small></div></div></div></div></div>`;
+    var infoHtml = '';
+    if (numeroCuenta) infoHtml += '<div class="d-flex align-items-center gap-2 mb-1"><i class="bi bi-credit-card-2-front text-muted" style="font-size:0.8rem;width:16px;"></i><small style="color:var(--mg-text-color);">' + escHtml(numeroCuenta) + '</small></div>';
+    if (nombreTitular) infoHtml += '<div class="d-flex align-items-center gap-2 mb-1"><i class="bi bi-person text-muted" style="font-size:0.8rem;width:16px;"></i><small style="color:var(--mg-text-color);">' + escHtml(nombreTitular) + '</small></div>';
+    if (cedula) infoHtml += '<div class="d-flex align-items-center gap-2 mb-1"><i class="bi bi-card-text text-muted" style="font-size:0.8rem;width:16px;"></i><small style="color:var(--mg-text-color);">' + escHtml(cedula) + '</small></div>';
+    var earningsHtml = '<div class="d-flex justify-content-between mt-2 pt-2" style="border-top:1px dashed var(--mg-border-color);"><div class="text-center"><small class="text-muted d-block" style="font-size:0.65rem;">Hoy</small><span class="fw-bold" style="font-size:0.85rem;color:var(--mg-text-color);">$' + (stats.totalHoy || 0).toFixed(2) + '</span></div><div class="text-center"><small class="text-muted d-block" style="font-size:0.65rem;">Semana</small><span class="fw-bold" style="font-size:0.85rem;color:var(--mg-text-color);">$' + (stats.totalSemana || 0).toFixed(2) + '</span></div><div class="text-center"><small class="text-muted d-block" style="font-size:0.65rem;">Mes</small><span class="fw-bold" style="font-size:0.85rem;color:var(--mg-text-color);">$' + (stats.totalMes || 0).toFixed(2) + '</span></div></div>';
+    return '<div class="col-md-4 col-sm-6"><div class="card border-0 shadow-sm h-100" style="border-radius:16px;background:var(--mg-card-bg);"><div class="card-body p-4 position-relative">' + menuHtml + '<div class="d-flex align-items-start gap-3"><div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:52px;height:52px;background:' + (isEfectivo ? 'rgba(80,205,137,0.12)' : 'var(--mg-primary-light, rgba(62,151,255,0.1))') + ';"><i class="bi ' + icon + ' fs-4" style="color:' + (isEfectivo ? '#50CD89' : 'var(--mg-primary)') + ';"></i></div><div class="flex-grow-1 min-width-0"><h6 class="mb-1 fw-bold" style="color:var(--mg-text-color);">' + escHtml(nombre) + qrIndicator + '</h6>' + defaultBadge + '</div></div>' + (infoHtml ? '<hr class="my-3" style="border-color:var(--mg-border-color);opacity:0.3;">' + infoHtml : '') + earningsHtml + '</div></div></div>';
+}
+
+function verQR(id, nombre) {
+    $.get('/Negocios/GetMetodoPago', { negocioId: negocioId, metodoPagoId: id }, function(data) {
+        if (data.imagenQR) {
+            $('#modalVerQRTitle').text(nombre);
+            $('#modalVerQRImg').attr('src', data.imagenQR);
+            new bootstrap.Modal('#modalVerQR').show();
+        }
+    });
 }
 
 function abrirModalMetodoPago() {

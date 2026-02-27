@@ -166,6 +166,7 @@ builder.Services.AddScoped<ICatalogoService, CatalogoService>();
 // ── Modelo Restaurante (Mesas / Menús) ──────────────────────
 // Gestión de mesas y menús digitales con 5 estilos visuales.
 builder.Services.AddScoped<IMesaService, MesaService>();
+builder.Services.AddScoped<IReservaService, ReservaService>();
 builder.Services.AddScoped<IMenuRestauranteService, MenuRestauranteService>();
 
 // ── Métodos de Pago ─────────────────────────────────────────

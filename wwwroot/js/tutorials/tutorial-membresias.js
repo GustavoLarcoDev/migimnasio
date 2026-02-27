@@ -31,7 +31,7 @@
                 element: '#sidebar',
                 popover: {
                     title: t.stepTitle('layout-sidebar', 'Menú de Navegación', 'primary'),
-                    description: 'Este es tu menú principal. Desde aquí puedes acceder a todas las secciones: Resumen, Clientes, Movimientos, Reportes, Inventario, Recibos, Métodos de Pago, Notificaciones y Sugerencias.',
+                    description: 'Este es tu menú principal. Desde aquí puedes acceder a todas las secciones: Resumen, Clientes, Movimientos, Reportes, Inventario, Recibos, Métodos de Pago, Notificaciones, Perfil y Sugerencias.',
                     side: 'right',
                     align: 'start'
                 },
@@ -286,7 +286,7 @@
                 element: '#tablaRecibos',
                 popover: {
                     title: t.stepTitle('receipt', 'Tabla de Recibos', 'primary'),
-                    description: 'Aquí se guardan automáticamente los recibos de cada transacción: membresías nuevas, renovaciones y ventas. Puedes ver el detalle de cada recibo haciendo clic en "Ver".',
+                    description: 'Aquí se guardan automáticamente los recibos de cada transacción: membresías nuevas, renovaciones y ventas. Los recibos incluyen el logo de tu negocio si lo tienes configurado. Haz clic en "Ver" para ver el detalle completo.',
                     side: 'top',
                     align: 'center'
                 },
@@ -401,8 +401,65 @@
             },
 
             // ───────────────────────────────────
-            // 34–36. TOPBAR — Elementos superiores
+            // TAB PERFIL
             // ───────────────────────────────────
+            {
+                element: '#perfilLogoImg, #perfilLogoPlaceholder',
+                popover: {
+                    title: t.stepTitle('image', 'Logo de tu Negocio', 'primary'),
+                    description: 'Sube el logo de tu negocio haciendo clic sobre la imagen. Acepta JPG, PNG y WebP (máximo 2 MB). Tu logo aparecerá en la barra superior del panel y en todos los recibos que generes.',
+                    side: 'right',
+                    align: 'center'
+                },
+                onHighlightStarted: function () {
+                    var link = document.querySelector('[data-mg-tab="perfilTab"]');
+                    if (link && !link.classList.contains('active')) link.click();
+                }
+            },
+            {
+                element: '#perfilEmail',
+                popover: {
+                    title: t.stepTitle('envelope', 'Datos de Contacto', 'info'),
+                    description: 'Actualiza el email, teléfono y dirección de tu negocio. Esta información se usa para los recibos y las comunicaciones automáticas con tus clientes.',
+                    side: 'left',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#perfilPassActual',
+                popover: {
+                    title: t.stepTitle('shield-lock', 'Cambiar Contraseña', 'warning'),
+                    description: 'Cambia tu contraseña de acceso ingresando la contraseña actual y la nueva dos veces. Recomendamos cambiarla periódicamente para mantener tu cuenta segura.',
+                    side: 'left',
+                    align: 'center'
+                }
+            },
+            {
+                element: '#perfilDiasRestantes',
+                popover: {
+                    title: t.stepTitle('calendar-check', 'Info de Suscripción', 'success'),
+                    description: 'Aquí ves los días restantes de tu suscripción a My-Negocio, la fecha de registro y el tipo de negocio. Si estás en periodo de prueba, aparecerá una etiqueta indicándolo.',
+                    side: 'left',
+                    align: 'center'
+                }
+            },
+
+            // ───────────────────────────────────
+            // TOPBAR — Elementos superiores
+            // ───────────────────────────────────
+            {
+                element: '#topbarLogoContainer',
+                popover: {
+                    title: t.stepTitle('shop', 'Logo en la Barra Superior', 'primary'),
+                    description: 'Si subiste un logo desde el tab Perfil, aparecerá aquí en la barra superior. Haz clic sobre él para ir directamente a la configuración de tu perfil.',
+                    side: 'bottom',
+                    align: 'start'
+                },
+                onHighlightStarted: function () {
+                    var link = document.querySelector('[data-mg-tab="resumenTab"]');
+                    if (link && !link.classList.contains('active')) link.click();
+                }
+            },
             {
                 element: '#bellBtn',
                 popover: {
@@ -410,11 +467,6 @@
                     description: 'Acceso rápido a tus notificaciones desde cualquier pestaña. El contador rojo indica cuántas notificaciones sin leer tienes. Haz clic para ver un resumen sin salir de donde estés.',
                     side: 'bottom',
                     align: 'end'
-                },
-                onHighlightStarted: function () {
-                    // Navegar al resumen para que el topbar esté visible
-                    var link = document.querySelector('[data-mg-tab="resumenTab"]');
-                    if (link && !link.classList.contains('active')) link.click();
                 }
             },
             {

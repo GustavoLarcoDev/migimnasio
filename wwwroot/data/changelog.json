@@ -1,0 +1,28 @@
+[
+  {
+    "version": "1.0.0",
+    "fecha": "2026-02-26",
+    "titulo": "Lanzamiento inicial de My-Negocio",
+    "cambios": [
+      { "tipo": "feature", "descripcion": "Sistema multi-negocio con 4 tipos: membresías, artesanal, tienda y restaurante" },
+      { "tipo": "feature", "descripcion": "Panel de administración con gestión de negocios, vendedores y comisiones" },
+      { "tipo": "feature", "descripcion": "Sistema de autenticación con roles (Admin, Negocio, Vendedor) y suplantación" },
+      { "tipo": "feature", "descripcion": "Dashboard de membresías: clientes, renovaciones, notificaciones, logs financieros" },
+      { "tipo": "feature", "descripcion": "Dashboard artesanal: servicios, empleados, horarios, citas con calendario FullCalendar" },
+      { "tipo": "feature", "descripcion": "Dashboard tienda: inventario, POS, ventas, movimientos de stock" },
+      { "tipo": "feature", "descripcion": "Dashboard restaurante: mesas, menú público, pedidos, reservas, inventario" },
+      { "tipo": "feature", "descripcion": "Sistema de vendedores con comisiones automáticas ($5 por negocio calificado)" },
+      { "tipo": "feature", "descripcion": "Integración WhatsApp Cloud API con templates de Twilio para notificaciones" },
+      { "tipo": "feature", "descripcion": "6 servicios en background: recordatorios, reportes diarios, expiración de suscripciones" },
+      { "tipo": "feature", "descripcion": "Reportes por email con MailKit (Gmail SMTP)" },
+      { "tipo": "feature", "descripcion": "Exportación e importación Excel con ClosedXML" },
+      { "tipo": "feature", "descripcion": "Sistema de temas: claro, oscuro, océano y atardecer (Metronic v8)" },
+      { "tipo": "feature", "descripcion": "Tutoriales interactivos guiados para cada tipo de negocio" },
+      { "tipo": "feature", "descripcion": "Menú público para restaurantes con filtrado automático de productos sin stock" },
+      { "tipo": "feature", "descripcion": "Sistema de reservas con prevención de doble-booking y gestión de mesas" },
+      { "tipo": "feature", "descripcion": "Promoción masiva por WhatsApp desde archivo Excel" },
+      { "tipo": "feature", "descripcion": "Modal de Términos y Condiciones bloqueante para negocios y vendedores" },
+      { "tipo": "feature", "descripcion": "Logo de negocio en recibos POS y pestaña de perfil" }
+    ]
+  }
+]

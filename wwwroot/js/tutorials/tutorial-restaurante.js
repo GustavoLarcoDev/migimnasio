@@ -32,7 +32,7 @@
                 element: '#sidebar',
                 popover: {
                     title: t.stepTitle('layout-sidebar', 'Menu de Navegacion', 'primary'),
-                    description: 'Este es tu menu principal. Desde aqui puedes acceder a todas las secciones de tu restaurante: POS, Mesas, Menus, Inventario, Distribuidores, Repartidores, Movimientos, Reportes, Recibos, Metodos de Pago, Notificaciones y Sugerencias.',
+                    description: 'Este es tu menu principal. Desde aqui puedes acceder a todas las secciones de tu restaurante: POS, Reservas, Mesas, Menus, Inventario, Distribuidores, Repartidores, Movimientos, Reportes, Recibos, Metodos de Pago, Notificaciones, Perfil y Sugerencias.',
                     side: 'right',
                     align: 'start'
                 },
@@ -204,7 +204,51 @@
             },
 
             // ───────────────────────────────────
-            // 17–19. TAB MESAS
+            // TAB RESERVAS
+            // ───────────────────────────────────
+            {
+                element: '#reservasFechaFiltro',
+                popover: {
+                    title: t.stepTitle('calendar-event', 'Filtro por Fecha', 'info'),
+                    description: 'Selecciona una fecha para ver las reservas de ese dia. Por defecto muestra las reservas de hoy. Puedes navegar a cualquier fecha futura para planificar la ocupacion de tu restaurante.',
+                    side: 'bottom',
+                    align: 'start'
+                },
+                onHighlightStarted: function () {
+                    t.closeSidebarMobile();
+                    var link = document.querySelector('[data-mg-tab="reservasTab"]');
+                    if (link && !link.classList.contains('active')) link.click();
+                }
+            },
+            {
+                element: '#btnNuevaReserva',
+                popover: {
+                    title: t.stepTitle('plus-circle', 'Nueva Reserva', 'success'),
+                    description: 'Crea una nueva reserva ingresando: nombre del cliente, telefono, fecha y hora, cantidad de personas, mesa (opcional) y notas. Las reservas se crean con estado "confirmada" automaticamente.',
+                    side: 'bottom',
+                    align: 'end'
+                }
+            },
+            {
+                element: '#reservasList',
+                popover: {
+                    title: t.stepTitle('bookmark-check', 'Lista de Reservas', 'primary'),
+                    description: 'Aqui aparecen todas las reservas del dia seleccionado con nombre, hora, personas, mesa asignada y estado. Puedes editar, cambiar estado (completada, cancelada, no presentado) o eliminar cada reserva.',
+                    side: 'top',
+                    align: 'center'
+                }
+            },
+            {
+                popover: {
+                    title: t.stepTitle('arrow-left-right', 'Reservas y Mesas', 'warning'),
+                    description: 'Las reservas se integran con el sistema de mesas: al asignar una mesa a una reserva de hoy, la mesa se marca como "reservada" (amarillo). Al completar o cancelar la reserva, la mesa vuelve a "libre". El sistema previene reservas duplicadas en la misma mesa a la misma hora.',
+                    side: 'over',
+                    align: 'center'
+                }
+            },
+
+            // ───────────────────────────────────
+            // TAB MESAS
             // ───────────────────────────────────
             {
                 element: '#btnNuevaMesa',
@@ -223,7 +267,7 @@
                 element: '#mesasGrid',
                 popover: {
                     title: t.stepTitle('grid-3x3', 'Distribucion de Mesas', 'primary'),
-                    description: 'Vista visual de todas tus mesas con colores de estado: verde (libre), rojo (ocupada) y amarillo (reservada). Haz clic en una mesa ocupada para ver su pedido y editarlo en el POS.',
+                    description: 'Vista visual de todas tus mesas con colores de estado: verde (libre), rojo (ocupada) y amarillo (reservada). Las mesas se marcan "reservada" automaticamente cuando tienen una reserva activa de hoy. Haz clic en una mesa ocupada para ver su pedido en el POS.',
                     side: 'top',
                     align: 'center'
                 }
@@ -517,7 +561,7 @@
                 element: '#tablaRecibos',
                 popover: {
                     title: t.stepTitle('receipt', 'Tabla de Recibos', 'primary'),
-                    description: 'Aqui se guardan automaticamente los recibos de cada venta del POS. Puedes ver el detalle de cada recibo haciendo clic en "Ver" y tambien buscar por numero de recibo.',
+                    description: 'Aqui se guardan automaticamente los recibos de cada venta del POS. Los recibos incluyen el logo de tu restaurante si lo tienes configurado y el metodo de pago utilizado. Haz clic en "Ver" para ver el detalle completo.',
                     side: 'top',
                     align: 'center'
                 },
@@ -623,8 +667,65 @@
             },
 
             // ───────────────────────────────────
-            // 51–53. TOPBAR — Elementos superiores
+            // TAB PERFIL
             // ───────────────────────────────────
+            {
+                element: '#perfilLogoImg, #perfilLogoPlaceholder',
+                popover: {
+                    title: t.stepTitle('image', 'Logo de tu Negocio', 'primary'),
+                    description: 'Sube el logo de tu restaurante haciendo clic sobre la imagen. Acepta JPG, PNG y WebP (maximo 2 MB). Tu logo aparecera en la barra superior del panel y en todos los recibos de ventas.',
+                    side: 'right',
+                    align: 'center'
+                },
+                onHighlightStarted: function () {
+                    var link = document.querySelector('[data-mg-tab="perfilTab"]');
+                    if (link && !link.classList.contains('active')) link.click();
+                }
+            },
+            {
+                element: '#perfilEmail',
+                popover: {
+                    title: t.stepTitle('envelope', 'Datos de Contacto', 'info'),
+                    description: 'Actualiza el email, telefono y direccion de tu restaurante. Esta informacion se usa para los recibos y las comunicaciones automaticas con tus clientes.',
+                    side: 'left',
+                    align: 'start'
+                }
+            },
+            {
+                element: '#perfilPassActual',
+                popover: {
+                    title: t.stepTitle('shield-lock', 'Cambiar Contrasena', 'warning'),
+                    description: 'Cambia tu contrasena de acceso ingresando la contrasena actual y la nueva dos veces. Recomendamos cambiarla periodicamente para mantener tu cuenta segura.',
+                    side: 'left',
+                    align: 'center'
+                }
+            },
+            {
+                element: '#perfilDiasRestantes',
+                popover: {
+                    title: t.stepTitle('calendar-check', 'Info de Suscripcion', 'success'),
+                    description: 'Aqui ves los dias restantes de tu suscripcion a My-Negocio, la fecha de registro y el tipo de negocio. Si estas en periodo de prueba, aparecera una etiqueta indicandolo.',
+                    side: 'left',
+                    align: 'center'
+                }
+            },
+
+            // ───────────────────────────────────
+            // TOPBAR — Elementos superiores
+            // ───────────────────────────────────
+            {
+                element: '#topbarLogoContainer',
+                popover: {
+                    title: t.stepTitle('shop', 'Logo en la Barra Superior', 'primary'),
+                    description: 'Si subiste un logo desde el tab Perfil, aparecera aqui en la barra superior. Haz clic sobre el para ir directamente a la configuracion de tu perfil.',
+                    side: 'bottom',
+                    align: 'start'
+                },
+                onHighlightStarted: function () {
+                    var link = document.querySelector('[data-mg-tab="posTab"]');
+                    if (link && !link.classList.contains('active')) link.click();
+                }
+            },
             {
                 element: '#bellBtn',
                 popover: {
@@ -632,10 +733,6 @@
                     description: 'Acceso rapido a tus notificaciones desde cualquier pestana. El contador rojo indica cuantas notificaciones sin leer tienes. Haz clic para ver un resumen sin salir de donde estes.',
                     side: 'bottom',
                     align: 'end'
-                },
-                onHighlightStarted: function () {
-                    var link = document.querySelector('[data-mg-tab="posTab"]');
-                    if (link && !link.classList.contains('active')) link.click();
                 }
             },
             {

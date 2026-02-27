@@ -117,15 +117,18 @@ public class RestauranteCrudController : Controller
     private readonly IAuthService _authService;
     private readonly IMesaService _mesaService;
     private readonly IMenuRestauranteService _menuService;
+    private readonly IReservaService _reservaService;
 
     public RestauranteCrudController(
         IAuthService authService,
         IMesaService mesaService,
-        IMenuRestauranteService menuService)
+        IMenuRestauranteService menuService,
+        IReservaService reservaService)
     {
         _authService = authService;
         _mesaService = mesaService;
         _menuService = menuService;
+        _reservaService = reservaService;
     }
 
     // ── Mesas ──────────────────────────────────────────────────
@@ -374,9 +377,90 @@ public class RestauranteCrudController : Controller
             return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
+
+    // ── Reservas ──────────────────────────────────────────────────
+
+    [HttpGet("GetReservas")]
+    public async Task<IActionResult> GetReservas(Guid negocioId, DateTime? fecha = null)
+    {
+        var nId = _authService.GetNegocioId(User);
+        if (!nId.HasValue || negocioId != nId.Value) return Forbid();
+        var reservas = await _reservaService.GetReservasAsync(nId.Value, fecha);
+        return Ok(reservas);
+    }
+
+    [HttpGet("GetReservasHoy")]
+    public async Task<IActionResult> GetReservasHoy(Guid negocioId)
+    {
+        var nId = _authService.GetNegocioId(User);
+        if (!nId.HasValue || negocioId != nId.Value) return Forbid();
+        var reservas = await _reservaService.GetReservasHoyAsync(nId.Value);
+        return Ok(reservas);
+    }
+
+    [HttpPost("CrearReserva")]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> CrearReserva([FromBody] ReservaRequest req)
+    {
+        var nId = _authService.GetNegocioId(User);
+        if (!nId.HasValue) return Forbid();
+        var (success, message) = await _reservaService.CrearReservaAsync(
+            nId.Value, req.NombreCliente, req.Telefono,
+            req.FechaHoraReserva, req.CantidadPersonas, req.MesaId, req.Notas);
+        return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+    }
+
+    [HttpPost("EditarReserva")]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> EditarReserva([FromBody] ReservaRequest req)
+    {
+        var nId = _authService.GetNegocioId(User);
+        if (!nId.HasValue) return Forbid();
+        var (success, message) = await _reservaService.EditarReservaAsync(
+            req.ReservaId, nId.Value, req.NombreCliente, req.Telefono,
+            req.FechaHoraReserva, req.CantidadPersonas, req.MesaId, req.Notas);
+        return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+    }
+
+    [HttpPost("CambiarEstadoReserva")]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> CambiarEstadoReserva([FromBody] CambiarEstadoReservaRequest req)
+    {
+        var nId = _authService.GetNegocioId(User);
+        if (!nId.HasValue) return Forbid();
+        var (success, message) = await _reservaService.CambiarEstadoReservaAsync(req.ReservaId, nId.Value, req.Estado);
+        return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+    }
+
+    [HttpPost("CancelarReserva")]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> CancelarReserva([FromBody] CambiarEstadoReservaRequest req)
+    {
+        var nId = _authService.GetNegocioId(User);
+        if (!nId.HasValue) return Forbid();
+        var (success, message) = await _reservaService.CancelarReservaAsync(req.ReservaId, nId.Value);
+        return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+    }
 }
 
 // ── Request DTOs ──────────────────────────────────────────────────
+
+public class ReservaRequest
+{
+    public Guid ReservaId { get; set; }
+    public string NombreCliente { get; set; }
+    public string Telefono { get; set; }
+    public DateTime FechaHoraReserva { get; set; }
+    public int CantidadPersonas { get; set; } = 2;
+    public Guid? MesaId { get; set; }
+    public string Notas { get; set; }
+}
+
+public class CambiarEstadoReservaRequest
+{
+    public Guid ReservaId { get; set; }
+    public string Estado { get; set; }
+}
 
 public class MesaRequest
 {
