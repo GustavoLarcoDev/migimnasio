@@ -100,4 +100,6 @@ public class WhatsAppTemplates
     public string NegocioBloqueado { get; set; } = "";
     public string NegocioDesbloqueado { get; set; } = "";
     public string Promocion { get; set; } = "";
+    public string CancelacionCita { get; set; } = "";
+    public string ConfirmacionCitaEmpleado { get; set; } = "";
 }

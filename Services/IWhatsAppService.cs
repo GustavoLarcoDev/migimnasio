@@ -82,8 +82,21 @@ public interface IWhatsAppService
 
     /// <summary>
     /// Envía recordatorio de cita al empleado que atenderá al cliente.
+    /// El mensaje es en nombre del negocio (no de My-Negocio).
     /// </summary>
-    Task<bool> EnviarRecordatorioCitaEmpleadoWhatsAppAsync(string telefono, string empleado, string cliente, string servicio, string hora);
+    Task<bool> EnviarRecordatorioCitaEmpleadoWhatsAppAsync(string telefono, string empleado, string cliente, string servicio, string hora, string nombreNegocio = null);
+
+    /// <summary>
+    /// Notifica al empleado que su cita fue confirmada por el negocio.
+    /// Mensaje en nombre del negocio con detalles de cliente, servicio y hora.
+    /// </summary>
+    Task<bool> EnviarCitaConfirmadaEmpleadoAsync(string telefono, string empleado, string cliente, string negocio, string servicio, string fechaHora);
+
+    /// <summary>
+    /// Envía un mensaje de cancelación al cliente con tono de marketing.
+    /// Mensaje en nombre del negocio (no My-Negocio).
+    /// </summary>
+    Task<bool> EnviarCitaCanceladaClienteAsync(string telefono, string cliente, string negocio, string servicio, string fechaHora);
 
     // ═══════════════════════════════════════════════════════════
     // MENSAJES PAREADOS CON EMAIL (al dueño/vendedor)

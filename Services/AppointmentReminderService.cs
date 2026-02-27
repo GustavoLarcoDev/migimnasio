@@ -261,7 +261,8 @@ public class AppointmentReminderService : BackgroundService
                                 cita.NombreEmpleado,
                                 cita.NombreCliente,
                                 cita.NombreServicio,
-                                hora);
+                                hora,
+                                negocio.NegocioNombre);
                         }
                         catch (Exception ex)
                         {

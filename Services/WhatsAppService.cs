@@ -221,8 +221,10 @@ public class WhatsAppService : IWhatsAppService
 
     /// <inheritdoc />
     public async Task<bool> EnviarRecordatorioCitaEmpleadoWhatsAppAsync(
-        string telefono, string empleado, string cliente, string servicio, string hora)
+        string telefono, string empleado, string cliente, string servicio, string hora, string nombreNegocio = null)
     {
+        var firma = !string.IsNullOrWhiteSpace(nombreNegocio) ? nombreNegocio : "Tu negocio";
+
         return await EnviarConTemplateAsync(
             telefono,
             _settings.Templates.RecordatorioCitaEmpleado,
@@ -233,7 +235,44 @@ public class WhatsAppService : IWhatsAppService
                 ["3"] = servicio,
                 ["4"] = hora
             },
-            $"Recordatorio de Cita\n\nHola {empleado}, tienes una cita próxima:\n\nCliente: {cliente}\nServicio: {servicio}\nHora: {hora}\n\n— My-Negocio"
+            $"Recordatorio de Cita — {firma}\n\nHola {empleado}, tienes una cita próxima:\n\nCliente: {cliente}\nServicio: {servicio}\nHora: {hora}\n\n— {firma}"
+        );
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> EnviarCitaConfirmadaEmpleadoAsync(
+        string telefono, string empleado, string cliente, string negocio, string servicio, string fechaHora)
+    {
+        return await EnviarConTemplateAsync(
+            telefono,
+            _settings.Templates.ConfirmacionCitaEmpleado,
+            new Dictionary<string, string>
+            {
+                ["1"] = empleado,
+                ["2"] = cliente,
+                ["3"] = negocio,
+                ["4"] = servicio,
+                ["5"] = fechaHora
+            },
+            $"Cita Confirmada — {negocio}\n\nHola {empleado}, te informamos que {cliente} ha confirmado su cita.\n\nServicio: {servicio}\nFecha y hora: {fechaHora}\n\nPrepárate para brindarle la mejor atención.\n\n— {negocio}"
+        );
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> EnviarCitaCanceladaClienteAsync(
+        string telefono, string cliente, string negocio, string servicio, string fechaHora)
+    {
+        return await EnviarConTemplateAsync(
+            telefono,
+            _settings.Templates.CancelacionCita,
+            new Dictionary<string, string>
+            {
+                ["1"] = cliente,
+                ["2"] = negocio,
+                ["3"] = servicio,
+                ["4"] = fechaHora
+            },
+            $"Hola {cliente}, desde {negocio} lamentamos que tu cita haya sido cancelada.\n\nServicio: {servicio}\nFecha: {fechaHora}\n\nSabemos que a veces los planes cambian, y está bien. Queremos que sepas que estaremos aquí para cuando estés listo/a.\n\nNos encantaría verte pronto. Agenda tu próxima cita cuando gustes — tu bienestar es nuestra prioridad.\n\nCon cariño,\n{negocio}"
         );
     }
 
