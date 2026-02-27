@@ -44,7 +44,7 @@ public interface IEmailService
     // Recibo de pago de cliente (membresía) enviado desde el negocio
     Task<(bool enviado, string htmlBody)> EnviarReciboPagoClienteAsync(string destinatario, string nombreCliente, string nombreNegocio,
         string conceptoPago, decimal monto, int dias, string? emailNegocio, string? telefonoNegocio, string numeroRecibo,
-        string metodoPago = "Efectivo");
+        string metodoPago = "Efectivo", string? logoUrl = null);
 
     // Confirmación de reserva para negocio artesanal
     Task<bool> EnviarConfirmacionReservaAsync(string destinatario, string nombreCliente, string nombreNegocio,
@@ -60,7 +60,7 @@ public interface IEmailService
     Task<(bool enviado, string htmlBody)> EnviarReciboCitaCompletadaAsync(string destinatario, string nombreCliente, string nombreNegocio,
         string nombreServicio, string? nombreEmpleado, decimal montoServicio, decimal montoExtra,
         decimal propina, decimal total, string? emailNegocio, string? telefonoNegocio, string numeroRecibo,
-        string metodoPago = "Efectivo");
+        string metodoPago = "Efectivo", string? logoUrl = null);
 
     // Recordatorio de cita al empleado — 30 minutos antes
     Task<bool> EnviarRecordatorioCitaEmpleadoAsync(string destinatario, string nombreEmpleado,

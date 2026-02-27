@@ -487,8 +487,58 @@
 
     <!-- ═══════════════ TAB NOTIFICACIONES ═══════════════ -->
     <div class="tab-pane fade" id="notificacionesTab" role="tabpanel">
-        <div class="d-flex justify-content-between align-items-center mb-4"><h4 class="fw-bold mb-0">Notificaciones</h4><div class="d-flex gap-2"><button id="btnMarcarTodasLeidasTab" class="btn btn-outline-primary"><i class="bi bi-check-all me-2"></i>Marcar todas leidas</button></div></div>
+        <div class="d-flex justify-content-between align-items-center mb-4"><h4 class="fw-bold mb-0">Notificaciones</h4><div class="d-flex gap-2"><button id="btnGenerarNotificaciones" class="btn btn-primary"><i class="bi bi-arrow-repeat me-2"></i>Generar Notificaciones</button><button id="btnMarcarTodasLeidasTab" class="btn btn-outline-primary"><i class="bi bi-check-all me-2"></i>Marcar todas leidas</button></div></div>
         <div id="notificacionesList" class="d-flex flex-column gap-2"><div class="text-center py-5 text-muted"><i class="bi bi-bell-slash fs-1 d-block mb-3"></i><p>No hay notificaciones.</p></div></div>
+    </div>
+
+    <!-- ═══════════════ TAB PERFIL ═══════════════ -->
+    <div class="tab-pane fade" id="perfilTab" role="tabpanel">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="mg-card mb-4">
+                    <div class="card-body text-center py-4">
+                        <div style="width:120px;height:120px;border-radius:50%;margin:0 auto 1rem;overflow:hidden;border:3px solid var(--mg-border-color);cursor:pointer;position:relative;background:var(--mg-body-bg);" onclick="window._perfilSubirLogo()" title="Cambiar logo">
+                            <img id="perfilLogoImg" src="" alt="Logo" style="width:100%;height:100%;object-fit:cover;display:none;">
+                            <div id="perfilLogoPlaceholder" class="d-flex flex-column align-items-center justify-content-center h-100 text-muted">
+                                <i class="bi bi-camera fs-1"></i>
+                                <small>Subir logo</small>
+                            </div>
+                        </div>
+                        <h4 class="fw-bold mb-1" id="perfilNombre"></h4>
+                        <span class="badge bg-primary" id="perfilTipoBadge"></span>
+                        <span class="badge bg-warning text-dark ms-1" id="perfilPruebaBadge" style="display:none;">Prueba</span>
+                    </div>
+                </div>
+                <div class="mg-card mb-4">
+                    <div class="card-header border-0"><h5 class="fw-bold mb-0"><i class="bi bi-pencil me-2"></i>Datos de Contacto</h5></div>
+                    <div class="card-body">
+                        <div class="mb-3"><label class="form-label fw-semibold">Email</label><input type="email" class="form-control" id="perfilEmail"></div>
+                        <div class="mb-3"><label class="form-label fw-semibold">Teléfono</label><input type="tel" class="form-control" id="perfilTelefono"></div>
+                        <div class="mb-3"><label class="form-label fw-semibold">Dirección</label><input type="text" class="form-control" id="perfilDireccion"></div>
+                        <button class="btn btn-primary" onclick="window._perfilGuardar()"><i class="bi bi-check-lg me-1"></i>Guardar Cambios</button>
+                    </div>
+                </div>
+                <div class="mg-card mb-4">
+                    <div class="card-header border-0"><h5 class="fw-bold mb-0"><i class="bi bi-shield-lock me-2"></i>Cambiar Contraseña</h5></div>
+                    <div class="card-body">
+                        <div class="mb-3"><label class="form-label fw-semibold">Contraseña actual</label><input type="password" class="form-control" id="perfilPassActual"></div>
+                        <div class="mb-3"><label class="form-label fw-semibold">Nueva contraseña</label><input type="password" class="form-control" id="perfilPassNueva" minlength="6"></div>
+                        <div class="mb-3"><label class="form-label fw-semibold">Confirmar nueva contraseña</label><input type="password" class="form-control" id="perfilPassConfirmar" minlength="6"></div>
+                        <button class="btn btn-warning" onclick="window._perfilCambiarPassword()"><i class="bi bi-key me-1"></i>Cambiar Contraseña</button>
+                    </div>
+                </div>
+                <div class="mg-card mb-4">
+                    <div class="card-header border-0"><h5 class="fw-bold mb-0"><i class="bi bi-credit-card-2-front me-2"></i>Suscripción</h5></div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-4"><div id="perfilDiasRestantes"></div></div>
+                            <div class="col-4"><div id="perfilDiasSuscrito"></div></div>
+                            <div class="col-4"><small class="text-muted d-block mb-1">Registrado</small><span class="fw-bold" id="perfilFechaRegistro"></span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- ═══════════════ TAB SUGERENCIAS ═══════════════ -->
@@ -594,6 +644,8 @@
     <div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Vista Previa del Menu</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
     <div class="modal-body p-0"><iframe id="menuPreviewIframe" style="width:100%;height:550px;border:none;" sandbox="allow-same-origin"></iframe></div>
     <div class="modal-footer">
+        <button type="button" class="btn btn-outline-success" id="btnQRMenuPreview"><i class="bi bi-qr-code me-1"></i>Codigo QR</button>
+        <button type="button" class="btn btn-outline-secondary" id="btnCopiarLinkMenuPreview"><i class="bi bi-link-45deg me-1"></i>Copiar Link</button>
         <button type="button" class="btn btn-outline-primary" id="btnDescargarMenuPreview"><i class="bi bi-printer me-1"></i>Imprimir</button>
         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
     </div>
@@ -867,6 +919,11 @@ $(document).ready(function() {
     cargarPOS();
     verificarSuscripcion();
     cargarNotificacionesCount();
+    $.post('/Negocios/GenerarNotificaciones', { negocioId: negocioId }).done(function() {
+        cargarNotificacionesCount();
+    }).fail(function() {
+        console.warn('No se pudieron generar notificaciones automaticas');
+    });
 });
 
 // ═══════════════ SUSCRIPCION ═══════════════
@@ -1298,6 +1355,8 @@ $('#btnGuardarMesa').on('click', function() {
 });
 
 // ═══════════════ MENUS ═══════════════
+var _menuPreviewCurrentId = null;
+
 function cargarMenus() {
     if (tablaMenus) { tablaMenus.ajax.reload(); return; }
     tablaMenus = $('#menusTable').DataTable({ language: dtLang, ajax: { url: '/Negocios/GetMenus', data: { negocioId }, dataSrc: '' },
@@ -1307,7 +1366,7 @@ function cargarMenus() {
             { data: 'precioFijo', render: function(d) { return d ? '$' + d.toFixed(2) : '-'; } },
             { data: 'estilo', render: function(d) { return escHtml(d || 'moderno'); } },
             { data: 'fechaCreacion', render: function(d) { return new Date(d).toLocaleDateString('es-EC'); } },
-            { data: 'menuId', render: function(d) { return '<div class="d-flex gap-1 justify-content-end"><button class="btn btn-sm btn-outline-info" onclick="previewMenuGuardado(\'' + d + '\')"><i class="bi bi-eye"></i></button><button class="btn btn-sm btn-outline-primary" onclick="editarMenuGuardado(\'' + d + '\')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="eliminarMenu(\'' + d + '\')"><i class="bi bi-trash"></i></button></div>'; } }
+            { data: 'menuId', render: function(d) { return '<div class="d-flex gap-1 justify-content-end"><button class="btn btn-sm btn-outline-success" onclick="mostrarQRMenu(\'' + d + '\')" title="Codigo QR"><i class="bi bi-qr-code"></i></button><button class="btn btn-sm btn-outline-secondary" onclick="copiarLinkMenu(\'' + d + '\')" title="Copiar link"><i class="bi bi-link-45deg"></i></button><button class="btn btn-sm btn-outline-info" onclick="previewMenuGuardado(\'' + d + '\')"><i class="bi bi-eye"></i></button><button class="btn btn-sm btn-outline-primary" onclick="editarMenuGuardado(\'' + d + '\')"><i class="bi bi-pencil"></i></button><button class="btn btn-sm btn-outline-danger" onclick="eliminarMenu(\'' + d + '\')"><i class="bi bi-trash"></i></button></div>'; } }
         ], order: [[4, 'desc']]
     });
 }
@@ -1379,6 +1438,7 @@ $('#btnGuardarMenu').on('click', function() {
 });
 
 function previewMenuGuardado(menuId) {
+    _menuPreviewCurrentId = menuId;
     $.get('/Negocios/PreviewMenu', { menuId }, function(html) { document.getElementById('menuPreviewIframe').srcdoc = html; new bootstrap.Modal('#menuPreviewModal').show(); }).fail(function() { toastr.error('Error al cargar preview'); });
 }
 
@@ -1410,6 +1470,44 @@ function eliminarMenu(menuId) {
         if (r.isConfirmed) $.ajax({ url: '/Negocios/EliminarMenu', type: 'POST', contentType: 'application/json', data: JSON.stringify({ MenuId: menuId }), success: function(r) { if (r.success) { toastr.success(r.message); cargarMenus(); } else toastr.error(r.message); } });
     });
 }
+
+// ═══════════════ QR Y COMPARTIR MENU ═══════════════
+
+function getMenuPublicUrl(menuId) {
+    return window.location.origin + '/Restaurante/VerMenu?negocioId=' + negocioId + '&menuId=' + menuId;
+}
+
+function mostrarQRMenu(menuId) {
+    var url = getMenuPublicUrl(menuId);
+    mostrarQRLink(url, 'QR del Menu', 'Tus clientes pueden escanear este codigo para ver el menu');
+}
+
+function copiarLinkMenu(menuId) {
+    var url = getMenuPublicUrl(menuId);
+    navigator.clipboard.writeText(url).then(function() {
+        toastr.success('Link del menu copiado al portapapeles');
+    }).catch(function() {
+        // Fallback
+        var tmp = document.createElement('textarea');
+        tmp.value = url;
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand('copy');
+        document.body.removeChild(tmp);
+        toastr.success('Link del menu copiado al portapapeles');
+    });
+}
+
+$('#btnQRMenuPreview').on('click', function() {
+    if (_menuPreviewCurrentId) {
+        bootstrap.Modal.getInstance(document.getElementById('menuPreviewModal'))?.hide();
+        setTimeout(function() { mostrarQRMenu(_menuPreviewCurrentId); }, 300);
+    }
+});
+
+$('#btnCopiarLinkMenuPreview').on('click', function() {
+    if (_menuPreviewCurrentId) copiarLinkMenu(_menuPreviewCurrentId);
+});
 
 // ═══════════════ REPARTIDORES (reutiliza Empleado) ═══════════════
 function cargarRepartidores() {
@@ -1637,29 +1735,43 @@ function editarProveedor(id) {
 function eliminarProveedor(id) { swalMG.fire({ title: 'Eliminar distribuidor?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Si, eliminar', confirmButtonColor: '#F1416C' }).then(function(r) { if (r.isConfirmed) $.post('/Negocios/EliminarCliente', { id: id, negocioId: negocioId }, function(r) { if (r.success) { toastr.success(r.message); cargarProveedores(); } else toastr.error(r.message); }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al eliminar'); }); }); }
 
 // ═══════════════ LOGS/MOVIMIENTOS ═══════════════
+var tipoLogBadges = { 'ingreso': 'bg-success', 'gasto': 'bg-danger', 'cliente_creado': 'bg-primary', 'cliente_editado': 'bg-warning text-dark', 'cliente_renovado': 'bg-info', 'cliente_eliminado': 'bg-danger', 'sesion_inicio': 'bg-secondary', 'sesion_cierre': 'bg-dark', 'manual': 'bg-light text-dark', 'venta_inventario': 'bg-success', 'devolucion_inventario': 'bg-warning text-dark', 'restock_inventario': 'bg-info', 'ajuste_inventario': 'bg-secondary', 'producto_creado': 'bg-primary', 'producto_editado': 'bg-warning text-dark', 'producto_eliminado': 'bg-danger', 'pedido_completado': 'bg-success', 'pedido_cancelado': 'bg-danger', 'mesa_creada': 'bg-primary', 'reserva_creada': 'bg-info' };
+var tipoLogLabels = { 'ingreso': 'Ingreso', 'gasto': 'Gasto', 'cliente_creado': 'Cliente Nuevo', 'cliente_editado': 'Edición', 'cliente_renovado': 'Renovación', 'cliente_eliminado': 'Eliminación', 'sesion_inicio': 'Inicio Sesión', 'sesion_cierre': 'Cierre Sesión', 'manual': 'Manual', 'venta_inventario': 'Venta Inv.', 'devolucion_inventario': 'Dev. Inv.', 'restock_inventario': 'Restock', 'ajuste_inventario': 'Ajuste Inv.', 'producto_creado': 'Producto', 'producto_editado': 'Edit. Prod.', 'producto_eliminado': 'Elim. Prod.', 'pedido_completado': 'Pedido', 'pedido_cancelado': 'Cancelación', 'mesa_creada': 'Mesa', 'reserva_creada': 'Reserva' };
+
 function cargarLogs() {
     if (tablaLogs) { tablaLogs.ajax.reload(); return; }
-    tablaLogs = $('#logsTable').DataTable({ language: dtLang, ajax: { url: '/Negocios/GetLogs', data: { negocioId }, dataSrc: '' },
+    tablaLogs = $('#logsTable').DataTable({ language: dtLang, ajax: { url: '/Negocios/GetLogs', data: { negocioId: negocioId }, dataSrc: '', error: function(xhr) { toastr.error('Error al cargar los logs: ' + (xhr.responseJSON?.message || 'Error desconocido')); } },
         columns: [
-            { data: 'descripcion', render: function(d) { return escHtml(d); } },
-            { data: 'tipo', render: function(d) { var cls = (d || '').includes('ingreso') || (d || '').includes('venta') ? 'success' : 'danger'; return '<span class="badge bg-' + cls + '">' + escHtml(d) + '</span>'; } },
-            { data: 'clienteNombre', render: function(d) { return escHtml(d || '-'); } },
-            { data: 'monto', render: function(d) { return '<span class="fw-bold ' + (d >= 0 ? 'text-success' : 'text-danger') + '">$' + d.toFixed(2) + '</span>'; } },
-            { data: 'fecha', render: function(d) { return new Date(d).toLocaleString('es-EC'); } }
+            { data: 'message' },
+            { data: 'tipo', render: function(d) { var badge = tipoLogBadges[d] || 'bg-secondary'; var label = tipoLogLabels[d] || d; return '<span class="badge ' + badge + '">' + escHtml(label) + '</span>'; } },
+            { data: 'nombreCliente', render: function(d) { return d ? escHtml(d) : '<span class="text-muted">-</span>'; } },
+            { data: 'monto', render: function(d) { return d === 0 ? '<span class="text-muted">-</span>' : '<span class="fw-bold ' + (d >= 0 ? 'text-success' : 'text-danger') + '">' + (d >= 0 ? '+' : '') + '$' + d.toFixed(2) + '</span>'; } },
+            { data: 'fecha', render: function(d, type) { if (type === 'sort' || type === 'type') return d; return new Date(d).toLocaleString('es-EC'); } }
         ], order: [[4, 'desc']]
     });
 }
 
 $('#btnRegistrarLog').on('click', function() {
-    var desc = $('#logDescripcion').val(), monto = parseFloat($('#logMonto').val());
-    if (!desc || isNaN(monto)) { toastr.error('Completa los campos'); return; }
-    var tipo = monto >= 0 ? 'ingreso' : 'gasto';
-    $.post('/Negocios/CrearLog', { NegocioId: negocioId, Descripcion: desc, Tipo: tipo, Monto: Math.abs(monto) }, function(r) {
-        if (r.success) { toastr.success('Movimiento registrado'); $('#logDescripcion').val(''); $('#logMonto').val(''); if (tablaLogs) tablaLogs.ajax.reload(); } else toastr.error(r.message);
+    var message = $('#logDescripcion').val(), monto = $('#logMonto').val();
+    if (!message || monto === '') { toastr.error('Complete todos los campos'); return; }
+    var btn = $(this);
+    var originalHtml = btn.html();
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Registrando...');
+    $.post('/Negocios/CrearLog', { NegocioId: negocioId, Message: message, Monto: monto }, function(r) {
+        if (r.success) { toastr.success(r.message); $('#logDescripcion').val(''); $('#logMonto').val(''); if (tablaLogs) tablaLogs.ajax.reload(); } else toastr.error(r.message || 'Error al registrar');
+    }).fail(function(xhr) {
+        toastr.error(xhr.responseJSON?.message || 'Error al registrar movimiento');
+    }).always(function() {
+        btn.prop('disabled', false).html(originalHtml);
     });
 });
 
-$('#btnExportLogsExcel').on('click', function() { window.location.href = '/Negocios/ExportLogsExcel?negocioId=' + negocioId; });
+$('#btnExportLogsExcel').on('click', function() {
+    var btn = $(this);
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Exportando...');
+    window.location.href = '/Negocios/ExportLogsExcel?negocioId=' + negocioId;
+    setTimeout(function() { btn.prop('disabled', false).html('<i class="bi bi-file-earmark-excel me-2"></i>Exportar'); }, 3000);
+});
 
 // ═══════════════ REPORTES (reutilizado) ═══════════════
 var chartBar, chartResumen;
@@ -1725,16 +1837,41 @@ function cargarNotificaciones() {
     $.get('/Negocios/GetNotificaciones', { negocioId }, function(notifs) {
         var c = $('#notificacionesList'); c.empty();
         if (!notifs || !notifs.length) { c.html('<div class="text-center py-5 text-muted"><i class="bi bi-bell-slash fs-1 d-block mb-3"></i><p>No hay notificaciones.</p></div>'); return; }
-        notifs.forEach(function(n) { c.append('<div class="mg-card p-3 ' + (n.leida ? 'opacity-50' : '') + '"><div class="d-flex justify-content-between"><div>' + escHtml(n.mensaje) + '</div><small class="text-muted">' + new Date(n.fechaCreacion).toLocaleDateString('es-EC') + '</small></div></div>'); });
+        notifs.forEach(function(n) {
+            c.append('<div class="mg-card ' + (n.leida ? 'opacity-50' : '') + '"><div class="card-body py-2 d-flex align-items-center gap-3">' +
+                '<i class="bi bi-bell' + (n.leida ? '' : '-fill') + ' ' + (n.leida ? 'text-muted' : 'text-warning') + '"></i>' +
+                '<div class="flex-grow-1"><p class="mb-0 small">' + escHtml(n.mensaje) + '</p><small class="text-muted">' + new Date(n.fechaCreacion).toLocaleDateString('es-EC') + '</small></div>' +
+                (!n.leida ? '<button class="btn btn-sm btn-outline-primary" onclick="marcarLeida(\'' + n.id + '\')"><i class="bi bi-check"></i></button>' : '') +
+            '</div></div>');
+        });
     });
 }
+
+function marcarLeida(id) {
+    $.post('/Negocios/MarcarNotificacionLeida', { id: id, negocioId: negocioId }, function() { cargarNotificaciones(); cargarNotificacionesCount(); });
+}
+
 function cargarNotificacionesCount() {
     $.get('/Negocios/GetNotificacionesCount', { negocioId }, function(d) {
-        var badge = $('#sidebarNotifBadge'); if (d.count > 0) { badge.text(d.count).removeClass('d-none'); } else badge.addClass('d-none');
+        var count = d.count || 0;
+        if (count > 0) { $('#sidebarNotifBadge, #topbarNotifBadge').text(count).removeClass('d-none'); }
+        else { $('#sidebarNotifBadge, #topbarNotifBadge').addClass('d-none'); }
     });
 }
 
 $('#btnMarcarTodasLeidasTab').on('click', function() { $.post('/Negocios/MarcarTodasNotificacionesLeidas', { NegocioId: negocioId }, function(r) { if (r.success) { toastr.success('Notificaciones marcadas como leidas'); cargarNotificaciones(); cargarNotificacionesCount(); } }); });
+
+$('#btnGenerarNotificaciones').on('click', function() {
+    var btn = $(this);
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Generando...');
+    $.post('/Negocios/GenerarNotificaciones', { negocioId: negocioId }, function(r) {
+        if (r.success) { toastr.success(r.message); cargarNotificaciones(); cargarNotificacionesCount(); }
+    }).fail(function(xhr) {
+        toastr.error(xhr.responseJSON?.message || 'Error al generar notificaciones');
+    }).always(function() {
+        btn.prop('disabled', false).html('<i class="bi bi-arrow-repeat me-2"></i>Generar Notificaciones');
+    });
+});
 
 // ═══════════════ SUGERENCIAS ═══════════════
 $('#sugerenciaTexto').on('input', function() { $('#sugerenciaCount').text($(this).val().length); });

@@ -487,6 +487,67 @@ public class CitasController : Controller
             if (!success)
                 return BadRequest(new { success, message });
 
+            // Enviar mensajes WhatsApp según el cambio de estado
+            if (success && (nuevoEstado == "confirmada" || nuevoEstado == "cancelada"))
+            {
+                var cita = await _context.Citas.FindAsync(citaId);
+                if (cita != null)
+                {
+                    var cliente = await _context.Clientes.FindAsync(cita.ClienteId);
+                    var negocio = await _context.Negocios.FindAsync(cita.NegocioId);
+                    var fechaHora = cita.FechaHoraInicio.ToString("dd/MM/yyyy hh:mm tt",
+                        System.Globalization.CultureInfo.InvariantCulture);
+
+                    if (negocio != null)
+                    {
+                        if (nuevoEstado == "confirmada")
+                        {
+                            // Notificar al empleado que la cita fue confirmada
+                            var empleado = await _context.Empleados.FindAsync(cita.EmpleadoId);
+                            if (empleado != null && !string.IsNullOrWhiteSpace(empleado.Telefono))
+                            {
+                                var empNombre = cita.NombreEmpleado;
+                                var cliNombre = cita.NombreCliente;
+                                var negNombre = negocio.NegocioNombre;
+                                var svcNombre = cita.NombreServicio;
+                                var empTelefono = empleado.Telefono;
+                                _ = Task.Run(async () =>
+                                {
+                                    try
+                                    {
+                                        await _whatsAppService.EnviarCitaConfirmadaEmpleadoAsync(
+                                            empTelefono, empNombre, cliNombre,
+                                            negNombre, svcNombre, fechaHora);
+                                    }
+                                    catch { }
+                                });
+                            }
+                        }
+                        else if (nuevoEstado == "cancelada")
+                        {
+                            // Enviar mensaje de cancelación al cliente
+                            if (cliente != null && !string.IsNullOrWhiteSpace(cliente.Telefono))
+                            {
+                                var cliTelefono = cliente.Telefono;
+                                var cliNombre = cita.NombreCliente;
+                                var negNombre = negocio.NegocioNombre;
+                                var svcNombre = cita.NombreServicio;
+                                _ = Task.Run(async () =>
+                                {
+                                    try
+                                    {
+                                        await _whatsAppService.EnviarCitaCanceladaClienteAsync(
+                                            cliTelefono, cliNombre, negNombre,
+                                            svcNombre, fechaHora);
+                                    }
+                                    catch { }
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+
             return Ok(new { success, message });
         }
         catch (Exception)
@@ -550,7 +611,7 @@ public class CitasController : Controller
                             cita.NombreServicio, cita.NombreEmpleado,
                             pago.MontoServicio, pago.MontoExtra, pago.Propina, pago.Total,
                             negocio.Email, negocio.Telefono, numRecibo,
-                            metodoPago: pago.MetodoPago ?? "Efectivo");
+                            metodoPago: pago.MetodoPago ?? "Efectivo", logoUrl: negocio.LogoUrl);
 
                         // Siempre almacenar el recibo en BD (aunque el email falle)
                         await _reciboService.CrearReciboAsync(dto.NegocioId, numRecibo, "pago_cita",

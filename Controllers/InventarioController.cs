@@ -578,7 +578,8 @@ public class InventarioController : Controller
                 request.EmpleadoId,
                 request.DireccionEntrega,
                 request.MetodoPago,
-                request.NumeroConfirmacion
+                request.NumeroConfirmacion,
+                request.CargosExtra
             );
 
             if (!res.success)

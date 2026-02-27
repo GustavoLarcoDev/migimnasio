@@ -21,7 +21,8 @@ public interface IVentaProductoService
         Guid? empleadoId = null,
         string direccionEntrega = null,
         string metodoPago = "Efectivo",
-        string numeroConfirmacion = null
+        string numeroConfirmacion = null,
+        List<CargoExtraDto> cargosExtra = null
     );
 
     Task<OrdenVenta> GetOrdenVentaAsync(Guid ordenVentaId, Guid negocioId);
@@ -35,6 +36,12 @@ public class DetalleOrdenVentaDto
     public int Cantidad { get; set; }
 }
 
+public class CargoExtraDto
+{
+    public string Descripcion { get; set; }
+    public decimal Monto { get; set; }
+}
+
 public class OrdenVentaCreateRequest
 {
     public string NombreCliente { get; set; }
@@ -42,6 +49,7 @@ public class OrdenVentaCreateRequest
     public decimal DescuentoAdicional { get; set; }
     public decimal PorcentajeIva { get; set; }
     public List<DetalleOrdenVentaDto> Items { get; set; }
+    public List<CargoExtraDto> CargosExtra { get; set; }
 
     // Campos adicionales para restaurante
     public string TipoOrden { get; set; } = "local";

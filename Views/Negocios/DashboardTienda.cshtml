@@ -89,10 +89,29 @@
                             </div>
                         </div>
 
-                        <hr>
+                        <!-- Cargos extra listado -->
+                        <div id="posCargosExtraContainer" class="d-none">
+                            <div class="d-flex align-items-center gap-2 mb-1 mt-2">
+                                <i class="bi bi-plus-circle text-purple" style="color:#7239EA;"></i>
+                                <small class="fw-bold" style="color:#7239EA;">Cargos Extra</small>
+                            </div>
+                            <div id="posCargosExtraList"></div>
+                        </div>
+
+                        <!-- Botón agregar cargo extra -->
+                        <button type="button" class="btn btn-sm btn-outline-secondary w-100 mt-2 mb-2" id="btnAgregarCargoExtra">
+                            <i class="bi bi-plus-circle me-1"></i>Agregar Cargo Extra
+                        </button>
+
+                        <hr class="mt-1">
                         <div class="d-flex justify-content-between mb-1">
                             <span class="text-muted">Subtotal</span>
                             <span class="fw-bold" id="posSubtotal">$0.00</span>
+                        </div>
+                        <!-- Cargos extra total (solo si hay) -->
+                        <div class="d-flex justify-content-between mb-1 d-none" id="posCargosExtraTotalRow">
+                            <span class="text-muted">Cargos Extra</span>
+                            <span class="fw-bold" style="color:#7239EA;" id="posCargosExtraTotal">+$0.00</span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <div class="d-flex align-items-center gap-2">
@@ -182,6 +201,20 @@
         </div></div></div>
     </div>
 
+    <!-- ═══════════════ TAB REPARTIDORES (reutiliza Empleado) ═══════════════ -->
+    <div class="tab-pane fade" id="repartidoresTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+            <h4 class="fw-bold mb-0">Repartidores</h4>
+            <button class="btn btn-primary" id="btnNuevoRepartidor"><i class="bi bi-plus-circle me-2"></i>Nuevo Repartidor</button>
+        </div>
+        <div class="mg-card"><div class="card-body"><div class="table-responsive">
+            <table id="repartidoresTable" class="table table-row-bordered align-middle gs-0 gy-3">
+                <thead><tr class="fw-bold text-muted"><th>Nombre</th><th>Apellido</th><th>Telefono</th><th>Email</th><th>Vehiculo</th><th class="text-end">Acciones</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div></div></div>
+    </div>
+
     <!-- ═══════════════ TAB CATALOGO ═══════════════ -->
     <div class="tab-pane fade" id="catalogoTab" role="tabpanel">
         <div class="row justify-content-center">
@@ -201,6 +234,8 @@
                         <div class="d-flex flex-wrap gap-2 mb-3">
                             <a id="catDescargarPdf" class="btn btn-primary" target="_blank"><i class="bi bi-download me-2"></i>Descargar PDF</a>
                             <a id="catAbrirLink" class="btn btn-outline-primary" target="_blank"><i class="bi bi-link-45deg me-2"></i>Abrir Link Publico</a>
+                            <button class="btn btn-outline-success" id="btnQRCatalogo"><i class="bi bi-qr-code me-2"></i>Codigo QR</button>
+                            <button class="btn btn-outline-secondary" id="btnCopiarLinkCatalogo"><i class="bi bi-clipboard me-2"></i>Copiar Link</button>
                             <button class="btn btn-success" id="btnEnviarCatWhatsapp"><i class="bi bi-whatsapp me-2"></i>Enviar por WhatsApp</button>
                             <button class="btn btn-outline-info" id="btnEnviarCatEmail"><i class="bi bi-envelope me-2"></i>Enviar por Email</button>
                         </div>
@@ -365,8 +400,58 @@
 
     <!-- ═══════════════ TAB NOTIFICACIONES ═══════════════ -->
     <div class="tab-pane fade" id="notificacionesTab" role="tabpanel">
-        <div class="d-flex justify-content-between align-items-center mb-4"><h4 class="fw-bold mb-0">Notificaciones</h4><div class="d-flex gap-2"><button id="btnMarcarTodasLeidasTab" class="btn btn-outline-primary"><i class="bi bi-check-all me-2"></i>Marcar todas leidas</button></div></div>
+        <div class="d-flex justify-content-between align-items-center mb-4"><h4 class="fw-bold mb-0">Notificaciones</h4><div class="d-flex gap-2"><button id="btnGenerarNotificaciones" class="btn btn-primary"><i class="bi bi-arrow-repeat me-2"></i>Generar Notificaciones</button><button id="btnMarcarTodasLeidasTab" class="btn btn-outline-primary"><i class="bi bi-check-all me-2"></i>Marcar todas leidas</button></div></div>
         <div id="notificacionesList" class="d-flex flex-column gap-2"><div class="text-center py-5 text-muted"><i class="bi bi-bell-slash fs-1 d-block mb-3"></i><p>No hay notificaciones.</p></div></div>
+    </div>
+
+    <!-- ═══════════════ TAB PERFIL ═══════════════ -->
+    <div class="tab-pane fade" id="perfilTab" role="tabpanel">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="mg-card mb-4">
+                    <div class="card-body text-center py-4">
+                        <div style="width:120px;height:120px;border-radius:50%;margin:0 auto 1rem;overflow:hidden;border:3px solid var(--mg-border-color);cursor:pointer;position:relative;background:var(--mg-body-bg);" onclick="window._perfilSubirLogo()" title="Cambiar logo">
+                            <img id="perfilLogoImg" src="" alt="Logo" style="width:100%;height:100%;object-fit:cover;display:none;">
+                            <div id="perfilLogoPlaceholder" class="d-flex flex-column align-items-center justify-content-center h-100 text-muted">
+                                <i class="bi bi-camera fs-1"></i>
+                                <small>Subir logo</small>
+                            </div>
+                        </div>
+                        <h4 class="fw-bold mb-1" id="perfilNombre"></h4>
+                        <span class="badge bg-primary" id="perfilTipoBadge"></span>
+                        <span class="badge bg-warning text-dark ms-1" id="perfilPruebaBadge" style="display:none;">Prueba</span>
+                    </div>
+                </div>
+                <div class="mg-card mb-4">
+                    <div class="card-header border-0"><h5 class="fw-bold mb-0"><i class="bi bi-pencil me-2"></i>Datos de Contacto</h5></div>
+                    <div class="card-body">
+                        <div class="mb-3"><label class="form-label fw-semibold">Email</label><input type="email" class="form-control" id="perfilEmail"></div>
+                        <div class="mb-3"><label class="form-label fw-semibold">Teléfono</label><input type="tel" class="form-control" id="perfilTelefono"></div>
+                        <div class="mb-3"><label class="form-label fw-semibold">Dirección</label><input type="text" class="form-control" id="perfilDireccion"></div>
+                        <button class="btn btn-primary" onclick="window._perfilGuardar()"><i class="bi bi-check-lg me-1"></i>Guardar Cambios</button>
+                    </div>
+                </div>
+                <div class="mg-card mb-4">
+                    <div class="card-header border-0"><h5 class="fw-bold mb-0"><i class="bi bi-shield-lock me-2"></i>Cambiar Contraseña</h5></div>
+                    <div class="card-body">
+                        <div class="mb-3"><label class="form-label fw-semibold">Contraseña actual</label><input type="password" class="form-control" id="perfilPassActual"></div>
+                        <div class="mb-3"><label class="form-label fw-semibold">Nueva contraseña</label><input type="password" class="form-control" id="perfilPassNueva" minlength="6"></div>
+                        <div class="mb-3"><label class="form-label fw-semibold">Confirmar nueva contraseña</label><input type="password" class="form-control" id="perfilPassConfirmar" minlength="6"></div>
+                        <button class="btn btn-warning" onclick="window._perfilCambiarPassword()"><i class="bi bi-key me-1"></i>Cambiar Contraseña</button>
+                    </div>
+                </div>
+                <div class="mg-card mb-4">
+                    <div class="card-header border-0"><h5 class="fw-bold mb-0"><i class="bi bi-credit-card-2-front me-2"></i>Suscripción</h5></div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-4"><div id="perfilDiasRestantes"></div></div>
+                            <div class="col-4"><div id="perfilDiasSuscrito"></div></div>
+                            <div class="col-4"><small class="text-muted d-block mb-1">Registrado</small><span class="fw-bold" id="perfilFechaRegistro"></span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- ═══════════════ TAB SUGERENCIAS ═══════════════ -->
@@ -450,6 +535,23 @@
         </div>
     </form>
 </div><div class="modal-footer bg-light"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="button" id="btnGuardarProveedor" class="btn btn-primary"><i class="bi bi-save me-2"></i>Guardar</button></div></div></div></div>
+
+<!-- Modal Repartidor -->
+<div class="modal fade" id="repartidorModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down"><div class="modal-content"><div class="modal-header bg-light"><h3 class="modal-title fw-bolder" id="repartidorModalTitle">Nuevo Repartidor</h3><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+    <div class="modal-body">
+        <input type="hidden" id="repEditId">
+        <div class="row g-3">
+            <div class="col-6"><label class="form-label fw-semibold">Nombre *</label><input type="text" class="form-control" id="repNombre" maxlength="100"></div>
+            <div class="col-6"><label class="form-label fw-semibold">Apellido *</label><input type="text" class="form-control" id="repApellido" maxlength="100"></div>
+            <div class="col-6"><label class="form-label fw-semibold">Telefono</label><input type="text" class="form-control" id="repTelefono" maxlength="20"></div>
+            <div class="col-6"><label class="form-label fw-semibold">Email</label><input type="email" class="form-control" id="repEmail" maxlength="200"></div>
+            <div class="col-12"><label class="form-label fw-semibold">Vehiculo</label><select class="form-select" id="repVehiculo"><option value="Moto">Moto</option><option value="Bicicleta">Bicicleta</option><option value="Auto">Auto</option><option value="A pie">A pie</option></select></div>
+        </div>
+    </div>
+    <div class="modal-footer bg-light"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button><button type="button" class="btn btn-primary" id="btnGuardarRepartidor"><i class="bi bi-save me-2"></i>Guardar</button></div>
+    </div></div>
+</div>
 
 <!-- Modal Enviar Catalogo -->
 <div class="modal fade" id="catEnviarModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down"><div class="modal-content"><div class="modal-header bg-light"><h3 class="modal-title fw-bolder" id="catEnviarTitle">Enviar Catalogo</h3><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body">
@@ -751,10 +853,12 @@
 @section Scripts {
 <script>
 const negocioId = @Json.Serialize(negocioId.ToString());
-let tablaLogs, tablaMovimientos, tablaRecibos, tablaOrdenes, tablaProveedores;
+const negocioNombre = @Json.Serialize(Model.NegocioNombre ?? "Tienda");
+let tablaLogs, tablaMovimientos, tablaRecibos, tablaOrdenes, tablaProveedores, tablaRepartidores;
 var modoEdicionProducto = false;
 var productosCache = [];
 var posCart = []; // { productoId, nombre, precioVenta, cantidad, stock }
+var posCargosExtra = []; // { descripcion, monto }
 var categoriasCache = [];
 
 const swalMG = Swal.mixin({ confirmButtonColor: '#3E97FF', cancelButtonColor: '#E4E6EF', cancelButtonText: 'Cancelar', reverseButtons: true });
@@ -767,6 +871,11 @@ $(document).ready(function() {
     cargarPOS();
     verificarSuscripcion();
     cargarNotificacionesCount();
+    $.post('/Negocios/GenerarNotificaciones', { negocioId: negocioId }).done(function() {
+        cargarNotificacionesCount();
+    }).fail(function() {
+        console.warn('No se pudieron generar notificaciones automaticas');
+    });
 });
 
 function verificarSuscripcion() {
@@ -958,14 +1067,21 @@ function quitarDelCarrito(index) {
 
 function calcularTotales() {
     var subtotal = posCart.reduce(function(s, item) { return s + (item.precioVenta * item.cantidad); }, 0);
+    var totalCargos = posCargosExtra.reduce(function(s, c) { return s + c.monto; }, 0);
     var ivaPct = parseFloat($('#posIva').val()) || 0;
     var descPct = parseFloat($('#posDescuento').val()) || 0;
     var montoIva = subtotal * (ivaPct / 100);
     var montoDescuento = subtotal * (descPct / 100);
-    var total = subtotal + montoIva - montoDescuento;
+    var total = subtotal + totalCargos + montoIva - montoDescuento;
     if (total < 0) total = 0;
 
     $('#posSubtotal').text('$' + subtotal.toFixed(2));
+    if (totalCargos > 0) {
+        $('#posCargosExtraTotalRow').removeClass('d-none');
+        $('#posCargosExtraTotal').text('+$' + totalCargos.toFixed(2));
+    } else {
+        $('#posCargosExtraTotalRow').addClass('d-none');
+    }
     $('#posIvaMonto').text('$' + montoIva.toFixed(2));
     $('#posDescuentoDisplay').text('-$' + montoDescuento.toFixed(2));
     $('#posTotal').text('$' + total.toFixed(2));
@@ -973,15 +1089,74 @@ function calcularTotales() {
 
 $('#posIva, #posDescuento').on('input', calcularTotales);
 
+// ═══════════════ CARGOS EXTRA ═══════════════
+$('#btnAgregarCargoExtra').on('click', function() {
+    swalMG.fire({
+        title: 'Agregar Cargo Extra',
+        html:
+            '<div class="mb-3 text-start">' +
+                '<label class="form-label fw-semibold">Descripción</label>' +
+                '<input type="text" id="swalCargoDesc" class="form-control" placeholder="Ej: Envío, Empaque, Propina...">' +
+            '</div>' +
+            '<div class="text-start">' +
+                '<label class="form-label fw-semibold">Monto ($)</label>' +
+                '<input type="number" id="swalCargoMonto" class="form-control" min="0.01" step="0.01" placeholder="0.00">' +
+            '</div>',
+        showCancelButton: true,
+        confirmButtonText: '<i class="bi bi-plus-circle me-1"></i>Agregar',
+        didOpen: function() { document.getElementById('swalCargoDesc').focus(); },
+        preConfirm: function() {
+            var desc = document.getElementById('swalCargoDesc').value.trim();
+            var monto = parseFloat(document.getElementById('swalCargoMonto').value);
+            if (!desc) { Swal.showValidationMessage('Ingresa una descripción'); return false; }
+            if (!monto || monto <= 0) { Swal.showValidationMessage('Ingresa un monto válido'); return false; }
+            return { descripcion: desc, monto: monto };
+        }
+    }).then(function(result) {
+        if (result.isConfirmed) {
+            posCargosExtra.push(result.value);
+            renderCargosExtra();
+            calcularTotales();
+            toastr.success('Cargo extra agregado');
+        }
+    });
+});
+
+function renderCargosExtra() {
+    var container = $('#posCargosExtraList');
+    container.empty();
+    if (!posCargosExtra.length) {
+        $('#posCargosExtraContainer').addClass('d-none');
+        return;
+    }
+    $('#posCargosExtraContainer').removeClass('d-none');
+    posCargosExtra.forEach(function(cargo, i) {
+        container.append(
+            '<div class="d-flex align-items-center gap-2 py-1 px-2" style="border-bottom:1px dashed var(--mg-border-color);">' +
+                '<span class="flex-grow-1 small">' + escHtml(cargo.descripcion) + '</span>' +
+                '<span class="fw-bold small" style="color:#7239EA;">+$' + cargo.monto.toFixed(2) + '</span>' +
+                '<button class="btn btn-sm btn-outline-danger p-0 d-flex align-items-center justify-content-center" style="width:22px;height:22px;border-radius:50%;" onclick="quitarCargoExtra(' + i + ')" title="Quitar"><i class="bi bi-x" style="font-size:0.7rem;"></i></button>' +
+            '</div>'
+        );
+    });
+}
+
+function quitarCargoExtra(index) {
+    posCargosExtra.splice(index, 1);
+    renderCargosExtra();
+    calcularTotales();
+}
+
 // Cobrar — primero seleccionar metodo de pago, luego confirmar
 $('#btnCobrar').on('click', function() {
     if (!posCart.length) return;
     var total = parseFloat($('#posTotal').text().replace('$', ''));
 
     mostrarModalPago(function(resultado) {
+        var cargosInfo = posCargosExtra.length ? '<p class="text-muted small mt-1"><i class="bi bi-plus-circle me-1" style="color:#7239EA;"></i>' + posCargosExtra.length + ' cargo(s) extra</p>' : '';
         swalMG.fire({
             title: 'Confirmar Cobro',
-            html: '<p class="fs-3 fw-bolder text-success mb-0">$' + total.toFixed(2) + '</p><p class="text-muted">' + posCart.length + ' producto(s)</p><p class="text-muted small mt-1"><i class="bi bi-credit-card me-1"></i>' + escHtml(resultado.metodoPago) + '</p>',
+            html: '<p class="fs-3 fw-bolder text-success mb-0">$' + total.toFixed(2) + '</p><p class="text-muted">' + posCart.length + ' producto(s)</p>' + cargosInfo + '<p class="text-muted small mt-1"><i class="bi bi-credit-card me-1"></i>' + escHtml(resultado.metodoPago) + '</p>',
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: '<i class="bi bi-check-lg me-1"></i>Confirmar Pago',
@@ -1008,6 +1183,7 @@ function procesarVenta(metodoPago, numeroConfirmacion) {
         DescuentoAdicional: montoDescuento,
         PorcentajeIva: parseFloat($('#posIva').val()) || 0,
         Items: posCart.map(function(c) { return { ProductoId: c.productoId, Cantidad: c.cantidad }; }),
+        CargosExtra: posCargosExtra.length ? posCargosExtra.map(function(c) { return { Descripcion: c.descripcion, Monto: c.monto }; }) : null,
         MetodoPago: metodoPago || 'Efectivo',
         NumeroConfirmacion: numeroConfirmacion || null
     };
@@ -1022,6 +1198,8 @@ function procesarVenta(metodoPago, numeroConfirmacion) {
             if (r.success) {
                 // Reset cart
                 posCart = [];
+                posCargosExtra = [];
+                renderCargosExtra();
                 renderCart();
                 $('#posNombreCliente').val('');
                 $('#posDescuento').val(0);
@@ -1691,8 +1869,17 @@ function cargarProveedores() {
                 return '<a href="mailto:' + escAttr(d) + '">' + escHtml(d) + '</a>';
             }},
             { data: null, orderable: false, className: 'text-end', render: function(d, t, r) {
-                return '<button class="btn btn-sm btn-outline-primary me-1" onclick="editarProveedor(\'' + r.clienteId + '\')"><i class="bi bi-pencil"></i></button>' +
-                       '<button class="btn btn-sm btn-outline-danger" onclick="eliminarProveedor(\'' + r.clienteId + '\',\'' + escAttr(r.nombre) + '\')"><i class="bi bi-trash"></i></button>';
+                var btns = '';
+                var cleanPhone = r.telefono ? r.telefono.replace(/\D/g, '') : '';
+                if (cleanPhone.length >= 10) {
+                    if (cleanPhone.startsWith('0')) cleanPhone = '593' + cleanPhone.substring(1);
+                    if (!cleanPhone.startsWith('593')) cleanPhone = '593' + cleanPhone;
+                    var waMsg = encodeURIComponent('Hola ' + (r.nombre || '') + ', te saludamos de ' + (negocioNombre || '') + '. ¿Cómo estás?');
+                    btns += '<a href="https://wa.me/' + escHtml(cleanPhone) + '?text=' + waMsg + '" target="_blank" rel="noopener" class="btn btn-sm btn-icon btn-light-success me-1" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>';
+                }
+                btns += '<button class="btn btn-sm btn-outline-primary me-1" onclick="editarProveedor(\'' + r.clienteId + '\')"><i class="bi bi-pencil"></i></button>';
+                btns += '<button class="btn btn-sm btn-outline-danger" onclick="eliminarProveedor(\'' + r.clienteId + '\',\'' + escAttr(r.nombre) + '\')"><i class="bi bi-trash"></i></button>';
+                return btns;
             }}
         ]
     });
@@ -1748,6 +1935,75 @@ function eliminarProveedor(id, nombre) {
     });
 }
 
+// ═══════════════ REPARTIDORES (reutiliza Empleado) ═══════════════
+
+function cargarRepartidores() {
+    if (tablaRepartidores) { tablaRepartidores.ajax.reload(); return; }
+    tablaRepartidores = $('#repartidoresTable').DataTable({
+        ajax: { url: '/Negocios/GetEmpleados', data: { negocioId }, dataSrc: function(d) { return Array.isArray(d) ? d : (d.empleados || d || []); } },
+        columns: [
+            { data: 'nombre', render: function(d) { return escHtml(d); } },
+            { data: 'apellido', render: function(d) { return escHtml(d); } },
+            { data: 'telefono', render: function(d) { return escHtml(d || '-'); } },
+            { data: 'email', render: function(d) { return escHtml(d || '-'); } },
+            { data: 'especialidad', render: function(d) { return escHtml(d || '-'); } },
+            { data: null, orderable: false, className: 'text-end', render: function(d, t, row) {
+                var btns = '';
+                var cleanPhone = row.telefono ? row.telefono.replace(/\D/g, '') : '';
+                if (cleanPhone.length >= 10) {
+                    if (cleanPhone.startsWith('0')) cleanPhone = '593' + cleanPhone.substring(1);
+                    if (!cleanPhone.startsWith('593')) cleanPhone = '593' + cleanPhone;
+                    var waMsg = encodeURIComponent('Hola ' + (row.nombre || '') + ', te saludamos de ' + (negocioNombre || '') + '. ¿Cómo estás?');
+                    btns += '<a href="https://wa.me/' + escHtml(cleanPhone) + '?text=' + waMsg + '" target="_blank" rel="noopener" class="btn btn-sm btn-icon btn-light-success me-1" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>';
+                }
+                btns += '<button class="btn btn-sm btn-outline-primary me-1" onclick="editarRepartidor(\'' + row.empleadoId + '\')"><i class="bi bi-pencil"></i></button>';
+                btns += '<button class="btn btn-sm btn-outline-danger" onclick="eliminarRepartidor(\'' + row.empleadoId + '\')"><i class="bi bi-trash"></i></button>';
+                return '<div class="d-flex gap-1 justify-content-end">' + btns + '</div>';
+            }}
+        ]
+    });
+}
+
+$('#btnNuevoRepartidor').on('click', function() {
+    $('#repEditId').val(''); $('#repNombre').val(''); $('#repApellido').val(''); $('#repTelefono').val(''); $('#repEmail').val(''); $('#repVehiculo').val('Moto');
+    $('#repartidorModalTitle').text('Nuevo Repartidor');
+    new bootstrap.Modal('#repartidorModal').show();
+});
+
+$('#btnGuardarRepartidor').on('click', function() {
+    var id = $('#repEditId').val();
+    var data = { NegocioId: negocioId, Nombre: $('#repNombre').val(), Apellido: $('#repApellido').val(), Telefono: $('#repTelefono').val(), Email: $('#repEmail').val(), Especialidad: $('#repVehiculo').val() };
+    if (!data.Nombre || !data.Apellido) { toastr.error('Nombre y apellido obligatorios'); return; }
+    if (id) data.EmpleadoId = id;
+    var url = id ? '/Negocios/EditarEmpleado' : '/Negocios/CrearEmpleado';
+    var btn = $(this);
+    var originalHtml = btn.html();
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...');
+    $.post(url, data, function(r) {
+        if (r.success) { toastr.success(r.message); bootstrap.Modal.getInstance(document.getElementById('repartidorModal')).hide(); cargarRepartidores(); }
+        else toastr.error(r.message);
+    }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al guardar repartidor'); })
+      .always(function() { btn.prop('disabled', false).html(originalHtml); });
+});
+
+function editarRepartidor(id) {
+    $.get('/Negocios/GetEmpleado', { empleadoId: id, negocioId }, function(e) {
+        if (!e) { toastr.error('Repartidor no encontrado'); return; }
+        $('#repEditId').val(e.empleadoId); $('#repNombre').val(e.nombre); $('#repApellido').val(e.apellido); $('#repTelefono').val(e.telefono); $('#repEmail').val(e.email); $('#repVehiculo').val(e.especialidad || 'Moto');
+        $('#repartidorModalTitle').text('Editar Repartidor');
+        new bootstrap.Modal('#repartidorModal').show();
+    });
+}
+
+function eliminarRepartidor(id) {
+    swalMG.fire({ title: 'Eliminar repartidor?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Si, eliminar', confirmButtonColor: '#F1416C' }).then(function(r) {
+        if (r.isConfirmed) $.post('/Negocios/EliminarEmpleado', { empleadoId: id, negocioId: negocioId }, function(r) {
+            if (r.success) { toastr.success(r.message); cargarRepartidores(); }
+            else toastr.error(r.message);
+        }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al eliminar'); });
+    });
+}
+
 // ═══════════════ CATALOGO ═══════════════
 var currentCatEstilo = 'moderno';
 
@@ -1763,6 +2019,30 @@ $('.catEstiloBtn').on('click', function() {
     $(this).addClass('active');
     currentCatEstilo = $(this).data('style');
     cargarCatalogo();
+});
+
+function getCatalogoPublicUrl() {
+    return window.location.origin + '/Tienda/VerCatalogo?negocioId=' + negocioId + '&estilo=' + currentCatEstilo;
+}
+
+$('#btnQRCatalogo').on('click', function() {
+    var url = getCatalogoPublicUrl();
+    mostrarQRLink(url, 'QR del Catalogo', 'Tus clientes pueden escanear este codigo para ver tu catalogo');
+});
+
+$('#btnCopiarLinkCatalogo').on('click', function() {
+    var url = getCatalogoPublicUrl();
+    navigator.clipboard.writeText(url).then(function() {
+        toastr.success('Link del catalogo copiado al portapapeles');
+    }).catch(function() {
+        var tmp = document.createElement('textarea');
+        tmp.value = url;
+        document.body.appendChild(tmp);
+        tmp.select();
+        document.execCommand('copy');
+        document.body.removeChild(tmp);
+        toastr.success('Link del catalogo copiado al portapapeles');
+    });
 });
 
 $('#btnEnviarCatWhatsapp').on('click', function() {
@@ -1987,6 +2267,18 @@ $('#btnMarcarTodasLeidasTab').on('click', function() {
     $.post('/Negocios/MarcarTodasNotificacionesLeidas', { negocioId }, function() { cargarNotificacionesTab(); cargarNotificacionesCount(); toastr.success('Todas marcadas como leidas'); });
 });
 
+$('#btnGenerarNotificaciones').on('click', function() {
+    var btn = $(this);
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Generando...');
+    $.post('/Negocios/GenerarNotificaciones', { negocioId: negocioId }, function(r) {
+        if (r.success) { toastr.success(r.message); cargarNotificacionesTab(); cargarNotificacionesCount(); }
+    }).fail(function(xhr) {
+        toastr.error(xhr.responseJSON?.message || 'Error al generar notificaciones');
+    }).always(function() {
+        btn.prop('disabled', false).html('<i class="bi bi-arrow-repeat me-2"></i>Generar Notificaciones');
+    });
+});
+
 // ═══════════════ SUGERENCIAS ═══════════════
 $('#sugerenciaTexto').on('input', function() { $('#sugerenciaCount').text($(this).val().length); });
 $('#btnEnviarSugerencia').on('click', function() {
@@ -2087,6 +2379,7 @@ document.addEventListener('mg-tab-shown', function(e) {
     if (tab === 'posTab') { cargarPOS(); }
     else if (tab === 'inventarioTab') { cargarInventarioCategorias(); cargarProductosGrid(); cargarInventarioStats(); }
     else if (tab === 'proveedoresTab') { cargarProveedores(); }
+    else if (tab === 'repartidoresTab') { cargarRepartidores(); }
     else if (tab === 'catalogoTab') { cargarCatalogo(); }
     else if (tab === 'logsTab') { if (!tablaLogs) cargarTablaLogs(); }
     else if (tab === 'ventasTab') { cargarVentasStats(); cargarCharts(); cargarVentasPorCategoria(); cargarProductosMasVendidos(); }

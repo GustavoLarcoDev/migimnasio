@@ -59,7 +59,8 @@ public class VentaProductoService : IVentaProductoService
         Guid negocioId, string nombreCliente, string emailCliente,
         List<DetalleOrdenVentaDto> items, decimal descuentoAdicional, decimal porcentajeIva,
         string tipoOrden = "local", Guid? mesaId = null, Guid? empleadoId = null, string direccionEntrega = null,
-        string metodoPago = "Efectivo", string numeroConfirmacion = null)
+        string metodoPago = "Efectivo", string numeroConfirmacion = null,
+        List<CargoExtraDto> cargosExtra = null)
     {
         if (items == null || !items.Any()) return (false, "La orden no contiene productos", null, null);
 
@@ -152,11 +153,17 @@ public class VentaProductoService : IVentaProductoService
                 _context.Update(producto);
             }
 
+            // Sumar cargos extra
+            decimal totalCargosExtra = 0;
+            if (cargosExtra != null && cargosExtra.Any())
+                totalCargosExtra = cargosExtra.Where(c => c.Monto > 0).Sum(c => c.Monto);
+
             // Calcular IVA y total final de la orden
             var montoIva = subtotalGeneral * (porcentajeIva / 100m);
             orden.Subtotal = subtotalGeneral;
             orden.MontoIva = montoIva;
-            orden.Total = subtotalGeneral + montoIva - descuentoAdicional;
+            orden.GastosAdicionales = totalCargosExtra;
+            orden.Total = subtotalGeneral + montoIva + totalCargosExtra - descuentoAdicional;
 
             _context.OrdenesVenta.Add(orden);
             await _context.SaveChangesAsync();
@@ -183,7 +190,7 @@ public class VentaProductoService : IVentaProductoService
                 negocioNombre: negocio.NegocioNombre ?? (esRestaurante ? "Restaurante" : "Tienda"),
                 concepto: $"Venta POS - Orden #{orden.NumeroOrden}",
                 monto: orden.Total,
-                contenidoHtml: GenerarHtmlReciboTienda(orden, negocio, productos, descuentoAdicional)
+                contenidoHtml: GenerarHtmlReciboTienda(orden, negocio, productos, descuentoAdicional, cargosExtra)
             );
 
             // Vincular el recibo recien creado con la orden de venta
@@ -257,7 +264,7 @@ public class VentaProductoService : IVentaProductoService
     /// subtotal, IVA, descuento y total. Los valores se escapan con HtmlEncode
     /// para prevenir XSS.
     /// </summary>
-    private string GenerarHtmlReciboTienda(OrdenVenta orden, Gym negocio, List<Producto> productos, decimal descuento)
+    private string GenerarHtmlReciboTienda(OrdenVenta orden, Gym negocio, List<Producto> productos, decimal descuento, List<CargoExtraDto> cargosExtra = null)
     {
         // Funcion auxiliar para escapar HTML y prevenir XSS
         Func<string, string> enc = System.Net.WebUtility.HtmlEncode;
@@ -300,6 +307,17 @@ public class VentaProductoService : IVentaProductoService
         var descuentoHtml = descuento > 0
             ? $"<tr><td style='padding: 10px 12px; color: #F1416C; font-weight: bold;' colspan='3'>Descuento</td><td style='padding: 10px 12px; color: #F1416C; font-weight: bold; text-align: right;'>-${descuento:F2}</td></tr>"
             : "";
+
+        // Filas de cargos extra (si existen)
+        var cargosExtraHtml = "";
+        if (cargosExtra != null && cargosExtra.Any())
+        {
+            foreach (var cargo in cargosExtra.Where(c => c.Monto > 0))
+            {
+                var descCargo = enc(cargo.Descripcion ?? "Cargo extra");
+                cargosExtraHtml += $"<tr><td style='padding: 10px 12px; color: #7239EA; font-weight: bold;' colspan='3'>{descCargo}</td><td style='padding: 10px 12px; color: #7239EA; font-weight: bold; text-align: right;'>+${cargo.Monto:F2}</td></tr>";
+            }
+        }
 
         // Fila de IVA (solo si el porcentaje es mayor a 0)
         var ivaHtml = orden.PorcentajeIva > 0
@@ -347,6 +365,7 @@ public class VentaProductoService : IVentaProductoService
                 <td style='padding: 10px 12px; color: #333; text-align: right; font-weight: bold;'>${orden.Subtotal:F2}</td>
             </tr>
             {ivaHtml}
+            {cargosExtraHtml}
             {descuentoHtml}
             <tr style='border-top: 2px solid #3E97FF;'>
                 <td style='padding: 14px 12px; color: #3E97FF; font-weight: bold; font-size: 17px;' colspan='3'>TOTAL</td>

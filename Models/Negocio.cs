@@ -133,6 +133,13 @@ public class Gym
     [MaxLength(500)]
     public string Direccion { get; set; }
 
+    /// <summary>
+    /// URL del logo del negocio, almacenado como Base64 data URI.
+    /// Ejemplo: "data:image/png;base64,iVBOR..."
+    /// Se muestra en el topbar del dashboard y en los recibos.
+    /// </summary>
+    public string LogoUrl { get; set; }
+
     // ═══════════════════════════════════════════════════════════
     // FECHAS
     // ═══════════════════════════════════════════════════════════

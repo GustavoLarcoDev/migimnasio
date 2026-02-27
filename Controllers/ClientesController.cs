@@ -359,7 +359,7 @@ public class ClientesController : Controller
                             email, nombreCompleto, negocio.NegocioNombre,
                             concepto, model.Precio, model.Dias,
                             negocio.Email, negocio.Telefono, numRecibo,
-                            metodoPago: metodo);
+                            metodoPago: metodo, logoUrl: negocio.LogoUrl);
                         html = htmlEmail;
                     }
                     await _reciboService.CrearReciboAsync(model.NegocioId, numRecibo, "pago_cliente",
@@ -504,7 +504,7 @@ public class ClientesController : Controller
                         var (enviado, htmlEmail) = await _emailService.EnviarReciboPagoClienteAsync(
                             email, nombreCompleto, negocio.NegocioNombre,
                             concepto, precio, dias, negocio.Email, negocio.Telefono, numRecibo,
-                            metodoPago: metodoPago);
+                            metodoPago: metodoPago, logoUrl: negocio.LogoUrl);
                         html = htmlEmail;
                     }
                     await _reciboService.CrearReciboAsync(negocioId, numRecibo, "pago_cliente",
@@ -920,6 +920,167 @@ public class ClientesController : Controller
             });
 
             return Ok(new { success = true, message = $"Enviando promoción a {clientes.Count} clientes...", total = clientes.Count });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // SECCION 9 — PERFIL DEL NEGOCIO
+    //
+    // Endpoints para la pestaña "Perfil" del dashboard: ver info del negocio,
+    // subir logo, cambiar contraseña y actualizar datos de contacto.
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    [HttpGet("GetPerfilNegocio")]
+    public async Task<IActionResult> GetPerfilNegocio(Guid negocioId)
+    {
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+
+            var negocio = await _context.Negocios.FindAsync(negocioId);
+            if (negocio == null)
+                return NotFound();
+
+            var now = TimeHelper.Now;
+            int? diasRestantes = negocio.FechaExpiracion.HasValue
+                ? (int)(negocio.FechaExpiracion.Value.Date - now.Date).TotalDays
+                : null;
+
+            var diasSuscrito = (int)(now.Date - negocio.FechaCreacion.Date).TotalDays;
+
+            return Ok(new
+            {
+                logoUrl = negocio.LogoUrl,
+                nombre = negocio.NegocioNombre,
+                email = negocio.Email,
+                telefono = negocio.Telefono,
+                direccion = negocio.Direccion,
+                tipoNegocio = negocio.TipoNegocio,
+                diasRestantes,
+                diasSuscrito,
+                fechaRegistro = negocio.FechaCreacion,
+                esPrueba = negocio.EsPrueba
+            });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    [HttpPost("SubirLogoNegocio")]
+    public async Task<IActionResult> SubirLogoNegocio([FromForm] Guid negocioId, IFormFile imagen)
+    {
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+
+            if (imagen == null || imagen.Length == 0)
+                return BadRequest(new { success = false, message = "No se ha proporcionado ninguna imagen." });
+
+            if (imagen.Length > 2 * 1024 * 1024)
+                return BadRequest(new { success = false, message = "La imagen no debe superar los 2MB." });
+
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var extension = Path.GetExtension(imagen.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(extension))
+                return BadRequest(new { success = false, message = "Formato no permitido. Usa JPG, PNG o WebP." });
+
+            var mimeType = extension switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".webp" => "image/webp",
+                _ => "image/jpeg"
+            };
+
+            using var ms = new MemoryStream();
+            await imagen.CopyToAsync(ms);
+            var base64 = Convert.ToBase64String(ms.ToArray());
+            var dataUri = $"data:{mimeType};base64,{base64}";
+
+            var negocio = await _context.Negocios.FindAsync(negocioId);
+            if (negocio == null)
+                return NotFound();
+
+            negocio.LogoUrl = dataUri;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true, message = "Logo actualizado", url = dataUri });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    [HttpPost("CambiarPassword")]
+    public async Task<IActionResult> CambiarPassword(Guid negocioId, string passwordActual, string passwordNueva)
+    {
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+
+            if (string.IsNullOrWhiteSpace(passwordNueva) || passwordNueva.Length < 6)
+                return BadRequest(new { success = false, message = "La nueva contraseña debe tener al menos 6 caracteres." });
+
+            var negocio = await _context.Negocios.FindAsync(negocioId);
+            if (negocio == null)
+                return NotFound();
+
+            // Verify current password (BCrypt or plaintext legacy)
+            bool passwordValida = negocio.Password.StartsWith("$2")
+                ? _authService.VerifyPassword(passwordActual, negocio.Password)
+                : passwordActual == negocio.Password;
+
+            if (!passwordValida)
+                return BadRequest(new { success = false, message = "La contraseña actual es incorrecta." });
+
+            negocio.Password = _authService.HashPassword(passwordNueva);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true, message = "Contraseña actualizada correctamente." });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
+        }
+    }
+
+    [HttpPost("ActualizarPerfilNegocio")]
+    public async Task<IActionResult> ActualizarPerfilNegocio(Guid negocioId, string email = null, string telefono = null, string direccion = null)
+    {
+        try
+        {
+            var nId = _authService.GetNegocioId(User);
+            if (!nId.HasValue || negocioId != nId.Value)
+                return Forbid();
+
+            var negocio = await _context.Negocios.FindAsync(negocioId);
+            if (negocio == null)
+                return NotFound();
+
+            if (!string.IsNullOrWhiteSpace(email))
+                negocio.Email = email.Trim();
+            if (telefono != null)
+                negocio.Telefono = telefono.Trim();
+            if (direccion != null)
+                negocio.Direccion = direccion.Trim();
+
+            negocio.FechaDeActualizacion = TimeHelper.Now;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { success = true, message = "Perfil actualizado correctamente." });
         }
         catch (Exception)
         {

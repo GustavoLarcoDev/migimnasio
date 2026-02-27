@@ -130,6 +130,10 @@
                     <i class="bi bi-credit-card"></i>
                     <span>Métodos de Pago</span>
                 </a>
+                <a href="#perfilTab" class="nav-link" data-mg-tab="perfilTab">
+                    <i class="bi bi-building"></i>
+                    <span>Perfil</span>
+                </a>
                 <a href="#notificacionesTab" class="nav-link" data-mg-tab="notificacionesTab">
                     <i class="bi bi-bell-fill"></i>
                     <span>Notificaciones</span>
@@ -182,6 +186,10 @@
                     <i class="bi bi-credit-card"></i>
                     <span>Métodos de Pago</span>
                 </a>
+                <a href="#perfilTab" class="nav-link" data-mg-tab="perfilTab">
+                    <i class="bi bi-building"></i>
+                    <span>Perfil</span>
+                </a>
                 <a href="#notificacionesTab" class="nav-link" data-mg-tab="notificacionesTab">
                     <i class="bi bi-bell-fill"></i>
                     <span>Notificaciones</span>
@@ -206,6 +214,10 @@
                     <i class="bi bi-truck"></i>
                     <span>Proveedores</span>
                 </a>
+                <a href="#repartidoresTab" class="nav-link" data-mg-tab="repartidoresTab">
+                    <i class="bi bi-bicycle"></i>
+                    <span>Repartidores</span>
+                </a>
                 <a href="#catalogoTab" class="nav-link" data-mg-tab="catalogoTab">
                     <i class="bi bi-book"></i>
                     <span>Catálogo</span>
@@ -225,6 +237,10 @@
                 <a href="#metodosPagoTab" class="nav-link" data-mg-tab="metodosPagoTab">
                     <i class="bi bi-credit-card"></i>
                     <span>Métodos de Pago</span>
+                </a>
+                <a href="#perfilTab" class="nav-link" data-mg-tab="perfilTab">
+                    <i class="bi bi-building"></i>
+                    <span>Perfil</span>
                 </a>
                 <a href="#notificacionesTab" class="nav-link" data-mg-tab="notificacionesTab">
                     <i class="bi bi-bell-fill"></i>
@@ -265,6 +281,10 @@
                 <a href="#metodosPagoTab" class="nav-link" data-mg-tab="metodosPagoTab">
                     <i class="bi bi-credit-card"></i>
                     <span>Métodos de Pago</span>
+                </a>
+                <a href="#perfilTab" class="nav-link" data-mg-tab="perfilTab">
+                    <i class="bi bi-building"></i>
+                    <span>Perfil</span>
                 </a>
                 <a href="#notificacionesTab" class="nav-link" data-mg-tab="notificacionesTab">
                     <i class="bi bi-bell-fill"></i>
@@ -382,10 +402,10 @@
                 </div>
             </div>
 
-            <!-- User -->
+            <!-- User / Logo -->
             <div class="d-none d-md-flex align-items-center ms-2">
-                <div class="bg-light-primary rounded-circle d-flex align-items-center justify-content-center" style="width:38px;height:38px;">
-                    <i class="bi bi-person-fill text-primary"></i>
+                <div id="topbarLogoContainer" class="bg-light-primary rounded-circle d-flex align-items-center justify-content-center" style="width:38px;height:38px;overflow:hidden;cursor:pointer;" onclick="document.querySelector('[data-mg-tab=perfilTab]')?.click()">
+                    <i class="bi bi-person-fill text-primary" id="topbarDefaultIcon"></i>
                 </div>
             </div>
         </div>
@@ -404,6 +424,7 @@
     <script src="https://cdn.datatables.net/2.3.6/js/dataTables.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/driver.js@1.3.1/dist/driver.js.iife.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
 
@@ -510,6 +531,168 @@
     $.ajaxSetup({ headers: { 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val() } });
     </script>
 
+    <!-- Perfil Tab System -->
+    <script>
+    (function() {
+        var _negocioId = '@(ViewData["NegocioId"]?.ToString() ?? "")';
+        var _perfilCargado = false;
+
+        // Load logo into topbar on page load
+        function cargarLogoTopbar() {
+            if (!_negocioId) return;
+            $.get('/Negocios/GetPerfilNegocio?negocioId=' + _negocioId, function(data) {
+                if (data.logoUrl) {
+                    actualizarLogoTopbar(data.logoUrl);
+                }
+            });
+        }
+
+        function actualizarLogoTopbar(url) {
+            var container = document.getElementById('topbarLogoContainer');
+            if (!container) return;
+            var icon = document.getElementById('topbarDefaultIcon');
+            if (icon) icon.style.display = 'none';
+            // Remove old img if exists
+            var oldImg = container.querySelector('img');
+            if (oldImg) oldImg.remove();
+            var img = document.createElement('img');
+            img.src = url;
+            img.style.cssText = 'width:38px;height:38px;object-fit:cover;border-radius:50%;';
+            img.alt = 'Logo';
+            container.appendChild(img);
+        }
+
+        function cargarPerfil() {
+            if (!_negocioId) return;
+            $.get('/Negocios/GetPerfilNegocio?negocioId=' + _negocioId, function(data) {
+                // Logo
+                if (data.logoUrl) {
+                    $('#perfilLogoImg').attr('src', data.logoUrl).show();
+                    $('#perfilLogoPlaceholder').hide();
+                    actualizarLogoTopbar(data.logoUrl);
+                } else {
+                    $('#perfilLogoImg').hide();
+                    $('#perfilLogoPlaceholder').show();
+                }
+                // Info
+                $('#perfilNombre').text(data.nombre || '');
+                var tipoLabel = { membresias: 'Membresías', artesanal: 'Artesanal', tienda: 'Tienda', restaurante: 'Restaurante' };
+                $('#perfilTipoBadge').text(tipoLabel[data.tipoNegocio] || data.tipoNegocio);
+                $('#perfilEmail').val(data.email || '');
+                $('#perfilTelefono').val(data.telefono || '');
+                $('#perfilDireccion').val(data.direccion || '');
+                // Suscripción
+                if (data.diasRestantes !== null) {
+                    var cls = data.diasRestantes > 7 ? 'text-success' : (data.diasRestantes > 0 ? 'text-warning' : 'text-danger');
+                    $('#perfilDiasRestantes').html('<span class="' + cls + ' fw-bold fs-4">' + data.diasRestantes + '</span> <small class="text-muted">días restantes</small>');
+                } else {
+                    $('#perfilDiasRestantes').html('<span class="text-muted">Sin fecha</span>');
+                }
+                $('#perfilDiasSuscrito').html('<span class="fw-bold fs-4">' + data.diasSuscrito + '</span> <small class="text-muted">días suscrito</small>');
+                var fecha = data.fechaRegistro ? new Date(data.fechaRegistro).toLocaleDateString('es-EC', { year: 'numeric', month: 'long', day: 'numeric' }) : '-';
+                $('#perfilFechaRegistro').text(fecha);
+                if (data.esPrueba) $('#perfilPruebaBadge').show(); else $('#perfilPruebaBadge').hide();
+            }).fail(function() {
+                toastr.error('Error al cargar el perfil');
+            });
+        }
+
+        function subirLogo() {
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/jpeg,image/png,image/webp';
+            input.onchange = function() {
+                var file = input.files[0];
+                if (!file) return;
+                if (file.size > 2 * 1024 * 1024) { toastr.error('La imagen no debe superar 2MB'); return; }
+                var fd = new FormData();
+                fd.append('negocioId', _negocioId);
+                fd.append('imagen', file);
+                $.ajax({
+                    url: '/Negocios/SubirLogoNegocio',
+                    type: 'POST',
+                    data: fd,
+                    processData: false,
+                    contentType: false,
+                    success: function(res) {
+                        if (res.success) {
+                            toastr.success('Logo actualizado');
+                            $('#perfilLogoImg').attr('src', res.url).show();
+                            $('#perfilLogoPlaceholder').hide();
+                            actualizarLogoTopbar(res.url);
+                        } else {
+                            toastr.error(res.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        var msg = xhr.responseJSON?.message || 'Error al subir logo';
+                        toastr.error(msg);
+                    }
+                });
+            };
+            input.click();
+        }
+
+        function guardarPerfil() {
+            var email = $('#perfilEmail').val();
+            var telefono = $('#perfilTelefono').val();
+            var direccion = $('#perfilDireccion').val();
+            $.post('/Negocios/ActualizarPerfilNegocio', {
+                negocioId: _negocioId,
+                email: email,
+                telefono: telefono,
+                direccion: direccion
+            }, function(res) {
+                if (res.success) toastr.success(res.message);
+                else toastr.error(res.message);
+            }).fail(function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Error al guardar');
+            });
+        }
+
+        function cambiarPassword() {
+            var actual = $('#perfilPassActual').val();
+            var nueva = $('#perfilPassNueva').val();
+            var confirmar = $('#perfilPassConfirmar').val();
+            if (!actual || !nueva) { toastr.warning('Completa todos los campos'); return; }
+            if (nueva.length < 6) { toastr.warning('La contraseña debe tener al menos 6 caracteres'); return; }
+            if (nueva !== confirmar) { toastr.warning('Las contraseñas no coinciden'); return; }
+            $.post('/Negocios/CambiarPassword', {
+                negocioId: _negocioId,
+                passwordActual: actual,
+                passwordNueva: nueva
+            }, function(res) {
+                if (res.success) {
+                    toastr.success(res.message);
+                    $('#perfilPassActual, #perfilPassNueva, #perfilPassConfirmar').val('');
+                } else {
+                    toastr.error(res.message);
+                }
+            }).fail(function(xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Error al cambiar contraseña');
+            });
+        }
+
+        // Expose functions
+        window._perfilSubirLogo = subirLogo;
+        window._perfilGuardar = guardarPerfil;
+        window._perfilCambiarPassword = cambiarPassword;
+
+        // Load on tab show
+        document.addEventListener('mg-tab-shown', function(e) {
+            if (e.detail.tab === 'perfilTab' && !_perfilCargado) {
+                _perfilCargado = true;
+                cargarPerfil();
+            } else if (e.detail.tab === 'perfilTab') {
+                cargarPerfil();
+            }
+        });
+
+        // Load logo on page init
+        cargarLogoTopbar();
+    })();
+    </script>
+
     <!-- Tutorial System -->
     <script>window._mgTipoNegocio = '@(ViewData["TipoNegocio"]?.ToString() ?? "membresias")';</script>
     <script src="~/js/tutorials/tutorial-loader.js" asp-append-version="true"></script>
@@ -558,6 +741,120 @@
             #bloqueoOverlay, #bloqueoOverlay * { pointer-events: auto !important; }
         </style>
     }
+
+    <!-- Modal: QR Code para Links Publicos (menus, catalogos) -->
+    <div class="modal fade" id="modalQRLink" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content border-0" style="border-radius: 20px; background: var(--mg-card-bg);">
+                <div class="modal-header border-0 pb-0">
+                    <h6 class="modal-title" id="modalQRLinkTitle" style="color: var(--mg-text-color);">
+                        <i class="bi bi-qr-code me-2"></i>Codigo QR
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center px-4 pb-4">
+                    <div id="qrLinkCanvas" class="mb-3"></div>
+                    <p class="text-muted small mb-3" id="qrLinkDescription">Escanea este codigo con tu celular</p>
+                    <div class="input-group input-group-sm mb-3">
+                        <input type="text" class="form-control" id="qrLinkUrl" readonly
+                               style="background: var(--mg-body-bg); color: var(--mg-text-color); border-color: var(--mg-border-color); border-radius: 8px 0 0 8px; font-size: 0.75rem;">
+                        <button class="btn btn-outline-primary" type="button" onclick="copiarQRLink()" style="border-radius: 0 8px 8px 0;">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button class="btn btn-sm btn-primary" onclick="descargarQRLink()">
+                            <i class="bi bi-download me-1"></i>Descargar
+                        </button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="window.open(document.getElementById('qrLinkUrl').value, '_blank')">
+                            <i class="bi bi-box-arrow-up-right me-1"></i>Abrir Link
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ═══════════════ QR CODE GENERATION HELPERS ═══════════════
+    var _qrLinkCurrentDataUrl = null;
+
+    function mostrarQRLink(url, titulo, descripcion) {
+        $('#modalQRLinkTitle').html('<i class="bi bi-qr-code me-2"></i>' + (titulo || 'Codigo QR'));
+        $('#qrLinkDescription').text(descripcion || 'Escanea este codigo con tu celular');
+        $('#qrLinkUrl').val(url);
+
+        var container = document.getElementById('qrLinkCanvas');
+        container.innerHTML = '';
+
+        try {
+            var qr = qrcode(0, 'M');
+            qr.addData(url);
+            qr.make();
+
+            var moduleCount = qr.getModuleCount();
+            var cellSize = Math.max(4, Math.floor(260 / moduleCount));
+            var size = cellSize * moduleCount + 20;
+
+            var canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            var ctx = canvas.getContext('2d');
+
+            // White background
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, size, size);
+
+            // Draw QR modules
+            ctx.fillStyle = '#000000';
+            var offset = 10;
+            for (var row = 0; row < moduleCount; row++) {
+                for (var col = 0; col < moduleCount; col++) {
+                    if (qr.isDark(row, col)) {
+                        ctx.fillRect(offset + col * cellSize, offset + row * cellSize, cellSize, cellSize);
+                    }
+                }
+            }
+
+            canvas.style.maxWidth = '260px';
+            canvas.style.width = '100%';
+            canvas.style.borderRadius = '12px';
+            canvas.style.border = '1px solid var(--mg-border-color)';
+            canvas.className = 'qr-zoomable';
+            container.appendChild(canvas);
+
+            _qrLinkCurrentDataUrl = canvas.toDataURL('image/png');
+        } catch (e) {
+            container.innerHTML = '<div class="text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Error al generar QR</div>';
+            _qrLinkCurrentDataUrl = null;
+        }
+
+        new bootstrap.Modal('#modalQRLink').show();
+    }
+
+    function copiarQRLink() {
+        var url = document.getElementById('qrLinkUrl').value;
+        navigator.clipboard.writeText(url).then(function() {
+            toastr.success('Link copiado al portapapeles');
+        }).catch(function() {
+            // Fallback
+            var inp = document.getElementById('qrLinkUrl');
+            inp.select();
+            document.execCommand('copy');
+            toastr.success('Link copiado al portapapeles');
+        });
+    }
+
+    function descargarQRLink() {
+        if (!_qrLinkCurrentDataUrl) { toastr.error('No hay QR para descargar'); return; }
+        var a = document.createElement('a');
+        a.href = _qrLinkCurrentDataUrl;
+        a.download = 'codigo-qr.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+    </script>
 
     <!-- QR Zoom Overlay (global) -->
     <div id="qrZoomOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;z-index:99999;

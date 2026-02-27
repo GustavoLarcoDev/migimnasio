@@ -833,16 +833,17 @@ public class EmailService : IEmailService
 
     public async Task<(bool enviado, string htmlBody)> EnviarReciboPagoClienteAsync(string destinatario, string nombreCliente, string nombreNegocio,
         string conceptoPago, decimal monto, int dias, string? emailNegocio, string? telefonoNegocio, string numeroRecibo,
-        string metodoPago = "Efectivo")
+        string metodoPago = "Efectivo", string? logoUrl = null)
     {
         var fechaPago  = TimeHelper.Now;
         var fechaVence = fechaPago.AddDays(dias);
         var linksContacto = GenerarLinksContacto(emailNegocio, telefonoNegocio);
+        var logoHtml = !string.IsNullOrWhiteSpace(logoUrl) ? $"<img src='{logoUrl}' alt='Logo' style='max-height:60px;max-width:180px;margin-bottom:10px;border-radius:8px;' /><br/>" : "";
 
         var body = $@"
 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>
     <div style='background: linear-gradient(135deg, #ff6b35, #f7931e); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;'>
-        <h1 style='color: white; margin: 0; font-size: 26px;'>Recibo de Pago</h1>
+        {logoHtml}<h1 style='color: white; margin: 0; font-size: 26px;'>Recibo de Pago</h1>
         <p style='color: rgba(255,255,255,0.9); margin: 8px 0 0; font-size: 15px;'>{nombreNegocio}</p>
         <p style='color: rgba(255,255,255,0.8); margin: 6px 0 0; font-size: 13px;'>#{numeroRecibo}</p>
     </div>
@@ -1006,14 +1007,15 @@ public class EmailService : IEmailService
     public async Task<(bool enviado, string htmlBody)> EnviarReciboCitaCompletadaAsync(string destinatario, string nombreCliente, string nombreNegocio,
         string nombreServicio, string? nombreEmpleado, decimal montoServicio, decimal montoExtra,
         decimal propina, decimal total, string? emailNegocio, string? telefonoNegocio, string numeroRecibo,
-        string metodoPago = "Efectivo")
+        string metodoPago = "Efectivo", string? logoUrl = null)
     {
         var linksContacto = GenerarLinksContacto(emailNegocio, telefonoNegocio);
+        var logoHtml = !string.IsNullOrWhiteSpace(logoUrl) ? $"<img src='{logoUrl}' alt='Logo' style='max-height:60px;max-width:180px;margin-bottom:10px;border-radius:8px;' /><br/>" : "";
 
         var body = $@"
 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>
     <div style='background: linear-gradient(135deg, #ff6b35, #f7931e); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;'>
-        <h1 style='color: white; margin: 0; font-size: 26px;'>Recibo de Servicio</h1>
+        {logoHtml}<h1 style='color: white; margin: 0; font-size: 26px;'>Recibo de Servicio</h1>
         <p style='color: rgba(255,255,255,0.9); margin: 8px 0 0; font-size: 15px;'>{nombreNegocio} &mdash; {TimeHelper.Now:dd/MM/yyyy}</p>
         <p style='color: rgba(255,255,255,0.8); margin: 6px 0 0; font-size: 13px;'>#{numeroRecibo}</p>
     </div>
