@@ -239,4 +239,20 @@ public class Gym
     /// Relación uno-a-muchos: un negocio tiene muchos métodos de pago.
     /// </summary>
     public virtual ICollection<MetodoPago> MetodosPago { get; set; } = new List<MetodoPago>();
+
+    // ═══════════════════════════════════════════════════════════
+    // TÉRMINOS Y CONDICIONES
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Indica si el negocio aceptó los términos y condiciones de la plataforma.
+    /// false = no ha aceptado (verá modal bloqueante al entrar al dashboard).
+    /// </summary>
+    public bool AceptoTerminos { get; set; } = false;
+
+    /// <summary>
+    /// Fecha y hora en que el negocio aceptó los términos.
+    /// null = aún no ha aceptado.
+    /// </summary>
+    public DateTime? FechaAceptoTerminos { get; set; }
 }

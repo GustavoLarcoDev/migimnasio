@@ -606,6 +606,60 @@ app.Use(async (context, next) =>
     await next();
 });
 
+// ── Verificación de Términos y Condiciones ──────────────────
+// Después del bloqueo, verificamos si el negocio ha aceptado los términos.
+// Si no los aceptó:
+//   - Requests AJAX → responde 423 con JSON indicando términos pendientes
+//   - Requests de página → marca HttpContext.Items["TerminosPendientesNegocio"] = true
+//     para que _DashboardLayout.cshtml muestre el overlay de términos
+// Los admins impersonando NO ven el modal de términos.
+// El endpoint AceptarTerminosNegocio se excluye para permitir la aceptación.
+app.Use(async (context, next) =>
+{
+    var user = context.User;
+    if (user.Identity?.IsAuthenticated == true
+        && user.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Negocio")
+        && !user.Claims.Any(c => c.Type == "AdminImpersonating" && c.Value == "true")
+        && !user.Claims.Any(c => c.Type == "VendedorImpersonating" && c.Value == "true"))
+    {
+        var path = context.Request.Path.Value ?? "";
+        // Excluir el endpoint de aceptación y logout para que puedan ejecutarse
+        if (!path.Contains("AceptarTerminosNegocio", StringComparison.OrdinalIgnoreCase)
+            && !path.Contains("Logout", StringComparison.OrdinalIgnoreCase))
+        {
+            var negocioIdClaim = user.Claims.FirstOrDefault(c => c.Type == "NegocioId");
+            if (negocioIdClaim != null && Guid.TryParse(negocioIdClaim.Value, out var negocioId))
+            {
+                var negocioService = context.RequestServices.GetRequiredService<INegocioService>();
+                var acepto = await negocioService.HasAceptadoTerminosAsync(negocioId);
+
+                if (!acepto)
+                {
+                    // Para AJAX: devolver 423 con mensaje de términos pendientes
+                    if (context.Request.Headers["X-Requested-With"] == "XMLHttpRequest"
+                        || context.Request.Headers["Accept"].ToString().Contains("application/json"))
+                    {
+                        context.Response.StatusCode = 423;
+                        context.Response.ContentType = "application/json";
+                        await context.Response.WriteAsJsonAsync(new
+                        {
+                            success = false,
+                            terminosPendientes = true,
+                            message = "Debes aceptar los términos y condiciones para continuar."
+                        });
+                        return;
+                    }
+
+                    // Para páginas: marcar para que el layout muestre el overlay
+                    context.Items["TerminosPendientesNegocio"] = true;
+                }
+            }
+        }
+    }
+
+    await next();
+});
+
 // ── Archivos Estáticos ─────────────────────────────────────
 // Sirve archivos de wwwroot/ (CSS, JS, imágenes, fuentes).
 // MapStaticAssets es la versión optimizada de ASP.NET Core 9

@@ -126,4 +126,17 @@ public class Vendedor
     /// </summary>
     [StringLength(50)]
     public string? NumeroCuenta { get; set; }
+
+    // ─── Términos y Condiciones ─────────────────────────────────────────
+    /// <summary>
+    /// Indica si el vendedor aceptó los términos y condiciones de la plataforma.
+    /// false = no ha aceptado (verá modal bloqueante al entrar al dashboard).
+    /// </summary>
+    public bool AceptoTerminos { get; set; } = false;
+
+    /// <summary>
+    /// Fecha y hora en que el vendedor aceptó los términos.
+    /// null = aún no ha aceptado.
+    /// </summary>
+    public DateTime? FechaAceptoTerminos { get; set; }
 }

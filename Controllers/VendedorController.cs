@@ -346,13 +346,23 @@ public class VendedorController : Controller
     /// cuando impersona a un vendedor, y aquí queremos permitirlo.
     /// </summary>
     [HttpGet("VendedorDashboard")]
-    public IActionResult VendedorDashboard()
+    public async Task<IActionResult> VendedorDashboard()
     {
         // IsVendedor() comprueba el claim de rol en la cookie actual.
         // Si el admin está impersonando a un vendedor, su cookie tiene rol "Vendedor",
         // por lo que también pasa esta comprobación.
         if (!IsVendedor())
             return RedirectToAction("Login", "Auth");
+
+        // Verificar si el vendedor necesita aceptar términos.
+        // Admins impersonando NO ven el modal de términos.
+        var vendedorId = GetVendedorId();
+        var isAdminImpersonating = User.Claims.Any(c => c.Type == "AdminImpersonating" && c.Value == "true");
+        if (vendedorId.HasValue && !isAdminImpersonating)
+        {
+            var acepto = await _vendedorService.HasAceptadoTerminosAsync(vendedorId.Value);
+            ViewBag.TerminosPendientes = !acepto;
+        }
 
         return View("~/Views/Vendedor/Dashboard.cshtml");
     }
@@ -1087,6 +1097,24 @@ public class VendedorController : Controller
         {
             return StatusCode(500, new { success = false, message = "Error al cargar comisiones: " + ex.Message });
         }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // TÉRMINOS Y CONDICIONES
+    // ═══════════════════════════════════════════════════════════
+
+    [HttpPost("AceptarTerminosVendedor")]
+    public async Task<IActionResult> AceptarTerminosVendedor()
+    {
+        var vendedorId = GetVendedorId();
+        if (!vendedorId.HasValue)
+            return Forbid();
+
+        var result = await _vendedorService.AceptarTerminosAsync(vendedorId.Value);
+        if (!result.success)
+            return BadRequest(new { success = false, message = result.message });
+
+        return Ok(new { success = true, message = result.message });
     }
 
     // ═══════════════════════════════════════════════════════════

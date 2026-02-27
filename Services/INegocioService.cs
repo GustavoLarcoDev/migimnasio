@@ -194,6 +194,20 @@ public interface INegocioService
     /// <returns>Lista de hasta 200 entradas de AdminLog.</returns>
     Task<object> GetAdminLogsAsync();
 
+    // ═══════════════════════════════════════════════════════════
+    // TÉRMINOS Y CONDICIONES
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Verifica si un negocio ha aceptado los términos y condiciones.
+    /// </summary>
+    Task<bool> HasAceptadoTerminosAsync(Guid negocioId);
+
+    /// <summary>
+    /// Marca que un negocio aceptó los términos y condiciones.
+    /// </summary>
+    Task<(bool success, string message)> AceptarTerminosAsync(Guid negocioId);
+
     /// <summary>
     /// Obtiene los datos financieros de la pestaña "Ventas" del panel admin:
     ///   - totalRevenue: suma de PrecioSuscripcion de todos los negocios que pagan.

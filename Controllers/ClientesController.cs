@@ -1087,4 +1087,26 @@ public class ClientesController : Controller
             return StatusCode(500, new { success = false, message = "Error interno del servidor" });
         }
     }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // TÉRMINOS Y CONDICIONES
+    // ═══════════════════════════════════════════════════════════════════════════════
+
+    [HttpPost("AceptarTerminosNegocio")]
+    public async Task<IActionResult> AceptarTerminosNegocio()
+    {
+        var negocioId = _authService.GetNegocioId(User);
+        if (!negocioId.HasValue)
+            return Forbid();
+
+        var negocio = await _context.Negocios.FindAsync(negocioId.Value);
+        if (negocio == null)
+            return NotFound();
+
+        negocio.AceptoTerminos = true;
+        negocio.FechaAceptoTerminos = TimeHelper.Now;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { success = true, message = "Términos aceptados exitosamente" });
+    }
 }

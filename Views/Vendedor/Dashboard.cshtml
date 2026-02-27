@@ -2199,5 +2199,83 @@
     </div>
 </div>
 
+@if (ViewBag.TerminosPendientes == true)
+{
+    <!-- Overlay de Términos y Condiciones del Vendedor — No se puede cerrar -->
+    <div id="terminosVendedorOverlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);z-index:99998;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);overflow-y:auto;padding:1rem;">
+        <div style="background:#fff;border-radius:16px;padding:2rem;max-width:680px;width:95%;box-shadow:0 20px 60px rgba(0,0,0,0.3);max-height:95vh;overflow-y:auto;">
+            <div style="text-align:center;margin-bottom:1.5rem;">
+                <div style="width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,#7239EA,#9B59B6);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;">
+                    <i class="bi bi-file-earmark-text" style="font-size:2rem;color:#fff;"></i>
+                </div>
+                <h3 style="font-weight:700;color:#181C32;margin-bottom:0.5rem;">Términos y Condiciones del Vendedor</h3>
+                <p style="color:#7E8299;font-size:0.9rem;">Para continuar usando el panel de vendedores de <strong>My-Negocio</strong>, debes leer y aceptar los siguientes términos.</p>
+            </div>
+
+            <div style="background:#F9FAFB;border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;font-size:0.88rem;color:#3F4254;">
+                <ol style="padding-left:1.2rem;margin:0;line-height:1.7;">
+                    <li style="margin-bottom:0.5rem;">El vendedor <strong>no debe realizar cobros directos</strong> a los dueños de negocios. Todos los pagos deben dirigirse exclusivamente a las cuentas del administrador de My-Negocio.</li>
+                    <li style="margin-bottom:0.5rem;">El vendedor no debe faltar el respeto a los dueños de negocios ni a ningún miembro del equipo de My-Negocio.</li>
+                    <li style="margin-bottom:0.5rem;">El vendedor se compromete a aprender el funcionamiento del sistema para poder brindar soporte básico a sus clientes.</li>
+                    <li style="margin-bottom:0.5rem;">Las comisiones se pagan <strong>cada 15 días del mes</strong> (quincena y fin de mes).</li>
+                    <li style="margin-bottom:0.5rem;">Los pagos de comisiones se realizan exclusivamente vía <strong>transferencia bancaria</strong> a la cuenta registrada por el vendedor.</li>
+                    <li style="margin-bottom:0.5rem;">La comisión por negocio vendido es de <strong>$5.00 USD</strong>, pagada <strong>una sola vez</strong> por negocio.</li>
+                    <li style="margin-bottom:0.5rem;">Ejemplo: si vendes 10 negocios = $50, si vendes 20 negocios = $100.</li>
+                    <li style="margin-bottom:0.5rem;">Las comisiones se basan en <strong>negocios nuevos vendidos</strong>, no en renovaciones de suscripciones existentes.</li>
+                    <li style="margin-bottom:0.5rem;">Los períodos de prueba gratuita <strong>no generan comisión</strong>. La comisión se genera únicamente cuando el negocio realiza su primer pago.</li>
+                    <li style="margin-bottom:0.5rem;">La comisión se genera automáticamente cuando el negocio paga su suscripción (mínimo $15, mínimo 30 días).</li>
+                    <li style="margin-bottom:0.5rem;"><strong>Bono especial:</strong> $1,000 USD por cada 100 negocios vendidos que estén activos y pagando.</li>
+                    <li>El incumplimiento de estos términos resultará en la <strong>terminación inmediata</strong> de la relación comercial bajo las leyes vigentes de Ecuador, con pago de comisiones pendientes hasta la fecha de terminación y <strong>pérdida permanente de acceso</strong> al panel de vendedores.</li>
+                </ol>
+            </div>
+
+            <div style="margin-bottom:1rem;">
+                <label style="display:flex;align-items:flex-start;gap:0.6rem;cursor:pointer;font-size:0.9rem;color:#3F4254;">
+                    <input type="checkbox" id="chkAceptoTerminosVendedor" style="margin-top:3px;width:18px;height:18px;accent-color:#7239EA;flex-shrink:0;">
+                    <span>Leí, entendí y acepto los <strong>Términos y Condiciones</strong> de vendedor de My-Negocio.</span>
+                </label>
+            </div>
+
+            <button id="btnAceptarTerminosVendedor" class="btn btn-lg w-100" style="font-weight:600;border-radius:10px;background:linear-gradient(135deg,#7239EA,#9B59B6);color:#fff;" disabled>
+                <i class="bi bi-check-circle me-2"></i>Aceptar y Continuar
+            </button>
+        </div>
+    </div>
+    <style>
+        #terminosVendedorOverlay ~ *, .mg-sidebar, .mg-topbar, .mg-content { pointer-events: none !important; }
+        #terminosVendedorOverlay, #terminosVendedorOverlay * { pointer-events: auto !important; }
+    </style>
+    <script>
+    (function() {
+        var chk = document.getElementById('chkAceptoTerminosVendedor');
+        var btn = document.getElementById('btnAceptarTerminosVendedor');
+        chk.addEventListener('change', function() { btn.disabled = !this.checked; });
+        btn.addEventListener('click', function() {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Procesando...';
+            $.post('/Negocios/AceptarTerminosVendedor', function(res) {
+                if (res.success) {
+                    // Remover overlay sin reload (la vista tiene Layout = null)
+                    document.getElementById('terminosVendedorOverlay').remove();
+                    // Restaurar pointer-events
+                    document.querySelectorAll('.mg-sidebar, .mg-topbar, .mg-content').forEach(function(el) {
+                        el.style.pointerEvents = '';
+                    });
+                    toastr.success('Términos aceptados correctamente');
+                } else {
+                    toastr.error(res.message || 'Error al aceptar términos');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Aceptar y Continuar';
+                }
+            }).fail(function() {
+                toastr.error('Error de conexión. Intenta nuevamente.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Aceptar y Continuar';
+            });
+        });
+    })();
+    </script>
+}
+
 </body>
 </html>

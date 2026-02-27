@@ -508,6 +508,33 @@ public class NegocioService : INegocioService
     }
 
     // ═══════════════════════════════════════════════════════════
+    // TÉRMINOS Y CONDICIONES
+    // ═══════════════════════════════════════════════════════════
+
+    public async Task<bool> HasAceptadoTerminosAsync(Guid negocioId)
+    {
+        return await _context.Negocios
+            .AsNoTracking()
+            .Where(n => n.NegocioId == negocioId)
+            .Select(n => n.AceptoTerminos)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<(bool success, string message)> AceptarTerminosAsync(Guid negocioId)
+    {
+        var negocio = await _context.Negocios.FindAsync(negocioId);
+        if (negocio == null)
+            return (false, "Negocio no encontrado");
+
+        negocio.AceptoTerminos = true;
+        negocio.FechaAceptoTerminos = TimeHelper.Now;
+        _context.Update(negocio);
+        await _context.SaveChangesAsync();
+
+        return (true, "Términos aceptados exitosamente");
+    }
+
+    // ═══════════════════════════════════════════════════════════
     // ESTADÍSTICAS DEL DASHBOARD ADMIN
     // ═══════════════════════════════════════════════════════════
 

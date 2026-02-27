@@ -469,6 +469,33 @@ public class VendedorService : IVendedorService
         return await _context.LeadsVendedor.CountAsync(l => !l.Atendido);
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // TÉRMINOS Y CONDICIONES
+    // ═══════════════════════════════════════════════════════════
+
+    public async Task<bool> HasAceptadoTerminosAsync(Guid vendedorId)
+    {
+        return await _context.Vendedores
+            .AsNoTracking()
+            .Where(v => v.VendedorId == vendedorId)
+            .Select(v => v.AceptoTerminos)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<(bool success, string message)> AceptarTerminosAsync(Guid vendedorId)
+    {
+        var vendedor = await _context.Vendedores.FindAsync(vendedorId);
+        if (vendedor == null)
+            return (false, "Vendedor no encontrado");
+
+        vendedor.AceptoTerminos = true;
+        vendedor.FechaAceptoTerminos = TimeHelper.Now;
+        _context.Update(vendedor);
+        await _context.SaveChangesAsync();
+
+        return (true, "Términos aceptados exitosamente");
+    }
+
     public async Task<(bool success, string message)> ActualizarDatosBancariosAsync(
         Guid vendedorId, string nombreBanco, string numeroCuenta, string numeroCedula)
     {

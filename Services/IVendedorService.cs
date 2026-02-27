@@ -197,6 +197,20 @@ public interface IVendedorService
     /// <returns>Número de leads pendientes de atención.</returns>
     Task<int> GetLeadsCountAsync();
 
+    // ═══════════════════════════════════════════════════════════
+    // TÉRMINOS Y CONDICIONES
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Verifica si un vendedor ha aceptado los términos y condiciones.
+    /// </summary>
+    Task<bool> HasAceptadoTerminosAsync(Guid vendedorId);
+
+    /// <summary>
+    /// Marca que un vendedor aceptó los términos y condiciones.
+    /// </summary>
+    Task<(bool success, string message)> AceptarTerminosAsync(Guid vendedorId);
+
     /// <summary>
     /// Permite al vendedor actualizar sus propios datos bancarios para recibir comisiones.
     /// </summary>
