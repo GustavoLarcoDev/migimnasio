@@ -603,8 +603,6 @@ const negocioId = @Json.Serialize(negocioId.ToString());
 const negocioNombre = @Json.Serialize(ViewData["NegocioNombre"] as string ?? "");
 let tablaClientes, tablaLogs, tablaUsuariosDiarios, tablaMovimientos;
 let modoEdicion = false;
-const swalMG = Swal.mixin({ confirmButtonColor: '#3E97FF', cancelButtonColor: '#E4E6EF', cancelButtonText: 'Cancelar', reverseButtons: true, customClass: { popup: 'mg-swal-popup', confirmButton: 'mg-swal-confirm', cancelButton: 'mg-swal-cancel' } });
-
 
 $(document).ready(function () {
     cargarResumen();
@@ -1714,7 +1712,7 @@ function cargarRecibos() {
             { data: null, orderable: false, render: (d,t,r) => `<button class="btn btn-sm btn-outline-primary" onclick="verRecibo('${r.reciboId}')"><i class="bi bi-eye"></i></button>` }
         ],
         order: [[4, 'desc']],
-        language: { emptyTable: 'No hay recibos', info: 'Mostrando _START_ a _END_ de _TOTAL_ recibos', infoEmpty: 'Sin recibos', search: 'Buscar:', lengthMenu: 'Mostrar _MENU_ recibos', paginate: { first: 'Primero', last: 'Ultimo', next: 'Sig.', previous: 'Ant.' } },
+        language: { emptyTable: 'No hay recibos' },
         responsive: true
     });
 }

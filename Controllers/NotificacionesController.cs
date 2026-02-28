@@ -1,143 +1,50 @@
-// ═══════════════════════════════════════════════════════════
-// NotificacionesController.cs — Controlador de notificaciones
-// Maneja la generación automática de alertas de vencimiento,
-// consulta, conteo y marcado de notificaciones como leídas
-// ═══════════════════════════════════════════════════════════
-
 using Gimnasio.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Gimnasio.Controllers;
 
-[Route("Negocios")]
-[Authorize]
-public class NotificacionesController : Controller
+public class NotificacionesController : NegocioBaseController
 {
-    private readonly INotificationService _notificationService;
-    private readonly IAuthService _authService;
+    private readonly INotificationService _service;
 
-    public NotificacionesController(INotificationService notificationService, IAuthService authService)
-    {
-        _notificationService = notificationService;
-        _authService = authService;
-    }
+    public NotificacionesController(INotificationService service, IAuthService authService)
+        : base(authService) => _service = service;
 
-    // ═══════════════════════════════════════════════════════════
-    // CONSULTAS
-    // ═══════════════════════════════════════════════════════════
+    // ── Consultas ──
 
-    /// <summary>
-    /// Obtiene las últimas 50 notificaciones del negocio
-    /// </summary>
     [HttpGet("GetNotificaciones")]
-    public async Task<IActionResult> GetNotificaciones(Guid negocioId)
-    {
-        try
-        {
-            var negocioIdClaim = _authService.GetNegocioId(User);
-            if (!negocioIdClaim.HasValue || negocioId != negocioIdClaim.Value)
-                return Forbid();
+    public Task<IActionResult> GetNotificaciones(Guid negocioId)
+        => Execute(negocioId, async nId => Ok(await _service.GetNotificacionesAsync(nId)));
 
-            var notificaciones = await _notificationService.GetNotificacionesAsync(negocioId);
-            return Ok(notificaciones);
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    /// <summary>
-    /// Obtiene el conteo de notificaciones no leídas (para el badge del sidebar)
-    /// </summary>
     [HttpGet("GetNotificacionesCount")]
-    public async Task<IActionResult> GetNotificacionesCount(Guid negocioId)
-    {
-        try
-        {
-            var negocioIdClaim = _authService.GetNegocioId(User);
-            if (!negocioIdClaim.HasValue || negocioId != negocioIdClaim.Value)
-                return Forbid();
+    public Task<IActionResult> GetNotificacionesCount(Guid negocioId)
+        => Execute(negocioId, async nId => Ok(new { count = await _service.GetNotificacionesCountAsync(nId) }));
 
-            var count = await _notificationService.GetNotificacionesCountAsync(negocioId);
-            return Ok(new { count });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+    // ── Acciones ──
 
-    // ═══════════════════════════════════════════════════════════
-    // ACCIONES
-    // ═══════════════════════════════════════════════════════════
-
-    /// <summary>
-    /// Marca una notificación individual como leída
-    /// </summary>
     [HttpPost("MarcarNotificacionLeida")]
-    public async Task<IActionResult> MarcarLeida(Guid id, Guid negocioId)
-    {
-        try
+    public Task<IActionResult> MarcarLeida(Guid id, Guid negocioId)
+        => Execute(negocioId, async nId =>
         {
-            var negocioIdClaim = _authService.GetNegocioId(User);
-            if (!negocioIdClaim.HasValue || negocioId != negocioIdClaim.Value)
-                return Forbid();
+            var (success, message) = await _service.MarcarLeidaAsync(id, nId);
+            return success
+                ? Ok(new { success = true, message })
+                : NotFound(new { success = false, message });
+        });
 
-            var (success, message) = await _notificationService.MarcarLeidaAsync(id, negocioId);
-            if (!success)
-                return NotFound(new { success = false, message });
-
-            return Ok(new { success = true, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    /// <summary>
-    /// Marca todas las notificaciones del negocio como leídas
-    /// </summary>
     [HttpPost("MarcarTodasNotificacionesLeidas")]
-    public async Task<IActionResult> MarcarTodasLeidas(Guid negocioId)
-    {
-        try
+    public Task<IActionResult> MarcarTodasLeidas(Guid negocioId)
+        => Execute(negocioId, async nId =>
         {
-            var negocioIdClaim = _authService.GetNegocioId(User);
-            if (!negocioIdClaim.HasValue || negocioId != negocioIdClaim.Value)
-                return Forbid();
+            await _service.MarcarTodasLeidasAsync(nId);
+            return Ok(new { success = true, message = "Todas las notificaciones marcadas como leidas" });
+        });
 
-            var (success, message) = await _notificationService.MarcarTodasLeidasAsync(negocioId);
-            return Ok(new { success = true, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    /// <summary>
-    /// Genera notificaciones automáticas para clientes cuya membresía
-    /// vence dentro de los próximos 3 días. Evita duplicados por día.
-    /// Se ejecuta al cargar el dashboard.
-    /// </summary>
     [HttpPost("GenerarNotificaciones")]
-    public async Task<IActionResult> GenerarNotificaciones(Guid negocioId)
-    {
-        try
+    public Task<IActionResult> GenerarNotificaciones(Guid negocioId)
+        => Execute(negocioId, async nId =>
         {
-            var negocioIdClaim = _authService.GetNegocioId(User);
-            if (!negocioIdClaim.HasValue || negocioId != negocioIdClaim.Value)
-                return Forbid();
-
-            var (success, message, count) = await _notificationService.GenerarNotificacionesAsync(negocioId);
+            var (success, message, count) = await _service.GenerarNotificacionesAsync(nId);
             return Ok(new { success = true, message, count });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+        });
 }

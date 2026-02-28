@@ -1,32 +1,18 @@
-// ═══════════════════════════════════════════════════════════════════════════════
-// InventarioController.cs — Controlador de inventario, categorias, POS y recibos
-//
-// Maneja tres grandes bloques funcionales:
-//   1. CRUD de productos y operaciones de stock (compartido por membresias y tienda)
-//   2. Categorias e imagenes de productos (exclusivo del modelo Tienda)
-//   3. Punto de Venta (POS) y envio de recibos (exclusivo del modelo Tienda)
-//
-// Todos los endpoints validan multi-tenancy comparando el NegocioId del
-// claim de sesion con el NegocioId del request para evitar acceso cruzado.
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═══ InventarioController.cs — CRUD productos, stock, categorias, POS y recibos ═══
 
 using Gimnasio.Data;
+using Gimnasio.Helpers;
 using Gimnasio.Models.DTOs;
 using Gimnasio.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Gimnasio.Controllers;
 
-[Route("Negocios")]
-[Authorize]
-public class InventarioController : Controller
+public class InventarioController : NegocioBaseController
 {
-    // ── Dependencias inyectadas ──────────────────────────────────────────────
     private readonly IInventarioService _inventarioService;
     private readonly IVentaProductoService _ventaService;
-    private readonly IAuthService _authService;
     private readonly ApplicationDbContext _context;
     private readonly IEmailService _emailService;
 
@@ -35,56 +21,26 @@ public class InventarioController : Controller
         IVentaProductoService ventaService,
         IAuthService authService,
         ApplicationDbContext context,
-        IEmailService emailService)
+        IEmailService emailService) : base(authService)
     {
         _inventarioService = inventarioService;
         _ventaService = ventaService;
-        _authService = authService;
         _context = context;
         _emailService = emailService;
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // SECCION 1 — CRUD DE PRODUCTOS
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ═══ CRUD de productos ═══
 
-    /// <summary>
-    /// Obtiene la lista completa de productos activos del negocio.
-    /// Devuelve campos calculados como margen unitario y alerta de stock bajo.
-    /// </summary>
     [HttpGet("GetProductos")]
-    public async Task<IActionResult> GetProductos(Guid negocioId)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value)
-                return Forbid();
+    public Task<IActionResult> GetProductos(Guid negocioId)
+        => Execute(negocioId, async nId => Ok(await _inventarioService.GetProductosAsync(nId)));
 
-            var productos = await _inventarioService.GetProductosAsync(negocioId);
-            return Ok(productos);
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    /// <summary>
-    /// Obtiene los datos de un producto especifico para pre-cargar el formulario de edicion.
-    /// </summary>
     [HttpGet("GetProducto")]
-    public async Task<IActionResult> GetProducto(Guid id, Guid negocioId)
-    {
-        try
+    public Task<IActionResult> GetProducto(Guid id, Guid negocioId)
+        => Execute(negocioId, async nId =>
         {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value)
-                return Forbid();
-
-            var producto = await _inventarioService.GetProductoAsync(id, negocioId);
+            var producto = await _inventarioService.GetProductoAsync(id, nId);
             if (producto == null) return NotFound(new { success = false, message = "Producto no encontrado" });
-
             return Ok(new
             {
                 producto.ProductoId,
@@ -95,516 +51,131 @@ public class InventarioController : Controller
                 producto.StockMinimo,
                 producto.CategoriaProductoId
             });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+        });
 
-    /// <summary>
-    /// Crea un nuevo producto en el inventario del negocio.
-    /// Las validaciones de negocio se delegan al servicio, no se hacen aqui.
-    /// </summary>
     [HttpPost("CrearProducto")]
-    public async Task<IActionResult> CrearProducto([FromForm] ProductoCreateDto model)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || model.NegocioId != nId.Value)
-                return Forbid();
+    public Task<IActionResult> CrearProducto([FromForm] ProductoCreateDto model)
+        => Execute(model.NegocioId, async nId => ServiceResult(await _inventarioService.CrearProductoAsync(model)));
 
-            var (success, message, dataId) = await _inventarioService.CrearProductoAsync(model);
-
-            if (!success)
-                return BadRequest(new { success = false, message });
-
-            return Ok(new { success = true, message, dataId });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    /// <summary>
-    /// Edita los metadatos de un producto (nombre, precios, stock minimo).
-    /// No modifica el stock actual — eso se hace via los endpoints de movimiento.
-    /// </summary>
     [HttpPost("EditarProducto")]
-    public async Task<IActionResult> EditarProducto([FromForm] ProductoCreateDto model)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || model.NegocioId != nId.Value)
-                return Forbid();
+    public Task<IActionResult> EditarProducto([FromForm] ProductoCreateDto model)
+        => Execute(model.NegocioId, async nId => ServiceResult(await _inventarioService.EditarProductoAsync(model)));
 
-            var (success, message) = await _inventarioService.EditarProductoAsync(model);
-
-            if (!success)
-                return BadRequest(new { success = false, message });
-
-            return Ok(new { success = true, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    /// <summary>
-    /// Elimina un producto de forma logica (IsActive = false).
-    /// Los movimientos historicos se mantienen para trazabilidad.
-    /// </summary>
     [HttpPost("EliminarProducto")]
-    public async Task<IActionResult> EliminarProducto(Guid id, Guid negocioId)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value)
-                return Forbid();
+    public Task<IActionResult> EliminarProducto(Guid id, Guid negocioId)
+        => Execute(negocioId, async nId => ServiceResult(await _inventarioService.EliminarProductoAsync(id, nId)));
 
-            var (success, message) = await _inventarioService.EliminarProductoAsync(id, negocioId);
+    // ═══ Operaciones de stock ═══
 
-            if (!success)
-                return BadRequest(new { success = false, message });
-
-            return Ok(new { success = true, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // SECCION 2 — OPERACIONES DE STOCK (Venta, Devolucion, Restock, Ajuste)
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    /// <summary>
-    /// Registra la venta de unidades de un producto. Reduce el stock y genera log de ingreso.
-    /// </summary>
     [HttpPost("VenderProducto")]
-    public async Task<IActionResult> VenderProducto(Guid productoId, Guid negocioId, int cantidad, string metodoPago = "Efectivo", string numeroConfirmacion = null)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value)
-                return Forbid();
+    public Task<IActionResult> VenderProducto(Guid productoId, Guid negocioId, int cantidad, string metodoPago = "Efectivo", string numeroConfirmacion = null)
+        => Execute(negocioId, async nId => ServiceResult(await _inventarioService.VenderProductoAsync(productoId, nId, cantidad, metodoPago, numeroConfirmacion)));
 
-            var (success, message) = await _inventarioService.VenderProductoAsync(productoId, negocioId, cantidad, metodoPago, numeroConfirmacion);
-
-            if (!success)
-                return BadRequest(new { success = false, message });
-
-            return Ok(new { success = true, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    /// <summary>
-    /// Registra la devolucion de productos. Incrementa el stock y registra gasto (devolucion de dinero).
-    /// </summary>
     [HttpPost("DevolverProducto")]
-    public async Task<IActionResult> DevolverProducto(Guid productoId, Guid negocioId, int cantidad, string nota)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value)
-                return Forbid();
+    public Task<IActionResult> DevolverProducto(Guid productoId, Guid negocioId, int cantidad, string nota)
+        => Execute(negocioId, async nId => ServiceResult(await _inventarioService.DevolverProductoAsync(productoId, nId, cantidad, nota)));
 
-            var (success, message) = await _inventarioService.DevolverProductoAsync(productoId, negocioId, cantidad, nota);
-
-            if (!success)
-                return BadRequest(new { success = false, message });
-
-            return Ok(new { success = true, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    /// <summary>
-    /// Registra el reabastecimiento de stock por compra a proveedor. Incrementa stock y registra gasto.
-    /// </summary>
     [HttpPost("RestockProducto")]
-    public async Task<IActionResult> RestockProducto(Guid productoId, Guid negocioId, int cantidad, decimal costoTotal)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value)
-                return Forbid();
+    public Task<IActionResult> RestockProducto(Guid productoId, Guid negocioId, int cantidad, decimal costoTotal)
+        => Execute(negocioId, async nId => ServiceResult(await _inventarioService.RestockAsync(productoId, nId, cantidad, costoTotal)));
 
-            var (success, message) = await _inventarioService.RestockAsync(productoId, negocioId, cantidad, costoTotal);
-
-            if (!success)
-                return BadRequest(new { success = false, message });
-
-            return Ok(new { success = true, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    /// <summary>
-    /// Ajusta el stock del sistema para que coincida con el conteo fisico real.
-    /// Financieramente neutro (no es ingreso ni gasto).
-    /// </summary>
     [HttpPost("AjustarStock")]
-    public async Task<IActionResult> AjustarStock(Guid productoId, Guid negocioId, int stockReal, string nota)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value)
-                return Forbid();
+    public Task<IActionResult> AjustarStock(Guid productoId, Guid negocioId, int stockReal, string nota)
+        => Execute(negocioId, async nId => ServiceResult(await _inventarioService.AjustarStockAsync(productoId, nId, stockReal, nota)));
 
-            var (success, message) = await _inventarioService.AjustarStockAsync(productoId, negocioId, stockReal, nota);
+    // ═══ Consultas y reportes ═══
 
-            if (!success)
-                return BadRequest(new { success = false, message });
-
-            return Ok(new { success = true, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    // SECCION 3 — CONSULTAS Y REPORTES DE INVENTARIO
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    /// <summary>
-    /// Obtiene el historial completo de movimientos de inventario (ventas, devoluciones, restocks, ajustes).
-    /// </summary>
     [HttpGet("GetMovimientos")]
-    public async Task<IActionResult> GetMovimientos(Guid negocioId)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value)
-                return Forbid();
+    public Task<IActionResult> GetMovimientos(Guid negocioId)
+        => Execute(negocioId, async nId => Ok(await _inventarioService.GetMovimientosAsync(nId)));
 
-            var movimientos = await _inventarioService.GetMovimientosAsync(negocioId);
-            return Ok(movimientos);
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    /// <summary>
-    /// Obtiene estadisticas del inventario para los widgets del dashboard
-    /// (total productos, stock bajo, ventas del dia, valor total del inventario).
-    /// </summary>
     [HttpGet("GetInventarioStats")]
-    public async Task<IActionResult> GetInventarioStats(Guid negocioId)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value)
-                return Forbid();
+    public Task<IActionResult> GetInventarioStats(Guid negocioId)
+        => Execute(negocioId, async nId => Ok(await _inventarioService.GetInventarioStatsAsync(nId)));
 
-            var stats = await _inventarioService.GetInventarioStatsAsync(negocioId);
-            return Ok(stats);
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    /// <summary>
-    /// Exporta el inventario completo a un archivo Excel (.xlsx) con dos hojas:
-    /// "Productos" (catalogo actual) y "Movimientos" (historial de operaciones).
-    /// </summary>
     [HttpGet("ExportInventarioExcel")]
-    public async Task<IActionResult> ExportInventarioExcel(Guid negocioId)
-    {
-        try
+    public Task<IActionResult> ExportInventarioExcel(Guid negocioId)
+        => Execute(negocioId, async nId =>
         {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value)
-                return Forbid();
-
-            var content = await _inventarioService.ExportInventarioExcelAsync(negocioId);
+            var content = await _inventarioService.ExportInventarioExcelAsync(nId);
             return File(content,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 $"Inventario_{TimeHelper.Now:yyyyMMdd}.xlsx");
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+        });
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // SECCION 4 — CATEGORIAS E IMAGENES (exclusivo modelo Tienda)
-    //
-    // Las categorias permiten agrupar productos en pestanas (tabs) dentro del
-    // catalogo y del POS. El orden es configurable via drag & drop.
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ═══ Categorias e imagenes ═══
 
-    /// <summary>
-    /// Obtiene todas las categorias del negocio con sus productos activos incluidos.
-    /// </summary>
     [HttpGet("GetCategorias")]
-    public async Task<IActionResult> GetCategorias(Guid negocioId)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
+    public Task<IActionResult> GetCategorias(Guid negocioId)
+        => Execute(negocioId, async nId => Ok(await _inventarioService.GetCategoriasAsync(nId)));
 
-            var categorias = await _inventarioService.GetCategoriasAsync(negocioId);
-            return Ok(categorias);
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    /// <summary>
-    /// Crea una nueva categoria de productos. Se asigna al final del orden existente.
-    /// </summary>
     [HttpPost("CrearCategoria")]
-    public async Task<IActionResult> CrearCategoria([FromForm] Guid negocioId, [FromForm] string nombre)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
+    public Task<IActionResult> CrearCategoria([FromForm] Guid negocioId, [FromForm] string nombre)
+        => Execute(negocioId, async nId => ServiceResult(await _inventarioService.CrearCategoriaAsync(nId, nombre)));
 
-            var (success, message) = await _inventarioService.CrearCategoriaAsync(negocioId, nombre);
-            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    /// <summary>
-    /// Elimina una categoria. Los productos que pertenecian a ella quedan sin categoria (null).
-    /// </summary>
     [HttpPost("EliminarCategoria")]
-    public async Task<IActionResult> EliminarCategoria([FromForm] Guid id, [FromForm] Guid negocioId)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
+    public Task<IActionResult> EliminarCategoria([FromForm] Guid id, [FromForm] Guid negocioId)
+        => Execute(negocioId, async nId => ServiceResult(await _inventarioService.EliminarCategoriaAsync(id, nId)));
 
-            var (success, message) = await _inventarioService.EliminarCategoriaAsync(id, negocioId);
-            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    /// <summary>
-    /// Mueve un producto a otra categoria (drag & drop).
-    /// </summary>
     [HttpPost("CambiarCategoriaProducto")]
     [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> CambiarCategoriaProducto([FromBody] CambiarCategoriaRequest req)
-    {
-        try
+    public Task<IActionResult> CambiarCategoriaProducto([FromBody] CambiarCategoriaRequest req)
+        => ExecuteSelf(async nId =>
         {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue) return Forbid();
-
-            var producto = await _context.Productos.FirstOrDefaultAsync(p => p.ProductoId == req.ProductoId && p.NegocioId == nId.Value);
+            var producto = await _context.Productos.FirstOrDefaultAsync(p => p.ProductoId == req.ProductoId && p.NegocioId == nId);
             if (producto == null) return NotFound(new { success = false, message = "Producto no encontrado" });
-
             producto.CategoriaProductoId = req.CategoriaProductoId;
             await _context.SaveChangesAsync();
             return Ok(new { success = true, message = "Categoria actualizada" });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+        });
 
-    /// <summary>
-    /// Reordena las categorias segun el orden de IDs recibido (drag & drop del frontend).
-    /// </summary>
     [HttpPost("ReordenarCategorias")]
-    public async Task<IActionResult> ReordenarCategorias([FromBody] List<Guid> categoriasIds, [FromQuery] Guid negocioId)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
+    public Task<IActionResult> ReordenarCategorias([FromBody] List<Guid> categoriasIds, [FromQuery] Guid negocioId)
+        => Execute(negocioId, async nId => ServiceResult(await _inventarioService.ReordenarCategoriasAsync(nId, categoriasIds)));
 
-            var (success, message) = await _inventarioService.ReordenarCategoriasAsync(negocioId, categoriasIds);
-            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    /// <summary>
-    /// Mueve un producto de una categoria a otra (o lo deja sin categoria si categoriaId es null).
-    /// </summary>
     [HttpPost("MoverProductoDeCategoria")]
-    public async Task<IActionResult> MoverProductoDeCategoria([FromForm] Guid productoId, [FromForm] Guid? categoriaId, [FromForm] Guid negocioId)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
+    public Task<IActionResult> MoverProductoDeCategoria([FromForm] Guid productoId, [FromForm] Guid? categoriaId, [FromForm] Guid negocioId)
+        => Execute(negocioId, async nId => ServiceResult(await _inventarioService.MoverProductoDeCategoriaAsync(productoId, nId, categoriaId)));
 
-            var (success, message) = await _inventarioService.MoverProductoDeCategoriaAsync(productoId, negocioId, categoriaId);
-            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    /// <summary>
-    /// Sube una imagen para un producto. Validaciones:
-    ///   - Tamaño máximo: 2 MB
-    ///   - Formatos permitidos: .jpg, .jpeg, .png, .webp
-    /// La imagen se convierte a Base64 data URI y se almacena en la BD.
-    /// Esto funciona en cualquier entorno de producción sin depender del filesystem.
-    /// </summary>
     [HttpPost("SubirImagenProducto")]
-    public async Task<IActionResult> SubirImagenProducto([FromForm] Guid productoId, [FromForm] Guid negocioId, IFormFile imagen)
-    {
-        try
+    public Task<IActionResult> SubirImagenProducto([FromForm] Guid productoId, [FromForm] Guid negocioId, IFormFile imagen)
+        => Execute(negocioId, async nId =>
         {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
+            var (valid, error, dataUri) = await ImageUploadHelper.ProcessAsync(imagen);
+            if (!valid) return BadRequest(new { success = false, message = error });
 
-            if (imagen == null || imagen.Length == 0)
-                return BadRequest(new { success = false, message = "No se ha proporcionado ninguna imagen." });
-
-            if (imagen.Length > 2 * 1024 * 1024)
-                return BadRequest(new { success = false, message = "La imagen no debe superar los 2MB." });
-
-            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp" };
-            var extension = Path.GetExtension(imagen.FileName).ToLowerInvariant();
-            if (!allowedExtensions.Contains(extension))
-                return BadRequest(new { success = false, message = "Formato de imagen no permitido." });
-
-            // Convertir a Base64 data URI para almacenar en BD (producción-safe)
-            var mimeType = extension switch
-            {
-                ".jpg" or ".jpeg" => "image/jpeg",
-                ".png" => "image/png",
-                ".webp" => "image/webp",
-                _ => "image/jpeg"
-            };
-
-            using var ms = new MemoryStream();
-            await imagen.CopyToAsync(ms);
-            var base64 = Convert.ToBase64String(ms.ToArray());
-            var dataUri = $"data:{mimeType};base64,{base64}";
-
-            var (success, message) = await _inventarioService.CambiarImagenProductoAsync(productoId, negocioId, dataUri);
-
+            var (success, message) = await _inventarioService.CambiarImagenProductoAsync(productoId, nId, dataUri!);
             return success ? Ok(new { success, message, url = dataUri }) : BadRequest(new { success, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+        });
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // SECCION 5 — PUNTO DE VENTA (POS) — exclusivo modelo Tienda
-    //
-    // El POS permite procesar ventas con multiples productos en una sola orden,
-    // calcular IVA y descuentos, y generar recibos automaticamente.
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ═══ Punto de Venta (POS) ═══
 
-    /// <summary>
-    /// Procesa una venta completa desde el POS. Flujo:
-    ///   1. Valida que la orden tenga al menos un item
-    ///   2. Descuenta stock de cada producto vendido
-    ///   3. Calcula subtotal, IVA y total con descuento
-    ///   4. Genera un recibo HTML profesional
-    ///   5. Registra un log financiero de la venta
-    /// Todo dentro de una transaccion para garantizar consistencia.
-    /// </summary>
     [HttpPost("ProcesarVentaPOS")]
     [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> ProcesarVentaPOS([FromBody] OrdenVentaCreateRequest request)
-    {
-        try
+    public Task<IActionResult> ProcesarVentaPOS([FromBody] OrdenVentaCreateRequest request)
+        => ExecuteSelf(async nId =>
         {
-            var nId = _authService.GetNegocioId(User);
-            if (nId == null) return Forbid();
-
             if (request == null || request.Items == null || !request.Items.Any())
                 return BadRequest(new { success = false, message = "Orden vacía." });
 
             var res = await _ventaService.RegistrarVentaAsync(
-                nId.Value,
-                request.NombreCliente,
-                request.EmailCliente,
-                request.Items,
-                request.DescuentoAdicional,
-                request.PorcentajeIva,
-                request.TipoOrden,
-                request.MesaId,
-                request.EmpleadoId,
-                request.DireccionEntrega,
-                request.MetodoPago,
-                request.NumeroConfirmacion,
-                request.CargosExtra
-            );
+                nId, request.NombreCliente, request.EmailCliente,
+                request.Items, request.DescuentoAdicional, request.PorcentajeIva,
+                request.TipoOrden, request.MesaId, request.EmpleadoId,
+                request.DireccionEntrega, request.MetodoPago,
+                request.NumeroConfirmacion, request.CargosExtra);
 
             if (!res.success)
                 return BadRequest(new { success = false, message = res.message });
 
             return Ok(new { success = true, message = res.message, ordenId = res.ordenId, reciboId = res.reciboId });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+        });
 
-    /// <summary>
-    /// Obtiene el listado de todas las ordenes de venta del negocio (historial POS).
-    /// </summary>
     [HttpGet("GetOrdenesVenta")]
-    public async Task<IActionResult> GetOrdenesVenta(Guid negocioId)
-    {
-        try
+    public Task<IActionResult> GetOrdenesVenta(Guid negocioId)
+        => Execute(negocioId, async nId =>
         {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
-
-            var ordenes = await _ventaService.GetOrdenesVentaAsync(negocioId);
+            var ordenes = await _ventaService.GetOrdenesVentaAsync(nId);
             return Ok(ordenes.Select(o => new
             {
                 o.OrdenVentaId,
@@ -620,28 +191,14 @@ public class InventarioController : Controller
                 o.MetodoPago,
                 Items = o.Detalles.Count
             }));
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+        });
 
-    /// <summary>
-    /// Obtiene el detalle completo de una orden de venta especifica, incluyendo
-    /// todos los productos vendidos con cantidad, precio unitario y subtotal.
-    /// </summary>
     [HttpGet("GetOrdenVenta")]
-    public async Task<IActionResult> GetOrdenVenta(Guid ordenId, Guid negocioId)
-    {
-        try
+    public Task<IActionResult> GetOrdenVenta(Guid ordenId, Guid negocioId)
+        => Execute(negocioId, async nId =>
         {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
-
-            var orden = await _ventaService.GetOrdenVentaAsync(ordenId, negocioId);
+            var orden = await _ventaService.GetOrdenVentaAsync(ordenId, nId);
             if (orden == null) return NotFound();
-
             return Ok(new
             {
                 orden.OrdenVentaId,
@@ -663,42 +220,25 @@ public class InventarioController : Controller
                     d.Subtotal
                 })
             });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+        });
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // SECCION 6 — ENVIO DE RECIBOS (email y WhatsApp)
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ═══ Envio de recibos ═══
 
-    /// <summary>
-    /// Envia un recibo existente al cliente por email o WhatsApp.
-    /// El recibo ya fue generado y guardado en BD durante la venta POS;
-    /// aqui solo se recupera y se envia al destino indicado.
-    /// </summary>
     [HttpPost("EnviarRecibo")]
-    public async Task<IActionResult> EnviarRecibo([FromForm] Guid reciboId, [FromForm] Guid negocioId, [FromForm] string destino, [FromForm] string tipo)
-    {
-        try
+    public Task<IActionResult> EnviarRecibo([FromForm] Guid reciboId, [FromForm] Guid negocioId, [FromForm] string destino, [FromForm] string tipo)
+        => Execute(negocioId, async nId =>
         {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
             if (string.IsNullOrWhiteSpace(destino))
                 return BadRequest(new { success = false, message = "Destino requerido" });
 
-            // Buscar el recibo en la BD con filtro de NegocioId para seguridad multi-tenant
             var recibo = await _context.Recibos
                 .AsNoTracking()
-                .FirstOrDefaultAsync(r => r.ReciboId == reciboId && r.NegocioId == negocioId);
+                .FirstOrDefaultAsync(r => r.ReciboId == reciboId && r.NegocioId == nId);
             if (recibo == null)
                 return NotFound(new { success = false, message = "Recibo no encontrado" });
 
             if (tipo == "email")
             {
-                // Enviar el HTML completo del recibo como cuerpo del correo
                 var enviado = await _emailService.EnviarReciboPorEmailGenericoAsync(
                     destino,
                     $"Tu recibo de compra #{recibo.NumeroRecibo:D6} - {recibo.NegocioNombre}",
@@ -707,44 +247,19 @@ public class InventarioController : Controller
             }
 
             return BadRequest(new { success = false, message = "Tipo de envio no soportado" });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+        });
 
-    // ═══════════════════════════════════════════════════════════════════════════
-    // SECCION 7 — RESUMEN DE VENTAS POR CATEGORIA
-    // ═══════════════════════════════════════════════════════════════════════════
+    // ═══ Ventas por categoria y productos mas vendidos ═══
 
-    /// <summary>
-    /// Retorna las ventas agrupadas por categoria de producto.
-    /// Incluye nombre de categoria, total vendido y cantidad de unidades.
-    /// </summary>
-    /// <summary>
-    /// Top 10 productos más vendidos en el periodo, agrupados por nombre de producto.
-    /// </summary>
     [HttpGet("GetProductosMasVendidos")]
-    public async Task<IActionResult> GetProductosMasVendidos(Guid negocioId, string periodo = "mes")
-    {
-        try
+    public Task<IActionResult> GetProductosMasVendidos(Guid negocioId, string periodo = "mes")
+        => Execute(negocioId, async nId =>
         {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
-
-            var ahora = TimeHelper.Now;
-            DateTime desde = periodo switch
-            {
-                "dia" => ahora.Date,
-                "semana" => ahora.Date.AddDays(-(int)ahora.DayOfWeek),
-                _ => new DateTime(ahora.Year, ahora.Month, 1)
-            };
-
+            var desde = DateHelper.GetDesde(periodo);
             var datos = await _context.DetallesOrdenVenta
                 .Include(d => d.OrdenVenta)
                 .Include(d => d.Producto)
-                .Where(d => d.OrdenVenta.NegocioId == negocioId && d.OrdenVenta.FechaCreacion >= desde)
+                .Where(d => d.OrdenVenta.NegocioId == nId && d.OrdenVenta.FechaCreacion >= desde)
                 .GroupBy(d => d.Producto.Nombre)
                 .Select(g => new
                 {
@@ -755,36 +270,19 @@ public class InventarioController : Controller
                 .OrderByDescending(x => x.unidades)
                 .Take(10)
                 .ToListAsync();
-
             return Ok(datos);
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+        });
 
     [HttpGet("GetVentasPorCategoria")]
-    public async Task<IActionResult> GetVentasPorCategoria(Guid negocioId, string periodo = "mes")
-    {
-        try
+    public Task<IActionResult> GetVentasPorCategoria(Guid negocioId, string periodo = "mes")
+        => Execute(negocioId, async nId =>
         {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
-
-            var ahora = TimeHelper.Now;
-            DateTime desde = periodo switch
-            {
-                "dia" => ahora.Date,
-                "semana" => ahora.Date.AddDays(-(int)ahora.DayOfWeek),
-                _ => new DateTime(ahora.Year, ahora.Month, 1)
-            };
-
+            var desde = DateHelper.GetDesde(periodo);
             var datos = await _context.DetallesOrdenVenta
                 .Include(d => d.OrdenVenta)
                 .Include(d => d.Producto)
                     .ThenInclude(p => p.Categoria)
-                .Where(d => d.OrdenVenta.NegocioId == negocioId && d.OrdenVenta.FechaCreacion >= desde)
+                .Where(d => d.OrdenVenta.NegocioId == nId && d.OrdenVenta.FechaCreacion >= desde)
                 .GroupBy(d => d.Producto.Categoria != null ? d.Producto.Categoria.Nombre : "Sin Categoria")
                 .Select(g => new
                 {
@@ -794,14 +292,8 @@ public class InventarioController : Controller
                 })
                 .OrderByDescending(x => x.totalVentas)
                 .ToListAsync();
-
             return Ok(datos);
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+        });
 }
 
 public class CambiarCategoriaRequest

@@ -1,178 +1,57 @@
-// ═══════════════════════════════════════════════════════════
-// LogsController.cs — Controlador de registros/logs del negocio
-// Maneja la creación manual de logs (ingresos/gastos),
-// consulta, eliminación y exportación Excel de registros
-// ═══════════════════════════════════════════════════════════
-
 using Gimnasio.Models.DTOs;
 using Gimnasio.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Gimnasio.Controllers;
 
-[Route("Negocios")]
-[Authorize]
-public class LogsController : Controller
+public class LogsController : NegocioBaseController
 {
     private readonly ILogService _logService;
-    private readonly IAuthService _authService;
 
     public LogsController(ILogService logService, IAuthService authService)
-    {
-        _logService = logService;
-        _authService = authService;
-    }
+        : base(authService) => _logService = logService;
 
-    // ═══════════════════════════════════════════════════════════
-    // CREAR LOG MANUAL
-    // ═══════════════════════════════════════════════════════════
+    // ── Crear ──
 
-    /// <summary>
-    /// Crea un registro manual de ingreso o gasto.
-    /// El tipo se asigna automáticamente según el signo del monto.
-    /// </summary>
     [HttpPost("CrearLog")]
-    public async Task<IActionResult> CrearLog([FromForm] LogCreateDto model)
-    {
-        try
-        {
-            var negocioId = _authService.GetNegocioId(User);
-            if (!negocioId.HasValue || model.NegocioId != negocioId.Value)
-                return Forbid();
+    public Task<IActionResult> CrearLog([FromForm] LogCreateDto model)
+        => Execute(model.NegocioId, async nId => ServiceResult(await _logService.CrearLogManualAsync(nId, model.Message, model.Monto)));
 
-            var (success, message) = await _logService.CrearLogManualAsync(model.NegocioId, model.Message, model.Monto);
+    // ── Consultas ──
 
-            if (!success)
-                return BadRequest(new { success = false, message });
-
-            return Ok(new { success = true, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    // CONSULTAS
-    // ═══════════════════════════════════════════════════════════
-
-    /// <summary>
-    /// Obtiene todos los logs del negocio ordenados por fecha descendente
-    /// </summary>
     [HttpGet("GetLogs")]
-    public async Task<IActionResult> GetLogs(Guid negocioId)
-    {
-        try
-        {
-            var gymId = _authService.GetNegocioId(User);
-            if (!gymId.HasValue || negocioId != gymId.Value)
-                return Forbid();
+    public Task<IActionResult> GetLogs(Guid negocioId)
+        => Execute(negocioId, async nId => Ok(await _logService.GetLogsAsync(nId)));
 
-            var logs = await _logService.GetLogsAsync(negocioId);
-            return Ok(logs);
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    /// <summary>
-    /// Obtiene un log individual por su ID
-    /// </summary>
     [HttpGet("GetLog")]
-    public async Task<IActionResult> GetLog(Guid id, Guid negocioId)
-    {
-        try
+    public Task<IActionResult> GetLog(Guid id, Guid negocioId)
+        => Execute(negocioId, async nId =>
         {
-            var gymId = _authService.GetNegocioId(User);
-            if (!gymId.HasValue || negocioId != gymId.Value)
-                return Forbid();
-
-            var log = await _logService.GetLogAsync(id, negocioId);
+            var log = await _logService.GetLogAsync(id, nId);
             if (log == null)
                 return NotFound(new { success = false, message = "Log no encontrado" });
-
             return Ok(log);
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+        });
 
-    /// <summary>
-    /// Obtiene la fecha del log más antiguo del negocio (para filtros de fecha)
-    /// </summary>
     [HttpGet("GetOldestLogDate")]
-    public async Task<IActionResult> GetOldestLogDate(Guid negocioId)
-    {
-        try
-        {
-            var gymId = _authService.GetNegocioId(User);
-            if (!gymId.HasValue || negocioId != gymId.Value)
-                return Forbid();
+    public Task<IActionResult> GetOldestLogDate(Guid negocioId)
+        => Execute(negocioId, async nId => Ok(new { fecha = await _logService.GetOldestLogDateAsync(nId) }));
 
-            var oldest = await _logService.GetOldestLogDateAsync(negocioId);
-            return Ok(new { fecha = oldest });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+    // ── Eliminar ──
 
-    // ═══════════════════════════════════════════════════════════
-    // ELIMINAR
-    // ═══════════════════════════════════════════════════════════
-
-    /// <summary>
-    /// Elimina todos los logs del negocio (acción irreversible)
-    /// </summary>
     [HttpPost("EliminarTodosLogs")]
-    public async Task<IActionResult> EliminarTodosLogs(Guid negocioId)
-    {
-        try
-        {
-            var gymId = _authService.GetNegocioId(User);
-            if (!gymId.HasValue || negocioId != gymId.Value)
-                return Forbid();
+    public Task<IActionResult> EliminarTodosLogs(Guid negocioId)
+        => Execute(negocioId, async nId => ServiceResult(await _logService.EliminarTodosLogsAsync(nId)));
 
-            var (success, message) = await _logService.EliminarTodosLogsAsync(negocioId);
-            return Ok(new { success, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+    // ── Excel ──
 
-    // ═══════════════════════════════════════════════════════════
-    // EXPORTACIÓN EXCEL
-    // ═══════════════════════════════════════════════════════════
-
-    /// <summary>
-    /// Exporta todos los logs a Excel con resumen de ingresos, gastos y balance
-    /// </summary>
     [HttpGet("ExportLogsExcel")]
-    public async Task<IActionResult> ExportLogsExcel(Guid negocioId)
-    {
-        try
+    public Task<IActionResult> ExportLogsExcel(Guid negocioId)
+        => Execute(negocioId, async nId =>
         {
-            var gymId = _authService.GetNegocioId(User);
-            if (!gymId.HasValue || negocioId != gymId.Value)
-                return Forbid();
-
-            var content = await _logService.ExportLogsExcelAsync(negocioId);
+            var content = await _logService.ExportLogsExcelAsync(nId);
             return File(content,
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 $"Logs_{TimeHelper.Now:yyyyMMdd}.xlsx");
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+        });
 }

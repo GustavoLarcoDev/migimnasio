@@ -2005,3 +2005,53 @@ body {
         min-height: 44px;
     }
 }
+
+/* ════════════════════════════════════════════════════════════════
+   Estilo unificado para modales de formulario (.mg-modal)
+   Aplica bordes redondeados y padding consistente a modales Bootstrap
+   para que visualmente armonicen con los SweetAlert2.
+   ════════════════════════════════════════════════════════════════ */
+.mg-modal .modal-content {
+    border-radius: 20px;
+    border: 0;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+}
+
+.mg-modal .modal-header {
+    border-bottom: 1px solid var(--mg-border-color, #EFF2F5);
+    padding: 1.5rem 1.5rem 1rem;
+    border-radius: 20px 20px 0 0;
+}
+
+.mg-modal .modal-title {
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+.mg-modal .modal-body {
+    padding: 1.25rem 1.5rem;
+}
+
+.mg-modal .modal-footer {
+    border-top: 0;
+    padding: 0.5rem 1.5rem 1.5rem;
+    border-radius: 0 0 20px 20px;
+}
+
+.mg-modal .btn-close {
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.mg-modal .btn-close:hover {
+    opacity: 1;
+}
+
+[data-theme="dark"] .mg-modal .modal-content {
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+}
+
+/* SweetAlert2 popup refinements */
+.mg-swal-popup {
+    border-radius: 20px !important;
+}

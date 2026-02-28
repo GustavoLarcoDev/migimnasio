@@ -1,9 +1,4 @@
-// ═══════════════════════════════════════════════════════════════════════════════
-// RestauranteController.cs — Mesas, Menus y endpoints publicos del restaurante
-//
-// Rutas publicas bajo /Restaurante (menus compartibles sin login).
-// Rutas CRUD bajo /Negocios (consistente con el resto de controladores).
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═══ RestauranteController.cs — Menus publicos + CRUD mesas/menus/reservas ═══
 
 using Gimnasio.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -11,9 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Gimnasio.Controllers;
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// PARTE 1 — Endpoints publicos del menu (AllowAnonymous)
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═══ PARTE 1 — Endpoints publicos del menu (ruta /Restaurante) ═══
 
 [Route("Restaurante")]
 [Authorize]
@@ -33,9 +26,6 @@ public class RestauranteController : Controller
         _emailService = emailService;
     }
 
-    /// <summary>
-    /// Vista publica del menu HTML (compartible por link sin autenticacion).
-    /// </summary>
     [HttpGet("VerMenu")]
     [AllowAnonymous]
     public async Task<IActionResult> VerMenu(Guid negocioId, Guid menuId)
@@ -49,9 +39,6 @@ public class RestauranteController : Controller
         return Content(html, "text/html");
     }
 
-    /// <summary>
-    /// Descarga/imprime el menu con window.print() inyectado.
-    /// </summary>
     [HttpGet("DescargarMenu")]
     public async Task<IActionResult> DescargarMenu(Guid menuId)
     {
@@ -65,9 +52,6 @@ public class RestauranteController : Controller
         return Content(html, "text/html");
     }
 
-    /// <summary>
-    /// Envia el link del menu por email o WhatsApp.
-    /// </summary>
     [HttpPost("EnviarMenu")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EnviarMenu([FromForm] Guid menuId, [FromForm] string destino, [FromForm] string tipo)
@@ -106,15 +90,10 @@ public class RestauranteController : Controller
     }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// PARTE 2 — CRUD de Mesas y Menus (bajo ruta /Negocios)
-// ═══════════════════════════════════════════════════════════════════════════════
+// ═══ PARTE 2 — CRUD mesas, menus y reservas (ruta /Negocios) ═══
 
-[Route("Negocios")]
-[Authorize]
-public class RestauranteCrudController : Controller
+public class RestauranteCrudController : NegocioBaseController
 {
-    private readonly IAuthService _authService;
     private readonly IMesaService _mesaService;
     private readonly IMenuRestauranteService _menuService;
     private readonly IReservaService _reservaService;
@@ -123,151 +102,59 @@ public class RestauranteCrudController : Controller
         IAuthService authService,
         IMesaService mesaService,
         IMenuRestauranteService menuService,
-        IReservaService reservaService)
+        IReservaService reservaService) : base(authService)
     {
-        _authService = authService;
         _mesaService = mesaService;
         _menuService = menuService;
         _reservaService = reservaService;
     }
 
-    // ── Mesas ──────────────────────────────────────────────────
+    // ═══ Mesas ═══
 
     [HttpGet("GetMesas")]
-    public async Task<IActionResult> GetMesas(Guid negocioId)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
-
-            var mesas = await _mesaService.GetMesasAsync(negocioId);
-            return Ok(mesas);
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+    public Task<IActionResult> GetMesas(Guid negocioId)
+        => Execute(negocioId, async nId => Ok(await _mesaService.GetMesasAsync(nId)));
 
     [HttpGet("GetMesa")]
-    public async Task<IActionResult> GetMesa(Guid mesaId)
-    {
-        try
+    public Task<IActionResult> GetMesa(Guid mesaId)
+        => ExecuteSelf(async nId =>
         {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue) return Forbid();
-
-            var mesa = await _mesaService.GetMesaAsync(mesaId, nId.Value);
+            var mesa = await _mesaService.GetMesaAsync(mesaId, nId);
             if (mesa == null) return NotFound(new { success = false, message = "Mesa no encontrada" });
             return Ok(mesa);
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+        });
 
     [HttpPost("CrearMesa")]
     [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> CrearMesa([FromBody] MesaRequest req)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue) return Forbid();
-
-            var (success, message) = await _mesaService.CrearMesaAsync(nId.Value, req.Nombre, req.Numero, req.Capacidad);
-            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+    public Task<IActionResult> CrearMesa([FromBody] MesaRequest req)
+        => ExecuteSelf(async nId => ServiceResult(await _mesaService.CrearMesaAsync(nId, req.Nombre, req.Numero, req.Capacidad)));
 
     [HttpPost("EditarMesa")]
     [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> EditarMesa([FromBody] MesaRequest req)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue) return Forbid();
-
-            var (success, message) = await _mesaService.EditarMesaAsync(req.MesaId, nId.Value, req.Nombre, req.Numero, req.Capacidad);
-            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+    public Task<IActionResult> EditarMesa([FromBody] MesaRequest req)
+        => ExecuteSelf(async nId => ServiceResult(await _mesaService.EditarMesaAsync(req.MesaId, nId, req.Nombre, req.Numero, req.Capacidad)));
 
     [HttpPost("CambiarEstadoMesa")]
     [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> CambiarEstadoMesa([FromBody] CambiarEstadoMesaRequest req)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue) return Forbid();
-
-            var (success, message) = await _mesaService.CambiarEstadoMesaAsync(req.MesaId, nId.Value, req.Estado);
-            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+    public Task<IActionResult> CambiarEstadoMesa([FromBody] CambiarEstadoMesaRequest req)
+        => ExecuteSelf(async nId => ServiceResult(await _mesaService.CambiarEstadoMesaAsync(req.MesaId, nId, req.Estado)));
 
     [HttpPost("EliminarMesa")]
     [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> EliminarMesa([FromBody] EliminarMesaRequest req)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue) return Forbid();
+    public Task<IActionResult> EliminarMesa([FromBody] EliminarMesaRequest req)
+        => ExecuteSelf(async nId => ServiceResult(await _mesaService.EliminarMesaAsync(req.MesaId, nId)));
 
-            var (success, message) = await _mesaService.EliminarMesaAsync(req.MesaId, nId.Value);
-            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
-
-    // ── Menus ──────────────────────────────────────────────────
+    // ═══ Menus ═══
 
     [HttpGet("GetMenus")]
-    public async Task<IActionResult> GetMenus(Guid negocioId)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue || negocioId != nId.Value) return Forbid();
-
-            var menus = await _menuService.GetMenusAsync(negocioId);
-            return Ok(menus);
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+    public Task<IActionResult> GetMenus(Guid negocioId)
+        => Execute(negocioId, async nId => Ok(await _menuService.GetMenusAsync(nId)));
 
     [HttpGet("GetMenu")]
-    public async Task<IActionResult> GetMenu(Guid menuId)
-    {
-        try
+    public Task<IActionResult> GetMenu(Guid menuId)
+        => ExecuteSelf(async nId =>
         {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue) return Forbid();
-
-            var menu = await _menuService.GetMenuAsync(menuId, nId.Value);
+            var menu = await _menuService.GetMenuAsync(menuId, nId);
             if (menu == null) return NotFound(new { success = false, message = "Menu no encontrado" });
             return Ok(new
             {
@@ -279,171 +166,85 @@ public class RestauranteCrudController : Controller
                 menu.Estilo,
                 menu.FechaCreacion
             });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+        });
 
     [HttpPost("CrearMenu")]
     [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> CrearMenu([FromBody] MenuRestauranteDto dto)
-    {
-        try
+    public Task<IActionResult> CrearMenu([FromBody] MenuRestauranteDto dto)
+        => ExecuteSelf(async nId =>
         {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue) return Forbid();
-            dto.NegocioId = nId.Value;
-
-            var (success, message) = await _menuService.CrearMenuAsync(dto);
-            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+            dto.NegocioId = nId;
+            return ServiceResult(await _menuService.CrearMenuAsync(dto));
+        });
 
     [HttpPost("EditarMenu")]
     [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> EditarMenu([FromBody] MenuRestauranteDto dto)
-    {
-        try
+    public Task<IActionResult> EditarMenu([FromBody] MenuRestauranteDto dto)
+        => ExecuteSelf(async nId =>
         {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue) return Forbid();
-            dto.NegocioId = nId.Value;
-
-            var (success, message) = await _menuService.EditarMenuAsync(dto);
-            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+            dto.NegocioId = nId;
+            return ServiceResult(await _menuService.EditarMenuAsync(dto));
+        });
 
     [HttpPost("CambiarDisponibilidadMenu")]
     [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> CambiarDisponibilidadMenu([FromBody] EliminarMenuRequest req)
-    {
-        try
+    public Task<IActionResult> CambiarDisponibilidadMenu([FromBody] EliminarMenuRequest req)
+        => ExecuteSelf(async nId =>
         {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue) return Forbid();
-
-            var (success, message, disponible) = await _menuService.CambiarDisponibilidadMenuAsync(req.MenuId, nId.Value);
+            var (success, message, disponible) = await _menuService.CambiarDisponibilidadMenuAsync(req.MenuId, nId);
             return success ? Ok(new { success, message, disponible }) : BadRequest(new { success, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+        });
 
     [HttpPost("EliminarMenu")]
     [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> EliminarMenu([FromBody] EliminarMenuRequest req)
-    {
-        try
-        {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue) return Forbid();
-
-            var (success, message) = await _menuService.EliminarMenuAsync(req.MenuId, nId.Value);
-            return success ? Ok(new { success, message }) : BadRequest(new { success, message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+    public Task<IActionResult> EliminarMenu([FromBody] EliminarMenuRequest req)
+        => ExecuteSelf(async nId => ServiceResult(await _menuService.EliminarMenuAsync(req.MenuId, nId)));
 
     [HttpGet("PreviewMenu")]
-    public async Task<IActionResult> PreviewMenu(Guid menuId)
-    {
-        try
+    public Task<IActionResult> PreviewMenu(Guid menuId)
+        => ExecuteSelf(async nId =>
         {
-            var nId = _authService.GetNegocioId(User);
-            if (!nId.HasValue) return Forbid();
-
-            var html = await _menuService.GenerarHtmlMenuAsync(menuId, nId.Value);
+            var html = await _menuService.GenerarHtmlMenuAsync(menuId, nId);
             if (html == null) return NotFound();
             return Content(html, "text/html");
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error interno del servidor" });
-        }
-    }
+        });
 
-    // ── Reservas ──────────────────────────────────────────────────
+    // ═══ Reservas ═══
 
     [HttpGet("GetReservas")]
-    public async Task<IActionResult> GetReservas(Guid negocioId, DateTime? fecha = null)
-    {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue || negocioId != nId.Value) return Forbid();
-        var reservas = await _reservaService.GetReservasAsync(nId.Value, fecha);
-        return Ok(reservas);
-    }
+    public Task<IActionResult> GetReservas(Guid negocioId, DateTime? fecha = null)
+        => Execute(negocioId, async nId => Ok(await _reservaService.GetReservasAsync(nId, fecha)));
 
     [HttpGet("GetReservasHoy")]
-    public async Task<IActionResult> GetReservasHoy(Guid negocioId)
-    {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue || negocioId != nId.Value) return Forbid();
-        var reservas = await _reservaService.GetReservasHoyAsync(nId.Value);
-        return Ok(reservas);
-    }
+    public Task<IActionResult> GetReservasHoy(Guid negocioId)
+        => Execute(negocioId, async nId => Ok(await _reservaService.GetReservasHoyAsync(nId)));
 
     [HttpPost("CrearReserva")]
     [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> CrearReserva([FromBody] ReservaRequest req)
-    {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue) return Forbid();
-        var (success, message) = await _reservaService.CrearReservaAsync(
-            nId.Value, req.NombreCliente, req.Telefono,
-            req.FechaHoraReserva, req.CantidadPersonas, req.MesaId, req.Notas);
-        return success ? Ok(new { success, message }) : BadRequest(new { success, message });
-    }
+    public Task<IActionResult> CrearReserva([FromBody] ReservaRequest req)
+        => ExecuteSelf(async nId => ServiceResult(await _reservaService.CrearReservaAsync(
+            nId, req.NombreCliente, req.Telefono,
+            req.FechaHoraReserva, req.CantidadPersonas, req.MesaId, req.Notas)));
 
     [HttpPost("EditarReserva")]
     [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> EditarReserva([FromBody] ReservaRequest req)
-    {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue) return Forbid();
-        var (success, message) = await _reservaService.EditarReservaAsync(
-            req.ReservaId, nId.Value, req.NombreCliente, req.Telefono,
-            req.FechaHoraReserva, req.CantidadPersonas, req.MesaId, req.Notas);
-        return success ? Ok(new { success, message }) : BadRequest(new { success, message });
-    }
+    public Task<IActionResult> EditarReserva([FromBody] ReservaRequest req)
+        => ExecuteSelf(async nId => ServiceResult(await _reservaService.EditarReservaAsync(
+            req.ReservaId, nId, req.NombreCliente, req.Telefono,
+            req.FechaHoraReserva, req.CantidadPersonas, req.MesaId, req.Notas)));
 
     [HttpPost("CambiarEstadoReserva")]
     [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> CambiarEstadoReserva([FromBody] CambiarEstadoReservaRequest req)
-    {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue) return Forbid();
-        var (success, message) = await _reservaService.CambiarEstadoReservaAsync(req.ReservaId, nId.Value, req.Estado);
-        return success ? Ok(new { success, message }) : BadRequest(new { success, message });
-    }
+    public Task<IActionResult> CambiarEstadoReserva([FromBody] CambiarEstadoReservaRequest req)
+        => ExecuteSelf(async nId => ServiceResult(await _reservaService.CambiarEstadoReservaAsync(req.ReservaId, nId, req.Estado)));
 
     [HttpPost("CancelarReserva")]
     [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> CancelarReserva([FromBody] CambiarEstadoReservaRequest req)
-    {
-        var nId = _authService.GetNegocioId(User);
-        if (!nId.HasValue) return Forbid();
-        var (success, message) = await _reservaService.CancelarReservaAsync(req.ReservaId, nId.Value);
-        return success ? Ok(new { success, message }) : BadRequest(new { success, message });
-    }
+    public Task<IActionResult> CancelarReserva([FromBody] CambiarEstadoReservaRequest req)
+        => ExecuteSelf(async nId => ServiceResult(await _reservaService.CancelarReservaAsync(req.ReservaId, nId)));
 }
 
-// ── Request DTOs ──────────────────────────────────────────────────
+// ═══ Request DTOs ═══
 
 public class ReservaRequest
 {

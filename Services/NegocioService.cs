@@ -355,15 +355,14 @@ public class NegocioService : INegocioService
             if (ordenIds.Count > 0)
                 await _context.DetallesOrdenVenta.Where(d => ordenIds.Contains(d.OrdenVentaId)).ExecuteDeleteAsync();
 
-            // HorariosEmpleado y HorariosExcepcion dependen de Empleados
+            // Horarios (tabla unificada) dependen de Empleados
             var empleadoIds = await _context.Empleados
                 .Where(e => e.NegocioId == id)
                 .Select(e => e.EmpleadoId)
                 .ToListAsync();
             if (empleadoIds.Count > 0)
             {
-                await _context.HorariosExcepcion.Where(h => empleadoIds.Contains(h.EmpleadoId)).ExecuteDeleteAsync();
-                await _context.HorariosEmpleado.Where(h => empleadoIds.Contains(h.EmpleadoId)).ExecuteDeleteAsync();
+                await _context.Horarios.Where(h => empleadoIds.Contains(h.EmpleadoId)).ExecuteDeleteAsync();
             }
 
             // ── Nivel 2: tablas que dependen directamente de Negocio ──

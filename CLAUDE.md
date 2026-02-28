@@ -610,3 +610,89 @@ If yes:
 - No controller endpoint needed — static file served by ASP.NET
 
 See `docs/PROTOCOLO_004.md` for full protocol documentation.
+
+## Protocolo Marketing — Generación de Assets de Marketing
+
+When the user says **"run protocolo marketing"** or **"protocolo marketing"**, execute the following:
+
+Pipeline programático que genera flyers (PNG) y videos (MP4) para My-Negocio usando HTML + Playwright + ffmpeg.
+
+### Requisitos
+
+Verificar antes de iniciar:
+```bash
+npx playwright --version && npx playwright install chromium
+ffmpeg -version
+```
+
+### Paleta de Colores (OBLIGATORIA)
+
+- **Principal:** `#0047AB` (Azul Control) — logo, botones, encabezados
+- **Acento:** `#00D4FF` (Azul Crecimiento) — CTAs, highlights, detalles
+- **Fondo oscuro:** `#2C3E50` (Gris Oxford) — fondos oscuros, footers
+- **Blanco:** `#FFFFFF` — textos sobre fondos oscuros/gradiente
+- **Gradiente:** `linear-gradient(135deg, #0047AB, #00D4FF)`
+- **Font:** Montserrat Bold (Google Fonts CDN)
+- **Icons:** Bootstrap Icons CDN
+
+### Estructura de Carpetas
+
+```
+~/Desktop/marketing/
+├── general/       → flyers/ (PNG 1080x1080) + videos/ (MP4 1080x1920)
+├── restaurantes/  → flyers/ + videos/
+├── membresias/    → flyers/ + videos/
+├── barberias/     → flyers/ + videos/
+└── tiendas/       → flyers/ + videos/
+```
+
+### Enfoque Técnico
+
+**Flyers (1080x1080 PNG):**
+1. Crear 1 archivo HTML auto-contenido por flyer (inline CSS, Google Fonts CDN, Bootstrap Icons CDN)
+2. Playwright: viewport 1080x1080, `page.screenshot()` → PNG
+3. Diseño: Montserrat Bold, paleta My-Negocio, mockups CSS-only, sin fotos
+
+**Videos (1080x1920 vertical MP4, 15-18s):**
+1. Crear 1 archivo HTML con CSS `@keyframes` animations (4-5 escenas de 3-4s)
+2. Playwright: `recordVideo: { size: { width: 1080, height: 1920 } }`, esperar duración + 2s
+3. ffmpeg: convertir WebM → MP4 (`-c:v libx264 -preset medium -crf 23 -movflags +faststart`)
+4. Incluir subtítulo fijo en parte inferior (blanco, bold, text-shadow)
+
+### Distribución de Agentes (4 paralelos)
+
+| Agente | Categorías | Assets |
+|--------|-----------|--------|
+| **Agente 1** | General + Membresías | 8 flyers + 8 videos |
+| **Agente 2** | Restaurantes | 4 flyers + 4 videos |
+| **Agente 3** | Barberías | 4 flyers + 4 videos |
+| **Agente 4** | Tiendas | 4 flyers + 4 videos |
+
+Cada agente recibe: paleta completa, URLs de CDN, paths de salida, descripción detallada de cada asset (layout, textos, escenas), e instrucciones de captura.
+
+### Logo Oficial (OBLIGATORIO)
+
+- **Archivos:** `~/Desktop/marketing/logo.png` (1496x942), `logo-corner.png` (500px), `logo-cta.png` (800px) — transparencia nativa perfecta
+- **Flyers:** logo esquina sup-izq, 280px, SIN contenedor blanco, con `drop-shadow` blanco para contraste
+- **Videos:** logo POP-UP al final — `scale(0)→scale(1.12)→scale(1)` con glow circular + "$10/mes" + "7 DÍAS GRATIS" + "Tu Negocio, Tu Control."
+- NUNCA procesar el logo (ya tiene transparencia perfecta), solo pre-escalar con LANCZOS
+
+### Reglas de Contenido
+
+**SIEMPRE:** marca "My-Negocio" + "my-negocio.com" + "$10/mes" + "7 días gratis" en CTAs + Montserrat + paleta oficial + mockups CSS-only + logo oficial en TODOS los assets
+
+**NUNCA:** fotos reales, WhatsApp, info sensible, emails/teléfonos reales, logos terceros, inglés, fuentes no-Montserrat, colores fuera de paleta, CDN externo para DataTables i18n
+
+### Verificación Final
+
+```bash
+for cat in general membresias barberias restaurantes tiendas; do
+  echo "$cat: $(ls ~/Desktop/marketing/$cat/flyers/*.png | wc -l) flyers, $(ls ~/Desktop/marketing/$cat/videos/*.mp4 | wc -l) videos"
+done
+```
+
+Verificar: archivos existen con tamaño > 0, flyers 1080x1080, videos 1080x1920 vertical 15-20s, marca y URL presentes, paleta consistente, archivos temporales limpiados.
+
+**Antes de generar nuevos assets:** consultar `docs/PROTOCOLO_MARKETING.md` sección "Assets Existentes Aprobados" para NO repetir temas ya cubiertos.
+
+See `docs/PROTOCOLO_MARKETING.md` for full protocol documentation.

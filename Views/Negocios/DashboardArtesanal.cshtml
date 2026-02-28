@@ -745,7 +745,6 @@ let activeEmpTabId = '';
 const empColors = ['#3E97FF','#50CD89','#F1416C','#FFC700','#7239EA','#009EF7','#E4E6EF','#181C32'];
 let empColorMap = {};
 
-const swalMG = Swal.mixin({ confirmButtonColor: '#3E97FF', cancelButtonColor: '#E4E6EF', cancelButtonText: 'Cancelar', reverseButtons: true });
 const diasNombres = ['Domingo','Lunes','Martes','Miercoles','Jueves','Viernes','Sabado'];
 
 function getEmpColor(empleadoId) {
@@ -1983,7 +1982,7 @@ function cargarRecibos() {
             { data: null, orderable: false, render: (d,t,r) => `<button class="btn btn-sm btn-outline-primary" onclick="verRecibo('${r.reciboId}')"><i class="bi bi-eye"></i></button>` }
         ],
         order: [[4, 'desc']],
-        language: { emptyTable: 'No hay recibos', info: 'Mostrando _START_ a _END_ de _TOTAL_ recibos', infoEmpty: 'Sin recibos', search: 'Buscar:', lengthMenu: 'Mostrar _MENU_ recibos', paginate: { first: 'Primero', last: 'Ultimo', next: 'Sig.', previous: 'Ant.' } },
+        language: { emptyTable: 'No hay recibos' },
         responsive: true
     });
 }

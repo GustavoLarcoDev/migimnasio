@@ -1155,14 +1155,6 @@ let ventasRevenueChart = null;
 let ventasDonutChart = null;
 let negociosData = null; // Caché de datos de /GetNegocios para la pestaña Ventas
 
-// Mixin de SweetAlert2 con estilo consistente
-const swalMG = Swal.mixin({
-    confirmButtonColor: '#3E97FF',
-    cancelButtonColor: '#E4E6EF',
-    cancelButtonText: 'Cancelar',
-    reverseButtons: true
-});
-
 // ================================================================
 // Inicialización
 // ================================================================
@@ -2665,7 +2657,6 @@ function cargarRecibosAdmin() {
             { data: null, orderable: false, render: (d,t,r) => `<button class="btn btn-sm btn-outline-primary" onclick="verReciboAdmin('${r.reciboId}')"><i class="bi bi-eye"></i></button>` }
         ],
         order: [[5, 'desc']],
-        language: { emptyTable: 'Sin registros', info: 'Mostrando _START_ a _END_ de _TOTAL_ registros', infoEmpty: 'Sin registros', search: 'Buscar:', lengthMenu: 'Mostrar _MENU_ registros', paginate: { first: 'Primero', last: 'Ultimo', next: 'Sig.', previous: 'Ant.' } },
         responsive: true
     });
 }

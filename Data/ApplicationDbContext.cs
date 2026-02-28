@@ -181,7 +181,7 @@ public class ApplicationDbContext : DbContext
     //
     // Flujo típico:
     //   Negocio define Servicios → registra Empleados →
-    //   configura HorariosEmpleado → cliente agenda una Cita →
+    //   configura Horarios (regulares + excepciones) → cliente agenda una Cita →
     //   al completarse se registra un PagoCita
     // ═══════════════════════════════════════════════════════════
 
@@ -199,19 +199,13 @@ public class ApplicationDbContext : DbContext
     public DbSet<Empleado> Empleados { get; set; }
 
     /// <summary>
-    /// Horario regular de trabajo de cada empleado por día de la semana
-    /// (ej. lunes de 9:00 a 18:00). Se usa como base para calcular
-    /// los slots disponibles al crear una cita nueva.
-    /// Hay un único registro por empleado+día (restricción UNIQUE en BD).
+    /// Tabla unificada de horarios que combina horarios regulares semanales
+    /// y excepciones de horario en una sola tabla con discriminador TipoHorario.
+    /// TipoHorario="regular": horario semanal recurrente (un registro por día de semana).
+    /// TipoHorario="excepcion": override puntual por fecha (vacaciones, horario especial).
+    /// UNIQUE filtrado: (EmpleadoId, DiaSemana) para regulares, (EmpleadoId, Fecha) para excepciones.
     /// </summary>
-    public DbSet<HorarioEmpleado> HorariosEmpleado { get; set; }
-
-    /// <summary>
-    /// Excepciones al horario regular de un empleado en una fecha específica
-    /// (vacaciones, día libre, horario especial). Sobreescribe HorarioEmpleado
-    /// para esa fecha particular. UNIQUE por empleado+fecha.
-    /// </summary>
-    public DbSet<HorarioExcepcion> HorariosExcepcion { get; set; }
+    public DbSet<Horario> Horarios { get; set; }
 
     /// <summary>
     /// Tabla central de citas agendadas. Cada cita relaciona un cliente,
@@ -306,27 +300,23 @@ public class ApplicationDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
-        // ── Índice UNIQUE de HorarioEmpleado (empleado + día) ──
-        // Cada empleado tiene exactamente UN horario por día de la semana.
-        // Este UNIQUE previene duplicados a nivel de BD, no solo en código.
-        // Intentar crear dos horarios "lunes" para el mismo empleado
-        // lanzará un error de constraint, no solo de validación.
-        modelBuilder.Entity<HorarioEmpleado>(entity =>
+        // ── Configuración de la tabla unificada Horarios ──
+        // Reemplaza las antiguas tablas HorariosEmpleado y HorariosExcepcion.
+        modelBuilder.Entity<Horario>(entity =>
         {
+            // UNIQUE para horarios regulares: un empleado tiene máximo un horario por día de semana.
+            // El filtro SQL asegura que solo aplique a registros de tipo "regular" con DiaSemana no null.
             entity.HasIndex(h => new { h.EmpleadoId, h.DiaSemana })
                 .IsUnique()
-                .HasDatabaseName("IX_HorariosEmpleado_EmpleadoId_Dia");
-        });
+                .HasFilter("[TipoHorario] = 'regular' AND [DiaSemana] IS NOT NULL")
+                .HasDatabaseName("IX_Horarios_EmpleadoId_DiaSemana");
 
-        // ── Índice UNIQUE de HorarioExcepcion (empleado + fecha) ──
-        // Similar al anterior: solo puede existir UNA excepción por
-        // empleado por fecha de calendario. Evita conflictos al consultar
-        // la disponibilidad (¿cuál excepción aplica hoy para este empleado?)
-        modelBuilder.Entity<HorarioExcepcion>(entity =>
-        {
+            // UNIQUE para excepciones: un empleado tiene máximo una excepción por fecha.
+            // El filtro SQL asegura que solo aplique a registros de tipo "excepcion" con Fecha no null.
             entity.HasIndex(h => new { h.EmpleadoId, h.Fecha })
                 .IsUnique()
-                .HasDatabaseName("IX_HorariosExcepcion_EmpleadoId_Fecha");
+                .HasFilter("[TipoHorario] = 'excepcion' AND [Fecha] IS NOT NULL")
+                .HasDatabaseName("IX_Horarios_EmpleadoId_Fecha");
         });
 
         // ── Configuración de relaciones de Cita (evitar multiple cascade) ──

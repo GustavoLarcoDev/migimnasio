@@ -983,14 +983,7 @@ function guardarTimestamps() {
 }
 restaurarOrdenesMesa();
 
-const swalMG = Swal.mixin({
-    customClass: { confirmButton: 'btn btn-primary me-2', cancelButton: 'btn btn-light', denyButton: 'btn btn-outline-warning me-2' },
-    buttonsStyling: false
-});
-
 $.ajaxSetup({ cache: false });
-
-const dtLang = { emptyTable: 'Sin datos', info: 'Mostrando _START_ a _END_ de _TOTAL_', infoEmpty: 'Sin registros', search: 'Buscar:', paginate: { first: 'Primera', last: 'Ultima', next: 'Sig.', previous: 'Ant.' }, lengthMenu: 'Mostrar _MENU_' };
 
 $(document).ready(function() {
     cargarPOS();
@@ -1208,7 +1201,7 @@ function imprimirRecibo() {
 
 function cargarOrdenesRecientes() {
     if (tablaOrdenes) { tablaOrdenes.ajax.reload(); return; }
-    tablaOrdenes = $('#ordenesTable').DataTable({ language: dtLang, ajax: { url: '/Negocios/GetOrdenesVenta', data: { negocioId }, dataSrc: '' },
+    tablaOrdenes = $('#ordenesTable').DataTable({ ajax: { url: '/Negocios/GetOrdenesVenta', data: { negocioId }, dataSrc: '' },
         columns: [
             { data: 'numeroOrden', render: function(d) { return '<span class="badge bg-primary">#' + d + '</span>'; } },
             { data: 'nombreCliente', render: function(d) { return escHtml(d || 'Mostrador'); } },
@@ -1436,7 +1429,7 @@ var _menuPreviewCurrentId = null;
 
 function cargarMenus() {
     if (tablaMenus) { tablaMenus.ajax.reload(); return; }
-    tablaMenus = $('#menusTable').DataTable({ language: dtLang, ajax: { url: '/Negocios/GetMenus', data: { negocioId }, dataSrc: '' },
+    tablaMenus = $('#menusTable').DataTable({ ajax: { url: '/Negocios/GetMenus', data: { negocioId }, dataSrc: '' },
         columns: [
             { data: 'nombre', render: function(d) { return '<strong>' + escHtml(d) + '</strong>'; } },
             { data: 'tipoMenu', render: function(d) { var colors = { desayuno: 'warning', almuerzo: 'primary', cena: 'info', general: 'secondary' }; return '<span class="badge bg-' + (colors[d] || 'secondary') + '">' + escHtml(d) + '</span>'; } },
@@ -1589,7 +1582,7 @@ $('#btnCopiarLinkMenuPreview').on('click', function() {
 // ═══════════════ REPARTIDORES (reutiliza Empleado) ═══════════════
 function cargarRepartidores() {
     if (tablaRepartidores) { tablaRepartidores.ajax.reload(); return; }
-    tablaRepartidores = $('#repartidoresTable').DataTable({ language: dtLang, ajax: { url: '/Negocios/GetEmpleados', data: { negocioId }, dataSrc: function(d) { return Array.isArray(d) ? d : (d.empleados || d || []); } },
+    tablaRepartidores = $('#repartidoresTable').DataTable({ ajax: { url: '/Negocios/GetEmpleados', data: { negocioId }, dataSrc: function(d) { return Array.isArray(d) ? d : (d.empleados || d || []); } },
         columns: [
             { data: 'nombre', render: function(d) { return escHtml(d); } },
             { data: 'apellido', render: function(d) { return escHtml(d); } },
@@ -1763,7 +1756,7 @@ $('#btnExportInventarioExcel').on('click', function() { window.location.href = '
 $('#btnToggleMovimientos').on('click', function() {
     var sec = $('#movimientosSection'); sec.toggleClass('d-none');
     if (!sec.hasClass('d-none') && !tablaMovimientos) {
-        tablaMovimientos = $('#movimientosTable').DataTable({ language: dtLang, ajax: { url: '/Negocios/GetMovimientos', data: { negocioId }, dataSrc: '' },
+        tablaMovimientos = $('#movimientosTable').DataTable({ ajax: { url: '/Negocios/GetMovimientos', data: { negocioId }, dataSrc: '' },
             columns: [
                 { data: 'fecha', render: function(d) { return new Date(d).toLocaleString('es-EC'); } },
                 { data: 'nombreProducto', render: function(d) { return escHtml(d); } },
@@ -1780,7 +1773,7 @@ $('#btnToggleMovimientos').on('click', function() {
 // ═══════════════ PROVEEDORES/DISTRIBUIDORES (reutilizado de Tienda) ═══════════════
 function cargarProveedores() {
     if (tablaProveedores) { tablaProveedores.ajax.reload(); return; }
-    tablaProveedores = $('#proveedoresTable').DataTable({ language: dtLang, ajax: { url: '/Negocios/GetClientesArtesanal', data: { negocioId }, dataSrc: '' },
+    tablaProveedores = $('#proveedoresTable').DataTable({ ajax: { url: '/Negocios/GetClientesArtesanal', data: { negocioId }, dataSrc: '' },
         columns: [
             { data: 'nombre', render: function(d) { return '<strong>' + escHtml(d) + '</strong>'; } },
             { data: 'apellido', render: function(d) { return escHtml(d || '-'); } },
@@ -1817,7 +1810,7 @@ var tipoLogLabels = { 'ingreso': 'Ingreso', 'gasto': 'Gasto', 'cliente_creado': 
 
 function cargarLogs() {
     if (tablaLogs) { tablaLogs.ajax.reload(); return; }
-    tablaLogs = $('#logsTable').DataTable({ language: dtLang, ajax: { url: '/Negocios/GetLogs', data: { negocioId: negocioId }, dataSrc: '', error: function(xhr) { toastr.error('Error al cargar los logs: ' + (xhr.responseJSON?.message || 'Error desconocido')); } },
+    tablaLogs = $('#logsTable').DataTable({ ajax: { url: '/Negocios/GetLogs', data: { negocioId: negocioId }, dataSrc: '', error: function(xhr) { toastr.error('Error al cargar los logs: ' + (xhr.responseJSON?.message || 'Error desconocido')); } },
         columns: [
             { data: 'message' },
             { data: 'tipo', render: function(d) { var badge = tipoLogBadges[d] || 'bg-secondary'; var label = tipoLogLabels[d] || d; return '<span class="badge ' + badge + '">' + escHtml(label) + '</span>'; } },
@@ -1960,7 +1953,7 @@ $('#btnEnviarSugerencia').on('click', function() {
 // ═══════════════ RECIBOS ═══════════════
 function cargarRecibos() {
     if (tablaRecibos) { tablaRecibos.ajax.reload(); return; }
-    tablaRecibos = $('#tablaRecibos').DataTable({ language: dtLang, ajax: { url: '/Negocios/GetRecibos', data: { negocioId }, dataSrc: '' },
+    tablaRecibos = $('#tablaRecibos').DataTable({ ajax: { url: '/Negocios/GetRecibos', data: { negocioId }, dataSrc: '' },
         columns: [
             { data: 'numeroRecibo', render: function(d) { return '<span class="badge bg-primary">#' + d + '</span>'; } },
             { data: 'destinatarioNombre', render: function(d) { return escHtml(d || '-'); } },

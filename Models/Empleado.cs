@@ -7,8 +7,7 @@
 // Este modelo aplica SOLO para negocios con TipoNegocio = "artesanal".
 //
 // Cada empleado tiene:
-//   - Horarios semanales regulares (HorarioEmpleado, uno por día)
-//   - Excepciones de horario para fechas específicas (HorarioExcepcion)
+//   - Horarios (tabla unificada Horario con TipoHorario="regular" y "excepcion")
 //   - Citas asignadas a su agenda (Cita)
 //
 // El soft delete (IsActive = false) permite desactivar empleados que ya
@@ -116,12 +115,13 @@ public class Empleado
     public Gym Negocio { get; set; }
 
     /// <summary>
-    /// Lista de horarios regulares del empleado (uno por día de la semana activo).
-    /// Relación uno-a-muchos: un empleado → hasta 7 horarios (uno por día).
-    /// Se usa para saber en qué días y horas está disponible el empleado cada semana.
+    /// Lista de horarios del empleado (regulares semanales y excepciones).
+    /// Relación uno-a-muchos: un empleado → múltiples registros Horario.
+    /// TipoHorario="regular": hasta 7 horarios (uno por día de semana).
+    /// TipoHorario="excepcion": N excepciones (una por fecha específica).
     /// EF Core carga esta lista solo cuando se hace .Include(e => e.Horarios).
     /// </summary>
-    public ICollection<HorarioEmpleado> Horarios { get; set; } = new List<HorarioEmpleado>();
+    public ICollection<Horario> Horarios { get; set; } = new List<Horario>();
 
     /// <summary>
     /// Lista de citas asignadas a este empleado.

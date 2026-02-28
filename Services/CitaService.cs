@@ -185,8 +185,8 @@ public class CitaService : ICitaService
         // Ejemplos: feriado, vacaciones, cambio de turno puntual.
         // SEGURIDAD MULTI-TENANT: Filtramos también por NegocioId para garantizar
         // que no se filtren datos de empleados de otro negocio.
-        var excepcion = await _context.HorariosExcepcion
-            .FirstOrDefaultAsync(h => h.EmpleadoId == empleadoId && h.NegocioId == negocioId && h.Fecha.Date == fecha.Date);
+        var excepcion = await _context.Horarios
+            .FirstOrDefaultAsync(h => h.TipoHorario == "excepcion" && h.EmpleadoId == empleadoId && h.NegocioId == negocioId && h.Fecha.Value.Date == fecha.Date);
 
         // Si el empleado tiene marcado ese día como "día libre", no hay slots disponibles.
         if (excepcion != null && excepcion.EsDiaLibre)
@@ -207,8 +207,8 @@ public class CitaService : ICitaService
         else
         {
             // PASO 2: No hay excepción, usamos el horario semanal normal.
-            var horario = await _context.HorariosEmpleado
-                .FirstOrDefaultAsync(h => h.EmpleadoId == empleadoId && h.NegocioId == negocioId && h.DiaSemana == diaSemana);
+            var horario = await _context.Horarios
+                .FirstOrDefaultAsync(h => h.TipoHorario == "regular" && h.EmpleadoId == empleadoId && h.NegocioId == negocioId && h.DiaSemana == diaSemana);
 
             // Si no hay horario para ese día (ej: Domingo inactivo), no hay slots.
             if (horario == null || !horario.Activo)
@@ -437,8 +437,8 @@ public class CitaService : ICitaService
         // Verificamos que el empleado trabaje el día y hora solicitados.
         // Prioridad: excepciones > horario semanal (misma lógica que GetSlotsDisponiblesAsync).
         var diaSemana = (int)dto.FechaHoraInicio.DayOfWeek;
-        var excepcionHorario = await _context.HorariosExcepcion
-            .FirstOrDefaultAsync(h => h.EmpleadoId == dto.EmpleadoId && h.NegocioId == dto.NegocioId && h.Fecha.Date == dto.FechaHoraInicio.Date);
+        var excepcionHorario = await _context.Horarios
+            .FirstOrDefaultAsync(h => h.TipoHorario == "excepcion" && h.EmpleadoId == dto.EmpleadoId && h.NegocioId == dto.NegocioId && h.Fecha.Value.Date == dto.FechaHoraInicio.Date);
 
         if (excepcionHorario != null && excepcionHorario.EsDiaLibre)
             return (false, "El empleado no trabaja este día", null);
@@ -453,8 +453,8 @@ public class CitaService : ICitaService
         }
         else
         {
-            var horarioEmpleado = await _context.HorariosEmpleado
-                .FirstOrDefaultAsync(h => h.EmpleadoId == dto.EmpleadoId && h.NegocioId == dto.NegocioId && h.DiaSemana == diaSemana);
+            var horarioEmpleado = await _context.Horarios
+                .FirstOrDefaultAsync(h => h.TipoHorario == "regular" && h.EmpleadoId == dto.EmpleadoId && h.NegocioId == dto.NegocioId && h.DiaSemana == diaSemana);
             if (horarioEmpleado == null || !horarioEmpleado.Activo)
                 return (false, "El empleado no trabaja este día", null);
             horaInicioEmpleado = horarioEmpleado.HoraInicio;
@@ -550,8 +550,8 @@ public class CitaService : ICitaService
         // Verificamos que el empleado trabaje el día y hora solicitados.
         // Prioridad: excepciones > horario semanal.
         var diaSemana = (int)dto.FechaHoraInicio.DayOfWeek;
-        var excepcionHorario = await _context.HorariosExcepcion
-            .FirstOrDefaultAsync(h => h.EmpleadoId == dto.EmpleadoId && h.NegocioId == dto.NegocioId && h.Fecha.Date == dto.FechaHoraInicio.Date);
+        var excepcionHorario = await _context.Horarios
+            .FirstOrDefaultAsync(h => h.TipoHorario == "excepcion" && h.EmpleadoId == dto.EmpleadoId && h.NegocioId == dto.NegocioId && h.Fecha.Value.Date == dto.FechaHoraInicio.Date);
 
         if (excepcionHorario != null && excepcionHorario.EsDiaLibre)
             return (false, "El empleado no trabaja este día");
@@ -566,8 +566,8 @@ public class CitaService : ICitaService
         }
         else
         {
-            var horarioEmpleado = await _context.HorariosEmpleado
-                .FirstOrDefaultAsync(h => h.EmpleadoId == dto.EmpleadoId && h.NegocioId == dto.NegocioId && h.DiaSemana == diaSemana);
+            var horarioEmpleado = await _context.Horarios
+                .FirstOrDefaultAsync(h => h.TipoHorario == "regular" && h.EmpleadoId == dto.EmpleadoId && h.NegocioId == dto.NegocioId && h.DiaSemana == diaSemana);
             if (horarioEmpleado == null || !horarioEmpleado.Activo)
                 return (false, "El empleado no trabaja este día");
             horaInicioEmp = horarioEmpleado.HoraInicio;

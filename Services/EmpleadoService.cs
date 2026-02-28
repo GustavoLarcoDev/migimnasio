@@ -160,11 +160,12 @@ public class EmpleadoService : IEmpleadoService
         // .NET usa DayOfWeek donde 0=Domingo, 1=Lunes, ..., 6=Sábado.
         for (int dia = 1; dia <= 6; dia++)
         {
-            _context.HorariosEmpleado.Add(new HorarioEmpleado
+            _context.Horarios.Add(new Horario
             {
                 HorarioId = Guid.NewGuid(),
                 EmpleadoId = empleado.EmpleadoId,
                 NegocioId = dto.NegocioId,
+                TipoHorario = "regular",
                 DiaSemana = dia,
                 HoraInicio = "09:00",
                 HoraFin = "17:00",
@@ -174,11 +175,12 @@ public class EmpleadoService : IEmpleadoService
 
         // Domingo inactivo. Guardamos las horas igual (09:00-17:00) para que el formulario
         // de edición de horarios tenga valores predeterminados si el admin decide activarlo.
-        _context.HorariosEmpleado.Add(new HorarioEmpleado
+        _context.Horarios.Add(new Horario
         {
             HorarioId = Guid.NewGuid(),
             EmpleadoId = empleado.EmpleadoId,
             NegocioId = dto.NegocioId,
+            TipoHorario = "regular",
             DiaSemana = 0,      // 0 = Domingo
             HoraInicio = "09:00",
             HoraFin = "17:00",
@@ -288,8 +290,8 @@ public class EmpleadoService : IEmpleadoService
     /// </summary>
     public async Task<object> GetHorariosAsync(Guid empleadoId, Guid negocioId)
     {
-        return await _context.HorariosEmpleado.AsNoTracking()
-            .Where(h => h.EmpleadoId == empleadoId && h.NegocioId == negocioId)
+        return await _context.Horarios.AsNoTracking()
+            .Where(h => h.TipoHorario == "regular" && h.EmpleadoId == empleadoId && h.NegocioId == negocioId)
             .OrderBy(h => h.DiaSemana)
             .Select(h => new
             {
@@ -325,9 +327,9 @@ public class EmpleadoService : IEmpleadoService
             return (false, "Empleado no encontrado");
 
         // Pre-cargar horarios existentes en diccionario (elimina N+1)
-        var horariosExistentes = await _context.HorariosEmpleado
-            .Where(h => h.EmpleadoId == dto.EmpleadoId && h.NegocioId == dto.NegocioId)
-            .ToDictionaryAsync(h => h.DiaSemana);
+        var horariosExistentes = await _context.Horarios
+            .Where(h => h.TipoHorario == "regular" && h.EmpleadoId == dto.EmpleadoId && h.NegocioId == dto.NegocioId)
+            .ToDictionaryAsync(h => h.DiaSemana.Value);
 
         // Procesamos cada día enviado en el DTO
         foreach (var dia in dto.Dias)
@@ -365,11 +367,12 @@ public class EmpleadoService : IEmpleadoService
             else
             {
                 // INSERTAR: no existía registro para este día, creamos uno nuevo
-                _context.HorariosEmpleado.Add(new HorarioEmpleado
+                _context.Horarios.Add(new Horario
                 {
                     HorarioId = Guid.NewGuid(),
                     EmpleadoId = dto.EmpleadoId,
                     NegocioId = dto.NegocioId,
+                    TipoHorario = "regular",
                     DiaSemana = dia.DiaSemana,
                     HoraInicio = dia.HoraInicio,
                     HoraFin = dia.HoraFin,
@@ -421,14 +424,14 @@ public class EmpleadoService : IEmpleadoService
 
         // CONSULTA 2: Horarios semanales de todos los empleados para ese día de semana.
         // Traemos solo el DiaSemana que corresponde a la fecha pedida.
-        var horarios = await _context.HorariosEmpleado.AsNoTracking()
-            .Where(h => empleadoIds.Contains(h.EmpleadoId) && h.DiaSemana == diaSemana)
+        var horarios = await _context.Horarios.AsNoTracking()
+            .Where(h => h.TipoHorario == "regular" && empleadoIds.Contains(h.EmpleadoId) && h.DiaSemana == diaSemana)
             .ToListAsync();
 
         // CONSULTA 3: Excepciones de horario de todos los empleados para esa fecha exacta.
         // Comparamos solo la parte de la fecha (sin hora) usando .Date
-        var excepciones = await _context.HorariosExcepcion.AsNoTracking()
-            .Where(h => empleadoIds.Contains(h.EmpleadoId) && h.Fecha.Date == fecha.Date)
+        var excepciones = await _context.Horarios.AsNoTracking()
+            .Where(h => h.TipoHorario == "excepcion" && empleadoIds.Contains(h.EmpleadoId) && h.Fecha.Value.Date == fecha.Date)
             .ToListAsync();
 
         // CONSULTA 4: Conteo de citas por empleado para ese día (para mostrar carga de trabajo).
@@ -496,8 +499,8 @@ public class EmpleadoService : IEmpleadoService
     public async Task<object> GetExcepcionesAsync(Guid empleadoId, Guid negocioId, DateTime? desde, DateTime? hasta)
     {
         // Iniciamos con el filtro base: las excepciones del empleado en este negocio
-        var query = _context.HorariosExcepcion.AsNoTracking()
-            .Where(h => h.EmpleadoId == empleadoId && h.NegocioId == negocioId);
+        var query = _context.Horarios.AsNoTracking()
+            .Where(h => h.TipoHorario == "excepcion" && h.EmpleadoId == empleadoId && h.NegocioId == negocioId);
 
         // Aplicamos los filtros opcionales de fecha solo si se proporcionaron.
         // IQueryable permite encadenar condiciones sin ejecutar la consulta todavía.
@@ -506,12 +509,13 @@ public class EmpleadoService : IEmpleadoService
         if (hasta.HasValue)
             query = query.Where(h => h.Fecha <= hasta.Value);
 
-        // Ejecutar la consulta y proyectar los campos necesarios
+        // Ejecutar la consulta y proyectar los campos necesarios.
+        // ExcepcionId se mapea desde HorarioId para mantener compatibilidad con el frontend.
         return await query
             .OrderBy(h => h.Fecha)
             .Select(h => new
             {
-                h.ExcepcionId,
+                ExcepcionId = h.HorarioId,  // Alias para compatibilidad frontend
                 h.Fecha,
                 h.EsDiaLibre,   // true=día libre, false=horario especial
                 h.HoraInicio,   // null si EsDiaLibre=true
@@ -567,18 +571,20 @@ public class EmpleadoService : IEmpleadoService
         // Verificar que no exista ya una excepción para esta fecha.
         // SEGURIDAD MULTI-TENANT: Filtramos por NegocioId para aislamiento entre negocios.
         // (usamos .Date para comparar solo la parte de la fecha, ignorando la hora)
-        var existe = await _context.HorariosExcepcion
-            .AnyAsync(h => h.EmpleadoId == empleadoId && h.NegocioId == negocioId && h.Fecha.Date == fecha.Date);
+        var existe = await _context.Horarios
+            .AnyAsync(h => h.TipoHorario == "excepcion" && h.EmpleadoId == empleadoId && h.NegocioId == negocioId && h.Fecha.Value.Date == fecha.Date);
 
         if (existe)
             return (false, "Ya existe una excepción para esta fecha", null);
 
-        var excepcion = new HorarioExcepcion
+        var excepcion = new Horario
         {
-            ExcepcionId = Guid.NewGuid(),
+            HorarioId = Guid.NewGuid(),
             EmpleadoId = empleadoId,
             NegocioId = negocioId,
+            TipoHorario = "excepcion",
             Fecha = fecha.Date,              // Normalizar a medianoche para consistencia
+            DiaSemana = null,                // No aplica para excepciones
             EsDiaLibre = esDiaLibre,
             // Si es día libre, no guardamos horas (null). Si es horario especial, guardamos las horas.
             HoraInicio = esDiaLibre ? null : horaInicio,
@@ -586,10 +592,10 @@ public class EmpleadoService : IEmpleadoService
             Motivo = motivo                  // Puede ser null si no se proporcionó motivo
         };
 
-        _context.HorariosExcepcion.Add(excepcion);
+        _context.Horarios.Add(excepcion);
         await _context.SaveChangesAsync();
 
-        return (true, "Excepción creada exitosamente", excepcion.ExcepcionId);
+        return (true, "Excepción creada exitosamente", excepcion.HorarioId);
     }
 
     /// <summary>
@@ -600,15 +606,16 @@ public class EmpleadoService : IEmpleadoService
     /// </summary>
     public async Task<(bool success, string message)> EliminarExcepcionAsync(Guid excepcionId, Guid negocioId)
     {
-        // Filtramos también por negocioId para evitar que un negocio borre excepciones de otro
-        var excepcion = await _context.HorariosExcepcion
-            .FirstOrDefaultAsync(h => h.ExcepcionId == excepcionId && h.NegocioId == negocioId);
+        // Filtramos también por negocioId para evitar que un negocio borre excepciones de otro.
+        // El parámetro excepcionId corresponde al HorarioId en la tabla unificada.
+        var excepcion = await _context.Horarios
+            .FirstOrDefaultAsync(h => h.TipoHorario == "excepcion" && h.HorarioId == excepcionId && h.NegocioId == negocioId);
 
         if (excepcion == null)
             return (false, "Excepción no encontrada");
 
         // Borrado físico: las excepciones no tienen historial que preservar
-        _context.HorariosExcepcion.Remove(excepcion);
+        _context.Horarios.Remove(excepcion);
         await _context.SaveChangesAsync();
 
         return (true, "Excepción eliminada exitosamente");

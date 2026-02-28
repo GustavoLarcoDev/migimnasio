@@ -1,5 +1,20 @@
 [
   {
+    "version": "1.1.0",
+    "fecha": "2026-02-28",
+    "titulo": "Refactoring: código más limpio y mantenible",
+    "cambios": [
+      { "tipo": "mejora", "descripcion": "NegocioBaseController: clase base que elimina 132 validaciones multi-tenant duplicadas y 153 try-catch repetidos en 10 controllers" },
+      { "tipo": "mejora", "descripcion": "Reducción del 59% de líneas en controllers (de 4,630 a ~1,800 líneas)" },
+      { "tipo": "mejora", "descripcion": "DateHelper y ImageUploadHelper: funciones reutilizables para cálculos de fecha y procesamiento de imágenes" },
+      { "tipo": "mejora", "descripcion": "SweetAlert2 global (swalMG): una sola definición en site.js en lugar de 7 definiciones duplicadas en vistas" },
+      { "tipo": "mejora", "descripcion": "DataTables idioma español centralizado (dtLangES): una definición global en lugar de 30 inline" },
+      { "tipo": "mejora", "descripcion": "Helpers AJAX (mgPost, mgGet): manejo automático de errores y spinners en botones" },
+      { "tipo": "mejora", "descripcion": "Estilo unificado de modales (.mg-modal): bordes redondeados y padding consistente" },
+      { "tipo": "mejora", "descripcion": "Merge de tablas: HorarioEmpleado + HorarioExcepcion unificados en tabla Horario (25→24 tablas)" }
+    ]
+  },
+  {
     "version": "1.0.0",
     "fecha": "2026-02-26",
     "titulo": "Lanzamiento inicial de My-Negocio",
