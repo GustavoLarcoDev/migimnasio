@@ -18,8 +18,12 @@ public class PropagandaController : NegocioBaseController
         => Execute(negocioId, async nId => Ok(await _propagandaService.GetDisenosAsync(nId)));
 
     [HttpGet("GetDisenosEditor")]
-    public Task<IActionResult> GetDisenosEditor()
-        => ExecuteSelf(async nId => Ok(await _propagandaService.GetDisenosAsync(nId)));
+    public async Task<IActionResult> GetDisenosEditor()
+    {
+        var nId = AuthService.GetNegocioId(User);
+        if (!nId.HasValue) return Ok(new List<object>());
+        return Ok(await _propagandaService.GetDisenosAsync(nId.Value));
+    }
 
     [HttpGet("GetDiseno")]
     public Task<IActionResult> GetDiseno(Guid disenoId)
