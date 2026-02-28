@@ -459,9 +459,9 @@ Cleanup:
 Report: PASS/FAIL for each test.
 ```
 
-**Test Agent 8 — Restaurante Menú & Recibos Testing:**
+**Test Agent 8 — Restaurante Menú, Recibos & Propaganda Testing:**
 ```
-Test menu stock filtering and receipt logo integration.
+Test menu stock filtering, receipt logo integration, and propaganda editor CRUD.
 BASE_URL=http://localhost:5170, COOKIES=/tmp/p002-agent8.cookies
 
 Login as a restaurante business from seed data.
@@ -489,6 +489,27 @@ Notification dropdown (CRITICAL — recently fixed):
 - GET GetNotificacionesCount → verify count > 0
 - GET GetNotificaciones → verify array returned with items
 - The bell dropdown in the layout loads via the shared _DashboardLayout.cshtml script — verify the endpoint works from any business type
+
+Propaganda editor CRUD (NEW):
+- Login as a membresias business from seed data
+- GET GetDisenosEditor → verify returns empty array [] (no designs yet)
+- POST CrearDiseno (Nombre:"Test Flyer", CanvasJson:"{}", ThumbnailDataUri:"data:image/png;base64,iVBOR", Ancho:1080, Alto:1080) → verify success + capture disenoId
+- GET GetDisenosEditor → verify returns 1 design
+- GET GetDiseno?disenoId={disenoId} → verify fields match (Nombre, Ancho, Alto)
+- POST GuardarDiseno (DisenoId:{disenoId}, Nombre:"Updated Flyer", CanvasJson:"{\"objects\":[]}", ThumbnailDataUri:"data:image/png;base64,abc") → verify success
+- GET GetDiseno?disenoId={disenoId} → verify Nombre="Updated Flyer"
+- POST DuplicarDiseno (DisenoId:{disenoId}) → verify success
+- GET GetDisenosEditor → verify returns 2 designs
+- POST EliminarDiseno (DisenoId:{disenoId}) → verify success (soft delete)
+- GET GetDisenosEditor → verify returns 1 design (only the copy remains)
+- POST CrearDiseno with Nombre="" → must fail (nombre required)
+- POST GuardarDiseno with non-existent DisenoId → must fail gracefully
+- POST EliminarDiseno with non-existent DisenoId → must fail gracefully
+
+Propaganda admin access (CRITICAL — recently fixed):
+- Login as admin: POST /TestAgent/LoginAsAdmin
+- GET GetDisenosEditor → MUST return 200 with empty array [] (NOT 403 Forbid)
+- POST CrearDiseno as admin (no NegocioId) → should return 403 Forbid (expected, admin can't create designs without impersonation)
 
 Report: PASS/FAIL for each test.
 ```
