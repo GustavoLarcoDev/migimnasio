@@ -310,7 +310,7 @@ var PropagandaEditor = (function () {
         bootstrap.Modal.getInstance(document.getElementById('newDesignModal')).hide();
 
         // Create on server, then open editor
-        mgPost('/Negocios/CrearDiseno', { Nombre: nombre, CanvasJson: '{}', ThumbnailDataUri: '', Ancho: w, Alto: h }, function (resp) {
+        mgPost('/Negocios/CrearDiseno', { Nombre: nombre, CanvasJson: '{}', ThumbnailDataUri: '', Ancho: w, Alto: h }, null, function (resp) {
             if (resp.success) {
                 currentDisenoId = resp.dataId;
                 initEditor(w, h, nombre, tplId);
@@ -824,7 +824,7 @@ var PropagandaEditor = (function () {
             Nombre: nombre,
             CanvasJson: json,
             ThumbnailDataUri: thumbnail
-        }, function (resp) {
+        }, null, function (resp) {
             if (resp.success) {
                 toastr.success('Diseno guardado');
                 isDirty = false;
@@ -913,7 +913,7 @@ var PropagandaEditor = (function () {
 
     function deleteDesign(id) {
         mgConfirmDelete(function () {
-            mgPost('/Negocios/EliminarDiseno', { DisenoId: id }, function (resp) {
+            mgPost('/Negocios/EliminarDiseno', { DisenoId: id }, null, function (resp) {
                 if (resp.success) {
                     toastr.success('Diseno eliminado');
                     loadDesigns();
@@ -923,7 +923,7 @@ var PropagandaEditor = (function () {
     }
 
     function duplicateDesign(id) {
-        mgPost('/Negocios/DuplicarDiseno', { DisenoId: id }, function (resp) {
+        mgPost('/Negocios/DuplicarDiseno', { DisenoId: id }, null, function (resp) {
             if (resp.success) {
                 toastr.success('Diseno duplicado');
                 loadDesigns();
