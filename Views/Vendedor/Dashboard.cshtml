@@ -733,23 +733,10 @@
     <script>toastr.options.escapeHtml = true;</script>
     <script src="https://cdn.datatables.net/2.3.6/js/dataTables.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="~/js/site.js"></script>
 
     <script>
-    $.extend(true, $.fn.dataTable.defaults, {
-        language: {
-            processing: "Procesando...",
-            search: "Buscar:",
-            lengthMenu: "Mostrar _MENU_ registros",
-            info: "Mostrando _START_ a _END_ de _TOTAL_ registros",
-            infoEmpty: "Mostrando 0 a 0 de 0 registros",
-            infoFiltered: "(filtrado de _MAX_ registros totales)",
-            loadingRecords: "Cargando...",
-            zeroRecords: "No se encontraron resultados",
-            emptyTable: "No hay datos disponibles",
-            paginate: { first: "«", previous: "‹", next: "›", last: "»" },
-            aria: { sortAscending: ": activar para ordenar ascendente", sortDescending: ": activar para ordenar descendente" }
-        }
-    });
+    $.extend(true, $.fn.dataTable.defaults, { language: dtLangES });
     </script>
 
     <script>
@@ -808,13 +795,6 @@
     </script>
 
     <script>
-    const swalMG = Swal.mixin({ confirmButtonColor: '#3E97FF', cancelButtonColor: '#E4E6EF', cancelButtonText: 'Cancelar', reverseButtons: true });
-
-    function escHtml(str) {
-        if (!str) return '';
-        return $('<span>').text(str).html();
-    }
-
     let tablaNegocios = null;
 
     $(document).ready(function() {

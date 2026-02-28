@@ -896,7 +896,7 @@ $(document).ready(function() {
 });
 
 function verificarSuscripcion() {
-    $.get('/Negocios/GetSuscripcionStatus', { negocioId }, function(d) {
+    mgGet('/Negocios/GetSuscripcionStatus', { negocioId }, function(d) {
         var t = document.getElementById('trialDaysText');
         if (t && d.diasRestantes !== null) {
             if (d.porEmpezar) t.innerHTML = '- <span class="badge bg-secondary">Por empezar</span>';
@@ -909,19 +909,19 @@ function verificarSuscripcion() {
 // ═══════════════ POS ═══════════════
 function cargarPOS() {
     // Load categories
-    $.get('/Negocios/GetCategorias', { negocioId }, function(cats) {
+    mgGet('/Negocios/GetCategorias', { negocioId }, function(cats) {
         categoriasCache = cats;
         renderCategoryTabs(cats, '#posCategoryTabs');
     });
 
     // Load products
-    $.get('/Negocios/GetProductos', { negocioId }, function(productos) {
+    mgGet('/Negocios/GetProductos', { negocioId }, function(productos) {
         productosCache = productos;
         renderPOSProducts(productos);
     });
 
     // Load stats
-    $.get('/Negocios/GetInventarioStats', { negocioId }, function(d) {
+    mgGet('/Negocios/GetInventarioStats', { negocioId }, function(d) {
         $('#posVentasHoy').text(d.ventasHoyUnidades);
         $('#posIngresosHoy').text('$' + d.ingresosHoy.toFixed(2));
         $('#posTotalProductos').text(d.totalProductos);
@@ -1244,7 +1244,7 @@ function procesarVenta(metodoPago, numeroConfirmacion) {
 }
 
 function mostrarReciboVenta(reciboId) {
-    $.get('/Negocios/GetRecibo', { reciboId, negocioId }, function(r) {
+    mgGet('/Negocios/GetRecibo', { reciboId, negocioId }, function(r) {
         if (!r) { swalMG.fire({ title: 'Venta Exitosa!', text: 'Pago procesado.', icon: 'success' }); return; }
         $('#reciboModalNumero').text(r.numeroRecibo);
         document.getElementById('reciboIframe').srcdoc = r.contenidoHtml;
@@ -1327,7 +1327,7 @@ function cargarOrdenesRecientes() {
 // ═══════════════ INVENTARIO ═══════════════
 
 function cargarInventarioStats() {
-    $.get('/Negocios/GetInventarioStats', { negocioId }, function(d) {
+    mgGet('/Negocios/GetInventarioStats', { negocioId }, function(d) {
         $('#invTotalProductos').text(d.totalProductos);
         $('#invStockBajo').text(d.stockBajo);
         $('#invVentasHoy').text(d.ventasHoyUnidades);
@@ -1336,7 +1336,7 @@ function cargarInventarioStats() {
 }
 
 function cargarInventarioCategorias() {
-    $.get('/Negocios/GetCategorias', { negocioId }, function(cats) {
+    mgGet('/Negocios/GetCategorias', { negocioId }, function(cats) {
         categoriasCache = cats;
         renderCategoryFolders();
     });
@@ -1544,7 +1544,7 @@ function moverProductoACategoria(productoId, categoriaId) {
             if (r.success) {
                 toastr.success(r.message || 'Producto movido');
                 // Refresh all views sequentially to ensure fresh data
-                $.get('/Negocios/GetProductos', { negocioId: negocioId }, function(prods) {
+                mgGet('/Negocios/GetProductos', { negocioId: negocioId }, function(prods) {
                     productosCache = prods;
                     cargarInventarioCategorias();
                     cargarProductosGrid();
@@ -2004,7 +2004,7 @@ $('#btnGuardarRepartidor').on('click', function() {
 });
 
 function editarRepartidor(id) {
-    $.get('/Negocios/GetEmpleado', { empleadoId: id, negocioId }, function(e) {
+    mgGet('/Negocios/GetEmpleado', { empleadoId: id, negocioId }, function(e) {
         if (!e) { toastr.error('Repartidor no encontrado'); return; }
         $('#repEditId').val(e.empleadoId); $('#repNombre').val(e.nombre); $('#repApellido').val(e.apellido); $('#repTelefono').val(e.telefono); $('#repEmail').val(e.email); $('#repVehiculo').val(e.especialidad || 'Moto');
         $('#repartidorModalTitle').text('Editar Repartidor');
@@ -2126,7 +2126,7 @@ $('#btnExportLogsExcel').on('click', function() { window.location.href = '/Negoc
 let chartBarVentas, chartResumen;
 
 function cargarVentasStats() {
-    $.get('/Negocios/GetLogs', { negocioId }, function(logs) {
+    mgGet('/Negocios/GetLogs', { negocioId }, function(logs) {
         var periodo = $('#ventasPeriodPills .mg-pill.active').data('periodo');
         var now = new Date(), filtered;
         if (periodo === 'dia') { filtered = logs.filter(function(l) { return new Date(l.fecha).toDateString() === now.toDateString(); }); }
@@ -2147,7 +2147,7 @@ function cargarVentasStats() {
 }
 
 function cargarCharts() {
-    $.get('/Negocios/GetLogs', { negocioId }, function(logs) {
+    mgGet('/Negocios/GetLogs', { negocioId }, function(logs) {
         var meses = [], ingArr = [], gasArr = [];
         for (var i = 5; i >= 0; i--) {
             var d = new Date(); d.setMonth(d.getMonth() - i);
@@ -2198,7 +2198,7 @@ function actualizarDonut(logs) {
 var chartVentasCategoria;
 function cargarVentasPorCategoria() {
     var periodo = $('#ventasPeriodPills .mg-pill.active').data('periodo') || 'mes';
-    $.get('/Negocios/GetVentasPorCategoria', { negocioId, periodo }, function(datos) {
+    mgGet('/Negocios/GetVentasPorCategoria', { negocioId, periodo }, function(datos) {
         if (chartVentasCategoria) chartVentasCategoria.destroy();
         $('#chartVentasCategoria').empty();
         if (!datos.length) { $('#chartVentasCategoria').html('<div class="text-center py-5 text-muted"><i class="bi bi-pie-chart fs-1 d-block mb-2"></i>Sin datos</div>'); return; }
@@ -2215,7 +2215,7 @@ function cargarVentasPorCategoria() {
 var chartProductosMasVendidos;
 function cargarProductosMasVendidos() {
     var periodo = $('#ventasPeriodPills .mg-pill.active').data('periodo') || 'mes';
-    $.get('/Negocios/GetProductosMasVendidos', { negocioId, periodo }, function(datos) {
+    mgGet('/Negocios/GetProductosMasVendidos', { negocioId, periodo }, function(datos) {
         if (chartProductosMasVendidos) chartProductosMasVendidos.destroy();
         $('#chartProductosMasVendidos').empty();
         if (!datos.length) { $('#chartProductosMasVendidos').html('<div class="text-center py-5 text-muted"><i class="bi bi-trophy fs-1 d-block mb-2"></i>Sin ventas</div>'); return; }
@@ -2237,7 +2237,7 @@ $('#ventasPeriodPills').on('click', '.mg-pill', function() {
     $('#ventasPeriodPills .mg-pill').removeClass('active');
     $(this).addClass('active');
     cargarVentasStats();
-    $.get('/Negocios/GetLogs', { negocioId }, function(logs) { actualizarDonut(logs); });
+    mgGet('/Negocios/GetLogs', { negocioId }, function(logs) { actualizarDonut(logs); });
     cargarVentasPorCategoria();
     cargarProductosMasVendidos();
 });
@@ -2254,7 +2254,7 @@ $('#btnRefrescarVentas').on('click', function() {
 
 // ═══════════════ NOTIFICACIONES ═══════════════
 function cargarNotificacionesCount() {
-    $.get('/Negocios/GetNotificacionesCount', { negocioId }, function(d) {
+    mgGet('/Negocios/GetNotificacionesCount', { negocioId }, function(d) {
         var count = d.count || d;
         if (count > 0) { $('#sidebarNotifBadge, #topbarNotifBadge').text(count).removeClass('d-none'); }
         else { $('#sidebarNotifBadge, #topbarNotifBadge').addClass('d-none'); }
@@ -2262,7 +2262,7 @@ function cargarNotificacionesCount() {
 }
 
 function cargarNotificacionesTab() {
-    $.get('/Negocios/GetNotificaciones', { negocioId }, function(data) {
+    mgGet('/Negocios/GetNotificaciones', { negocioId }, function(data) {
         var list = $('#notificacionesList');
         list.empty();
         if (!data.length) { list.html('<div class="text-center py-5 text-muted"><i class="bi bi-bell-slash fs-1 d-block mb-3"></i><p>No hay notificaciones</p></div>'); return; }
@@ -2277,11 +2277,11 @@ function cargarNotificacionesTab() {
 }
 
 function marcarLeida(id) {
-    $.post('/Negocios/MarcarNotificacionLeida', { id, negocioId }, function() { cargarNotificacionesTab(); cargarNotificacionesCount(); });
+    $.post('/Negocios/MarcarNotificacionLeida', { id, negocioId }, function() { cargarNotificacionesTab(); cargarNotificacionesCount(); }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al marcar notificación como leída'); });
 }
 
 $('#btnMarcarTodasLeidasTab').on('click', function() {
-    $.post('/Negocios/MarcarTodasNotificacionesLeidas', { negocioId }, function() { cargarNotificacionesTab(); cargarNotificacionesCount(); toastr.success('Todas marcadas como leidas'); });
+    $.post('/Negocios/MarcarTodasNotificacionesLeidas', { negocioId }, function() { cargarNotificacionesTab(); cargarNotificacionesCount(); toastr.success('Todas marcadas como leidas'); }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al marcar notificaciones como leídas'); });
 });
 
 $('#btnGenerarNotificaciones').on('click', function() {
@@ -2326,7 +2326,7 @@ function cargarRecibos() {
 }
 
 function verRecibo(reciboId) {
-    $.get('/Negocios/GetRecibo', { reciboId, negocioId }, function(r) {
+    mgGet('/Negocios/GetRecibo', { reciboId, negocioId }, function(r) {
         if (r) {
             $('#reciboModalNumero').text(r.numeroRecibo);
             document.getElementById('reciboIframe').srcdoc = r.contenidoHtml;
@@ -2339,7 +2339,7 @@ $('#buscarReciboInput').on('keypress', function(e) {
     if (e.which === 13) {
         var num = parseInt($(this).val());
         if (!num || num < 1) return;
-        $.get('/Negocios/BuscarRecibo', { numero: num, negocioId }, function(r) {
+        mgGet('/Negocios/BuscarRecibo', { numero: num, negocioId }, function(r) {
             if (r) {
                 $('#reciboModalNumero').text(r.numeroRecibo);
                 document.getElementById('reciboIframe').srcdoc = r.contenidoHtml;
@@ -2355,7 +2355,7 @@ $('#btnExportRecibos').on('click', function() {
 });
 
 function verificarCleanupRecibos() {
-    $.get('/Negocios/GetFechaReciboMasAntiguo', { negocioId }, function(r) {
+    mgGet('/Negocios/GetFechaReciboMasAntiguo', { negocioId }, function(r) {
         if (r.fecha) {
             var dias = Math.floor((new Date() - new Date(r.fecha)) / (1000*60*60*24));
             if (dias > 30) { $('#recibosCleanupBanner').removeClass('d-none'); }
@@ -2466,7 +2466,7 @@ function renderMetodoPagoCard(id, nombre, numeroCuenta, nombreTitular, cedula, i
 }
 
 function verQR(id, nombre) {
-    $.get('/Negocios/GetMetodoPago', { negocioId: negocioId, metodoPagoId: id }, function(data) {
+    mgGet('/Negocios/GetMetodoPago', { negocioId: negocioId, metodoPagoId: id }, function(data) {
         if (data.imagenQR) {
             $('#modalVerQRTitle').text(nombre);
             $('#modalVerQRImg').attr('src', data.imagenQR);
@@ -2484,7 +2484,7 @@ function abrirModalMetodoPago() {
 }
 
 function editarMetodoPago(id) {
-    $.get('/Negocios/GetMetodoPago', { negocioId: negocioId, metodoPagoId: id }, function(data) {
+    mgGet('/Negocios/GetMetodoPago', { negocioId: negocioId, metodoPagoId: id }, function(data) {
         $('#mpId').val(data.metodoPagoId);
         $('#mpNombre').val(data.nombre);
         $('#mpNumeroCuenta').val(data.numeroCuenta || '');

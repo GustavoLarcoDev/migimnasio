@@ -1385,7 +1385,7 @@ var modoEdicionProducto = false;
 var productosCache = [];
 
 function cargarInventarioStats() {
-    $.get('/Negocios/GetInventarioStats', { negocioId }, function(d) {
+    mgGet('/Negocios/GetInventarioStats', { negocioId }, function(d) {
         $('#invTotalProductos').text(d.totalProductos);
         $('#invStockBajo').text(d.stockBajo);
         $('#invVentasHoy').text(d.ventasHoyUnidades);
@@ -1718,7 +1718,7 @@ function cargarRecibos() {
 }
 
 function verRecibo(reciboId) {
-    $.get('/Negocios/GetRecibo', { reciboId, negocioId }, function(r) {
+    mgGet('/Negocios/GetRecibo', { reciboId, negocioId }, function(r) {
         if (r) {
             $('#reciboModalNumero').text(r.numeroRecibo);
             var iframe = document.getElementById('reciboIframe');
@@ -1732,7 +1732,7 @@ $('#buscarReciboInput').on('keypress', function(e) {
     if (e.which === 13) {
         var num = parseInt($(this).val());
         if (!num || num < 1) return;
-        $.get('/Negocios/BuscarRecibo', { numero: num, negocioId }, function(r) {
+        mgGet('/Negocios/BuscarRecibo', { numero: num, negocioId }, function(r) {
             if (r) {
                 $('#reciboModalNumero').text(r.numeroRecibo);
                 var iframe = document.getElementById('reciboIframe');
@@ -1751,7 +1751,7 @@ $('#btnExportRecibos').on('click', function() {
 });
 
 function verificarCleanupRecibos() {
-    $.get('/Negocios/GetFechaReciboMasAntiguo', { negocioId }, function(r) {
+    mgGet('/Negocios/GetFechaReciboMasAntiguo', { negocioId }, function(r) {
         if (r.fecha) {
             var fecha = new Date(r.fecha);
             var dias = Math.floor((new Date() - fecha) / (1000*60*60*24));
@@ -1901,7 +1901,7 @@ function renderMetodoPagoCard(id, nombre, numeroCuenta, nombreTitular, cedula, i
 }
 
 function verQR(id, nombre) {
-    $.get('/Negocios/GetMetodoPago', { negocioId: negocioId, metodoPagoId: id }, function(data) {
+    mgGet('/Negocios/GetMetodoPago', { negocioId: negocioId, metodoPagoId: id }, function(data) {
         if (data.imagenQR) {
             $('#modalVerQRTitle').text(nombre);
             $('#modalVerQRImg').attr('src', data.imagenQR);
@@ -1919,7 +1919,7 @@ function abrirModalMetodoPago() {
 }
 
 function editarMetodoPago(id) {
-    $.get('/Negocios/GetMetodoPago', { negocioId: negocioId, metodoPagoId: id }, function(data) {
+    mgGet('/Negocios/GetMetodoPago', { negocioId: negocioId, metodoPagoId: id }, function(data) {
         $('#mpId').val(data.metodoPagoId);
         $('#mpNombre').val(data.nombre);
         $('#mpNumeroCuenta').val(data.numeroCuenta || '');

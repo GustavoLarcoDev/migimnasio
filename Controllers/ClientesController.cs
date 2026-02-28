@@ -16,6 +16,7 @@ public class ClientesController : NegocioBaseController
     private readonly IEmailService _emailService;
     private readonly IReciboService _reciboService;
     private readonly IWhatsAppService _whatsAppService;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     public ClientesController(
         IClienteService clienteService,
@@ -23,13 +24,15 @@ public class ClientesController : NegocioBaseController
         ApplicationDbContext context,
         IEmailService emailService,
         IReciboService reciboService,
-        IWhatsAppService whatsAppService) : base(authService)
+        IWhatsAppService whatsAppService,
+        IServiceScopeFactory scopeFactory) : base(authService)
     {
         _clienteService = clienteService;
         _context = context;
         _emailService = emailService;
         _reciboService = reciboService;
         _whatsAppService = whatsAppService;
+        _scopeFactory = scopeFactory;
     }
 
     // ═══ Dashboard ═══
@@ -361,14 +364,17 @@ public class ClientesController : NegocioBaseController
 
             var negocioNombre = negocio.NegocioNombre;
             var telefonos = clientes.Select(c => c.Telefono).ToList();
+            var scopeFactory = _scopeFactory;
             _ = Task.Run(async () =>
             {
+                using var scope = scopeFactory.CreateScope();
+                var whatsApp = scope.ServiceProvider.GetRequiredService<IWhatsAppService>();
                 foreach (var telefono in telefonos)
                 {
                     try
                     {
                         var mensajeCompleto = $"*{negocioNombre}*\n\n{mensaje}{disclaimer}";
-                        await _whatsAppService.EnviarMensajeTextoAsync(telefono, mensajeCompleto);
+                        await whatsApp.EnviarMensajeTextoAsync(telefono, mensajeCompleto);
                     }
                     catch { }
                     await Task.Delay(1000);

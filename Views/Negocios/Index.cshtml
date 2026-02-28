@@ -2512,7 +2512,7 @@ $('#editDiasPagados').on('change input', function() {
 // ================================================================
 function cargarComisiones() {
     // Load summary
-    $.get('/Negocios/GetResumenComisiones', function(data) {
+    mgGet('/Negocios/GetResumenComisiones', null, function(data) {
         var totalPendiente = 0, totalPagado = 0, vendedoresActivos = 0, totalNegocios = 0;
         if (data && data.length) {
             data.forEach(function(v) {
@@ -2534,7 +2534,7 @@ function cargarComisiones() {
         }
     });
     // Load pending
-    $.get('/Negocios/GetComisionesPendientes', function(data) {
+    mgGet('/Negocios/GetComisionesPendientes', null, function(data) {
         var html = '';
         if (!data || !data.length) {
             html = '<div class="text-center py-4 text-muted"><i class="bi bi-check-circle fs-1 d-block mb-2 text-success"></i>No hay comisiones pendientes</div>';
@@ -2565,7 +2565,7 @@ function cargarComisiones() {
         $('#comisionesPendientesList').html(html);
     });
     // Load history
-    $.get('/Negocios/GetHistorialComisiones', function(data) {
+    mgGet('/Negocios/GetHistorialComisiones', null, function(data) {
         var html = '';
         if (!data || !data.length) {
             html = '<div class="text-center py-4 text-muted">Sin historial de pagos</div>';
@@ -2662,7 +2662,7 @@ function cargarRecibosAdmin() {
 }
 
 function verReciboAdmin(reciboId) {
-    $.get('/Negocios/GetReciboAdmin', { reciboId }, function(r) {
+    mgGet('/Negocios/GetReciboAdmin', { reciboId }, function(r) {
         if (r) {
             $('#reciboAdminModalNumero').text(r.numeroRecibo);
             document.getElementById('reciboAdminIframe').srcdoc = r.contenidoHtml;

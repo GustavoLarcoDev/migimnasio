@@ -17,6 +17,7 @@ public class CitasController : NegocioBaseController
     private readonly IReciboService _reciboService;
     private readonly IWhatsAppService _whatsAppService;
     private readonly ILogger<CitasController> _logger;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     public CitasController(
         ICitaService citaService,
@@ -26,7 +27,8 @@ public class CitasController : NegocioBaseController
         IEmailService emailService,
         IReciboService reciboService,
         IWhatsAppService whatsAppService,
-        ILogger<CitasController> logger) : base(authService)
+        ILogger<CitasController> logger,
+        IServiceScopeFactory scopeFactory) : base(authService)
     {
         _citaService = citaService;
         _clienteService = clienteService;
@@ -35,6 +37,7 @@ public class CitasController : NegocioBaseController
         _emailService = emailService;
         _whatsAppService = whatsAppService;
         _logger = logger;
+        _scopeFactory = scopeFactory;
     }
 
     // ═══ Consultas ═══
@@ -85,33 +88,47 @@ public class CitasController : NegocioBaseController
                     if (cliente != null && negocio != null)
                     {
                         var clienteEmail = cliente.Email;
+                        var clienteTelefono = cliente.Telefono;
+                        var citaNombreCliente = cita.NombreCliente;
+                        var negNombre = negocio.NegocioNombre;
+                        var svcNombre = cita.NombreServicio;
+                        var empNombre = cita.NombreEmpleado;
+                        var fechaInicio = cita.FechaHoraInicio;
+                        var duracion = cita.DuracionMinutos;
+                        var precio = cita.PrecioServicio;
+                        var negEmail = negocio.Email;
+                        var negTelefono = negocio.Telefono;
+                        var scopeFactory = _scopeFactory;
+
                         if (!string.IsNullOrWhiteSpace(clienteEmail))
                         {
                             _ = Task.Run(async () =>
                             {
                                 try
                                 {
-                                    await _emailService.EnviarConfirmacionReservaAsync(
-                                        clienteEmail, cita.NombreCliente, negocio.NegocioNombre,
-                                        cita.NombreServicio, cita.NombreEmpleado, cita.FechaHoraInicio,
-                                        cita.DuracionMinutos, cita.PrecioServicio,
-                                        negocio.Email, negocio.Telefono);
+                                    using var scope = scopeFactory.CreateScope();
+                                    var emailSvc = scope.ServiceProvider.GetRequiredService<IEmailService>();
+                                    await emailSvc.EnviarConfirmacionReservaAsync(
+                                        clienteEmail, citaNombreCliente, negNombre,
+                                        svcNombre, empNombre, fechaInicio,
+                                        duracion, precio, negEmail, negTelefono);
                                 }
                                 catch { }
                             });
                         }
 
-                        if (!string.IsNullOrWhiteSpace(cliente.Telefono))
+                        if (!string.IsNullOrWhiteSpace(clienteTelefono))
                         {
-                            var negTelefono = negocio.Telefono;
                             _ = Task.Run(async () =>
                             {
                                 try
                                 {
-                                    await _whatsAppService.EnviarConfirmacionReservaWhatsAppAsync(
-                                        cliente.Telefono, cita.NombreCliente, negocio.NegocioNombre,
-                                        cita.NombreServicio, cita.NombreEmpleado, cita.FechaHoraInicio,
-                                        cita.PrecioServicio, negTelefono);
+                                    using var scope = scopeFactory.CreateScope();
+                                    var whatsApp = scope.ServiceProvider.GetRequiredService<IWhatsAppService>();
+                                    await whatsApp.EnviarConfirmacionReservaWhatsAppAsync(
+                                        clienteTelefono, citaNombreCliente, negNombre,
+                                        svcNombre, empNombre, fechaInicio,
+                                        precio, negTelefono);
                                 }
                                 catch { }
                             });
@@ -152,33 +169,47 @@ public class CitasController : NegocioBaseController
                 if (cita != null)
                 {
                     var clienteEmail = cliente.Email;
+                    var clienteTelefono = cliente.Telefono;
+                    var citaNombreCliente = cita.NombreCliente;
+                    var negNombre = negocio.NegocioNombre;
+                    var svcNombre = cita.NombreServicio;
+                    var empNombre = cita.NombreEmpleado;
+                    var fechaInicio = cita.FechaHoraInicio;
+                    var duracion = cita.DuracionMinutos;
+                    var precio = cita.PrecioServicio;
+                    var negEmail = negocio.Email;
+                    var negTelefono = negocio.Telefono;
+                    var scopeFactory = _scopeFactory;
+
                     if (!string.IsNullOrWhiteSpace(clienteEmail))
                     {
                         _ = Task.Run(async () =>
                         {
                             try
                             {
-                                await _emailService.EnviarConfirmacionReservaAsync(
-                                    clienteEmail, cita.NombreCliente, negocio.NegocioNombre,
-                                    cita.NombreServicio, cita.NombreEmpleado, cita.FechaHoraInicio,
-                                    cita.DuracionMinutos, cita.PrecioServicio,
-                                    negocio.Email, negocio.Telefono);
+                                using var scope = scopeFactory.CreateScope();
+                                var emailSvc = scope.ServiceProvider.GetRequiredService<IEmailService>();
+                                await emailSvc.EnviarConfirmacionReservaAsync(
+                                    clienteEmail, citaNombreCliente, negNombre,
+                                    svcNombre, empNombre, fechaInicio,
+                                    duracion, precio, negEmail, negTelefono);
                             }
                             catch { }
                         });
                     }
 
-                    if (!string.IsNullOrWhiteSpace(cliente.Telefono))
+                    if (!string.IsNullOrWhiteSpace(clienteTelefono))
                     {
-                        var negTelefono = negocio.Telefono;
                         _ = Task.Run(async () =>
                         {
                             try
                             {
-                                await _whatsAppService.EnviarConfirmacionReservaWhatsAppAsync(
-                                    cliente.Telefono, cita.NombreCliente, negocio.NegocioNombre,
-                                    cita.NombreServicio, cita.NombreEmpleado, cita.FechaHoraInicio,
-                                    cita.PrecioServicio, negTelefono);
+                                using var scope = scopeFactory.CreateScope();
+                                var whatsApp = scope.ServiceProvider.GetRequiredService<IWhatsAppService>();
+                                await whatsApp.EnviarConfirmacionReservaWhatsAppAsync(
+                                    clienteTelefono, citaNombreCliente, negNombre,
+                                    svcNombre, empNombre, fechaInicio,
+                                    precio, negTelefono);
                             }
                             catch { }
                         });
@@ -213,6 +244,7 @@ public class CitasController : NegocioBaseController
 
                     if (negocio != null)
                     {
+                        var scopeFactory = _scopeFactory;
                         if (nuevoEstado == "confirmada")
                         {
                             var empleado = await _context.Empleados.FindAsync(cita.EmpleadoId);
@@ -227,7 +259,9 @@ public class CitasController : NegocioBaseController
                                 {
                                     try
                                     {
-                                        await _whatsAppService.EnviarCitaConfirmadaEmpleadoAsync(
+                                        using var scope = scopeFactory.CreateScope();
+                                        var whatsApp = scope.ServiceProvider.GetRequiredService<IWhatsAppService>();
+                                        await whatsApp.EnviarCitaConfirmadaEmpleadoAsync(
                                             empTelefono, empNombre, cliNombre,
                                             negNombre, svcNombre, fechaHora);
                                     }
@@ -247,7 +281,9 @@ public class CitasController : NegocioBaseController
                                 {
                                     try
                                     {
-                                        await _whatsAppService.EnviarCitaCanceladaClienteAsync(
+                                        using var scope = scopeFactory.CreateScope();
+                                        var whatsApp = scope.ServiceProvider.GetRequiredService<IWhatsAppService>();
+                                        await whatsApp.EnviarCitaCanceladaClienteAsync(
                                             cliTelefono, cliNombre, negNombre,
                                             svcNombre, fechaHora);
                                     }

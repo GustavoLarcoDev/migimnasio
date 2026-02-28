@@ -695,7 +695,8 @@
 <!-- Modal Recibo -->
 <div class="modal fade modal-fullscreen-sm-down" id="reciboModal" tabindex="-1">
     <div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Recibo #<span id="reciboModalNumero"></span></h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-    <div class="modal-body p-0"><iframe id="reciboIframe" style="width:100%;height:500px;border:none;" sandbox="allow-same-origin"></iframe></div>
+    <!-- sandbox="" prevents sandboxed content from reading parent cookies even if stored XSS exists in receipt HTML. srcdoc renders fine without allow-same-origin. Printing uses window.open() so sandbox has no effect. -->
+    <div class="modal-body p-0"><iframe id="reciboIframe" style="width:100%;height:500px;border:none;" sandbox=""></iframe></div>
     <div class="modal-footer"><button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button></div>
     </div></div>
 </div>
@@ -719,7 +720,8 @@
 <!-- Modal Preview Menu -->
 <div class="modal fade modal-fullscreen-sm-down" id="menuPreviewModal" tabindex="-1">
     <div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Vista Previa del Menu</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-    <div class="modal-body p-0"><iframe id="menuPreviewIframe" style="width:100%;height:550px;border:none;" sandbox="allow-same-origin"></iframe></div>
+    <!-- sandbox="" prevents sandboxed content from reading parent cookies. srcdoc renders fine without allow-same-origin. -->
+    <div class="modal-body p-0"><iframe id="menuPreviewIframe" style="width:100%;height:550px;border:none;" sandbox=""></iframe></div>
     <div class="modal-footer">
         <button type="button" class="btn btn-outline-success" id="btnQRMenuPreview"><i class="bi bi-qr-code me-1"></i>Codigo QR</button>
         <button type="button" class="btn btn-outline-secondary" id="btnCopiarLinkMenuPreview"><i class="bi bi-link-45deg me-1"></i>Copiar Link</button>
@@ -998,7 +1000,7 @@ $(document).ready(function() {
 
 // ═══════════════ SUSCRIPCION ═══════════════
 function verificarSuscripcion() {
-    $.get('/Negocios/GetSuscripcionStatus', { negocioId }, function(d) {
+    mgGet('/Negocios/GetSuscripcionStatus', { negocioId }, function(d) {
         if (d && d.esPrueba) {
             var dias = d.diasRestantes;
             $('#trialDaysText').text(dias <= 0 ? 'Tu prueba ha expirado' : 'Te quedan ' + dias + ' dias de prueba');
@@ -1008,15 +1010,15 @@ function verificarSuscripcion() {
 
 // ═══════════════ POS ═══════════════
 function cargarPOS() {
-    $.get('/Negocios/GetCategorias', { negocioId }, function(cats) {
+    mgGet('/Negocios/GetCategorias', { negocioId }, function(cats) {
         categoriasCache = cats;
         renderCategoryTabs(cats, '#posCategoryTabs');
     });
-    $.get('/Negocios/GetProductos', { negocioId }, function(productos) {
+    mgGet('/Negocios/GetProductos', { negocioId }, function(productos) {
         productosCache = productos;
         renderPOSProducts(productos);
     });
-    $.get('/Negocios/GetInventarioStats', { negocioId }, function(d) {
+    mgGet('/Negocios/GetInventarioStats', { negocioId }, function(d) {
         $('#posVentasHoy').text(d.ventasHoyUnidades);
         $('#posIngresosHoy').text('$' + d.ingresosHoy.toFixed(2));
         $('#posTotalProductos').text(d.totalProductos);
@@ -1028,7 +1030,7 @@ function cargarPOS() {
 }
 
 function cargarMesasParaPOS() {
-    $.get('/Negocios/GetMesas', { negocioId }, function(mesas) {
+    mgGet('/Negocios/GetMesas', { negocioId }, function(mesas) {
         mesasCache = mesas;
         var sel = $('#posMesaId');
         sel.find('option:not(:first)').remove();
@@ -1039,7 +1041,7 @@ function cargarMesasParaPOS() {
 }
 
 function cargarRepartidoresParaPOS() {
-    $.get('/Negocios/GetEmpleados', { negocioId }, function(data) {
+    mgGet('/Negocios/GetEmpleados', { negocioId }, function(data) {
         repartidoresCache = Array.isArray(data) ? data : (data.empleados || []);
         var sel = $('#posRepartidorId');
         sel.find('option:not(:first)').remove();
@@ -1176,7 +1178,7 @@ function procesarVenta(metodoPago, numeroConfirmacion) {
 }
 
 function mostrarReciboVenta(reciboId) {
-    $.get('/Negocios/GetRecibo', { reciboId, negocioId }, function(r) {
+    mgGet('/Negocios/GetRecibo', { reciboId, negocioId }, function(r) {
         if (!r) { swalMG.fire({ title: 'Venta Exitosa!', icon: 'success' }); return; }
         $('#reciboModalNumero').text(r.numeroRecibo); document.getElementById('reciboIframe').srcdoc = r.contenidoHtml;
         var footer = $('#reciboModal .modal-footer');
@@ -1215,7 +1217,7 @@ function cargarOrdenesRecientes() {
 
 // ═══════════════ MESAS ═══════════════
 function cargarMesas() {
-    $.get('/Negocios/GetMesas', { negocioId }, function(mesas) {
+    mgGet('/Negocios/GetMesas', { negocioId }, function(mesas) {
         mesasCache = mesas;
         var grid = $('#mesasGrid'); grid.empty();
         if (!mesas.length) { grid.html('<div class="col-12 text-center py-5 text-muted"><i class="bi bi-grid-3x3 fs-1 d-block mb-3 opacity-50"></i><p>No hay mesas. Crea la primera.</p></div>'); return; }
@@ -1448,7 +1450,7 @@ $(document).on('click', '#menuTipoPills .mg-pill', function() { $('#menuTipoPill
 $(document).on('click', '.menuEstiloBtn', function() { $('.menuEstiloBtn').removeClass('active'); $(this).addClass('active'); currentMenuEstilo = $(this).data('style'); });
 
 function cargarPlatosParaMenu() {
-    $.get('/Negocios/GetProductos', { negocioId }, function(prods) {
+    mgGet('/Negocios/GetProductos', { negocioId }, function(prods) {
         var container = $('#menuPlatosDisponibles'); container.empty();
         prods.forEach(function(p) {
             container.append('<div class="d-flex align-items-center justify-content-between p-2 border-bottom cursor-pointer menu-plato-item" data-id="' + p.productoId + '" data-nombre="' + escAttr(p.nombre) + '" data-precio="' + p.precioVenta + '"><div><strong>' + escHtml(p.nombre) + '</strong><br><small class="text-muted">$' + p.precioVenta.toFixed(2) + '</small></div><button class="btn btn-sm btn-outline-primary" onclick="agregarPlatoAlMenu(\'' + p.productoId + '\',\'' + escAttr(p.nombre) + '\',' + p.precioVenta + ')"><i class="bi bi-plus"></i></button></div>');
@@ -1523,7 +1525,7 @@ $('#btnPreviewMenu').on('click', function() {
 $('#btnDescargarMenuPreview').on('click', function() { var html = document.getElementById('menuPreviewIframe').srcdoc; if (!html) return; var w = window.open('', '_blank'); w.document.write(html); w.document.close(); w.focus(); setTimeout(function() { w.print(); }, 400); });
 
 function editarMenuGuardado(menuId) {
-    $.get('/Negocios/GetMenu', { menuId }, function(m) {
+    mgGet('/Negocios/GetMenu', { menuId }, function(m) {
         menuEditId = m.menuId; $('#menuNombre').val(m.nombre); currentMenuTipo = m.tipoMenu; currentMenuEstilo = m.estilo || 'moderno';
         $('#menuTipoPills .mg-pill').removeClass('active').filter('[data-tipo="' + m.tipoMenu + '"]').addClass('active');
         $('.menuEstiloBtn').removeClass('active').filter('[data-style="' + currentMenuEstilo + '"]').addClass('active');
@@ -1606,7 +1608,7 @@ $('#btnGuardarRepartidor').on('click', function() {
 });
 
 function editarRepartidor(id) {
-    $.get('/Negocios/GetEmpleado', { empleadoId: id, negocioId }, function(e) {
+    mgGet('/Negocios/GetEmpleado', { empleadoId: id, negocioId }, function(e) {
         if (!e) { toastr.error('Repartidor no encontrado'); return; }
         $('#repEditId').val(e.empleadoId); $('#repNombre').val(e.nombre); $('#repApellido').val(e.apellido); $('#repTelefono').val(e.telefono); $('#repEmail').val(e.email); $('#repVehiculo').val(e.especialidad || 'Moto'); $('#repartidorModalTitle').text('Editar Repartidor'); new bootstrap.Modal('#repartidorModal').show();
     });
@@ -1620,17 +1622,17 @@ function eliminarRepartidor(id) {
 
 // ═══════════════ INVENTARIO (reutilizado de Tienda) ═══════════════
 function cargarInventario() {
-    $.get('/Negocios/GetCategorias', { negocioId }, function(cats) {
+    mgGet('/Negocios/GetCategorias', { negocioId }, function(cats) {
         categoriasCache = cats;
         renderCategoryFolders(cats);
         var sel = $('#prodCategoria'); sel.find('option:not(:first)').remove();
         cats.forEach(function(c) { sel.append('<option value="' + c.categoriaId + '">' + escHtml(c.nombre) + '</option>'); });
     });
-    $.get('/Negocios/GetProductos', { negocioId }, function(prods) {
+    mgGet('/Negocios/GetProductos', { negocioId }, function(prods) {
         productosCache = prods;
         renderProductosGrid(prods);
     });
-    $.get('/Negocios/GetInventarioStats', { negocioId }, function(d) {
+    mgGet('/Negocios/GetInventarioStats', { negocioId }, function(d) {
         $('#invTotalProductos').text(d.totalProductos); $('#invStockBajo').text(d.stockBajo);
         $('#invVentasHoy').text(d.ventasHoyUnidades); $('#invIngresosHoy').text('$' + d.ingresosHoy.toFixed(2));
     });
@@ -1847,13 +1849,13 @@ $('#btnExportLogsExcel').on('click', function() {
 var chartBar, chartResumen;
 function cargarReportes(periodo) {
     periodo = periodo || 'dia';
-    $.get('/Negocios/GetVentasStats', { negocioId, periodo }, function(d) {
+    mgGet('/Negocios/GetVentasStats', { negocioId, periodo }, function(d) {
         var labels = { dia: 'del Dia', semana: 'de la Semana', mes: 'del Mes' };
         $('#ventasIngresosLabel').text('Ingresos ' + labels[periodo]); $('#ventasGastosLabel').text('Gastos ' + labels[periodo]); $('#ventasGananciaLabel').text('Ganancia ' + labels[periodo]);
         $('#ventasIngresos').text('$' + (d.ingresos || 0).toFixed(2)); $('#ventasGastos').text('$' + (d.gastos || 0).toFixed(2)); $('#ventasGanancia').text('$' + (d.ganancia || 0).toFixed(2));
         $('#chartResumenTitle').text('Resumen ' + labels[periodo]);
     });
-    $.get('/Negocios/GetChartData', { negocioId, periodo }, function(d) {
+    mgGet('/Negocios/GetChartData', { negocioId, periodo }, function(d) {
         if (chartBar) chartBar.destroy();
         chartBar = new ApexCharts(document.querySelector('#chartBarVentas'), { chart: { type: 'bar', height: 300 }, series: [{ name: 'Ingresos', data: d.ingresos || [] }, { name: 'Gastos', data: d.gastos || [] }], xaxis: { categories: d.labels || [] }, colors: ['#50CD89', '#F1416C'], plotOptions: { bar: { borderRadius: 4 } } });
         chartBar.render();
@@ -1874,7 +1876,7 @@ function cargarReportes(periodo) {
 var chartVentasCategoria;
 function cargarVentasPorCategoria() {
     var periodo = $('#ventasPeriodPills .mg-pill.active').data('periodo') || 'mes';
-    $.get('/Negocios/GetVentasPorCategoria', { negocioId, periodo }, function(datos) {
+    mgGet('/Negocios/GetVentasPorCategoria', { negocioId, periodo }, function(datos) {
         var tbody = $('#tablaVentasCategoria tbody'); tbody.empty();
         if (!datos.length) { tbody.html('<tr><td colspan="3" class="text-center text-muted py-3">Sin ventas en este periodo</td></tr>'); }
         else { datos.forEach(function(d) { tbody.append('<tr><td>' + escHtml(d.categoria) + '</td><td class="text-end">' + d.unidades + '</td><td class="text-end fw-bold text-success">$' + d.totalVentas.toFixed(2) + '</td></tr>'); }); }
@@ -1904,7 +1906,7 @@ $('#btnRefrescarVentas').on('click', function() {
 
 // ═══════════════ NOTIFICACIONES ═══════════════
 function cargarNotificaciones() {
-    $.get('/Negocios/GetNotificaciones', { negocioId }, function(notifs) {
+    mgGet('/Negocios/GetNotificaciones', { negocioId }, function(notifs) {
         var c = $('#notificacionesList'); c.empty();
         if (!notifs || !notifs.length) { c.html('<div class="text-center py-5 text-muted"><i class="bi bi-bell-slash fs-1 d-block mb-3"></i><p>No hay notificaciones.</p></div>'); return; }
         notifs.forEach(function(n) {
@@ -1918,18 +1920,18 @@ function cargarNotificaciones() {
 }
 
 function marcarLeida(id) {
-    $.post('/Negocios/MarcarNotificacionLeida', { id: id, negocioId: negocioId }, function() { cargarNotificaciones(); cargarNotificacionesCount(); });
+    $.post('/Negocios/MarcarNotificacionLeida', { id: id, negocioId: negocioId }, function() { cargarNotificaciones(); cargarNotificacionesCount(); }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al marcar notificación como leída'); });
 }
 
 function cargarNotificacionesCount() {
-    $.get('/Negocios/GetNotificacionesCount', { negocioId }, function(d) {
+    mgGet('/Negocios/GetNotificacionesCount', { negocioId }, function(d) {
         var count = d.count || 0;
         if (count > 0) { $('#sidebarNotifBadge, #topbarNotifBadge').text(count).removeClass('d-none'); }
         else { $('#sidebarNotifBadge, #topbarNotifBadge').addClass('d-none'); }
     });
 }
 
-$('#btnMarcarTodasLeidasTab').on('click', function() { $.post('/Negocios/MarcarTodasNotificacionesLeidas', { NegocioId: negocioId }, function(r) { if (r.success) { toastr.success('Notificaciones marcadas como leidas'); cargarNotificaciones(); cargarNotificacionesCount(); } }); });
+$('#btnMarcarTodasLeidasTab').on('click', function() { $.post('/Negocios/MarcarTodasNotificacionesLeidas', { NegocioId: negocioId }, function(r) { if (r.success) { toastr.success('Notificaciones marcadas como leidas'); cargarNotificaciones(); cargarNotificacionesCount(); } }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al marcar notificaciones como leídas'); }); });
 
 $('#btnGenerarNotificaciones').on('click', function() {
     var btn = $(this);
@@ -1947,7 +1949,7 @@ $('#btnGenerarNotificaciones').on('click', function() {
 $('#sugerenciaTexto').on('input', function() { $('#sugerenciaCount').text($(this).val().length); });
 $('#btnEnviarSugerencia').on('click', function() {
     var txt = $('#sugerenciaTexto').val(); if (!txt || txt.length < 10) { toastr.error('Escribe al menos 10 caracteres'); return; }
-    $.post('/Negocios/EnviarSugerencia', { NegocioId: negocioId, Texto: txt }, function(r) { if (r.success) { toastr.success('Sugerencia enviada!'); $('#sugerenciaTexto').val(''); $('#sugerenciaCount').text('0'); } else toastr.error(r.message); });
+    $.post('/Negocios/EnviarSugerencia', { NegocioId: negocioId, Texto: txt }, function(r) { if (r.success) { toastr.success('Sugerencia enviada!'); $('#sugerenciaTexto').val(''); $('#sugerenciaCount').text('0'); } else toastr.error(r.message); }).fail(function(xhr) { toastr.error(xhr.responseJSON?.message || 'Error al enviar sugerencia'); });
 });
 
 // ═══════════════ RECIBOS ═══════════════
@@ -2054,7 +2056,7 @@ $('#btnNuevaReserva').on('click', function() {
 });
 
 function cargarMesasSelect(selectedId) {
-    $.get('/Negocios/GetMesas', { negocioId: negocioId }, function(mesas) {
+    mgGet('/Negocios/GetMesas', { negocioId: negocioId }, function(mesas) {
         var sel = $('#reservaMesa');
         sel.html('<option value="">Sin asignar</option>');
         mesas.forEach(function(m) {
@@ -2098,7 +2100,7 @@ $('#btnGuardarReserva').on('click', function() {
 function editarReserva(reservaId) {
     var fecha = $('#reservasFechaFiltro').val() || '';
     var url = '/Negocios/GetReservas?negocioId=' + negocioId + (fecha ? '&fecha=' + fecha : '');
-    $.get(url, function(data) {
+    mgGet(url, null, function(data) {
         var r = data.find(function(x) { return x.reservaId === reservaId; });
         if (!r) { toastr.error('Reserva no encontrada'); return; }
         $('#reservaId').val(r.reservaId);
@@ -2199,7 +2201,7 @@ function renderMetodoPagoCard(id, nombre, numeroCuenta, nombreTitular, cedula, i
 }
 
 function verQR(id, nombre) {
-    $.get('/Negocios/GetMetodoPago', { negocioId: negocioId, metodoPagoId: id }, function(data) {
+    mgGet('/Negocios/GetMetodoPago', { negocioId: negocioId, metodoPagoId: id }, function(data) {
         if (data.imagenQR) {
             $('#modalVerQRTitle').text(nombre);
             $('#modalVerQRImg').attr('src', data.imagenQR);
@@ -2217,7 +2219,7 @@ function abrirModalMetodoPago() {
 }
 
 function editarMetodoPago(id) {
-    $.get('/Negocios/GetMetodoPago', { negocioId: negocioId, metodoPagoId: id }, function(data) {
+    mgGet('/Negocios/GetMetodoPago', { negocioId: negocioId, metodoPagoId: id }, function(data) {
         $('#mpId').val(data.metodoPagoId);
         $('#mpNombre').val(data.nombre);
         $('#mpNumeroCuenta').val(data.numeroCuenta || '');

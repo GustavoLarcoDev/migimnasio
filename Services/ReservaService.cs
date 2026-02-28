@@ -75,8 +75,10 @@ public class ReservaService : IReservaService
             if (mesa == null) return (false, "Mesa no encontrada");
 
             // Verificar que la mesa no tiene otra reserva activa en la misma fecha/hora (±2 horas)
+            // Excluir estados terminales en lugar de filtrar solo "confirmada", para cubrir nuevos estados futuros
             var conflicto = await _context.Reservas.AnyAsync(r =>
-                r.MesaId == mesaId && r.IsActive && r.Estado == "confirmada"
+                r.MesaId == mesaId && r.IsActive
+                && r.Estado != "cancelada" && r.Estado != "completada" && r.Estado != "no_presentado"
                 && r.FechaHoraReserva > fechaHoraReserva.AddHours(-2)
                 && r.FechaHoraReserva < fechaHoraReserva.AddHours(2));
             if (conflicto)
@@ -117,6 +119,19 @@ public class ReservaService : IReservaService
 
         if (string.IsNullOrWhiteSpace(nombreCliente))
             return (false, "El nombre del cliente es obligatorio");
+
+        // Verificar conflictos cuando cambia la mesa o la hora
+        var mesaIdFinal = mesaId == Guid.Empty ? null : mesaId;
+        if (mesaIdFinal.HasValue && (reserva.MesaId != mesaIdFinal || reserva.FechaHoraReserva != fechaHoraReserva))
+        {
+            var conflicto = await _context.Reservas.AnyAsync(r =>
+                r.ReservaId != reservaId && r.MesaId == mesaIdFinal && r.IsActive
+                && r.Estado != "cancelada" && r.Estado != "completada" && r.Estado != "no_presentado"
+                && r.FechaHoraReserva > fechaHoraReserva.AddHours(-2)
+                && r.FechaHoraReserva < fechaHoraReserva.AddHours(2));
+            if (conflicto)
+                return (false, "La mesa ya tiene una reserva en ese horario");
+        }
 
         // Si cambió la mesa, liberar la anterior y reservar la nueva
         if (reserva.MesaId != mesaId)
