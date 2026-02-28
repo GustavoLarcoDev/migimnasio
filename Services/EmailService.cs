@@ -1168,4 +1168,44 @@ public class EmailService : IEmailService
     {
         return await EnviarEmailAsync(destinatario, asunto, contenidoHtml);
     }
+
+    public async Task<bool> SendEmailWithAttachmentsAsync(string destinatario, string asunto, string htmlBody,
+        byte[]? adjunto1Bytes, string? adjunto1Nombre,
+        byte[]? adjunto2Bytes = null, string? adjunto2Nombre = null)
+    {
+        if (string.IsNullOrWhiteSpace(destinatario)) return false;
+        if (string.IsNullOrEmpty(_settings.Password) || _settings.Password.Contains("YOUR_")) return false;
+
+        try
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(_settings.FromName, _settings.FromEmail));
+            message.To.Add(MailboxAddress.Parse(destinatario));
+            message.Subject = asunto;
+
+            var builder = new BodyBuilder { HtmlBody = htmlBody };
+
+            if (adjunto1Bytes != null && !string.IsNullOrEmpty(adjunto1Nombre))
+                builder.Attachments.Add(adjunto1Nombre, adjunto1Bytes, ObtenerContentType(adjunto1Nombre));
+
+            if (adjunto2Bytes != null && !string.IsNullOrEmpty(adjunto2Nombre))
+                builder.Attachments.Add(adjunto2Nombre, adjunto2Bytes, ObtenerContentType(adjunto2Nombre));
+
+            message.Body = builder.ToMessageBody();
+
+            using var client = new MailKit.Net.Smtp.SmtpClient();
+            await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(_settings.FromEmail, _settings.Password);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+
+            _logger.LogInformation("Email con adjuntos enviado a {Email}", destinatario);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error enviando email con adjuntos a {Email}", destinatario);
+            return false;
+        }
+    }
 }

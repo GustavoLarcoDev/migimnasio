@@ -64,6 +64,10 @@ builder.Services.AddOptions<EmailSettings>()
 builder.Services.Configure<WhatsAppSettings>(
     builder.Configuration.GetSection("WhatsAppSettings"));
 
+// Configuración de facturación electrónica SRI Ecuador
+builder.Services.AddOptions<FacturacionSettings>()
+    .BindConfiguration("FacturacionSettings");
+
 // ═══════════════════════════════════════════════════════════
 // SECCIÓN 2 — BASE DE DATOS (Entity Framework Core)
 //
@@ -173,6 +177,10 @@ builder.Services.AddScoped<IMenuRestauranteService, MenuRestauranteService>();
 // CRUD de métodos de pago por negocio (transferencia, QR, efectivo, etc.)
 builder.Services.AddScoped<IMetodoPagoService, MetodoPagoService>();
 
+// ── Facturación Electrónica SRI ─────────────────────────────
+// Emisión de facturas electrónicas ante el SRI Ecuador
+builder.Services.AddScoped<IFacturacionElectronicaService, FacturacionElectronicaService>();
+
 // ═══════════════════════════════════════════════════════════
 // SECCIÓN 4 — CLIENTE HTTP (HttpClientFactory)
 //
@@ -183,6 +191,12 @@ builder.Services.AddScoped<IMetodoPagoService, MetodoPagoService>();
 // ═══════════════════════════════════════════════════════════
 
 builder.Services.AddHttpClient("WhatsApp");
+
+// HttpClient para el SRI con timeout configurado
+builder.Services.AddHttpClient("SRI", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 
 // ═══════════════════════════════════════════════════════════
 // SECCIÓN 5 — SERVICIOS DE FONDO (IHostedService)

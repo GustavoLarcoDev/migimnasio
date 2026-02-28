@@ -17,7 +17,9 @@
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
+      <PackageReference Include="QRCoder" Version="1.6.0" />
       <PackageReference Include="Select.HtmlToPdf.NetCore" Version="25.2.0" />
+      <PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.0" />
     </ItemGroup>
 
     <ItemGroup>

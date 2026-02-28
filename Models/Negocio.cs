@@ -255,4 +255,62 @@ public class Gym
     /// null = aún no ha aceptado.
     /// </summary>
     public DateTime? FechaAceptoTerminos { get; set; }
+
+    // ═══════════════════════════════════════════════════════════
+    // FACTURACION ELECTRONICA SRI
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Indica si el negocio tiene habilitada la facturación electrónica del SRI.
+    /// </summary>
+    public bool FacturacionElectronicaActiva { get; set; } = false;
+
+    /// <summary>RUC del emisor (13 dígitos).</summary>
+    [MaxLength(13)]
+    public string Ruc { get; set; }
+
+    /// <summary>Razón social registrada en el SRI.</summary>
+    [MaxLength(300)]
+    public string RazonSocial { get; set; }
+
+    /// <summary>Nombre comercial del emisor.</summary>
+    [MaxLength(300)]
+    public string NombreComercial { get; set; }
+
+    /// <summary>Dirección de la matriz del emisor.</summary>
+    [MaxLength(500)]
+    public string DireccionMatriz { get; set; }
+
+    /// <summary>Código de establecimiento SRI (3 dígitos, default "001").</summary>
+    [MaxLength(3)]
+    public string CodigoEstablecimiento { get; set; } = "001";
+
+    /// <summary>Punto de emisión SRI (3 dígitos, default "001").</summary>
+    [MaxLength(3)]
+    public string PuntoEmision { get; set; } = "001";
+
+    /// <summary>Certificado digital .p12 almacenado en Base64.</summary>
+    public string CertificadoP12Base64 { get; set; }
+
+    /// <summary>Contraseña del certificado .p12, cifrada con AES-256-GCM.</summary>
+    [MaxLength(500)]
+    public string CertificadoPasswordEncriptado { get; set; }
+
+    /// <summary>Ambiente SRI: 1=Pruebas, 2=Producción.</summary>
+    public int SriAmbiente { get; set; } = 1;
+
+    /// <summary>Indica si el emisor está obligado a llevar contabilidad.</summary>
+    public bool ObligadoContabilidad { get; set; } = false;
+
+    /// <summary>Número de contribuyente especial (si aplica).</summary>
+    [MaxLength(20)]
+    public string ContribuyenteEspecial { get; set; }
+
+    /// <summary>Régimen del contribuyente (ej: "RIMPE").</summary>
+    [MaxLength(50)]
+    public string RegimenContribuyente { get; set; }
+
+    /// <summary>Número de agente de retención (si aplica).</summary>
+    [MaxLength(20)]
+    public string AgenteRetencion { get; set; }
 }

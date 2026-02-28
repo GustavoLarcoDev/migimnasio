@@ -89,6 +89,9 @@ public static class BackgroundServicesRegistration
         // Recordatorios de expiración de suscripción: 10:00 AM Ecuador
         services.AddHostedService<SubscriptionExpirationReminderService>();
 
+        // Reintento de facturas electrónicas pendientes: cada 10 minutos
+        services.AddHostedService<FacturaReintentoService>();
+
         // Retornar services permite encadenar: builder.Services.AddBackgroundServices().AddOtraCosa()
         return services;
     }

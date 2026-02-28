@@ -614,6 +614,70 @@
                         </div>
                     </div>
                 </div>
+                <!-- Facturación Electrónica SRI -->
+                <div class="mg-card mb-4">
+                    <div class="card-header border-0 d-flex align-items-center justify-content-between">
+                        <h5 class="fw-bold mb-0"><i class="bi bi-file-earmark-ruled me-2"></i>Facturación Electrónica SRI</h5>
+                        <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="sriToggle" onchange="window._facToggle()"><label class="form-check-label small" for="sriToggle">Activar</label></div>
+                    </div>
+                    <div class="card-body">
+                        <div id="sriConfigFields" style="display:none;">
+                            <div class="row g-3">
+                                <div class="col-md-4"><label class="form-label fw-semibold small">RUC</label><input type="text" class="form-control form-control-sm" id="sriRuc" maxlength="13"></div>
+                                <div class="col-md-4"><label class="form-label fw-semibold small">Razón Social</label><input type="text" class="form-control form-control-sm" id="sriRazonSocial"></div>
+                                <div class="col-md-4"><label class="form-label fw-semibold small">Nombre Comercial</label><input type="text" class="form-control form-control-sm" id="sriNombreComercial"></div>
+                                <div class="col-md-6"><label class="form-label fw-semibold small">Dirección Matriz</label><input type="text" class="form-control form-control-sm" id="sriDireccionMatriz"></div>
+                                <div class="col-md-3"><label class="form-label fw-semibold small">Establecimiento</label><input type="text" class="form-control form-control-sm" id="sriEstablecimiento" maxlength="3" value="001"></div>
+                                <div class="col-md-3"><label class="form-label fw-semibold small">Punto Emisión</label><input type="text" class="form-control form-control-sm" id="sriPuntoEmision" maxlength="3" value="001"></div>
+                                <div class="col-md-4"><label class="form-label fw-semibold small">Ambiente</label><select class="form-select form-select-sm" id="sriAmbiente"><option value="1">Pruebas</option><option value="2">Producción</option></select></div>
+                                <div class="col-md-4"><label class="form-label fw-semibold small">Régimen</label><input type="text" class="form-control form-control-sm" id="sriRegimenContribuyente"></div>
+                                <div class="col-md-4 d-flex align-items-end"><div class="form-check"><input class="form-check-input" type="checkbox" id="sriObligadoContabilidad"><label class="form-check-label small" for="sriObligadoContabilidad">Obligado contabilidad</label></div></div>
+                                <div class="col-md-6"><label class="form-label fw-semibold small">Contribuyente Especial</label><input type="text" class="form-control form-control-sm" id="sriContribuyenteEspecial"></div>
+                                <div class="col-md-6"><label class="form-label fw-semibold small">Agente de Retención</label><input type="text" class="form-control form-control-sm" id="sriAgenteRetencion"></div>
+                            </div>
+                            <hr class="my-3">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-shield-lock me-2"></i>Certificado Digital (.p12)</h6>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-5"><input type="file" class="form-control form-control-sm" id="sriCertFile" accept=".p12,.pfx"></div>
+                                <div class="col-md-4"><input type="password" class="form-control form-control-sm" id="sriCertPassword" placeholder="Contraseña"></div>
+                                <div class="col-md-3"><button class="btn btn-sm btn-outline-primary w-100" onclick="window._facSubirCert()"><i class="bi bi-upload me-1"></i>Subir</button></div>
+                            </div>
+                            <span class="badge bg-success d-none" id="sriCertBadge"></span>
+                            <hr class="my-3">
+                            <button class="btn btn-primary" onclick="window._facGuardarConfig()"><i class="bi bi-check-lg me-1"></i>Guardar Configuración SRI</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB FACTURACION -->
+    <div class="tab-pane fade" id="facturacionTab" role="tabpanel">
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3"><div class="mg-card text-center py-3"><div class="fs-3 fw-bold" id="facStatEmitidas" style="color:var(--mg-primary);">0</div><small class="text-muted">Emitidas</small></div></div>
+            <div class="col-6 col-md-3"><div class="mg-card text-center py-3"><div class="fs-3 fw-bold text-success" id="facStatAutorizadas">0</div><small class="text-muted">Autorizadas</small></div></div>
+            <div class="col-6 col-md-3"><div class="mg-card text-center py-3"><div class="fs-3 fw-bold text-warning" id="facStatPendientes">0</div><small class="text-muted">Pendientes</small></div></div>
+            <div class="col-6 col-md-3"><div class="mg-card text-center py-3"><div class="fs-3 fw-bold" id="facStatMonto" style="color:var(--mg-primary);">$0.00</div><small class="text-muted">Monto Total</small></div></div>
+        </div>
+        <div class="mg-card">
+            <div class="card-header border-0 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <h5 class="fw-bold mb-0"><i class="bi bi-file-earmark-ruled me-2"></i>Facturas Electrónicas</h5>
+                <button class="btn btn-primary btn-sm" onclick="window._facNuevaFactura()"><i class="bi bi-plus-lg me-1"></i>Nueva Factura</button>
+            </div>
+            <div class="card-body">
+                <div class="row g-2 mb-3">
+                    <div class="col-auto"><input type="date" class="form-control form-control-sm" id="facFiltroDesde"></div>
+                    <div class="col-auto"><input type="date" class="form-control form-control-sm" id="facFiltroHasta"></div>
+                    <div class="col-auto"><select class="form-select form-select-sm" id="facFiltroEstado"><option value="">Todos</option><option value="Autorizada">Autorizada</option><option value="Pendiente">Pendiente</option><option value="NoAutorizada">No Autorizada</option><option value="Anulada">Anulada</option></select></div>
+                    <div class="col-auto"><button class="btn btn-sm btn-outline-primary" onclick="window._facFiltrar()"><i class="bi bi-funnel me-1"></i>Filtrar</button></div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0">
+                        <thead><tr><th>Número</th><th>Fecha</th><th>Comprador</th><th>RUC/CI</th><th class="text-end">Total</th><th>Estado</th><th class="text-end">Acciones</th></tr></thead>
+                        <tbody id="facturasTableBody"><tr><td colspan="7" class="text-center text-muted py-4">Cargando...</td></tr></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>

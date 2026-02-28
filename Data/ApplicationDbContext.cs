@@ -227,6 +227,12 @@ public class ApplicationDbContext : DbContext
     /// </summary>
     public DbSet<MetodoPago> MetodosPago { get; set; }
 
+    /// <summary>
+    /// Facturas electrónicas emitidas ante el SRI Ecuador.
+    /// Cada factura tiene clave de acceso, XML firmado, estado de autorización y RIDE PDF.
+    /// </summary>
+    public DbSet<FacturaElectronica> FacturasElectronicas { get; set; }
+
     // ═══════════════════════════════════════════════════════════
     // CONFIGURACIÓN DEL MODELO (OnModelCreating)
     //
@@ -531,6 +537,40 @@ public class ApplicationDbContext : DbContext
                 .HasForeignKey(e => e.NegocioId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ── Configuración FacturaElectronica ──
+        modelBuilder.Entity<FacturaElectronica>(entity =>
+        {
+            // Índice único: clave de acceso por negocio
+            entity.HasIndex(f => new { f.NegocioId, f.ClaveAcceso })
+                .IsUnique()
+                .HasDatabaseName("IX_FacturasElectronicas_NegocioId_ClaveAcceso");
+
+            // Índice único: numeración secuencial por negocio + establecimiento + punto emisión
+            entity.HasIndex(f => new { f.NegocioId, f.Establecimiento, f.PuntoEmision, f.Secuencial })
+                .IsUnique()
+                .HasDatabaseName("IX_FacturasElectronicas_Numeracion");
+
+            // Índice para consultas por estado
+            entity.HasIndex(f => new { f.NegocioId, f.EstadoSri })
+                .HasDatabaseName("IX_FacturasElectronicas_NegocioId_EstadoSri");
+
+            // Índice para consultas por fecha de emisión
+            entity.HasIndex(f => new { f.NegocioId, f.FechaEmision })
+                .HasDatabaseName("IX_FacturasElectronicas_NegocioId_FechaEmision");
+
+            // FK → Negocio (Cascade: borrar negocio borra sus facturas)
+            entity.HasOne(f => f.Negocio)
+                .WithMany()
+                .HasForeignKey(f => f.NegocioId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // FK → Recibo (SetNull: borrar recibo no borra la factura)
+            entity.HasOne(f => f.Recibo)
+                .WithMany()
+                .HasForeignKey(f => f.ReciboId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         // ═══════════════════════════════════════════════════════════

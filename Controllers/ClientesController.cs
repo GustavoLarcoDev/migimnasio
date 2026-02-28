@@ -410,7 +410,20 @@ public class ClientesController : NegocioBaseController
                 diasRestantes,
                 diasSuscrito,
                 fechaRegistro = negocio.FechaCreacion,
-                esPrueba = negocio.EsPrueba
+                esPrueba = negocio.EsPrueba,
+                facturacionActiva = negocio.FacturacionElectronicaActiva,
+                ruc = negocio.Ruc,
+                razonSocial = negocio.RazonSocial,
+                nombreComercial = negocio.NombreComercial,
+                direccionMatriz = negocio.DireccionMatriz,
+                codigoEstablecimiento = negocio.CodigoEstablecimiento,
+                puntoEmision = negocio.PuntoEmision,
+                sriAmbiente = negocio.SriAmbiente,
+                obligadoContabilidad = negocio.ObligadoContabilidad,
+                contribuyenteEspecial = negocio.ContribuyenteEspecial,
+                regimenContribuyente = negocio.RegimenContribuyente,
+                agenteRetencion = negocio.AgenteRetencion,
+                tieneCertificado = !string.IsNullOrWhiteSpace(negocio.CertificadoP12Base64)
             });
         });
 

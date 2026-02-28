@@ -130,6 +130,10 @@
                     <i class="bi bi-credit-card"></i>
                     <span>Métodos de Pago</span>
                 </a>
+                <a href="#facturacionTab" class="nav-link d-none mg-facturacion-link" data-mg-tab="facturacionTab">
+                    <i class="bi bi-file-earmark-ruled"></i>
+                    <span>Facturación</span>
+                </a>
                 <a href="#perfilTab" class="nav-link" data-mg-tab="perfilTab">
                     <i class="bi bi-building"></i>
                     <span>Perfil</span>
@@ -186,6 +190,10 @@
                     <i class="bi bi-credit-card"></i>
                     <span>Métodos de Pago</span>
                 </a>
+                <a href="#facturacionTab" class="nav-link d-none mg-facturacion-link" data-mg-tab="facturacionTab">
+                    <i class="bi bi-file-earmark-ruled"></i>
+                    <span>Facturación</span>
+                </a>
                 <a href="#perfilTab" class="nav-link" data-mg-tab="perfilTab">
                     <i class="bi bi-building"></i>
                     <span>Perfil</span>
@@ -238,6 +246,10 @@
                     <i class="bi bi-credit-card"></i>
                     <span>Métodos de Pago</span>
                 </a>
+                <a href="#facturacionTab" class="nav-link d-none mg-facturacion-link" data-mg-tab="facturacionTab">
+                    <i class="bi bi-file-earmark-ruled"></i>
+                    <span>Facturación</span>
+                </a>
                 <a href="#perfilTab" class="nav-link" data-mg-tab="perfilTab">
                     <i class="bi bi-building"></i>
                     <span>Perfil</span>
@@ -281,6 +293,10 @@
                 <a href="#metodosPagoTab" class="nav-link" data-mg-tab="metodosPagoTab">
                     <i class="bi bi-credit-card"></i>
                     <span>Métodos de Pago</span>
+                </a>
+                <a href="#facturacionTab" class="nav-link d-none mg-facturacion-link" data-mg-tab="facturacionTab">
+                    <i class="bi bi-file-earmark-ruled"></i>
+                    <span>Facturación</span>
                 </a>
                 <a href="#perfilTab" class="nav-link" data-mg-tab="perfilTab">
                     <i class="bi bi-building"></i>
@@ -693,6 +709,291 @@
     })();
     </script>
 
+    <!-- Facturación Electrónica SRI -->
+    <script>
+    (function() {
+        var _negocioId = '@(ViewData["NegocioId"]?.ToString() ?? "")';
+        if (!_negocioId) return;
+
+        window._facturacionActiva = false;
+        var _facturacionCargada = false;
+
+        // Check if facturación is active and show/hide sidebar link
+        function checkFacturacion() {
+            $.get('/Negocios/GetPerfilNegocio?negocioId=' + _negocioId, function(d) {
+                window._facturacionActiva = d.facturacionActiva || false;
+                if (window._facturacionActiva) {
+                    document.querySelectorAll('.mg-facturacion-link').forEach(function(el) { el.classList.remove('d-none'); });
+                }
+            });
+        }
+
+        function cargarConfigFacturacion() {
+            $.get('/Negocios/GetPerfilNegocio?negocioId=' + _negocioId, function(d) {
+                // Fill config form in perfil
+                $('#sriToggle').prop('checked', d.facturacionActiva || false);
+                toggleSriFields(d.facturacionActiva);
+                $('#sriRuc').val(d.ruc || '');
+                $('#sriRazonSocial').val(d.razonSocial || '');
+                $('#sriNombreComercial').val(d.nombreComercial || '');
+                $('#sriDireccionMatriz').val(d.direccionMatriz || '');
+                $('#sriEstablecimiento').val(d.codigoEstablecimiento || '001');
+                $('#sriPuntoEmision').val(d.puntoEmision || '001');
+                $('#sriAmbiente').val(d.sriAmbiente || 1);
+                $('#sriObligadoContabilidad').prop('checked', d.obligadoContabilidad || false);
+                $('#sriContribuyenteEspecial').val(d.contribuyenteEspecial || '');
+                $('#sriRegimenContribuyente').val(d.regimenContribuyente || '');
+                $('#sriAgenteRetencion').val(d.agenteRetencion || '');
+                if (d.tieneCertificado) {
+                    $('#sriCertBadge').removeClass('d-none').text('Certificado cargado');
+                    // Validate certificate
+                    $.get('/Negocios/ValidarCertificado?negocioId=' + _negocioId, function(c) {
+                        if (c.valid) {
+                            $('#sriCertBadge').removeClass('bg-danger').addClass('bg-success').text('Certificado válido — vence: ' + new Date(c.vencimiento).toLocaleDateString('es-EC'));
+                        } else {
+                            $('#sriCertBadge').removeClass('bg-success').addClass('bg-danger').text(c.message);
+                        }
+                    });
+                } else {
+                    $('#sriCertBadge').addClass('d-none');
+                }
+            });
+        }
+
+        function toggleSriFields(activa) {
+            if (activa) { $('#sriConfigFields').slideDown(); } else { $('#sriConfigFields').slideUp(); }
+        }
+
+        function guardarConfigSri() {
+            $.post('/Negocios/GuardarConfigFacturacion', {
+                negocioId: _negocioId,
+                ruc: $('#sriRuc').val(),
+                razonSocial: $('#sriRazonSocial').val(),
+                nombreComercial: $('#sriNombreComercial').val(),
+                direccionMatriz: $('#sriDireccionMatriz').val(),
+                codigoEstablecimiento: $('#sriEstablecimiento').val(),
+                puntoEmision: $('#sriPuntoEmision').val(),
+                sriAmbiente: parseInt($('#sriAmbiente').val()),
+                obligadoContabilidad: $('#sriObligadoContabilidad').is(':checked'),
+                contribuyenteEspecial: $('#sriContribuyenteEspecial').val(),
+                regimenContribuyente: $('#sriRegimenContribuyente').val(),
+                agenteRetencion: $('#sriAgenteRetencion').val()
+            }, function(r) {
+                if (r.success) toastr.success(r.message); else toastr.error(r.message);
+            }).fail(function(x) { toastr.error(x.responseJSON?.message || 'Error'); });
+        }
+
+        function toggleFacturacion() {
+            var activa = $('#sriToggle').is(':checked');
+            $.post('/Negocios/ToggleFacturacion', { negocioId: _negocioId, activa: activa }, function(r) {
+                if (r.success) {
+                    toastr.success(r.message);
+                    window._facturacionActiva = activa;
+                    toggleSriFields(activa);
+                    if (activa) document.querySelectorAll('.mg-facturacion-link').forEach(function(el) { el.classList.remove('d-none'); });
+                    else document.querySelectorAll('.mg-facturacion-link').forEach(function(el) { el.classList.add('d-none'); });
+                } else {
+                    toastr.error(r.message);
+                    $('#sriToggle').prop('checked', !activa);
+                }
+            }).fail(function(x) {
+                toastr.error(x.responseJSON?.message || 'Error');
+                $('#sriToggle').prop('checked', !activa);
+            });
+        }
+
+        function subirCertificado() {
+            var file = $('#sriCertFile')[0]?.files[0];
+            var pass = $('#sriCertPassword').val();
+            if (!file) { toastr.warning('Selecciona un archivo .p12'); return; }
+            if (!pass) { toastr.warning('Ingresa la contraseña del certificado'); return; }
+            var fd = new FormData();
+            fd.append('negocioId', _negocioId);
+            fd.append('certificado', file);
+            fd.append('password', pass);
+            $.ajax({
+                url: '/Negocios/SubirCertificado', type: 'POST', data: fd,
+                processData: false, contentType: false,
+                success: function(r) {
+                    if (r.success) { toastr.success(r.message); cargarConfigFacturacion(); }
+                    else toastr.error(r.message);
+                },
+                error: function(x) { toastr.error(x.responseJSON?.message || 'Error al subir certificado'); }
+            });
+        }
+
+        // ── Tab Facturación ──
+        var _facTabCargado = false;
+        function cargarTabFacturacion() {
+            // Stats
+            $.get('/Negocios/GetEstadisticasFacturacion?negocioId=' + _negocioId, function(s) {
+                $('#facStatEmitidas').text(s.totalEmitidas);
+                $('#facStatAutorizadas').text(s.autorizadas);
+                $('#facStatPendientes').text(s.pendientes);
+                $('#facStatMonto').text('$' + (s.montoTotal || 0).toFixed(2));
+            });
+            // Table
+            cargarTablaFacturas();
+        }
+
+        function cargarTablaFacturas() {
+            var desde = $('#facFiltroDesde').val() || '';
+            var hasta = $('#facFiltroHasta').val() || '';
+            var estado = $('#facFiltroEstado').val() || '';
+            var url = '/Negocios/GetFacturas?negocioId=' + _negocioId;
+            if (desde) url += '&desde=' + desde;
+            if (hasta) url += '&hasta=' + hasta;
+            if (estado) url += '&estado=' + estado;
+
+            $.get(url, function(data) {
+                var html = '';
+                if (!data || data.length === 0) {
+                    html = '<tr><td colspan="7" class="text-center text-muted py-4">No hay facturas</td></tr>';
+                } else {
+                    data.forEach(function(f) {
+                        var badgeCls = f.estadoSri === 'Autorizada' ? 'bg-success' : (f.estadoSri === 'Pendiente' || f.estadoSri === 'Recibida' ? 'bg-warning text-dark' : (f.estadoSri === 'Anulada' ? 'bg-secondary' : 'bg-danger'));
+                        html += '<tr>' +
+                            '<td class="small">' + escHtml(f.numeroCompleto) + '</td>' +
+                            '<td class="small">' + new Date(f.fechaEmision).toLocaleDateString('es-EC') + '</td>' +
+                            '<td class="small">' + escHtml(f.compradorRazonSocial || '') + '</td>' +
+                            '<td class="small">' + escHtml(f.compradorIdentificacion || '') + '</td>' +
+                            '<td class="small fw-bold">$' + f.importeTotal.toFixed(2) + '</td>' +
+                            '<td><span class="badge ' + badgeCls + '">' + escHtml(f.estadoSri) + '</span></td>' +
+                            '<td class="text-end">' +
+                                '<div class="btn-group btn-group-sm">' +
+                                (f.estadoSri === 'Autorizada' ? '<button class="btn btn-outline-primary btn-sm" onclick="window._facDescargarXml(\'' + f.facturaId + '\')" title="XML"><i class="bi bi-file-code"></i></button>' +
+                                '<button class="btn btn-outline-danger btn-sm" onclick="window._facDescargarRide(\'' + f.facturaId + '\')" title="RIDE PDF"><i class="bi bi-file-pdf"></i></button>' +
+                                '<button class="btn btn-outline-success btn-sm" onclick="window._facEnviarEmail(\'' + f.facturaId + '\')" title="Enviar email"><i class="bi bi-envelope"></i></button>' : '') +
+                                ((f.estadoSri === 'Pendiente' || f.estadoSri === 'NoAutorizada') ? '<button class="btn btn-outline-warning btn-sm" onclick="window._facReintentar(\'' + f.facturaId + '\')" title="Reintentar"><i class="bi bi-arrow-repeat"></i></button>' : '') +
+                                (f.estadoSri !== 'Anulada' ? '<button class="btn btn-outline-secondary btn-sm" onclick="window._facAnular(\'' + f.facturaId + '\')" title="Anular"><i class="bi bi-x-circle"></i></button>' : '') +
+                                '</div>' +
+                            '</td></tr>';
+                    });
+                }
+                $('#facturasTableBody').html(html);
+            });
+        }
+
+        // ── Modal Facturar ──
+        function abrirModalFacturar(items, reciboId) {
+            $('#facModalItems').empty();
+            var subtotal = 0;
+            (items || []).forEach(function(item, i) {
+                var sub = item.cantidad * item.precioUnitario;
+                subtotal += sub;
+                $('#facModalItems').append(
+                    '<tr><td>' + escHtml(item.descripcion) + '</td>' +
+                    '<td class="text-center">' + item.cantidad + '</td>' +
+                    '<td class="text-end">$' + item.precioUnitario.toFixed(2) + '</td>' +
+                    '<td class="text-end">$' + sub.toFixed(2) + '</td></tr>'
+                );
+            });
+            var iva = subtotal * 0.15;
+            var total = subtotal + iva;
+            $('#facModalSubtotal').text('$' + subtotal.toFixed(2));
+            $('#facModalIva').text('$' + iva.toFixed(2));
+            $('#facModalTotal').text('$' + total.toFixed(2));
+            window._facModalItems = items;
+            window._facModalReciboId = reciboId || null;
+            $('#facModalTipoId').val('07'); // Consumidor Final por defecto
+            $('#facModalIdentificacion').val('9999999999999');
+            $('#facModalRazonSocial').val('CONSUMIDOR FINAL');
+            $('#facModalEmail, #facModalDireccion').val('');
+            $('#facModalFormaPago').val('01');
+            new bootstrap.Modal($('#modalFacturar')[0]).show();
+        }
+
+        function emitirFacturaDesdeModal() {
+            var btn = $('#btnEmitirFactura');
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Emitiendo...');
+
+            var items = (window._facModalItems || []).map(function(it) {
+                return {
+                    codigoPrincipal: it.codigo || '001',
+                    descripcion: it.descripcion,
+                    cantidad: it.cantidad,
+                    precioUnitario: it.precioUnitario,
+                    descuento: it.descuento || 0,
+                    porcentajeIva: 15
+                };
+            });
+
+            var payload = {
+                negocioId: _negocioId,
+                reciboId: window._facModalReciboId,
+                compradorIdentificacion: $('#facModalIdentificacion').val(),
+                compradorTipoIdentificacion: $('#facModalTipoId').val(),
+                compradorRazonSocial: $('#facModalRazonSocial').val(),
+                compradorEmail: $('#facModalEmail').val(),
+                compradorDireccion: $('#facModalDireccion').val(),
+                formaPagoSri: $('#facModalFormaPago').val(),
+                items: items
+            };
+
+            $.ajax({
+                url: '/Negocios/EmitirFactura',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(payload),
+                success: function(r) {
+                    if (r.success) {
+                        toastr.success(r.message);
+                        bootstrap.Modal.getInstance($('#modalFacturar')[0])?.hide();
+                        if (_facTabCargado) cargarTablaFacturas();
+                    } else {
+                        toastr.error(r.message);
+                    }
+                },
+                error: function(x) { toastr.error(x.responseJSON?.message || 'Error al emitir factura'); },
+                complete: function() { btn.prop('disabled', false).html('<i class="bi bi-file-earmark-check me-1"></i>Emitir Factura'); }
+            });
+        }
+
+        // Acciones tabla
+        window._facDescargarXml = function(id) { window.open('/Negocios/DescargarFacturaXml?negocioId=' + _negocioId + '&facturaId=' + id); };
+        window._facDescargarRide = function(id) { window.open('/Negocios/DescargarFacturaRide?negocioId=' + _negocioId + '&facturaId=' + id); };
+        window._facEnviarEmail = function(id) {
+            $.post('/Negocios/EnviarFacturaEmail', { negocioId: _negocioId, facturaId: id }, function(r) {
+                if (r.success) toastr.success(r.message); else toastr.error(r.message);
+            }).fail(function(x) { toastr.error(x.responseJSON?.message || 'Error'); });
+        };
+        window._facReintentar = function(id) {
+            $.post('/Negocios/ReintentarFactura', { negocioId: _negocioId, facturaId: id }, function(r) {
+                if (r.success) { toastr.success(r.message); cargarTablaFacturas(); } else toastr.error(r.message);
+            }).fail(function(x) { toastr.error(x.responseJSON?.message || 'Error'); });
+        };
+        window._facAnular = function(id) {
+            swalMG.fire({ title: '¿Anular factura?', text: 'Esta acción no se puede deshacer', icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, anular' }).then(function(r) {
+                if (!r.isConfirmed) return;
+                $.post('/Negocios/AnularFactura', { negocioId: _negocioId, facturaId: id }, function(r) {
+                    if (r.success) { toastr.success(r.message); cargarTablaFacturas(); } else toastr.error(r.message);
+                }).fail(function(x) { toastr.error(x.responseJSON?.message || 'Error'); });
+            });
+        };
+
+        // Expose
+        window._facGuardarConfig = guardarConfigSri;
+        window._facToggle = toggleFacturacion;
+        window._facSubirCert = subirCertificado;
+        window._facAbrirModal = abrirModalFacturar;
+        window._facEmitir = emitirFacturaDesdeModal;
+        window._facFiltrar = cargarTablaFacturas;
+        window._facNuevaFactura = function() {
+            abrirModalFacturar([{ descripcion: '', cantidad: 1, precioUnitario: 0, descuento: 0, codigo: '001' }], null);
+        };
+
+        // Tab events
+        document.addEventListener('mg-tab-shown', function(e) {
+            if (e.detail.tab === 'perfilTab') cargarConfigFacturacion();
+            if (e.detail.tab === 'facturacionTab' && !_facTabCargado) { _facTabCargado = true; cargarTabFacturacion(); }
+            else if (e.detail.tab === 'facturacionTab') cargarTabFacturacion();
+        });
+
+        // Init
+        checkFacturacion();
+    })();
+    </script>
+
     <!-- Tutorial System -->
     <script>window._mgTipoNegocio = '@(ViewData["TipoNegocio"]?.ToString() ?? "membresias")';</script>
     <script src="~/js/tutorials/tutorial-loader.js" asp-append-version="true"></script>
@@ -1011,5 +1312,74 @@
             if (img) { e.preventDefault(); e.stopPropagation(); abrirQrZoom(img.src); }
         });
     </script>
+
+    <!-- Modal Facturación Electrónica SRI -->
+    <div class="modal fade" id="modalFacturar" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-fullscreen-sm-down">
+            <div class="modal-content border-0" style="border-radius:20px;background:var(--mg-card-bg);">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" style="color:var(--mg-text-color);"><i class="bi bi-file-earmark-ruled me-2"></i>Emitir Factura Electrónica</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Tipo Identificación</label>
+                            <select class="form-select form-select-sm" id="facModalTipoId">
+                                <option value="07">Consumidor Final</option>
+                                <option value="05">Cédula</option>
+                                <option value="04">RUC</option>
+                                <option value="06">Pasaporte</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Identificación</label>
+                            <input type="text" class="form-control form-control-sm" id="facModalIdentificacion" placeholder="9999999999999">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Razón Social / Nombre</label>
+                            <input type="text" class="form-control form-control-sm" id="facModalRazonSocial" placeholder="CONSUMIDOR FINAL">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Email</label>
+                            <input type="email" class="form-control form-control-sm" id="facModalEmail" placeholder="comprador@email.com">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Dirección</label>
+                            <input type="text" class="form-control form-control-sm" id="facModalDireccion" placeholder="Opcional">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Forma de Pago</label>
+                            <select class="form-select form-select-sm" id="facModalFormaPago">
+                                <option value="01">Sin utilización del SF</option>
+                                <option value="16">Tarjeta de débito</option>
+                                <option value="19">Tarjeta de crédito</option>
+                                <option value="20">Otros / Transferencia</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0">
+                            <thead><tr><th>Descripción</th><th class="text-center" style="width:70px">Cant</th><th class="text-end" style="width:90px">P.Unit</th><th class="text-end" style="width:90px">Subtotal</th></tr></thead>
+                            <tbody id="facModalItems"></tbody>
+                        </table>
+                    </div>
+                    <div class="d-flex justify-content-end mt-3">
+                        <div class="text-end">
+                            <div class="small text-muted">Subtotal: <span class="fw-bold" id="facModalSubtotal">$0.00</span></div>
+                            <div class="small text-muted">IVA 15%: <span class="fw-bold" id="facModalIva">$0.00</span></div>
+                            <div class="fs-5 fw-bold" style="color:var(--mg-primary);">TOTAL: <span id="facModalTotal">$0.00</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-warning fw-bold" id="btnEmitirFactura" onclick="window._facEmitir()">
+                        <i class="bi bi-file-earmark-check me-1"></i>Emitir Factura
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

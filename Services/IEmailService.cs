@@ -72,4 +72,9 @@ public interface IEmailService
 
     // Envío genérico de recibo HTML (Tienda POS)
     Task<bool> EnviarReciboPorEmailGenericoAsync(string destinatario, string asunto, string contenidoHtml);
+
+    // Envío de email con múltiples adjuntos (XML + PDF de factura electrónica)
+    Task<bool> SendEmailWithAttachmentsAsync(string destinatario, string asunto, string htmlBody,
+        byte[]? adjunto1Bytes, string? adjunto1Nombre,
+        byte[]? adjunto2Bytes = null, string? adjunto2Nombre = null);
 }
