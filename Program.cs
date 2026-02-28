@@ -181,6 +181,10 @@ builder.Services.AddScoped<IMetodoPagoService, MetodoPagoService>();
 // Emisión de facturas electrónicas ante el SRI Ecuador
 builder.Services.AddScoped<IFacturacionElectronicaService, FacturacionElectronicaService>();
 
+// ── Propaganda / Marketing ──────────────────────────────────
+// Editor de disenos (flyers, posts) con Fabric.js
+builder.Services.AddScoped<IPropagandaService, PropagandaService>();
+
 // ═══════════════════════════════════════════════════════════
 // SECCIÓN 4 — CLIENTE HTTP (HttpClientFactory)
 //

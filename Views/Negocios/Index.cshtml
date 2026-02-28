@@ -1122,6 +1122,50 @@
 </div>
 
     <!-- ============================================================== -->
+    <!-- TAB PROPAGANDA — Editor de disenos marketing (Fabric.js)       -->
+    <!-- ============================================================== -->
+    <div class="tab-pane fade" id="propagandaTab" role="tabpanel">
+        <div id="propagandaTabContent">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="fw-bold mb-0"><i class="bi bi-palette text-primary me-2"></i>Propaganda</h3>
+                    <p class="text-muted mb-0">Crea flyers, posts y material de marketing para tu negocio</p>
+                </div>
+            </div>
+            <div id="propagandaGalleryContent"></div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
+    <!-- TAB REDES SOCIALES — En construccion                           -->
+    <!-- ============================================================== -->
+    <div class="tab-pane fade" id="redesSocialesTab" role="tabpanel">
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="fw-bold mb-0"><i class="bi bi-share text-primary me-2"></i>Redes Sociales</h3>
+                <p class="text-muted mb-0">Conecta y gestiona tus redes sociales</p>
+            </div>
+        </div>
+        <div class="text-center py-5">
+            <div class="mb-4" style="font-size:5rem;opacity:0.3;">
+                <i class="bi bi-share-fill"></i>
+            </div>
+            <div class="mg-card d-inline-block px-5 py-4" style="max-width:500px;">
+                <div class="mb-3" style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--mg-primary),#00D4FF);margin:0 auto;display:flex;align-items:center;justify-content:center;">
+                    <i class="bi bi-tools text-white fs-1"></i>
+                </div>
+                <h4 class="fw-bold">En Construccion</h4>
+                <p class="text-muted mb-3">Estamos trabajando en la integracion con redes sociales. Pronto podras publicar directamente desde aqui.</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <span class="badge bg-light-primary text-primary px-3 py-2"><i class="bi bi-instagram me-1"></i>Instagram</span>
+                    <span class="badge bg-light-primary text-primary px-3 py-2"><i class="bi bi-facebook me-1"></i>Facebook</span>
+                    <span class="badge bg-light-primary text-primary px-3 py-2"><i class="bi bi-tiktok me-1"></i>TikTok</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================== -->
     <!-- TAB ACTUALIZACIONES — Changelog del sistema                    -->
     <!-- ============================================================== -->
     <div class="tab-pane fade" id="actualizacionesTab" role="tabpanel">
@@ -1141,7 +1185,15 @@
 
 </div>
 
+@section Styles {
+<style>
+.propaganda-canvas-wrapper { background: #e9ecef; border-radius: 8px; padding: 16px; text-center; overflow: auto; }
+</style>
+}
+
 @section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+<script src="~/js/propaganda-editor.js" asp-append-version="true"></script>
 <script>
 // ================================================================
 // Variables globales
@@ -1197,6 +1249,8 @@ document.addEventListener('mg-tab-shown', function (e) {
         // Sin carga automática — el usuario sube el archivo manualmente
     } else if (tab === 'actualizacionesTab') {
         cargarActualizaciones();
+    } else if (tab === 'propagandaTab') {
+        PropagandaEditor.init();
     }
 });
 

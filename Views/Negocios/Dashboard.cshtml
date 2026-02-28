@@ -477,6 +477,37 @@
         </div>
     </div>
 
+    <!-- TAB PROPAGANDA — Editor de disenos marketing -->
+    <div class="tab-pane fade" id="propagandaTab" role="tabpanel">
+        <div id="propagandaTabContent">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="fw-bold mb-0"><i class="bi bi-palette text-primary me-2"></i>Propaganda</h3>
+                    <p class="text-muted mb-0">Crea flyers, posts y material de marketing para tu negocio</p>
+                </div>
+            </div>
+            <div id="propagandaGalleryContent"></div>
+        </div>
+    </div>
+
+    <!-- TAB REDES SOCIALES — En construccion -->
+    <div class="tab-pane fade" id="redesSocialesTab" role="tabpanel">
+        <div class="text-center py-5">
+            <div class="mg-card d-inline-block px-5 py-4" style="max-width:500px;">
+                <div class="mb-3" style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--mg-primary),#00D4FF);margin:0 auto;display:flex;align-items:center;justify-content:center;">
+                    <i class="bi bi-tools text-white fs-1"></i>
+                </div>
+                <h4 class="fw-bold">En Construccion</h4>
+                <p class="text-muted mb-3">Estamos trabajando en la integracion con redes sociales. Pronto podras publicar directamente desde aqui.</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <span class="badge bg-light-primary text-primary px-3 py-2"><i class="bi bi-instagram me-1"></i>Instagram</span>
+                    <span class="badge bg-light-primary text-primary px-3 py-2"><i class="bi bi-facebook me-1"></i>Facebook</span>
+                    <span class="badge bg-light-primary text-primary px-3 py-2"><i class="bi bi-tiktok me-1"></i>TikTok</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- TAB SUGERENCIAS -->
     <div class="tab-pane fade" id="sugerenciasTab" role="tabpanel">
         <div class="row justify-content-center">
@@ -791,7 +822,7 @@ function verificarSuscripcion() {
         console.warn('Error al verificar suscripción');
     });
 }
-document.addEventListener('mg-tab-shown', function(e) { if (e.detail.tab === 'resumenTab') { cargarResumen(); } else if (e.detail.tab === 'clientesTab') { if (!tablaClientes) { cargarTablaClientes(); } cargarEstadisticas(); } else if (e.detail.tab === 'ventasTab') { cargarVentasStats(); cargarCharts(); } else if (e.detail.tab === 'logsTab') { if (!tablaLogs) cargarTablaLogs(); verificarCerrarPeriodo(); } else if (e.detail.tab === 'notificacionesTab') { cargarNotificacionesTab(); } else if (e.detail.tab === 'inventarioTab') { cargarProductosGrid(); cargarInventarioStats(); } else if (e.detail.tab === 'recibosTab') { cargarRecibos(); verificarCleanupRecibos(); } else if (e.detail.tab === 'metodosPagoTab') { cargarMetodosPago(); } });
+document.addEventListener('mg-tab-shown', function(e) { if (e.detail.tab === 'resumenTab') { cargarResumen(); } else if (e.detail.tab === 'clientesTab') { if (!tablaClientes) { cargarTablaClientes(); } cargarEstadisticas(); } else if (e.detail.tab === 'ventasTab') { cargarVentasStats(); cargarCharts(); } else if (e.detail.tab === 'logsTab') { if (!tablaLogs) cargarTablaLogs(); verificarCerrarPeriodo(); } else if (e.detail.tab === 'notificacionesTab') { cargarNotificacionesTab(); } else if (e.detail.tab === 'inventarioTab') { cargarProductosGrid(); cargarInventarioStats(); } else if (e.detail.tab === 'recibosTab') { cargarRecibos(); verificarCleanupRecibos(); } else if (e.detail.tab === 'metodosPagoTab') { cargarMetodosPago(); } else if (e.detail.tab === 'propagandaTab') { PropagandaEditor.init(); } });
 
 // Cargar estadísticas de la pestaña Clientes
 function cargarEstadisticas() {

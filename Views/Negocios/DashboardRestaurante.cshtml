@@ -682,6 +682,37 @@
         </div>
     </div>
 
+    <!-- TAB PROPAGANDA — Editor de disenos marketing -->
+    <div class="tab-pane fade" id="propagandaTab" role="tabpanel">
+        <div id="propagandaTabContent">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+                <div>
+                    <h3 class="fw-bold mb-0"><i class="bi bi-palette text-primary me-2"></i>Propaganda</h3>
+                    <p class="text-muted mb-0">Crea flyers, posts y material de marketing para tu negocio</p>
+                </div>
+            </div>
+            <div id="propagandaGalleryContent"></div>
+        </div>
+    </div>
+
+    <!-- TAB REDES SOCIALES — En construccion -->
+    <div class="tab-pane fade" id="redesSocialesTab" role="tabpanel">
+        <div class="text-center py-5">
+            <div class="mg-card d-inline-block px-5 py-4" style="max-width:500px;">
+                <div class="mb-3" style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--mg-primary),#00D4FF);margin:0 auto;display:flex;align-items:center;justify-content:center;">
+                    <i class="bi bi-tools text-white fs-1"></i>
+                </div>
+                <h4 class="fw-bold">En Construccion</h4>
+                <p class="text-muted mb-3">Estamos trabajando en la integracion con redes sociales. Pronto podras publicar directamente desde aqui.</p>
+                <div class="d-flex justify-content-center gap-3">
+                    <span class="badge bg-light-primary text-primary px-3 py-2"><i class="bi bi-instagram me-1"></i>Instagram</span>
+                    <span class="badge bg-light-primary text-primary px-3 py-2"><i class="bi bi-facebook me-1"></i>Facebook</span>
+                    <span class="badge bg-light-primary text-primary px-3 py-2"><i class="bi bi-tiktok me-1"></i>TikTok</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ═══════════════ TAB SUGERENCIAS ═══════════════ -->
     <div class="tab-pane fade" id="sugerenciasTab" role="tabpanel">
         <div class="row justify-content-center"><div class="col-lg-8"><div class="mg-card"><div class="card-header border-0"><h5 class="fw-bold mb-0"><i class="bi bi-chat-left-text me-2"></i>Enviar Sugerencia</h5></div><div class="card-body"><p class="text-muted mb-3">Ayudanos a mejorar. Escribe tu sugerencia, idea o comentario.</p><div class="mb-3"><textarea class="form-control form-control-lg" id="sugerenciaTexto" rows="5" maxlength="1000" placeholder="Escribe tu sugerencia aqui..."></textarea><div class="d-flex justify-content-between mt-1"><small class="text-muted">Maximo 1000 caracteres</small><small class="text-muted"><span id="sugerenciaCount">0</span>/1000</small></div></div><button id="btnEnviarSugerencia" class="btn btn-primary"><i class="bi bi-send me-2"></i>Enviar Sugerencia</button></div></div></div></div>
@@ -2050,6 +2081,7 @@ document.addEventListener('mg-tab-shown', function(e) {
     else if (tab === 'recibosTab') cargarRecibos();
     else if (tab === 'notificacionesTab') cargarNotificaciones();
     else if (tab === 'metodosPagoTab') cargarMetodosPago();
+    else if (tab === 'propagandaTab') PropagandaEditor.init();
 });
 
 // ═══════════════ RESERVAS ═══════════════

@@ -233,6 +233,12 @@ public class ApplicationDbContext : DbContext
     /// </summary>
     public DbSet<FacturaElectronica> FacturasElectronicas { get; set; }
 
+    /// <summary>
+    /// Disenos de marketing creados por los negocios (flyers, posts, etc.).
+    /// Almacena el JSON del canvas Fabric.js y un thumbnail para la galeria.
+    /// </summary>
+    public DbSet<DisenoMarketing> DisenosMarketing { get; set; }
+
     // ═══════════════════════════════════════════════════════════
     // CONFIGURACIÓN DEL MODELO (OnModelCreating)
     //
@@ -571,6 +577,18 @@ public class ApplicationDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(f => f.ReciboId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // ── Configuración DisenosMarketing ──
+        modelBuilder.Entity<DisenoMarketing>(entity =>
+        {
+            entity.HasIndex(d => d.NegocioId)
+                .HasDatabaseName("IX_DisenosMarketing_NegocioId");
+
+            entity.HasOne(d => d.Negocio)
+                .WithMany()
+                .HasForeignKey(d => d.NegocioId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // ═══════════════════════════════════════════════════════════
