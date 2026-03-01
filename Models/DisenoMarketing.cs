@@ -34,5 +34,4 @@ public class DisenoMarketing
 
     public DateTime FechaModificacion { get; set; } = TimeHelper.Now;
 
-    public Gym Negocio { get; set; }
 }

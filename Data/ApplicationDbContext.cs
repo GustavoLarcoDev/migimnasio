@@ -580,15 +580,11 @@ public class ApplicationDbContext : DbContext
         });
 
         // ── Configuración DisenosMarketing ──
+        // Sin FK a Negocios — admin usa un GUID propio para sus diseños
         modelBuilder.Entity<DisenoMarketing>(entity =>
         {
             entity.HasIndex(d => d.NegocioId)
                 .HasDatabaseName("IX_DisenosMarketing_NegocioId");
-
-            entity.HasOne(d => d.Negocio)
-                .WithMany()
-                .HasForeignKey(d => d.NegocioId)
-                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // ═══════════════════════════════════════════════════════════

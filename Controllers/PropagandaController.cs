@@ -7,13 +7,16 @@ public class PropagandaController : NegocioBaseController
 {
     private readonly IPropagandaService _propagandaService;
 
+    // GUID fijo para diseños del admin (no tiene NegocioId propio)
+    private static readonly Guid AdminDesignOwner = Guid.Parse("00000000-0000-0000-0000-000000000001");
+
     public PropagandaController(IPropagandaService propagandaService, IAuthService authService)
         : base(authService)
     {
         _propagandaService = propagandaService;
     }
 
-    private Guid? GetNId() => AuthService.GetNegocioId(User);
+    private Guid GetOwnerId() => AuthService.GetNegocioId(User) ?? AdminDesignOwner;
 
     [HttpGet("GetDisenos")]
     public Task<IActionResult> GetDisenos(Guid negocioId)
@@ -21,18 +24,12 @@ public class PropagandaController : NegocioBaseController
 
     [HttpGet("GetDisenosEditor")]
     public async Task<IActionResult> GetDisenosEditor()
-    {
-        var nId = GetNId();
-        if (!nId.HasValue) return Ok(new List<object>());
-        return Ok(await _propagandaService.GetDisenosAsync(nId.Value));
-    }
+        => Ok(await _propagandaService.GetDisenosAsync(GetOwnerId()));
 
     [HttpGet("GetDiseno")]
     public async Task<IActionResult> GetDiseno(Guid disenoId)
     {
-        var nId = GetNId();
-        if (!nId.HasValue) return BadRequest(new { success = false, message = "Debes acceder desde un negocio" });
-        var diseno = await _propagandaService.GetDisenoAsync(disenoId, nId.Value);
+        var diseno = await _propagandaService.GetDisenoAsync(disenoId, GetOwnerId());
         if (diseno == null) return NotFound(new { success = false, message = "Diseno no encontrado" });
         return Ok(new
         {
@@ -44,38 +41,22 @@ public class PropagandaController : NegocioBaseController
     [HttpPost("CrearDiseno")]
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> CrearDiseno([FromBody] CrearDisenoRequest req)
-    {
-        var nId = GetNId();
-        if (!nId.HasValue) return BadRequest(new { success = false, message = "Debes acceder desde un negocio para crear disenos" });
-        return ServiceResult(await _propagandaService.CrearDisenoAsync(nId.Value, req.Nombre, req.CanvasJson, req.ThumbnailDataUri, req.Ancho, req.Alto));
-    }
+        => ServiceResult(await _propagandaService.CrearDisenoAsync(GetOwnerId(), req.Nombre, req.CanvasJson, req.ThumbnailDataUri, req.Ancho, req.Alto));
 
     [HttpPost("GuardarDiseno")]
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> GuardarDiseno([FromBody] GuardarDisenoRequest req)
-    {
-        var nId = GetNId();
-        if (!nId.HasValue) return BadRequest(new { success = false, message = "Debes acceder desde un negocio" });
-        return ServiceResult(await _propagandaService.GuardarDisenoAsync(req.DisenoId, nId.Value, req.Nombre, req.CanvasJson, req.ThumbnailDataUri));
-    }
+        => ServiceResult(await _propagandaService.GuardarDisenoAsync(req.DisenoId, GetOwnerId(), req.Nombre, req.CanvasJson, req.ThumbnailDataUri));
 
     [HttpPost("EliminarDiseno")]
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> EliminarDiseno([FromBody] EliminarDisenoRequest req)
-    {
-        var nId = GetNId();
-        if (!nId.HasValue) return BadRequest(new { success = false, message = "Debes acceder desde un negocio" });
-        return ServiceResult(await _propagandaService.EliminarDisenoAsync(req.DisenoId, nId.Value));
-    }
+        => ServiceResult(await _propagandaService.EliminarDisenoAsync(req.DisenoId, GetOwnerId()));
 
     [HttpPost("DuplicarDiseno")]
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> DuplicarDiseno([FromBody] DuplicarDisenoRequest req)
-    {
-        var nId = GetNId();
-        if (!nId.HasValue) return BadRequest(new { success = false, message = "Debes acceder desde un negocio" });
-        return ServiceResult(await _propagandaService.DuplicarDisenoAsync(req.DisenoId, nId.Value));
-    }
+        => ServiceResult(await _propagandaService.DuplicarDisenoAsync(req.DisenoId, GetOwnerId()));
 
     public record CrearDisenoRequest(string Nombre, string CanvasJson, string ThumbnailDataUri, int Ancho, int Alto);
     public record GuardarDisenoRequest(Guid DisenoId, string Nombre, string CanvasJson, string ThumbnailDataUri);
