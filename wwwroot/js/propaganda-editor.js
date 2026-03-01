@@ -14,6 +14,26 @@ var PropagandaEditor = (function () {
     var isEditorMode = false;
     var clipboard = null;
 
+    // POST JSON helper (endpoints usan [FromBody])
+    function postJson(url, data, onSuccess) {
+        $.ajax({
+            url: url,
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function (res) {
+                if (res.success !== undefined && !res.success) {
+                    toastr.error(res.message || 'Error en la operacion');
+                } else if (onSuccess) {
+                    onSuccess(res);
+                }
+            },
+            error: function (xhr) {
+                toastr.error(xhr.responseJSON?.message || 'Error del servidor');
+            }
+        });
+    }
+
     // Tamanos predefinidos
     var SIZES = {
         'ig-post': { w: 1080, h: 1080, label: 'Instagram Post' },
@@ -310,7 +330,7 @@ var PropagandaEditor = (function () {
         bootstrap.Modal.getInstance(document.getElementById('newDesignModal')).hide();
 
         // Create on server, then open editor
-        mgPost('/Negocios/CrearDiseno', { Nombre: nombre, CanvasJson: '{}', ThumbnailDataUri: '', Ancho: w, Alto: h }, null, function (resp) {
+        postJson('/Negocios/CrearDiseno', { Nombre: nombre, CanvasJson: '{}', ThumbnailDataUri: '', Ancho: w, Alto: h }, function (resp) {
             if (resp.success) {
                 currentDisenoId = resp.dataId;
                 initEditor(w, h, nombre, tplId);
@@ -819,12 +839,12 @@ var PropagandaEditor = (function () {
         var thumbnail = canvas.toDataURL({ format: 'png', quality: 0.5, multiplier: 0.2 });
         canvas.setZoom(currentZoom);
 
-        mgPost('/Negocios/GuardarDiseno', {
+        postJson('/Negocios/GuardarDiseno', {
             DisenoId: currentDisenoId,
             Nombre: nombre,
             CanvasJson: json,
             ThumbnailDataUri: thumbnail
-        }, null, function (resp) {
+        }, function (resp) {
             if (resp.success) {
                 toastr.success('Diseno guardado');
                 isDirty = false;
@@ -913,7 +933,7 @@ var PropagandaEditor = (function () {
 
     function deleteDesign(id) {
         mgConfirmDelete(function () {
-            mgPost('/Negocios/EliminarDiseno', { DisenoId: id }, null, function (resp) {
+            postJson('/Negocios/EliminarDiseno', { DisenoId: id }, function (resp) {
                 if (resp.success) {
                     toastr.success('Diseno eliminado');
                     loadDesigns();
@@ -923,7 +943,7 @@ var PropagandaEditor = (function () {
     }
 
     function duplicateDesign(id) {
-        mgPost('/Negocios/DuplicarDiseno', { DisenoId: id }, null, function (resp) {
+        postJson('/Negocios/DuplicarDiseno', { DisenoId: id }, function (resp) {
             if (resp.success) {
                 toastr.success('Diseno duplicado');
                 loadDesigns();
