@@ -1255,6 +1255,11 @@ var PropagandaEditor = (function () {
         replaceImage: replaceImage,
         setAsBackground: setAsBackground,
         uploadBackground: uploadBackground,
-        removeBackground: removeCanvasBackground
+        removeBackground: removeCanvasBackground,
+        // Internal access for testing / advanced use
+        getCanvas: function () { return canvas; },
+        importSvg: importSvgAsObjects,
+        addImageFromUrl: addImageToCanvas,
+        setBackground: setCanvasBackground
     };
 })();
