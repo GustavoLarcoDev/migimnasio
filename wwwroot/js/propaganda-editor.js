@@ -34,6 +34,14 @@ var PropagandaEditor = (function () {
         });
     }
 
+    // Convert rgb/rgba to hex for input[type=color]
+    function toHex(color) {
+        if (!color || color.charAt(0) === '#') return color || '#000000';
+        var m = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+        if (!m) return '#000000';
+        return '#' + ((1 << 24) + (parseInt(m[1]) << 16) + (parseInt(m[2]) << 8) + parseInt(m[3])).toString(16).slice(1);
+    }
+
     // Tamanos predefinidos
     var SIZES = {
         'ig-post': { w: 1080, h: 1080, label: 'Instagram Post' },
@@ -54,7 +62,7 @@ var PropagandaEditor = (function () {
     var TEMPLATES = [
         {
             id: 'promo-general',
-            nombre: 'Promocion General',
+            nombre: 'Promoción General',
             thumbnail: null,
             size: 'ig-post',
             build: function (w, h) {
@@ -62,7 +70,7 @@ var PropagandaEditor = (function () {
                     { type: 'rect', left: 0, top: 0, width: w, height: h, fill: '#0047AB', selectable: false },
                     { type: 'rect', left: 0, top: h * 0.65, width: w, height: h * 0.35, fill: '#2C3E50', selectable: false },
                     { type: 'text', text: 'TU OFERTA AQUI', left: w / 2, top: h * 0.25, fontSize: 72, fontFamily: 'Inter', fontWeight: 'bold', fill: '#FFFFFF', textAlign: 'center', originX: 'center', originY: 'center' },
-                    { type: 'text', text: 'Descripcion del producto o servicio', left: w / 2, top: h * 0.42, fontSize: 36, fontFamily: 'Inter', fill: '#00D4FF', textAlign: 'center', originX: 'center', originY: 'center' },
+                    { type: 'text', text: 'Descripción del producto o servicio', left: w / 2, top: h * 0.42, fontSize: 36, fontFamily: 'Inter', fill: '#00D4FF', textAlign: 'center', originX: 'center', originY: 'center' },
                     { type: 'text', text: '$XX.XX', left: w / 2, top: h * 0.58, fontSize: 96, fontFamily: 'Inter', fontWeight: 'bold', fill: '#FFFFFF', textAlign: 'center', originX: 'center', originY: 'center' },
                     { type: 'text', text: 'my-negocio.com', left: w / 2, top: h * 0.88, fontSize: 28, fontFamily: 'Inter', fill: '#00D4FF', textAlign: 'center', originX: 'center', originY: 'center' }
                 ];
@@ -80,7 +88,7 @@ var PropagandaEditor = (function () {
                     { type: 'text', text: '-50%', left: w / 2, top: h * 0.35, fontSize: 120, fontFamily: 'Inter', fontWeight: 'bold', fill: '#FFFFFF', textAlign: 'center', originX: 'center', originY: 'center' },
                     { type: 'text', text: 'OFF', left: w / 2, top: h * 0.48, fontSize: 48, fontFamily: 'Inter', fontWeight: 'bold', fill: '#FFFFFF', textAlign: 'center', originX: 'center', originY: 'center' },
                     { type: 'text', text: 'OFERTA ESPECIAL', left: w / 2, top: h * 0.1, fontSize: 48, fontFamily: 'Inter', fontWeight: 'bold', fill: '#0047AB', textAlign: 'center', originX: 'center', originY: 'center' },
-                    { type: 'text', text: 'Valido por tiempo limitado', left: w / 2, top: h * 0.78, fontSize: 32, fontFamily: 'Inter', fill: '#2C3E50', textAlign: 'center', originX: 'center', originY: 'center' },
+                    { type: 'text', text: 'Válido por tiempo limitado', left: w / 2, top: h * 0.78, fontSize: 32, fontFamily: 'Inter', fill: '#2C3E50', textAlign: 'center', originX: 'center', originY: 'center' },
                     { type: 'text', text: 'my-negocio.com', left: w / 2, top: h * 0.9, fontSize: 28, fontFamily: 'Inter', fill: '#0047AB', textAlign: 'center', originX: 'center', originY: 'center' }
                 ];
             }
@@ -97,21 +105,21 @@ var PropagandaEditor = (function () {
                     { type: 'text', text: 'NUEVO', left: w / 2, top: h * 0.15, fontSize: 36, fontFamily: 'Inter', fontWeight: 'bold', fill: '#00D4FF', textAlign: 'center', originX: 'center', originY: 'center', charSpacing: 600 },
                     { type: 'text', text: 'Nombre del\nProducto', left: w / 2, top: h * 0.4, fontSize: 64, fontFamily: 'Inter', fontWeight: 'bold', fill: '#FFFFFF', textAlign: 'center', originX: 'center', originY: 'center' },
                     { type: 'rect', left: w / 2 - 40, top: h * 0.55, width: 80, height: 4, fill: '#00D4FF', originX: 'center' },
-                    { type: 'text', text: 'Descripcion breve del producto\no servicio que ofreces', left: w / 2, top: h * 0.68, fontSize: 28, fontFamily: 'Inter', fill: '#E4E6EF', textAlign: 'center', originX: 'center', originY: 'center' },
+                    { type: 'text', text: 'Descripción breve del producto\no servicio que ofreces', left: w / 2, top: h * 0.68, fontSize: 28, fontFamily: 'Inter', fill: '#E4E6EF', textAlign: 'center', originX: 'center', originY: 'center' },
                     { type: 'text', text: 'my-negocio.com', left: w / 2, top: h * 0.88, fontSize: 24, fontFamily: 'Inter', fill: '#00D4FF', textAlign: 'center', originX: 'center', originY: 'center' }
                 ];
             }
         },
         {
             id: 'horario',
-            nombre: 'Horario de Atencion',
+            nombre: 'Horario de Atención',
             thumbnail: null,
             size: 'ig-post',
             build: function (w, h) {
                 return [
                     { type: 'rect', left: 0, top: 0, width: w, height: h, fill: '#F5F8FA', selectable: false },
                     { type: 'rect', left: 0, top: 0, width: w, height: h * 0.2, fill: '#0047AB' },
-                    { type: 'text', text: 'HORARIO DE ATENCION', left: w / 2, top: h * 0.1, fontSize: 42, fontFamily: 'Inter', fontWeight: 'bold', fill: '#FFFFFF', textAlign: 'center', originX: 'center', originY: 'center' },
+                    { type: 'text', text: 'HORARIO DE ATENCIÓN', left: w / 2, top: h * 0.1, fontSize: 42, fontFamily: 'Inter', fontWeight: 'bold', fill: '#FFFFFF', textAlign: 'center', originX: 'center', originY: 'center' },
                     { type: 'text', text: 'Lunes a Viernes\n9:00 AM - 6:00 PM\n\nSabado\n9:00 AM - 2:00 PM\n\nDomingo\nCerrado', left: w / 2, top: h * 0.55, fontSize: 36, fontFamily: 'Inter', fill: '#2C3E50', textAlign: 'center', originX: 'center', originY: 'center', lineHeight: 1.4 },
                     { type: 'text', text: 'my-negocio.com', left: w / 2, top: h * 0.92, fontSize: 24, fontFamily: 'Inter', fill: '#0047AB', textAlign: 'center', originX: 'center', originY: 'center' }
                 ];
@@ -176,7 +184,7 @@ var PropagandaEditor = (function () {
             renderDesignCards(data);
         }).fail(function () {
             var list = document.getElementById('propagandaDesignsList');
-            if (list) list.innerHTML = '<div class="col-12"><div class="alert alert-danger">Error al cargar disenos</div></div>';
+            if (list) list.innerHTML = '<div class="col-12"><div class="alert alert-danger">Error al cargar diseños</div></div>';
         });
     }
 
@@ -192,7 +200,7 @@ var PropagandaEditor = (function () {
             'style="min-height:220px;cursor:pointer;border-color:var(--mg-primary) !important;" onclick="PropagandaEditor.showNewDesignModal()">' +
             '<div class="text-center p-4">' +
             '<i class="bi bi-plus-circle fs-1 text-primary d-block mb-2"></i>' +
-            '<span class="fw-semibold text-primary">Crear Nuevo Diseno</span>' +
+            '<span class="fw-semibold text-primary">Crear Nuevo Diseño</span>' +
             '</div></div></div>';
 
         if (designs && designs.length > 0) {
@@ -285,7 +293,7 @@ var PropagandaEditor = (function () {
             '<div class="modal-dialog modal-lg modal-dialog-centered modal-fullscreen-sm-down">' +
             '<div class="modal-content">' +
             '<div class="modal-header bg-light">' +
-            '<h3 class="modal-title fw-bolder"><i class="bi bi-plus-circle text-primary me-2"></i>Nuevo Diseno</h3>' +
+            '<h3 class="modal-title fw-bolder"><i class="bi bi-plus-circle text-primary me-2"></i>Nuevo Diseño</h3>' +
             '<button type="button" class="btn-close" data-bs-dismiss="modal"></button>' +
             '</div>' +
             '<div class="modal-body">' +
@@ -347,7 +355,7 @@ var PropagandaEditor = (function () {
             currentDisenoId = data.disenoId;
             initEditor(data.ancho, data.alto, data.nombre, null, data.canvasJson);
         }).fail(function () {
-            toastr.error('Error al cargar el diseno');
+            toastr.error('Error al cargar el diseño');
         });
     }
 
@@ -426,11 +434,11 @@ var PropagandaEditor = (function () {
             '           <h6 class="fw-bold px-2 pt-2 mb-2"><i class="bi bi-tools me-1"></i>Herramientas</h6>' +
             '           <div class="d-grid gap-1">' +
             '               <button class="btn btn-sm btn-light text-start" onclick="PropagandaEditor.addText()"><i class="bi bi-fonts me-2"></i>Texto</button>' +
-            '               <button class="btn btn-sm btn-light text-start" onclick="PropagandaEditor.addHeading()"><i class="bi bi-type-h1 me-2"></i>Titulo</button>' +
-            '               <button class="btn btn-sm btn-light text-start" onclick="PropagandaEditor.addRect()"><i class="bi bi-square me-2"></i>Rectangulo</button>' +
-            '               <button class="btn btn-sm btn-light text-start" onclick="PropagandaEditor.addCircle()"><i class="bi bi-circle me-2"></i>Circulo</button>' +
-            '               <button class="btn btn-sm btn-light text-start" onclick="PropagandaEditor.addTriangle()"><i class="bi bi-triangle me-2"></i>Triangulo</button>' +
-            '               <button class="btn btn-sm btn-light text-start" onclick="PropagandaEditor.addLine()"><i class="bi bi-dash-lg me-2"></i>Linea</button>' +
+            '               <button class="btn btn-sm btn-light text-start" onclick="PropagandaEditor.addHeading()"><i class="bi bi-type-h1 me-2"></i>Título</button>' +
+            '               <button class="btn btn-sm btn-light text-start" onclick="PropagandaEditor.addRect()"><i class="bi bi-square me-2"></i>Rectángulo</button>' +
+            '               <button class="btn btn-sm btn-light text-start" onclick="PropagandaEditor.addCircle()"><i class="bi bi-circle me-2"></i>Círculo</button>' +
+            '               <button class="btn btn-sm btn-light text-start" onclick="PropagandaEditor.addTriangle()"><i class="bi bi-triangle me-2"></i>Triángulo</button>' +
+            '               <button class="btn btn-sm btn-light text-start" onclick="PropagandaEditor.addLine()"><i class="bi bi-dash-lg me-2"></i>Línea</button>' +
             '               <button class="btn btn-sm btn-light text-start" onclick="PropagandaEditor.addImage()"><i class="bi bi-image me-2"></i>Imagen</button>' +
             '           </div>' +
             '           <h6 class="fw-bold px-2 pt-3 mb-2"><i class="bi bi-stack me-1"></i>Capas</h6>' +
@@ -594,14 +602,14 @@ var PropagandaEditor = (function () {
                 html += '<div style="width:28px;height:28px;border-radius:4px;cursor:pointer;background:' + COLORS[c] + ';' + active + '" ' +
                     'onclick="PropagandaEditor.setFill(\'' + COLORS[c] + '\')"></div>';
             }
-            html += '<input type="color" class="form-control form-control-color p-0" style="width:28px;height:28px;" value="' + (obj.fill || '#000000') + '" onchange="PropagandaEditor.setFill(this.value)" />';
+            html += '<input type="color" class="form-control form-control-color p-0" style="width:28px;height:28px;" value="' + toHex(obj.fill) + '" onchange="PropagandaEditor.setFill(this.value)" />';
             html += '</div></div>';
         }
 
         // Stroke
         html += '<div class="mb-3"><label class="form-label small fw-semibold">Borde</label>' +
             '<div class="d-flex gap-2 align-items-center">' +
-            '<input type="color" class="form-control form-control-color p-0" style="width:28px;height:28px;" value="' + (obj.stroke || '#000000') + '" onchange="PropagandaEditor.setStroke(this.value)" />' +
+            '<input type="color" class="form-control form-control-color p-0" style="width:28px;height:28px;" value="' + toHex(obj.stroke) + '" onchange="PropagandaEditor.setStroke(this.value)" />' +
             '<input type="number" class="form-control form-control-sm" style="width:60px;" value="' + (obj.strokeWidth || 0) + '" min="0" max="20" onchange="PropagandaEditor.setStrokeWidth(parseInt(this.value))" />' +
             '</div></div>';
 
@@ -708,10 +716,10 @@ var PropagandaEditor = (function () {
             var icon = 'bi-square';
             var name = 'Forma';
             if (obj.type === 'i-text' || obj.type === 'text' || obj.type === 'textbox') { icon = 'bi-fonts'; name = (obj.text || '').substring(0, 15); }
-            else if (obj.type === 'circle') { icon = 'bi-circle'; name = 'Circulo'; }
-            else if (obj.type === 'triangle') { icon = 'bi-triangle'; name = 'Triangulo'; }
-            else if (obj.type === 'rect') { icon = 'bi-square'; name = 'Rectangulo'; }
-            else if (obj.type === 'line') { icon = 'bi-dash-lg'; name = 'Linea'; }
+            else if (obj.type === 'circle') { icon = 'bi-circle'; name = 'Círculo'; }
+            else if (obj.type === 'triangle') { icon = 'bi-triangle'; name = 'Triángulo'; }
+            else if (obj.type === 'rect') { icon = 'bi-square'; name = 'Rectángulo'; }
+            else if (obj.type === 'line') { icon = 'bi-dash-lg'; name = 'Línea'; }
             else if (obj.type === 'image') { icon = 'bi-image'; name = 'Imagen'; }
 
             var active = canvas.getActiveObject() === obj ? 'bg-primary bg-opacity-10' : '';
@@ -846,7 +854,7 @@ var PropagandaEditor = (function () {
             ThumbnailDataUri: thumbnail
         }, function (resp) {
             if (resp.success) {
-                toastr.success('Diseno guardado');
+                toastr.success('Diseño guardado');
                 isDirty = false;
             }
         });
@@ -884,7 +892,7 @@ var PropagandaEditor = (function () {
         if (isDirty) {
             swalMG.fire({
                 title: 'Cambios sin guardar',
-                text: 'Tienes cambios sin guardar. Que deseas hacer?',
+                text: 'Tienes cambios sin guardar. ¿Qué deseas hacer?',
                 icon: 'warning',
                 showCancelButton: true,
                 showDenyButton: true,
@@ -932,10 +940,10 @@ var PropagandaEditor = (function () {
     // ══════════════════════════════════════════════════════
 
     function deleteDesign(id) {
-        mgConfirmDelete(function () {
+        mgConfirmDelete('Eliminar diseño', '¿Estás seguro de que deseas eliminar este diseño?', function () {
             postJson('/Negocios/EliminarDiseno', { DisenoId: id }, function (resp) {
                 if (resp.success) {
-                    toastr.success('Diseno eliminado');
+                    toastr.success('Diseño eliminado');
                     loadDesigns();
                 }
             });
@@ -945,15 +953,15 @@ var PropagandaEditor = (function () {
     function duplicateDesign(id) {
         postJson('/Negocios/DuplicarDiseno', { DisenoId: id }, function (resp) {
             if (resp.success) {
-                toastr.success('Diseno duplicado');
+                toastr.success('Diseño duplicado');
                 loadDesigns();
             }
         });
     }
 
     // Undo/Redo stubs (Fabric.js doesn't have built-in undo)
-    function undo() { toastr.info('Deshacer no disponible aun'); }
-    function redo() { toastr.info('Rehacer no disponible aun'); }
+    function undo() { toastr.info('Deshacer no disponible aún'); }
+    function redo() { toastr.info('Rehacer no disponible aún'); }
 
     // ══════════════════════════════════════════════════════
     // Public API
