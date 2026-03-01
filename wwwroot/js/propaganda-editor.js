@@ -439,7 +439,12 @@ var PropagandaEditor = (function () {
             '               <button class="btn btn-sm btn-light text-start" onclick="PropagandaEditor.addCircle()"><i class="bi bi-circle me-2"></i>Círculo</button>' +
             '               <button class="btn btn-sm btn-light text-start" onclick="PropagandaEditor.addTriangle()"><i class="bi bi-triangle me-2"></i>Triángulo</button>' +
             '               <button class="btn btn-sm btn-light text-start" onclick="PropagandaEditor.addLine()"><i class="bi bi-dash-lg me-2"></i>Línea</button>' +
-            '               <button class="btn btn-sm btn-light text-start" onclick="PropagandaEditor.addImage()"><i class="bi bi-image me-2"></i>Imagen</button>' +
+            '               <button class="btn btn-sm btn-light text-start" onclick="PropagandaEditor.addImage()"><i class="bi bi-image me-2"></i>Imagen / SVG</button>' +
+            '           </div>' +
+            '           <h6 class="fw-bold px-2 pt-3 mb-2"><i class="bi bi-card-image me-1"></i>Fondo</h6>' +
+            '           <div class="d-grid gap-1">' +
+            '               <button class="btn btn-sm btn-light text-start" onclick="PropagandaEditor.uploadBackground()"><i class="bi bi-upload me-2"></i>Subir fondo</button>' +
+            '               <button class="btn btn-sm btn-light text-start text-danger" onclick="PropagandaEditor.removeBackground()"><i class="bi bi-x-circle me-2"></i>Quitar fondo</button>' +
             '           </div>' +
             '           <h6 class="fw-bold px-2 pt-3 mb-2"><i class="bi bi-stack me-1"></i>Capas</h6>' +
             '           <div id="editorLayers" class="small" style="max-height:200px;overflow-y:auto;"></div>' +
@@ -553,28 +558,112 @@ var PropagandaEditor = (function () {
     function addImage() {
         var input = document.createElement('input');
         input.type = 'file';
-        input.accept = 'image/*';
+        input.accept = 'image/*,.svg';
         input.onchange = function (e) {
             var file = e.target.files[0];
             if (!file) return;
-            var reader = new FileReader();
-            reader.onload = function (ev) {
-                fabric.Image.fromURL(ev.target.result, function (img) {
-                    var maxDim = 400;
-                    if (img.width > maxDim || img.height > maxDim) {
-                        var scale = maxDim / Math.max(img.width, img.height);
-                        img.scale(scale);
-                    }
-                    img.set({ left: 50, top: 50 });
-                    canvas.add(img);
-                    canvas.setActiveObject(img);
-                    canvas.renderAll();
-                    updateLayersPanel();
-                });
-            };
-            reader.readAsDataURL(file);
+
+            var isSvg = file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg');
+
+            if (isSvg) {
+                var reader = new FileReader();
+                reader.onload = function (ev) { importSvgAsObjects(ev.target.result); };
+                reader.readAsText(file);
+            } else {
+                var reader2 = new FileReader();
+                reader2.onload = function (ev) { showImageOptionsModal(ev.target.result); };
+                reader2.readAsDataURL(file);
+            }
         };
         input.click();
+    }
+
+    function importSvgAsObjects(svgString) {
+        fabric.loadSVGFromString(svgString, function (objects, options) {
+            if (!objects || objects.length === 0) {
+                toastr.warning('No se encontraron objetos en el SVG');
+                return;
+            }
+            var maxW = canvas.width * 0.8;
+            var maxH = canvas.height * 0.8;
+            var svgW = options.width || maxW;
+            var svgH = options.height || maxH;
+            var scale = Math.min(maxW / svgW, maxH / svgH, 1);
+            var addedCount = 0;
+            for (var i = 0; i < objects.length; i++) {
+                if (objects[i]) {
+                    objects[i].set({
+                        left: (objects[i].left || 0) * scale + 50,
+                        top: (objects[i].top || 0) * scale + 50,
+                        scaleX: (objects[i].scaleX || 1) * scale,
+                        scaleY: (objects[i].scaleY || 1) * scale
+                    });
+                    canvas.add(objects[i]);
+                    addedCount++;
+                }
+            }
+            canvas.renderAll();
+            updateLayersPanel();
+            isDirty = true;
+            toastr.success(addedCount + ' objetos importados del SVG — cada uno es editable');
+        });
+    }
+
+    function showImageOptionsModal(dataUrl) {
+        swalMG.fire({
+            title: 'Agregar imagen',
+            html: '<p class="mb-2">¿Cómo deseas agregar esta imagen?</p>' +
+                '<p class="text-muted small"><i class="bi bi-info-circle me-1"></i>Las imágenes PNG/JPG se agregan como un solo objeto. Para objetos editables individuales, usa archivos SVG.</p>',
+            icon: 'question',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: '<i class="bi bi-image me-1"></i>Como objeto',
+            denyButtonText: '<i class="bi bi-card-image me-1"></i>Como fondo',
+            cancelButtonText: 'Cancelar',
+            confirmButtonColor: '#0047AB',
+            denyButtonColor: '#2C3E50'
+        }).then(function (result) {
+            if (result.isConfirmed) {
+                addImageToCanvas(dataUrl);
+            } else if (result.isDenied) {
+                setCanvasBackground(dataUrl);
+            }
+        });
+    }
+
+    function addImageToCanvas(dataUrl) {
+        fabric.Image.fromURL(dataUrl, function (img) {
+            var maxDim = 400;
+            if (img.width > maxDim || img.height > maxDim) {
+                var scale = maxDim / Math.max(img.width, img.height);
+                img.scale(scale);
+            }
+            img.set({ left: 50, top: 50 });
+            canvas.add(img);
+            canvas.setActiveObject(img);
+            canvas.renderAll();
+            updateLayersPanel();
+            isDirty = true;
+        });
+    }
+
+    function setCanvasBackground(dataUrl) {
+        fabric.Image.fromURL(dataUrl, function (img) {
+            var scaleX = canvas.width / img.width;
+            var scaleY = canvas.height / img.height;
+            canvas.setBackgroundImage(img, canvas.renderAll.bind(canvas), {
+                scaleX: scaleX,
+                scaleY: scaleY
+            });
+            isDirty = true;
+            toastr.success('Imagen establecida como fondo');
+        });
+    }
+
+    function removeCanvasBackground() {
+        canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas));
+        isDirty = true;
+        toastr.success('Fondo eliminado');
     }
 
     // ══════════════════════════════════════════════════════
@@ -637,6 +726,34 @@ var PropagandaEditor = (function () {
                 '</div>';
         }
 
+        // Image-specific tools
+        if (obj.type === 'image') {
+            var bri = getFilterValue(obj, 'Brightness', 'brightness');
+            var con = getFilterValue(obj, 'Contrast', 'contrast');
+            var sat = getFilterValue(obj, 'Saturation', 'saturation');
+
+            html += '<div class="mb-3"><label class="form-label small fw-semibold">Ajustes de imagen</label>';
+            html += '<div><label class="form-label small mb-0">Brillo</label><input type="range" class="form-range" min="-1" max="1" step="0.05" value="' + bri + '" onchange="PropagandaEditor.setImageFilter(\'Brightness\',\'brightness\',parseFloat(this.value))" /></div>';
+            html += '<div><label class="form-label small mb-0">Contraste</label><input type="range" class="form-range" min="-1" max="1" step="0.05" value="' + con + '" onchange="PropagandaEditor.setImageFilter(\'Contrast\',\'contrast\',parseFloat(this.value))" /></div>';
+            html += '<div><label class="form-label small mb-0">Saturación</label><input type="range" class="form-range" min="-1" max="1" step="0.05" value="' + sat + '" onchange="PropagandaEditor.setImageFilter(\'Saturation\',\'saturation\',parseFloat(this.value))" /></div>';
+            html += '</div>';
+
+            html += '<div class="mb-3 d-flex gap-1 flex-wrap">';
+            html += '<button class="btn btn-sm ' + (hasFilter(obj, 'Grayscale') ? 'btn-primary' : 'btn-light') + '" onclick="PropagandaEditor.toggleImageFilter(\'Grayscale\')">B/N</button>';
+            html += '<button class="btn btn-sm ' + (hasFilter(obj, 'Sepia') ? 'btn-primary' : 'btn-light') + '" onclick="PropagandaEditor.toggleImageFilter(\'Sepia\')">Sepia</button>';
+            html += '<button class="btn btn-sm ' + (hasFilter(obj, 'Invert') ? 'btn-primary' : 'btn-light') + '" onclick="PropagandaEditor.toggleImageFilter(\'Invert\')">Invertir</button>';
+            html += '</div>';
+
+            html += '<div class="mb-3"><label class="form-label small fw-semibold">Voltear</label>' +
+                '<div class="d-flex gap-1">' +
+                '<button class="btn btn-sm ' + (obj.flipX ? 'btn-primary' : 'btn-light') + '" onclick="PropagandaEditor.flipImage(\'x\')" title="Horizontal"><i class="bi bi-symmetry-vertical me-1"></i>H</button>' +
+                '<button class="btn btn-sm ' + (obj.flipY ? 'btn-primary' : 'btn-light') + '" onclick="PropagandaEditor.flipImage(\'y\')" title="Vertical"><i class="bi bi-symmetry-horizontal me-1"></i>V</button>' +
+                '</div></div>';
+
+            html += '<div class="mb-3"><button class="btn btn-sm btn-outline-primary w-100" onclick="PropagandaEditor.replaceImage()"><i class="bi bi-arrow-repeat me-1"></i>Reemplazar imagen</button></div>';
+            html += '<div class="mb-3"><button class="btn btn-sm btn-outline-secondary w-100" onclick="PropagandaEditor.setAsBackground()"><i class="bi bi-card-image me-1"></i>Mover al fondo</button></div>';
+        }
+
         // Opacity
         html += '<div class="mb-3"><label class="form-label small fw-semibold">Opacidad</label>' +
             '<input type="range" class="form-range" min="0" max="1" step="0.05" value="' + (obj.opacity || 1) + '" onchange="PropagandaEditor.setOpacity(parseFloat(this.value))" /></div>';
@@ -687,6 +804,134 @@ var PropagandaEditor = (function () {
     function toggleUnderline() {
         var o = canvas.getActiveObject();
         if (o) { o.set('underline', !o.underline); canvas.renderAll(); isDirty = true; updatePropertiesPanel(); }
+    }
+
+    // ══════════════════════════════════════════════════════
+    // Image filters & manipulation
+    // ══════════════════════════════════════════════════════
+
+    function getFilterValue(obj, filterType, prop) {
+        if (!obj.filters) return 0;
+        for (var i = 0; i < obj.filters.length; i++) {
+            if (obj.filters[i] && obj.filters[i].type === filterType) return obj.filters[i][prop] || 0;
+        }
+        return 0;
+    }
+
+    function hasFilter(obj, filterType) {
+        if (!obj.filters) return false;
+        for (var i = 0; i < obj.filters.length; i++) {
+            if (obj.filters[i] && obj.filters[i].type === filterType) return true;
+        }
+        return false;
+    }
+
+    function setImageFilter(filterType, prop, value) {
+        var obj = canvas.getActiveObject();
+        if (!obj || obj.type !== 'image') return;
+        if (!obj.filters) obj.filters = [];
+
+        var idx = -1;
+        for (var i = 0; i < obj.filters.length; i++) {
+            if (obj.filters[i] && obj.filters[i].type === filterType) { idx = i; break; }
+        }
+
+        var FilterClass = fabric.Image.filters[filterType];
+        if (!FilterClass) return;
+
+        if (idx >= 0) {
+            obj.filters[idx][prop] = value;
+        } else {
+            var opts = {};
+            opts[prop] = value;
+            obj.filters.push(new FilterClass(opts));
+        }
+
+        obj.applyFilters();
+        canvas.renderAll();
+        isDirty = true;
+    }
+
+    function toggleImageFilter(filterType) {
+        var obj = canvas.getActiveObject();
+        if (!obj || obj.type !== 'image') return;
+        if (!obj.filters) obj.filters = [];
+
+        var idx = -1;
+        for (var i = 0; i < obj.filters.length; i++) {
+            if (obj.filters[i] && obj.filters[i].type === filterType) { idx = i; break; }
+        }
+
+        if (idx >= 0) {
+            obj.filters.splice(idx, 1);
+        } else {
+            var FilterClass = fabric.Image.filters[filterType];
+            if (FilterClass) obj.filters.push(new FilterClass());
+        }
+
+        obj.applyFilters();
+        canvas.renderAll();
+        isDirty = true;
+        updatePropertiesPanel();
+    }
+
+    function flipImage(axis) {
+        var obj = canvas.getActiveObject();
+        if (!obj) return;
+        if (axis === 'x') obj.set('flipX', !obj.flipX);
+        else obj.set('flipY', !obj.flipY);
+        canvas.renderAll();
+        isDirty = true;
+        updatePropertiesPanel();
+    }
+
+    function replaceImage() {
+        var obj = canvas.getActiveObject();
+        if (!obj || obj.type !== 'image') return;
+
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = function (e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function (ev) {
+                fabric.Image.fromURL(ev.target.result, function (newImg) {
+                    obj.setElement(newImg.getElement());
+                    if (obj.filters && obj.filters.length) obj.applyFilters();
+                    canvas.renderAll();
+                    isDirty = true;
+                    toastr.success('Imagen reemplazada');
+                });
+            };
+            reader.readAsDataURL(file);
+        };
+        input.click();
+    }
+
+    function setAsBackground() {
+        var obj = canvas.getActiveObject();
+        if (!obj || obj.type !== 'image') return;
+        var dataUrl = obj.toDataURL();
+        canvas.remove(obj);
+        setCanvasBackground(dataUrl);
+        updateLayersPanel();
+        clearPropertiesPanel();
+    }
+
+    function uploadBackground() {
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = function (e) {
+            var file = e.target.files[0];
+            if (!file) return;
+            var reader = new FileReader();
+            reader.onload = function (ev) { setCanvasBackground(ev.target.result); };
+            reader.readAsDataURL(file);
+        };
+        input.click();
     }
 
     // Z-order
@@ -1002,6 +1247,14 @@ var PropagandaEditor = (function () {
         selectLayer: selectLayer,
         toggleLayerVisibility: toggleLayerVisibility,
         undo: undo,
-        redo: redo
+        redo: redo,
+        // Image tools
+        setImageFilter: setImageFilter,
+        toggleImageFilter: toggleImageFilter,
+        flipImage: flipImage,
+        replaceImage: replaceImage,
+        setAsBackground: setAsBackground,
+        uploadBackground: uploadBackground,
+        removeBackground: removeCanvasBackground
     };
 })();
