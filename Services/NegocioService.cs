@@ -370,14 +370,6 @@ public class NegocioService : INegocioService
                 await _context.Horarios.Where(h => empleadoIds.Contains(h.EmpleadoId)).ExecuteDeleteAsync();
             }
 
-            // DetallesPedido depende de Pedidos
-            var pedidoIds = await _context.Pedidos
-                .Where(p => p.NegocioId == id)
-                .Select(p => p.PedidoId)
-                .ToListAsync();
-            if (pedidoIds.Count > 0)
-                await _context.DetallesPedido.Where(d => pedidoIds.Contains(d.PedidoId)).ExecuteDeleteAsync();
-
             // ── Nivel 2: tablas que dependen directamente de Negocio ──
             // ORDEN CRÍTICO: respetar dependencias FK entre tablas de nivel 2.
             //
@@ -389,9 +381,6 @@ public class NegocioService : INegocioService
             // por lo que Productos DEBE eliminarse ANTES que CategoriasProducto.
             await _context.Citas.Where(c => c.NegocioId == id).ExecuteDeleteAsync();
             await _context.OrdenesVenta.Where(o => o.NegocioId == id).ExecuteDeleteAsync();
-            await _context.Pedidos.Where(p => p.NegocioId == id).ExecuteDeleteAsync();
-            await _context.ComisionesDelivery.Where(c => c.NegocioId == id).ExecuteDeleteAsync();
-            await _context.PagosDelivery.Where(p => p.NegocioId == id).ExecuteDeleteAsync();
             await _context.Notificaciones.Where(n => n.NegocioId == id).ExecuteDeleteAsync();
             await _context.Clientes.Where(c => c.NegocioId == id).ExecuteDeleteAsync();
             await _context.Empleados.Where(e => e.NegocioId == id).ExecuteDeleteAsync();

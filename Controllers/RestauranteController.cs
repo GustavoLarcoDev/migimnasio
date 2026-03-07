@@ -1,11 +1,8 @@
-// ═══ RestauranteController.cs — Menus publicos + CRUD mesas/menus/reservas + Pedidos delivery ═══
+// ═══ RestauranteController.cs — Menus publicos + CRUD mesas/menus/reservas ═══
 
-using Gimnasio.Hubs;
 using Gimnasio.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
 
 namespace Gimnasio.Controllers;
 
@@ -27,19 +24,6 @@ public class RestauranteController : Controller
         _authService = authService;
         _menuService = menuService;
         _emailService = emailService;
-    }
-
-    /// <summary>
-    /// Pagina de gestion de pedidos de delivery para el restaurante.
-    /// Muestra pedidos activos con controles para confirmar items, iniciar orden, etc.
-    /// </summary>
-    [HttpGet("Pedidos")]
-    public IActionResult Pedidos()
-    {
-        var nId = _authService.GetNegocioId(User);
-        if (nId == null) return RedirectToAction("Login", "Home");
-        ViewData["NegocioId"] = nId.Value.ToString();
-        return View();
     }
 
     [HttpGet("VerMenu")]
@@ -113,22 +97,16 @@ public class RestauranteCrudController : NegocioBaseController
     private readonly IMesaService _mesaService;
     private readonly IMenuRestauranteService _menuService;
     private readonly IReservaService _reservaService;
-    private readonly IPedidoService _pedidoService;
-    private readonly IHubContext<PedidoHub> _hubContext;
 
     public RestauranteCrudController(
         IAuthService authService,
         IMesaService mesaService,
         IMenuRestauranteService menuService,
-        IReservaService reservaService,
-        IPedidoService pedidoService,
-        IHubContext<PedidoHub> hubContext) : base(authService)
+        IReservaService reservaService) : base(authService)
     {
         _mesaService = mesaService;
         _menuService = menuService;
         _reservaService = reservaService;
-        _pedidoService = pedidoService;
-        _hubContext = hubContext;
     }
 
     // ═══ Mesas ═══
@@ -264,128 +242,6 @@ public class RestauranteCrudController : NegocioBaseController
     [IgnoreAntiforgeryToken]
     public Task<IActionResult> CancelarReserva([FromBody] CambiarEstadoReservaRequest req)
         => ExecuteSelf(async nId => ServiceResult(await _reservaService.CancelarReservaAsync(req.ReservaId, nId)));
-
-    // ═══ Pedidos Delivery ═══
-
-    /// <summary>
-    /// Obtiene los pedidos de delivery activos del restaurante.
-    /// </summary>
-    [HttpGet("GetPedidosDelivery")]
-    public Task<IActionResult> GetPedidosDelivery(Guid negocioId)
-        => Execute(negocioId, async nId => Ok(await _pedidoService.GetPedidosRestauranteAsync(nId)));
-
-    /// <summary>
-    /// El restaurante confirma que un item especifico esta disponible.
-    /// Si todos los items no-rechazados estan confirmados, notifica al motorizado.
-    /// </summary>
-    [HttpPost("ConfirmarItemPedido")]
-    [IgnoreAntiforgeryToken]
-    public Task<IActionResult> ConfirmarItemPedido([FromBody] ItemPedidoRequest req)
-        => ExecuteSelf(async nId =>
-        {
-            var (success, message) = await _pedidoService.ConfirmarItemAsync(req.DetallePedidoId, nId);
-            if (!success)
-                return BadRequest(new { success, message });
-
-            return Ok(new { success = true, message });
-        });
-
-    /// <summary>
-    /// El restaurante rechaza un item (plato no disponible).
-    /// </summary>
-    [HttpPost("RechazarItemPedido")]
-    [IgnoreAntiforgeryToken]
-    public Task<IActionResult> RechazarItemPedido([FromBody] ItemPedidoRequest req)
-        => ExecuteSelf(async nId =>
-        {
-            var (success, message) = await _pedidoService.RechazarItemAsync(req.DetallePedidoId, nId);
-            return success
-                ? Ok(new { success = true, message })
-                : BadRequest(new { success, message });
-        });
-
-    /// <summary>
-    /// El restaurante empieza a preparar el pedido.
-    /// Notifica al motorizado y al cliente via SignalR.
-    /// </summary>
-    [HttpPost("EmpezarOrdenDelivery")]
-    [IgnoreAntiforgeryToken]
-    public Task<IActionResult> EmpezarOrdenDelivery([FromBody] PedidoDeliveryRequest req)
-        => ExecuteSelf(async nId =>
-        {
-            var (success, message) = await _pedidoService.EmpezarOrdenAsync(req.PedidoId, nId);
-            if (!success)
-                return BadRequest(new { success, message });
-
-            // Notificar al grupo del pedido
-            await _hubContext.Clients.Group($"pedido_{req.PedidoId}")
-                .SendAsync("OrdenIniciada", new { pedidoId = req.PedidoId });
-
-            return Ok(new { success = true, message });
-        });
-
-    /// <summary>
-    /// El restaurante marca el pedido como listo para recoger.
-    /// Notifica al motorizado y al cliente via SignalR.
-    /// </summary>
-    [HttpPost("MarcarListoDelivery")]
-    [IgnoreAntiforgeryToken]
-    public Task<IActionResult> MarcarListoDelivery([FromBody] PedidoDeliveryRequest req)
-        => ExecuteSelf(async nId =>
-        {
-            var (success, message) = await _pedidoService.MarcarListoAsync(req.PedidoId, nId);
-            if (!success)
-                return BadRequest(new { success, message });
-
-            // Notificar al grupo del pedido
-            await _hubContext.Clients.Group($"pedido_{req.PedidoId}")
-                .SendAsync("ComidaLista", new { pedidoId = req.PedidoId });
-
-            return Ok(new { success = true, message });
-        });
-
-    /// <summary>
-    /// El restaurante confirma que entrego la comida al motorizado.
-    /// Si ambas partes confirmaron, el pedido pasa a "en_camino".
-    /// </summary>
-    [HttpPost("ConfirmarEntregaMotorizado")]
-    [IgnoreAntiforgeryToken]
-    public Task<IActionResult> ConfirmarEntregaMotorizado([FromBody] PedidoDeliveryRequest req)
-        => ExecuteSelf(async nId =>
-        {
-            var (success, message) = await _pedidoService.ConfirmarEntregaRestauranteAsync(req.PedidoId, nId);
-            if (!success)
-                return BadRequest(new { success, message });
-
-            // If message indicates both confirmed, notify about pickup
-            if (message.Contains("en camino", StringComparison.OrdinalIgnoreCase))
-            {
-                await _hubContext.Clients.Group($"pedido_{req.PedidoId}")
-                    .SendAsync("ComidaRecogida", new { pedidoId = req.PedidoId });
-            }
-
-            return Ok(new { success = true, message });
-        });
-
-    /// <summary>
-    /// El restaurante cancela un pedido de delivery.
-    /// Notifica a todas las partes via SignalR.
-    /// </summary>
-    [HttpPost("CancelarPedidoDelivery")]
-    [IgnoreAntiforgeryToken]
-    public Task<IActionResult> CancelarPedidoDelivery([FromBody] CancelarPedidoDeliveryRequest req)
-        => ExecuteSelf(async nId =>
-        {
-            var (success, message) = await _pedidoService.CancelarPedidoAsync(req.PedidoId, "restaurante", req.Razon);
-            if (!success)
-                return BadRequest(new { success, message });
-
-            // Notificar a todas las partes
-            await _hubContext.Clients.Group($"pedido_{req.PedidoId}")
-                .SendAsync("PedidoCancelado", new { canceladoPor = "restaurante", razon = req.Razon });
-
-            return Ok(new { success = true, message });
-        });
 }
 
 // ═══ Request DTOs ═══
@@ -429,22 +285,4 @@ public class EliminarMesaRequest
 public class EliminarMenuRequest
 {
     public Guid MenuId { get; set; }
-}
-
-// ═══ Delivery Request DTOs ═══
-
-public class ItemPedidoRequest
-{
-    public Guid DetallePedidoId { get; set; }
-}
-
-public class PedidoDeliveryRequest
-{
-    public Guid PedidoId { get; set; }
-}
-
-public class CancelarPedidoDeliveryRequest
-{
-    public Guid PedidoId { get; set; }
-    public string Razon { get; set; }
 }

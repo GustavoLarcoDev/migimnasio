@@ -48,10 +48,9 @@ public class AdminController : Controller
     private readonly IReciboService _reciboService;
     private readonly IWhatsAppService _whatsAppService;
     private readonly IMetodoPagoService _metodoPagoService;
-    private readonly IDeliveryAdminService _deliveryAdminService;
     private readonly IServiceScopeFactory _scopeFactory;
 
-    public AdminController(INegocioService negocioService, IAuthService authService, IEmailService emailService, IComisionService comisionService, IVendedorService vendedorService, IReciboService reciboService, IWhatsAppService whatsAppService, IMetodoPagoService metodoPagoService, IDeliveryAdminService deliveryAdminService, IServiceScopeFactory scopeFactory)
+    public AdminController(INegocioService negocioService, IAuthService authService, IEmailService emailService, IComisionService comisionService, IVendedorService vendedorService, IReciboService reciboService, IWhatsAppService whatsAppService, IMetodoPagoService metodoPagoService, IServiceScopeFactory scopeFactory)
     {
         _negocioService = negocioService;
         _authService = authService;
@@ -61,7 +60,6 @@ public class AdminController : Controller
         _reciboService = reciboService;
         _whatsAppService = whatsAppService;
         _metodoPagoService = metodoPagoService;
-        _deliveryAdminService = deliveryAdminService;
         _scopeFactory = scopeFactory;
     }
 
@@ -1344,195 +1342,6 @@ public class AdminController : Controller
         }
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // DELIVERY — Solicitudes y Pagos
-    // ═══════════════════════════════════════════════════════════
-
-    /// <summary>
-    /// Obtiene todas las solicitudes de delivery pendientes de revisión (motorizados + restaurantes).
-    /// </summary>
-    [HttpGet("GetSolicitudesDelivery")]
-    public async Task<IActionResult> GetSolicitudesDelivery()
-    {
-        try
-        {
-            if (!_authService.IsAdmin(User))
-                return Forbid();
-
-            var data = await _deliveryAdminService.GetSolicitudesPendientesAsync();
-            return Ok(data);
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error al obtener solicitudes de delivery" });
-        }
-    }
-
-    /// <summary>
-    /// Obtiene el detalle completo de una solicitud de delivery específica.
-    /// </summary>
-    [HttpGet("GetSolicitudDelivery/{id}")]
-    public async Task<IActionResult> GetSolicitudDelivery(Guid id)
-    {
-        try
-        {
-            if (!_authService.IsAdmin(User))
-                return Forbid();
-
-            var data = await _deliveryAdminService.GetSolicitudAsync(id);
-            if (data == null)
-                return NotFound(new { success = false, message = "Solicitud no encontrada" });
-
-            return Ok(data);
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error al obtener la solicitud de delivery" });
-        }
-    }
-
-    /// <summary>
-    /// Aprueba una solicitud de delivery: crea el Motorizado o Restaurante y marca como aprobada.
-    /// </summary>
-    [HttpPost("AprobarSolicitudDelivery")]
-    [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> AprobarSolicitudDelivery(Guid solicitudId)
-    {
-        try
-        {
-            if (!_authService.IsAdmin(User))
-                return Forbid();
-
-            var result = await _deliveryAdminService.AprobarSolicitudAsync(solicitudId);
-
-            if (!result.success)
-                return BadRequest(new { result.success, result.message });
-
-            return Ok(new { result.success, result.message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error al aprobar la solicitud de delivery" });
-        }
-    }
-
-    /// <summary>
-    /// Rechaza una solicitud de delivery con motivo explicativo.
-    /// </summary>
-    [HttpPost("RechazarSolicitudDelivery")]
-    [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> RechazarSolicitudDelivery(Guid solicitudId, string motivo)
-    {
-        try
-        {
-            if (!_authService.IsAdmin(User))
-                return Forbid();
-
-            if (string.IsNullOrWhiteSpace(motivo))
-                return BadRequest(new { success = false, message = "El motivo de rechazo es requerido" });
-
-            var result = await _deliveryAdminService.RechazarSolicitudAsync(solicitudId, motivo);
-
-            if (!result.success)
-                return BadRequest(new { result.success, result.message });
-
-            return Ok(new { result.success, result.message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error al rechazar la solicitud de delivery" });
-        }
-    }
-
-    /// <summary>
-    /// Obtiene todos los pagos de delivery pendientes de confirmación por el admin.
-    /// </summary>
-    [HttpGet("GetPagosDeliveryPendientes")]
-    public async Task<IActionResult> GetPagosDeliveryPendientes()
-    {
-        try
-        {
-            if (!_authService.IsAdmin(User))
-                return Forbid();
-
-            var data = await _deliveryAdminService.GetPagosDeliveryPendientesAsync();
-            return Ok(data);
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error al obtener pagos de delivery pendientes" });
-        }
-    }
-
-    /// <summary>
-    /// Confirma un pago de delivery: desbloquea al motorizado/restaurante y resetea comisiones.
-    /// </summary>
-    [HttpPost("ConfirmarPagoDelivery")]
-    [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> ConfirmarPagoDelivery(Guid pagoId)
-    {
-        try
-        {
-            if (!_authService.IsAdmin(User))
-                return Forbid();
-
-            var result = await _deliveryAdminService.ConfirmarPagoDeliveryAsync(pagoId);
-
-            if (!result.success)
-                return BadRequest(new { result.success, result.message });
-
-            return Ok(new { result.success, result.message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error al confirmar el pago de delivery" });
-        }
-    }
-
-    /// <summary>
-    /// Rechaza un pago de delivery con notas explicativas.
-    /// </summary>
-    [HttpPost("RechazarPagoDelivery")]
-    [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> RechazarPagoDelivery(Guid pagoId, string notas)
-    {
-        try
-        {
-            if (!_authService.IsAdmin(User))
-                return Forbid();
-
-            var result = await _deliveryAdminService.RechazarPagoDeliveryAsync(pagoId, notas);
-
-            if (!result.success)
-                return BadRequest(new { result.success, result.message });
-
-            return Ok(new { result.success, result.message });
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error al rechazar el pago de delivery" });
-        }
-    }
-
-    /// <summary>
-    /// Obtiene estadísticas del sistema de delivery para el dashboard de administración.
-    /// </summary>
-    [HttpGet("GetDeliveryAdminStats")]
-    public async Task<IActionResult> GetDeliveryAdminStats()
-    {
-        try
-        {
-            if (!_authService.IsAdmin(User))
-                return Forbid();
-
-            var data = await _deliveryAdminService.GetDeliveryAdminStatsAsync();
-            return Ok(data);
-        }
-        catch (Exception)
-        {
-            return StatusCode(500, new { success = false, message = "Error al obtener estadísticas de delivery" });
-        }
-    }
 }
 
 public class ContactoPromocionDto

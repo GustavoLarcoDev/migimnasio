@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Gimnasio.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260304041853_AddDeliverySystem")]
-    partial class AddDeliverySystem
+    [Migration("20260307053913_RemoveDeliverySystem")]
+    partial class RemoveDeliverySystem
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -315,48 +315,6 @@ namespace Gimnasio.Migrations
                     b.ToTable("DetallesOrdenVenta");
                 });
 
-            modelBuilder.Entity("Gimnasio.Models.DetallePedido", b =>
-                {
-                    b.Property<Guid>("DetallePedidoId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Cantidad")
-                        .HasColumnType("int");
-
-                    b.Property<bool>("Confirmado")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("NombreProducto")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<Guid>("PedidoId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<decimal>("PrecioUnitario")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<Guid>("ProductoId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("Rechazado")
-                        .HasColumnType("bit");
-
-                    b.Property<decimal>("Subtotal")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("DetallePedidoId");
-
-                    b.HasIndex("PedidoId");
-
-                    b.HasIndex("ProductoId");
-
-                    b.ToTable("DetallesPedido");
-                });
-
             modelBuilder.Entity("Gimnasio.Models.DisenoMarketing", b =>
                 {
                     b.Property<Guid>("DisenoId")
@@ -645,8 +603,14 @@ namespace Gimnasio.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<double?>("Latitud")
+                        .HasColumnType("float");
+
                     b.Property<string>("LogoUrl")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("Longitud")
+                        .HasColumnType("float");
 
                     b.Property<bool>("NegocioBloqueado")
                         .HasColumnType("bit");
@@ -1008,78 +972,6 @@ namespace Gimnasio.Migrations
                     b.ToTable("MetodosPago");
                 });
 
-            modelBuilder.Entity("Gimnasio.Models.Motorizado", b =>
-                {
-                    b.Property<Guid>("MotorizadoId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Apellido")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("FotoUrl")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsDisponible")
-                        .HasColumnType("bit");
-
-                    b.Property<double?>("Latitud")
-                        .HasColumnType("float");
-
-                    b.Property<double?>("Longitud")
-                        .HasColumnType("float");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("Password")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("Placa")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("Telefono")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<int>("TotalEntregas")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Vehiculo")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("MotorizadoId");
-
-                    b.HasIndex("Email")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Motorizados_Email_Unique");
-
-                    b.HasIndex("IsActive", "IsDisponible")
-                        .HasDatabaseName("IX_Motorizados_IsActive_IsDisponible");
-
-                    b.ToTable("Motorizados");
-                });
-
             modelBuilder.Entity("Gimnasio.Models.MovimientoInventario", b =>
                 {
                     b.Property<Guid>("MovimientoId")
@@ -1319,125 +1211,6 @@ namespace Gimnasio.Migrations
                         .HasDatabaseName("IX_PagosCita_CitaId_Unique");
 
                     b.ToTable("PagosCita");
-                });
-
-            modelBuilder.Entity("Gimnasio.Models.Pedido", b =>
-                {
-                    b.Property<Guid>("PedidoId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("CanceladoPor")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<decimal>("CostoComida")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<decimal>("CostoEnvio")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("DireccionEntrega")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("Estado")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<DateTime?>("FechaCancelado")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("FechaConfirmado")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("FechaCreacion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("FechaEntregado")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("FechaListo")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("FechaPreparando")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("FechaRecogido")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("FechaTomado")
-                        .HasColumnType("datetime2");
-
-                    b.Property<double>("LatitudCliente")
-                        .HasColumnType("float");
-
-                    b.Property<double>("LatitudRestaurante")
-                        .HasColumnType("float");
-
-                    b.Property<double>("LongitudCliente")
-                        .HasColumnType("float");
-
-                    b.Property<double>("LongitudRestaurante")
-                        .HasColumnType("float");
-
-                    b.Property<bool>("MotorizadoConfirmoRecepcion")
-                        .HasColumnType("bit");
-
-                    b.Property<Guid?>("MotorizadoId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("NegocioId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("NombreCliente")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("Notas")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("RazonCancelacion")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<bool>("RestauranteConfirmoEntrega")
-                        .HasColumnType("bit");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
-
-                    b.Property<string>("TelefonoCliente")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<decimal>("Total")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("PedidoId");
-
-                    b.HasIndex("Estado")
-                        .HasDatabaseName("IX_Pedidos_Estado");
-
-                    b.HasIndex("MotorizadoId")
-                        .HasDatabaseName("IX_Pedidos_MotorizadoId");
-
-                    b.HasIndex("NegocioId")
-                        .HasDatabaseName("IX_Pedidos_NegocioId");
-
-                    b.HasIndex("NegocioId", "Estado")
-                        .HasDatabaseName("IX_Pedidos_NegocioId_Estado");
-
-                    b.ToTable("Pedidos");
                 });
 
             modelBuilder.Entity("Gimnasio.Models.Producto", b =>
@@ -1831,25 +1604,6 @@ namespace Gimnasio.Migrations
                     b.Navigation("Producto");
                 });
 
-            modelBuilder.Entity("Gimnasio.Models.DetallePedido", b =>
-                {
-                    b.HasOne("Gimnasio.Models.Pedido", "Pedido")
-                        .WithMany("Detalles")
-                        .HasForeignKey("PedidoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Gimnasio.Models.Producto", "Producto")
-                        .WithMany()
-                        .HasForeignKey("ProductoId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Pedido");
-
-                    b.Navigation("Producto");
-                });
-
             modelBuilder.Entity("Gimnasio.Models.Empleado", b =>
                 {
                     b.HasOne("Gimnasio.Models.Gym", "Negocio")
@@ -1965,24 +1719,6 @@ namespace Gimnasio.Migrations
                     b.Navigation("Cita");
                 });
 
-            modelBuilder.Entity("Gimnasio.Models.Pedido", b =>
-                {
-                    b.HasOne("Gimnasio.Models.Motorizado", "Motorizado")
-                        .WithMany("Pedidos")
-                        .HasForeignKey("MotorizadoId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("Gimnasio.Models.Gym", "Negocio")
-                        .WithMany()
-                        .HasForeignKey("NegocioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Motorizado");
-
-                    b.Navigation("Negocio");
-                });
-
             modelBuilder.Entity("Gimnasio.Models.Producto", b =>
                 {
                     b.HasOne("Gimnasio.Models.CategoriaProducto", "Categoria")
@@ -2056,17 +1792,7 @@ namespace Gimnasio.Migrations
                     b.Navigation("Servicios");
                 });
 
-            modelBuilder.Entity("Gimnasio.Models.Motorizado", b =>
-                {
-                    b.Navigation("Pedidos");
-                });
-
             modelBuilder.Entity("Gimnasio.Models.OrdenVenta", b =>
-                {
-                    b.Navigation("Detalles");
-                });
-
-            modelBuilder.Entity("Gimnasio.Models.Pedido", b =>
                 {
                     b.Navigation("Detalles");
                 });

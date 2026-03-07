@@ -157,48 +157,6 @@ public class Gym
     public double? Longitud { get; set; }
 
     // ═══════════════════════════════════════════════════════════
-    // DELIVERY
-    // ═══════════════════════════════════════════════════════════
-
-    /// <summary>
-    /// Tipos de comida que ofrece el restaurante, separados por coma.
-    /// Ejemplo: "Clasica,Almuerzos,Comida Rapida".
-    /// Solo aplica para TipoNegocio="restaurante".
-    /// </summary>
-    [StringLength(500)]
-    public string? TiposComida { get; set; }
-
-    /// <summary>
-    /// Ciudad donde se ubica el negocio. Se usa para filtrar restaurantes.
-    /// </summary>
-    [StringLength(100)]
-    public string? Ciudad { get; set; }
-
-    /// <summary>
-    /// Tipo de plan delivery del restaurante: "mensual", "comision" o null.
-    /// null = no participa en delivery. "comision" = $0.20/pedido. "mensual" = $10/mes.
-    /// </summary>
-    [StringLength(20)]
-    public string? TipoPlanDelivery { get; set; }
-
-    /// <summary>
-    /// Total de comisiones de delivery acumuladas sin pagar.
-    /// Se resetea a 0 cuando el admin confirma el pago.
-    /// </summary>
-    public decimal ComisionesDeliveryAcumuladas { get; set; } = 0;
-
-    /// <summary>
-    /// Indica si el restaurante está bloqueado en el sistema de delivery
-    /// por deuda de comisiones. No puede recibir nuevos pedidos.
-    /// </summary>
-    public bool BloqueadoDelivery { get; set; } = false;
-
-    /// <summary>
-    /// Fecha de la última vez que se liquidaron las comisiones de delivery.
-    /// </summary>
-    public DateTime? UltimaLiquidacionComisionesDelivery { get; set; }
-
-    // ═══════════════════════════════════════════════════════════
     // FECHAS
     // ═══════════════════════════════════════════════════════════
 
