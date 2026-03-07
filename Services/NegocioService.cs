@@ -24,6 +24,7 @@ using Gimnasio.Data;
 using Gimnasio.Models;
 using Gimnasio.Models.DTOs;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Gimnasio.Services;
 
@@ -41,15 +42,19 @@ public class NegocioService : INegocioService
     // Servicio de autenticación — usado aquí exclusivamente para hashear contraseñas
     private readonly IAuthService _authService;
 
+    // Cache en memoria para IsNegocioBloqueadoAsync — evita query DB en cada request
+    private readonly IMemoryCache _cache;
+
     /// <summary>
     /// Constructor con inyección de dependencias.
     /// ASP.NET Core resuelve estas dependencias automáticamente
     /// según el registro en Program.cs (AddScoped).
     /// </summary>
-    public NegocioService(ApplicationDbContext context, IAuthService authService)
+    public NegocioService(ApplicationDbContext context, IAuthService authService, IMemoryCache cache)
     {
         _context = context;
         _authService = authService;
+        _cache = cache;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -365,6 +370,14 @@ public class NegocioService : INegocioService
                 await _context.Horarios.Where(h => empleadoIds.Contains(h.EmpleadoId)).ExecuteDeleteAsync();
             }
 
+            // DetallesPedido depende de Pedidos
+            var pedidoIds = await _context.Pedidos
+                .Where(p => p.NegocioId == id)
+                .Select(p => p.PedidoId)
+                .ToListAsync();
+            if (pedidoIds.Count > 0)
+                await _context.DetallesPedido.Where(d => pedidoIds.Contains(d.PedidoId)).ExecuteDeleteAsync();
+
             // ── Nivel 2: tablas que dependen directamente de Negocio ──
             // ORDEN CRÍTICO: respetar dependencias FK entre tablas de nivel 2.
             //
@@ -376,11 +389,16 @@ public class NegocioService : INegocioService
             // por lo que Productos DEBE eliminarse ANTES que CategoriasProducto.
             await _context.Citas.Where(c => c.NegocioId == id).ExecuteDeleteAsync();
             await _context.OrdenesVenta.Where(o => o.NegocioId == id).ExecuteDeleteAsync();
+            await _context.Pedidos.Where(p => p.NegocioId == id).ExecuteDeleteAsync();
+            await _context.ComisionesDelivery.Where(c => c.NegocioId == id).ExecuteDeleteAsync();
+            await _context.PagosDelivery.Where(p => p.NegocioId == id).ExecuteDeleteAsync();
             await _context.Notificaciones.Where(n => n.NegocioId == id).ExecuteDeleteAsync();
             await _context.Clientes.Where(c => c.NegocioId == id).ExecuteDeleteAsync();
             await _context.Empleados.Where(e => e.NegocioId == id).ExecuteDeleteAsync();
             await _context.ServiciosNegocio.Where(s => s.NegocioId == id).ExecuteDeleteAsync();
+            await _context.Reservas.Where(r => r.NegocioId == id).ExecuteDeleteAsync();
             await _context.Mesas.Where(m => m.NegocioId == id).ExecuteDeleteAsync();
+            await _context.FacturasElectronicas.Where(f => f.NegocioId == id).ExecuteDeleteAsync();
             await _context.Recibos.Where(r => r.NegocioId == id).ExecuteDeleteAsync();
             await _context.MovimientosInventario.Where(m => m.NegocioId == id).ExecuteDeleteAsync();
             await _context.Productos.Where(p => p.NegocioId == id).ExecuteDeleteAsync();
@@ -389,6 +407,7 @@ public class NegocioService : INegocioService
             await _context.Sugerencias.Where(s => s.NegocioId == id).ExecuteDeleteAsync();
             await _context.ComisionesVendedor.Where(c => c.NegocioId == id).ExecuteDeleteAsync();
             await _context.MenusRestaurante.Where(m => m.NegocioId == id).ExecuteDeleteAsync();
+            await _context.DisenosMarketing.Where(d => d.NegocioId == id).ExecuteDeleteAsync();
             await _context.MetodosPago.Where(m => m.NegocioId == id).ExecuteDeleteAsync();
 
             // ── Nivel 1: el negocio mismo ──
@@ -460,6 +479,7 @@ public class NegocioService : INegocioService
         _context.Update(negocio);
         await _context.SaveChangesAsync();
 
+        _cache.Remove($"negocio_bloqueado_{id}");
         return (true, "Negocio bloqueado exitosamente");
     }
 
@@ -474,11 +494,18 @@ public class NegocioService : INegocioService
         _context.Update(negocio);
         await _context.SaveChangesAsync();
 
+        _cache.Remove($"negocio_bloqueado_{id}");
         return (true, "Negocio desbloqueado exitosamente");
     }
 
     public async Task<bool> IsNegocioBloqueadoAsync(Guid negocioId)
     {
+        var cacheKey = $"negocio_bloqueado_{negocioId}";
+
+        // Cache de 60 segundos — evita query DB en cada request del middleware
+        if (_cache.TryGetValue(cacheKey, out bool cachedResult))
+            return cachedResult;
+
         var negocio = await _context.Negocios
             .AsNoTracking()
             .Where(n => n.NegocioId == negocioId)
@@ -487,8 +514,12 @@ public class NegocioService : INegocioService
 
         if (negocio == null) return false;
 
-        // Si ya está bloqueado, retornar true directamente
-        if (negocio.NegocioBloqueado) return true;
+        // Si ya está bloqueado, cachear y retornar
+        if (negocio.NegocioBloqueado)
+        {
+            _cache.Set(cacheKey, true, TimeSpan.FromSeconds(60));
+            return true;
+        }
 
         // Auto-bloquear si la suscripción expiró
         if (negocio.FechaExpiracion.HasValue && negocio.FechaExpiracion.Value.Date < TimeHelper.Now.Date)
@@ -500,9 +531,11 @@ public class NegocioService : INegocioService
                 entity.FechaDeActualizacion = TimeHelper.Now;
                 await _context.SaveChangesAsync();
             }
+            _cache.Set(cacheKey, true, TimeSpan.FromSeconds(60));
             return true;
         }
 
+        _cache.Set(cacheKey, false, TimeSpan.FromSeconds(60));
         return false;
     }
 

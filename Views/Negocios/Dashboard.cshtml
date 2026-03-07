@@ -1877,11 +1877,20 @@ function cargarRecibos() {
         ajax: { url: '/Negocios/GetRecibos', data: { negocioId }, dataSrc: '' },
         columns: [
             { data: 'numeroRecibo', render: d => `<span class="badge bg-primary">#${d}</span>` },
-            { data: 'destinatarioNombre' },
-            { data: 'concepto', render: d => d && d.length > 40 ? d.substring(0,40)+'...' : d },
+            { data: 'destinatarioNombre', render: d => escHtml(d || '-') },
+            { data: 'concepto', render: d => { var s = escHtml(d || '-'); return s.length > 40 ? s.substring(0,40)+'...' : s; } },
             { data: 'monto', render: d => `$${parseFloat(d).toFixed(2)}` },
             { data: 'fechaCreacion', render: d => new Date(d).toLocaleDateString('es-EC') },
-            { data: null, orderable: false, render: (d,t,r) => `<button class="btn btn-sm btn-outline-primary" onclick="verRecibo('${r.reciboId}')"><i class="bi bi-eye"></i></button>` }
+            { data: null, orderable: false, render: (d,t,r) => {
+                var btns = `<div class="btn-group btn-group-sm">`;
+                btns += `<button class="btn btn-outline-primary" onclick="verRecibo('${r.reciboId}')" title="Ver"><i class="bi bi-eye"></i></button>`;
+                if (window._facturacionActiva && !r.tieneFactura)
+                    btns += `<button class="btn btn-outline-warning" onclick="facturarDesdeRecibo('${r.reciboId}')" title="Facturar"><i class="bi bi-receipt"></i></button>`;
+                else if (r.tieneFactura)
+                    btns += `<span class="btn btn-success disabled"><i class="bi bi-check-lg"></i></span>`;
+                btns += `</div>`;
+                return btns;
+            }}
         ],
         order: [[4, 'desc']],
         language: { emptyTable: 'No hay recibos' },

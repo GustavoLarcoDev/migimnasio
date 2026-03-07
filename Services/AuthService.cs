@@ -256,7 +256,7 @@ public class AuthService : IAuthService
     /// <returns>Hash BCrypt listo para guardar en la base de datos.</returns>
     public string HashPassword(string password)
     {
-        return BCrypt.Net.BCrypt.HashPassword(password);
+        return BCrypt.Net.BCrypt.HashPassword(password, workFactor: 12);
     }
 
     /// <summary>

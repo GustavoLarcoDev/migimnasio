@@ -240,15 +240,14 @@ public class MetodoPagoService : IMetodoPagoService
             // Baja lógica: el registro queda en la base de datos pero invisible en listados
             metodoPago.IsActive = false;
             metodoPago.EsPredeterminado = false;
-
             _context.Update(metodoPago);
-            await _context.SaveChangesAsync();
 
             // Si era el predeterminado, asignar el flag al primer método activo restante
+            // Todo se guarda en un único SaveChangesAsync para garantizar atomicidad
             if (eraPredeterminado)
             {
                 var primerActivo = await _context.MetodosPago
-                    .Where(m => m.NegocioId == nId && m.IsActive)
+                    .Where(m => m.NegocioId == nId && m.IsActive && m.MetodoPagoId != metodoPagoId)
                     .OrderBy(m => m.Orden)
                     .FirstOrDefaultAsync();
 
@@ -256,9 +255,10 @@ public class MetodoPagoService : IMetodoPagoService
                 {
                     primerActivo.EsPredeterminado = true;
                     _context.Update(primerActivo);
-                    await _context.SaveChangesAsync();
                 }
             }
+
+            await _context.SaveChangesAsync();
 
             return (true, "Método de pago eliminado exitosamente");
         }

@@ -50,6 +50,7 @@ public class VendedorController : Controller
     private readonly IReciboService _reciboService;
     private readonly IWhatsAppService _whatsAppService;
     private readonly IMetodoPagoService _metodoPagoService;
+    private readonly IServiceScopeFactory _scopeFactory;
 
     public VendedorController(
         IVendedorService vendedorService,
@@ -59,7 +60,8 @@ public class VendedorController : Controller
         IComisionService comisionService,
         IReciboService reciboService,
         IWhatsAppService whatsAppService,
-        IMetodoPagoService metodoPagoService)
+        IMetodoPagoService metodoPagoService,
+        IServiceScopeFactory scopeFactory)
     {
         _vendedorService = vendedorService;
         _authService = authService;
@@ -69,6 +71,7 @@ public class VendedorController : Controller
         _reciboService = reciboService;
         _whatsAppService = whatsAppService;
         _metodoPagoService = metodoPagoService;
+        _scopeFactory = scopeFactory;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -151,10 +154,16 @@ public class VendedorController : Controller
             $"Vendedor '{nombre} {apellido}' creado",
             null);
 
-        // Enviar email en segundo plano con try-catch para evitar unobserved task exceptions.
+        // Enviar email en segundo plano (scope factory para evitar usar DbContext dispuesto)
+        var correoVend = correo;
+        var nombreCompleto = $"{nombre} {apellido}";
+        var passVend = password;
+        var telVend = telefono;
         _ = Task.Run(async () =>
         {
-            try { await _emailService.EnviarBienvenidaVendedorAsync(correo, $"{nombre} {apellido}", correo, password); }
+            using var scope = _scopeFactory.CreateScope();
+            var emailSvc = scope.ServiceProvider.GetRequiredService<IEmailService>();
+            try { await emailSvc.EnviarBienvenidaVendedorAsync(correoVend, nombreCompleto, correoVend, passVend); }
             catch { /* El EmailService ya loguea internamente */ }
         });
 
@@ -163,7 +172,9 @@ public class VendedorController : Controller
         {
             _ = Task.Run(async () =>
             {
-                try { await _whatsAppService.EnviarBienvenidaVendedorWhatsAppAsync(telefono, $"{nombre} {apellido}", correo, password); }
+                using var scope = _scopeFactory.CreateScope();
+                var whatsAppSvc = scope.ServiceProvider.GetRequiredService<IWhatsAppService>();
+                try { await whatsAppSvc.EnviarBienvenidaVendedorWhatsAppAsync(telVend, nombreCompleto, correoVend, passVend); }
                 catch { }
             });
         }
@@ -474,10 +485,19 @@ public class VendedorController : Controller
         }
         catch { /* No bloquear el flujo principal si falla la generación de comisión */ }
 
-        // Enviar email de bienvenida en segundo plano
+        // Enviar email de bienvenida en segundo plano (scope factory para evitar usar DbContext dispuesto)
+        var emailNeg = EmailNegocio;
+        var nombreNeg = NombreNegocio;
+        var duenoNeg = duenoNegocio;
+        var passNeg = passwordNegocio;
+        var telNeg = telefono;
+        var tipoNeg = tipoNegocio;
+        var vendNombre = vendedorNombre;
         _ = Task.Run(async () =>
         {
-            try { await _emailService.EnviarBienvenidaNegocioAsync(EmailNegocio, NombreNegocio, duenoNegocio, EmailNegocio, passwordNegocio, telefono, vendedorNombre, tipoNegocio); }
+            using var scope = _scopeFactory.CreateScope();
+            var emailSvc = scope.ServiceProvider.GetRequiredService<IEmailService>();
+            try { await emailSvc.EnviarBienvenidaNegocioAsync(emailNeg, nombreNeg, duenoNeg, emailNeg, passNeg, telNeg, vendNombre, tipoNeg); }
             catch { }
         });
 
@@ -486,7 +506,9 @@ public class VendedorController : Controller
         {
             _ = Task.Run(async () =>
             {
-                try { await _whatsAppService.EnviarBienvenidaNegocioWhatsAppAsync(telefono, NombreNegocio, duenoNegocio, EmailNegocio, passwordNegocio, tipoNegocio); }
+                using var scope = _scopeFactory.CreateScope();
+                var whatsAppSvc = scope.ServiceProvider.GetRequiredService<IWhatsAppService>();
+                try { await whatsAppSvc.EnviarBienvenidaNegocioWhatsAppAsync(telNeg, nombreNeg, duenoNeg, emailNeg, passNeg, tipoNeg); }
                 catch { }
             });
         }
@@ -840,7 +862,7 @@ public class VendedorController : Controller
             $"Vendedor {vendedorNombre} bloqueó el negocio '{negocio.NegocioNombre}'",
             negocio.NegocioNombre);
 
-        // Notificar al dueño del negocio por WhatsApp
+        // Notificar al dueño del negocio por WhatsApp (scope factory para evitar usar DbContext dispuesto)
         if (!string.IsNullOrWhiteSpace(negocio.Telefono))
         {
             var tel = negocio.Telefono;
@@ -848,7 +870,9 @@ public class VendedorController : Controller
             var dueno = negocio.DuenoNegocio ?? "Estimado cliente";
             _ = Task.Run(async () =>
             {
-                try { await _whatsAppService.EnviarNotificacionNegocioBloqueadoWhatsAppAsync(tel, nom, dueno); }
+                using var scope = _scopeFactory.CreateScope();
+                var whatsAppSvc = scope.ServiceProvider.GetRequiredService<IWhatsAppService>();
+                try { await whatsAppSvc.EnviarNotificacionNegocioBloqueadoWhatsAppAsync(tel, nom, dueno); }
                 catch { }
             });
         }
@@ -887,7 +911,7 @@ public class VendedorController : Controller
             $"Vendedor {vendedorNombre} desbloqueó el negocio '{negocio.NegocioNombre}'",
             negocio.NegocioNombre);
 
-        // Notificar al dueño del negocio por WhatsApp
+        // Notificar al dueño del negocio por WhatsApp (scope factory para evitar usar DbContext dispuesto)
         if (!string.IsNullOrWhiteSpace(negocio.Telefono))
         {
             var tel = negocio.Telefono;
@@ -895,7 +919,9 @@ public class VendedorController : Controller
             var dueno = negocio.DuenoNegocio ?? "Estimado cliente";
             _ = Task.Run(async () =>
             {
-                try { await _whatsAppService.EnviarNotificacionNegocioDesbloqueadoWhatsAppAsync(tel, nom, dueno); }
+                using var scope = _scopeFactory.CreateScope();
+                var whatsAppSvc = scope.ServiceProvider.GetRequiredService<IWhatsAppService>();
+                try { await whatsAppSvc.EnviarNotificacionNegocioDesbloqueadoWhatsAppAsync(tel, nom, dueno); }
                 catch { }
             });
         }

@@ -61,8 +61,12 @@ builder.Services.AddOptions<EmailSettings>()
 
 // Credenciales de Twilio WhatsApp API:
 // Account SID, Auth Token, número de origen, etc.
-builder.Services.Configure<WhatsAppSettings>(
-    builder.Configuration.GetSection("WhatsAppSettings"));
+// Validación: si Enabled=true, AccountSid y AuthToken son obligatorios.
+builder.Services.AddOptions<WhatsAppSettings>()
+    .BindConfiguration("WhatsAppSettings")
+    .Validate(s => !s.Enabled || !string.IsNullOrWhiteSpace(s.AccountSid), "WhatsAppSettings:AccountSid requerido cuando Enabled=true")
+    .Validate(s => !s.Enabled || !string.IsNullOrWhiteSpace(s.AuthToken), "WhatsAppSettings:AuthToken requerido cuando Enabled=true")
+    .ValidateOnStart();
 
 // Configuración de facturación electrónica SRI Ecuador
 builder.Services.AddOptions<FacturacionSettings>()
@@ -106,6 +110,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 //   - Evitar "Singleton" aquí porque los servicios usan
 //     ApplicationDbContext que también es Scoped
 // ═══════════════════════════════════════════════════════════
+
+// Cache en memoria — usado por IsNegocioBloqueadoAsync para evitar query DB en cada request
+builder.Services.AddMemoryCache();
 
 // Autenticación: login, logout, verificación de contraseña BCrypt
 builder.Services.AddScoped<IAuthService, AuthService>();
@@ -185,6 +192,13 @@ builder.Services.AddScoped<IFacturacionElectronicaService, FacturacionElectronic
 // Editor de disenos (flyers, posts) con Fabric.js
 builder.Services.AddScoped<IPropagandaService, PropagandaService>();
 
+// ── Delivery ─────────────────────────────────────────────
+// Pedidos de delivery: máquina de estados, GPS, notificaciones
+builder.Services.AddScoped<IPedidoService, PedidoService>();
+
+// Registro, aprobación, pagos y comisiones del sistema de delivery
+builder.Services.AddScoped<IDeliveryAdminService, DeliveryAdminService>();
+
 // ═══════════════════════════════════════════════════════════
 // SECCIÓN 4 — CLIENTE HTTP (HttpClientFactory)
 //
@@ -249,6 +263,9 @@ builder.Services.AddControllersWithViews(options =>
     jsonOpts.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
 });
 
+// ═══ SignalR for real-time delivery tracking ═══
+builder.Services.AddSignalR();
+
 // ═══════════════════════════════════════════════════════════
 // SECCIÓN 7 — RATE LIMITING (límite de velocidad)
 //
@@ -308,6 +325,17 @@ builder.Services.AddRateLimiter(options =>
             {
                 PermitLimit = isDev ? 500 : 30,
                 Window = TimeSpan.FromMinutes(1)
+            }));
+
+    // Política para formularios de registro de delivery (motorizados/restaurantes)
+    // Dev: 500/5min → sin restricción; Prod: 3/5min → anti-spam
+    options.AddPolicy("registro", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = isDev ? 500 : 3,
+                Window = TimeSpan.FromMinutes(5)
             }));
 });
 
@@ -503,8 +531,9 @@ app.Use(async (context, next) =>
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
 
     // Deshabilita explícitamente el acceso a hardware sensible
-    // del dispositivo que la app no necesita usar
-    context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+    // del dispositivo que la app no necesita usar.
+    // geolocation=(self) — permitido para delivery (ubicación GPS del cliente y motorizado)
+    context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(self)";
 
     // Content-Security-Policy (CSP): la política más importante.
     // Define exactamente de qué orígenes puede cargar recursos
@@ -529,8 +558,8 @@ app.Use(async (context, next) =>
         // Imágenes: self + data: URIs (para íconos base64) + cualquier HTTPS
         "img-src 'self' data: https:; " +
 
-        // Fetch/XHR: self + CDNs de DataTables (para carga lazy de datos)
-        "connect-src 'self' https://cdn.datatables.net https://cdn.jsdelivr.net; " +
+        // Fetch/XHR/WebSocket: self + CDNs + ws/wss for SignalR delivery tracking
+        "connect-src 'self' ws: wss: https://cdn.datatables.net https://cdn.jsdelivr.net; " +
 
         // Solo el propio dominio puede incrustar la app en iframes (catálogo, recibos)
         "frame-ancestors 'self';";
@@ -625,6 +654,54 @@ app.Use(async (context, next) =>
     await next();
 });
 
+// ── Verificación de Bloqueo de Motorizados ─────────────────
+// Similar al bloqueo de negocios, pero para motorizados con deuda de
+// comisiones o suscripción vencida. Excepciona endpoints de pago y logout.
+app.Use(async (context, next) =>
+{
+    var user = context.User;
+    if (user.Identity?.IsAuthenticated == true
+        && user.Claims.Any(c => c.Type == ClaimTypes.Role && c.Value == "Motorizado"))
+    {
+        var path = context.Request.Path.Value ?? "";
+        // Permitir endpoints de pago, suscripción, logout y métodos de pago
+        if (!path.Contains("EnviarConfirmacionPago", StringComparison.OrdinalIgnoreCase)
+            && !path.Contains("GetEstadoSuscripcion", StringComparison.OrdinalIgnoreCase)
+            && !path.Contains("GetMetodosPagoAdmin", StringComparison.OrdinalIgnoreCase)
+            && !path.Contains("GetHistorialPagos", StringComparison.OrdinalIgnoreCase)
+            && !path.Contains("Logout", StringComparison.OrdinalIgnoreCase))
+        {
+            var motorizadoIdClaim = user.Claims.FirstOrDefault(c => c.Type == "MotorizadoId");
+            if (motorizadoIdClaim != null && Guid.TryParse(motorizadoIdClaim.Value, out var motorizadoId))
+            {
+                var deliveryService = context.RequestServices.GetRequiredService<IDeliveryAdminService>();
+                var bloqueado = await deliveryService.IsMotorizadoBloqueadoAsync(motorizadoId);
+
+                if (bloqueado)
+                {
+                    if (context.Request.Headers["X-Requested-With"] == "XMLHttpRequest"
+                        || context.Request.Headers["Accept"].ToString().Contains("application/json"))
+                    {
+                        context.Response.StatusCode = 423;
+                        context.Response.ContentType = "application/json";
+                        await context.Response.WriteAsJsonAsync(new
+                        {
+                            success = false,
+                            blocked = true,
+                            message = "Tu cuenta está bloqueada por deuda pendiente. Envía tu comprobante de pago."
+                        });
+                        return;
+                    }
+
+                    context.Items["MotorizadoBloqueado"] = true;
+                }
+            }
+        }
+    }
+
+    await next();
+});
+
 // ── Verificación de Términos y Condiciones ──────────────────
 // Después del bloqueo, verificamos si el negocio ha aceptado los términos.
 // Si no los aceptó:
@@ -695,6 +772,9 @@ app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
+
+// ═══ SignalR Hub mapping ═══
+app.MapHub<Gimnasio.Hubs.PedidoHub>("/hubs/pedido");
 
 // ═══════════════════════════════════════════════════════════
 // HEALTH CHECK — Endpoint de verificación de salud

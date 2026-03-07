@@ -256,21 +256,21 @@ public class EmailService : IEmailService
         }
         else
         {
-            saludo = $"Hola {nombreDueno}!";
+            saludo = $"Hola {System.Net.WebUtility.HtmlEncode(nombreDueno)}!";
             mensaje = $@"
         <p style='color: #555; font-size: 16px; line-height: 1.6;'>
             Queremos agradecerle de corazon por su confianza, su tiempo y su compra.
             Bienvenido a <strong>My-Negocio</strong>! Estamos emocionados de que
-            <strong>{nombreNegocio}</strong> sea parte de nuestra familia.
+            <strong>{System.Net.WebUtility.HtmlEncode(nombreNegocio)}</strong> sea parte de nuestra familia.
         </p>
         <p style='color: #555; font-size: 16px; line-height: 1.6;'>
-            Su asesor <strong>{nombreVendedor}</strong> estara disponible para ayudarle en todo
+            Su asesor <strong>{System.Net.WebUtility.HtmlEncode(nombreVendedor)}</strong> estara disponible para ayudarle en todo
             lo que necesite. No dude en contactarlo.
         </p>";
             despedida = $@"
         <p style='color: #555; font-size: 16px;'>
             Con mucho agradecimiento,<br>
-            <strong>{nombreVendedor}</strong><br>
+            <strong>{System.Net.WebUtility.HtmlEncode(nombreVendedor)}</strong><br>
             <span style='color: #888;'>Asesor de My-Negocio</span>
         </p>";
         }
@@ -282,8 +282,8 @@ public class EmailService : IEmailService
 <div style='font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;'>
     <div style='background: linear-gradient(135deg, #ff6b35, #f7931e); padding: 30px; border-radius: 12px 12px 0 0; text-align: center;'>
         <h1 style='color: white; margin: 0; font-size: 28px;'>Bienvenido a My-Negocio</h1>
-        <p style='color: rgba(255,255,255,0.9); margin: 8px 0 0; font-size: 16px;'>{nombreNegocio}</p>
-        <p style='color: rgba(255,255,255,0.7); margin: 4px 0 0; font-size: 13px;'>Plan: {tipoLabel}</p>
+        <p style='color: rgba(255,255,255,0.9); margin: 8px 0 0; font-size: 16px;'>{System.Net.WebUtility.HtmlEncode(nombreNegocio)}</p>
+        <p style='color: rgba(255,255,255,0.7); margin: 4px 0 0; font-size: 13px;'>Plan: {System.Net.WebUtility.HtmlEncode(tipoLabel)}</p>
     </div>
     <div style='background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; border-top: none;'>
         <h2 style='color: #333;'>{saludo}</h2>
@@ -294,15 +294,15 @@ public class EmailService : IEmailService
             <table style='width: 100%; font-size: 15px;'>
                 <tr>
                     <td style='padding: 5px 0; color: #666; font-weight: bold;'>Email:</td>
-                    <td style='padding: 5px 0; color: #333;'>{emailNegocio}</td>
+                    <td style='padding: 5px 0; color: #333;'>{System.Net.WebUtility.HtmlEncode(emailNegocio)}</td>
                 </tr>
                 <tr>
                     <td style='padding: 5px 0; color: #666; font-weight: bold;'>Telefono:</td>
-                    <td style='padding: 5px 0; color: #333;'>{telefonoNegocio}</td>
+                    <td style='padding: 5px 0; color: #333;'>{System.Net.WebUtility.HtmlEncode(telefonoNegocio)}</td>
                 </tr>
                 <tr>
                     <td style='padding: 5px 0; color: #666; font-weight: bold;'>Contrasena:</td>
-                    <td style='padding: 5px 0; color: #333; font-family: monospace; font-size: 16px;'>{passwordNegocio}</td>
+                    <td style='padding: 5px 0; color: #333; font-family: monospace; font-size: 16px;'>{System.Net.WebUtility.HtmlEncode(passwordNegocio)}</td>
                 </tr>
             </table>
             <p style='color: #dc3545; font-size: 13px; margin: 12px 0 0 0;'>

@@ -1,0 +1,401 @@
+@{
+    ViewData["Title"] = "Esperando motorizado";
+    var pedidoId = ViewBag.PedidoId?.ToString() ?? "";
+}
+
+@section Styles {
+<style>
+    .esperando-page {
+        min-height: 70vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+    }
+
+    /* ── Pulse Animation ─────────────────────────────── */
+    .search-animation {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.25rem;
+    }
+    .pulse-container {
+        position: relative;
+        width: 140px;
+        height: 140px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .pulse-ring {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        border: 3px solid #0d6efd;
+        opacity: 0;
+        animation: pulseRing 2.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+    }
+    .pulse-ring:nth-child(2) { animation-delay: .8s; }
+    .pulse-ring:nth-child(3) { animation-delay: 1.6s; }
+    @@keyframes pulseRing {
+        0% { transform: scale(0.5); opacity: 0; }
+        20% { opacity: .6; }
+        100% { transform: scale(1.3); opacity: 0; }
+    }
+    .pulse-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #0d6efd, #6610f2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2;
+        box-shadow: 0 8px 32px rgba(13, 110, 253, .3);
+    }
+    .pulse-icon i {
+        font-size: 2rem;
+        color: #fff;
+    }
+
+    .search-text {
+        font-weight: 700;
+        font-size: 1.15rem;
+        color: #212529;
+        text-align: center;
+    }
+    .search-subtext {
+        color: #6c757d;
+        font-size: .95rem;
+        text-align: center;
+    }
+
+    /* ── Timer ──────────────────────────────────────── */
+    .wait-timer {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #0d6efd;
+        font-variant-numeric: tabular-nums;
+    }
+    .timer-label {
+        font-size: .85rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: .05em;
+    }
+
+    /* ── Order Summary Card ─────────────────────────── */
+    .order-summary-card {
+        background: #fff;
+        border-radius: 1rem;
+        box-shadow: 0 2px 16px rgba(0,0,0,.06);
+        padding: 1.25rem;
+        width: 100%;
+        max-width: 480px;
+        margin-top: 1.5rem;
+    }
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        padding: .35rem 0;
+        font-size: .9rem;
+    }
+    .summary-divider {
+        border-top: 1px solid #f0f0f0;
+        margin: .5rem 0;
+    }
+
+    /* ── Cancel Button ──────────────────────────────── */
+    .btn-cancel-order {
+        margin-top: 1rem;
+        color: #dc3545;
+        font-weight: 600;
+        background: none;
+        border: none;
+        font-size: .95rem;
+        cursor: pointer;
+    }
+    .btn-cancel-order:hover {
+        color: #a71d2a;
+        text-decoration: underline;
+    }
+
+    /* Disconnected banner */
+    .connection-banner {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 1050;
+        padding: .5rem;
+        text-align: center;
+        font-size: .85rem;
+        font-weight: 600;
+        display: none;
+    }
+    .connection-banner.disconnected {
+        display: block;
+        background: #dc3545;
+        color: #fff;
+    }
+    .connection-banner.reconnecting {
+        display: block;
+        background: #ffc107;
+        color: #000;
+    }
+</style>
+}
+
+<div class="connection-banner" id="connection-banner"></div>
+
+<div class="esperando-page">
+    <div class="search-animation" id="search-animation">
+        <div class="pulse-container">
+            <div class="pulse-ring"></div>
+            <div class="pulse-ring"></div>
+            <div class="pulse-ring"></div>
+            <div class="pulse-icon">
+                <i class="bi bi-bicycle"></i>
+            </div>
+        </div>
+        <div class="search-text">Buscando quien recoja tu pedido...</div>
+        <div class="search-subtext">Los motorizados cercanos pueden ver tu pedido</div>
+
+        <div class="text-center mt-2">
+            <div class="timer-label">Tiempo de espera</div>
+            <div class="wait-timer" id="wait-timer">00:00</div>
+        </div>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="order-summary-card" id="order-summary" style="display:none;">
+        <h6 class="fw-bold mb-2"><i class="bi bi-receipt me-2"></i>Resumen del pedido</h6>
+        <div id="summary-items"></div>
+        <div class="summary-divider"></div>
+        <div class="summary-item">
+            <span class="text-muted">Comida</span>
+            <span class="fw-bold" id="summary-food">$0.00</span>
+        </div>
+        <div class="summary-item">
+            <span class="text-muted">Delivery</span>
+            <span class="fw-bold" id="summary-delivery">$0.00</span>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-item">
+            <span class="fw-bold">Total</span>
+            <span class="fw-bold text-primary fs-5" id="summary-total">$0.00</span>
+        </div>
+    </div>
+
+    <!-- Cancel Button -->
+    <button class="btn-cancel-order" id="btn-cancel" onclick="cancelarPedido()">
+        <i class="bi bi-x-circle me-1"></i> Cancelar pedido
+    </button>
+</div>
+
+@section Scripts {
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+<script>
+(function () {
+    'use strict';
+
+    var pedidoId = '@pedidoId';
+    if (!pedidoId) {
+        window.location.href = '/Delivery';
+        return;
+    }
+
+    // ── Interval Tracking (memory leak prevention) ────────
+    var timerIntervalId = null;
+    var fallbackPollingId = null;
+    var fallbackPollingStarted = false;
+
+    function cleanupAllIntervals() {
+        if (timerIntervalId) { clearInterval(timerIntervalId); timerIntervalId = null; }
+        if (fallbackPollingId) { clearInterval(fallbackPollingId); fallbackPollingId = null; }
+    }
+
+    window.addEventListener('beforeunload', cleanupAllIntervals);
+
+    // ── Timer ──────────────────────────────────────────────
+    var startTime = Date.now();
+    var timerEl = document.getElementById('wait-timer');
+
+    function updateTimer() {
+        var elapsed = Math.floor((Date.now() - startTime) / 1000);
+        var mins = Math.floor(elapsed / 60);
+        var secs = elapsed % 60;
+        timerEl.textContent =
+            (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+    }
+
+    timerIntervalId = setInterval(updateTimer, 1000);
+
+    // ── Load Order Summary ─────────────────────────────────
+    async function loadOrderSummary() {
+        try {
+            var res = await fetch('/Delivery/GetPedidoTracking/' + pedidoId);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            var data = await res.json();
+
+            if (!data) return;
+
+            // If already taken, redirect to tracking
+            if (data.estado && data.estado !== 'nuevo') {
+                cleanupAllIntervals();
+                window.location.href = '/Delivery/Tracking/' + pedidoId;
+                return;
+            }
+
+            // Render items
+            var itemsEl = document.getElementById('summary-items');
+            itemsEl.innerHTML = '';
+            if (data.items) {
+                data.items.forEach(function (item) {
+                    if (item.rechazado) return;
+                    var div = document.createElement('div');
+                    div.className = 'summary-item';
+                    div.innerHTML =
+                        '<span>' + item.cantidad + 'x ' + escHtml(item.nombreProducto) + '</span>' +
+                        '<span>$' + item.subtotal.toFixed(2) + '</span>';
+                    itemsEl.appendChild(div);
+                });
+            }
+
+            document.getElementById('summary-food').textContent = '$' + (data.costoComida || 0).toFixed(2);
+            document.getElementById('summary-delivery').textContent = '$' + (data.costoEnvio || 0).toFixed(2);
+            document.getElementById('summary-total').textContent = '$' + (data.total || 0).toFixed(2);
+            document.getElementById('order-summary').style.display = 'block';
+        } catch (err) {
+            console.error('Error loading order:', err);
+        }
+    }
+
+    loadOrderSummary();
+
+    // ── SignalR ────────────────────────────────────────────
+    var banner = document.getElementById('connection-banner');
+
+    var connection = new signalR.HubConnectionBuilder()
+        .withUrl('/hubs/pedido')
+        .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+        .build();
+
+    connection.on('PedidoTomado', function (data) {
+        cleanupAllIntervals();
+        var nombre = data.motorizadoNombre || 'Un motorizado';
+        Swal.fire({
+            title: 'Motorizado encontrado!',
+            html: '<p class="fs-5"><strong>' + escHtml(nombre) + '</strong> acepto tu pedido</p>',
+            icon: 'success',
+            timer: 2500,
+            showConfirmButton: false,
+            timerProgressBar: true
+        }).then(function () {
+            window.location.href = '/Delivery/Tracking/' + pedidoId;
+        });
+    });
+
+    connection.on('PedidoCancelado', function (data) {
+        cleanupAllIntervals();
+        var razon = data.razon || 'El pedido fue cancelado';
+        Swal.fire({
+            title: 'Pedido cancelado',
+            text: razon,
+            icon: 'info',
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#0d6efd'
+        }).then(function () {
+            window.location.href = '/Delivery';
+        });
+    });
+
+    connection.onreconnecting(function () {
+        banner.className = 'connection-banner reconnecting';
+        banner.textContent = 'Reconectando...';
+    });
+
+    connection.onreconnected(function () {
+        banner.className = 'connection-banner';
+        banner.style.display = 'none';
+        // Re-join group
+        connection.invoke('JoinPedidoGroup', pedidoId).catch(function () {});
+    });
+
+    connection.onclose(function () {
+        banner.className = 'connection-banner disconnected';
+        banner.textContent = 'Conexion perdida. Recargando...';
+        // Try to reload after a bit
+        setTimeout(function () { window.location.reload(); }, 5000);
+    });
+
+    connection.start()
+        .then(function () {
+            return connection.invoke('JoinPedidoGroup', pedidoId);
+        })
+        .catch(function (err) {
+            console.error('SignalR connection error:', err);
+            // Fallback: poll every 10 seconds (guard against duplicate creation)
+            if (!fallbackPollingStarted) {
+                fallbackPollingStarted = true;
+                fallbackPollingId = setInterval(function () {
+                    fetch('/Delivery/GetPedidoTracking/' + pedidoId)
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            if (data && data.estado && data.estado !== 'nuevo') {
+                                cleanupAllIntervals();
+                                window.location.href = '/Delivery/Tracking/' + pedidoId;
+                            }
+                        })
+                        .catch(function () {});
+                }, 10000);
+            }
+        });
+
+    // ── Cancel Order ───────────────────────────────────────
+    window.cancelarPedido = function () {
+        Swal.fire({
+            title: 'Cancelar pedido?',
+            text: 'Estas seguro de que quieres cancelar tu pedido?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Si, cancelar',
+            cancelButtonText: 'No',
+            confirmButtonColor: '#dc3545'
+        }).then(async function (result) {
+            if (!result.isConfirmed) return;
+
+            try {
+                var res = await fetch('/Delivery/CancelarPedido', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pedidoId: pedidoId, razon: 'Cancelado por el cliente' })
+                });
+                var data = await res.json();
+
+                if (data.success) {
+                    cleanupAllIntervals();
+                    toastr.info('Pedido cancelado');
+                    setTimeout(function () { window.location.href = '/Delivery'; }, 1000);
+                } else {
+                    Swal.fire('Error', data.message || 'No se pudo cancelar', 'error');
+                }
+            } catch (err) {
+                Swal.fire('Error', 'Error de conexion', 'error');
+            }
+        });
+    };
+
+    // ── Helpers ─────────────────────────────────────────────
+    function escHtml(s) {
+        if (!s) return '';
+        var d = document.createElement('div');
+        d.appendChild(document.createTextNode(s));
+        return d.innerHTML;
+    }
+})();
+</script>
+}

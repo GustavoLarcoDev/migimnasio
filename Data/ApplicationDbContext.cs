@@ -240,6 +240,49 @@ public class ApplicationDbContext : DbContext
     public DbSet<DisenoMarketing> DisenosMarketing { get; set; }
 
     // ═══════════════════════════════════════════════════════════
+    // TABLAS DEL SISTEMA DE DELIVERY
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Pedidos de delivery realizados por clientes a restaurantes.
+    /// Cada pedido tiene una máquina de estados que va desde "nuevo"
+    /// hasta "entregado", pasando por la interacción entre restaurante y motorizado.
+    /// </summary>
+    public DbSet<Pedido> Pedidos { get; set; }
+
+    /// <summary>
+    /// Items individuales de cada pedido de delivery.
+    /// Datos desnormalizados (nombre y precio copiados del producto al crear)
+    /// para mantener historial inmutable.
+    /// </summary>
+    public DbSet<DetallePedido> DetallesPedido { get; set; }
+
+    /// <summary>
+    /// Motorizados/repartidores del sistema de delivery.
+    /// Entidad global — no pertenecen a un negocio específico.
+    /// Pueden tomar pedidos de cualquier restaurante registrado.
+    /// </summary>
+    public DbSet<Motorizado> Motorizados { get; set; }
+
+    /// <summary>
+    /// Solicitudes de registro de motorizados y restaurantes pendientes de aprobación.
+    /// El admin revisa la documentación y aprueba o rechaza cada solicitud.
+    /// </summary>
+    public DbSet<SolicitudRegistro> SolicitudesRegistro { get; set; }
+
+    /// <summary>
+    /// Pagos de suscripción y comisiones del sistema de delivery.
+    /// Motorizados y restaurantes envían comprobantes que el admin verifica.
+    /// </summary>
+    public DbSet<PagoDelivery> PagosDelivery { get; set; }
+
+    /// <summary>
+    /// Comisiones generadas por cada pedido entregado ($0.20/pedido).
+    /// Se cobran a motorizados y restaurantes con plan "comision".
+    /// </summary>
+    public DbSet<ComisionDelivery> ComisionesDelivery { get; set; }
+
+    // ═══════════════════════════════════════════════════════════
     // CONFIGURACIÓN DEL MODELO (OnModelCreating)
     //
     // Este método se ejecuta UNA SOLA VEZ al arrancar la app,
@@ -585,6 +628,142 @@ public class ApplicationDbContext : DbContext
         {
             entity.HasIndex(d => d.NegocioId)
                 .HasDatabaseName("IX_DisenosMarketing_NegocioId");
+        });
+
+        // ═══════════════════════════════════════════════════════════
+        // Configuración del Sistema de Delivery
+        // ═══════════════════════════════════════════════════════════
+
+        // ── Pedido: índices para consultas frecuentes ──
+        modelBuilder.Entity<Pedido>(entity =>
+        {
+            // Índice para filtrar pedidos por restaurante (multi-tenant)
+            entity.HasIndex(p => p.NegocioId)
+                .HasDatabaseName("IX_Pedidos_NegocioId");
+
+            // Índice compuesto para el dashboard del restaurante:
+            // "pedidos activos de mi restaurante" (filtra por negocio + estado)
+            entity.HasIndex(p => new { p.NegocioId, p.Estado })
+                .HasDatabaseName("IX_Pedidos_NegocioId_Estado");
+
+            // Índice para filtrar pedidos por motorizado asignado
+            entity.HasIndex(p => p.MotorizadoId)
+                .HasDatabaseName("IX_Pedidos_MotorizadoId");
+
+            // Índice para la vista de pedidos disponibles:
+            // "todos los pedidos con estado=nuevo" (consulta crítica para motorizados)
+            entity.HasIndex(p => p.Estado)
+                .HasDatabaseName("IX_Pedidos_Estado");
+
+            // FK → Negocio: Cascade (borrar negocio borra sus pedidos)
+            entity.HasOne(p => p.Negocio)
+                .WithMany()
+                .HasForeignKey(p => p.NegocioId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // FK → Motorizado: NoAction (borrar motorizado no borra pedidos,
+            // y evita multiple cascade paths)
+            entity.HasOne(p => p.Motorizado)
+                .WithMany(m => m.Pedidos)
+                .HasForeignKey(p => p.MotorizadoId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // ── DetallePedido: FK con cascade apropiado ──
+        modelBuilder.Entity<DetallePedido>(entity =>
+        {
+            // FK → Pedido: Cascade (borrar pedido borra sus detalles)
+            entity.HasOne(d => d.Pedido)
+                .WithMany(p => p.Detalles)
+                .HasForeignKey(d => d.PedidoId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // FK → Producto: NoAction (no borrar detalles al eliminar producto,
+            // el nombre ya está desnormalizado en NombreProducto)
+            entity.HasOne(d => d.Producto)
+                .WithMany()
+                .HasForeignKey(d => d.ProductoId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // ── Motorizado: índices para login y búsqueda ──
+        modelBuilder.Entity<Motorizado>(entity =>
+        {
+            // Email único para login — no puede haber dos motorizados con el mismo email
+            entity.HasIndex(m => m.Email)
+                .IsUnique()
+                .HasDatabaseName("IX_Motorizados_Email_Unique");
+
+            // Índice compuesto para buscar motorizados activos y disponibles
+            // (consulta frecuente al asignar pedidos o mostrar lista de activos)
+            entity.HasIndex(m => new { m.IsActive, m.IsDisponible })
+                .HasDatabaseName("IX_Motorizados_IsActive_IsDisponible");
+        });
+
+        // ── SolicitudRegistro: índices para revisión admin ──
+        modelBuilder.Entity<SolicitudRegistro>(entity =>
+        {
+            entity.HasIndex(s => new { s.TipoSolicitud, s.Estado })
+                .HasDatabaseName("IX_SolicitudesRegistro_Tipo_Estado");
+
+            entity.HasIndex(s => s.Cedula)
+                .IsUnique()
+                .HasFilter("[TipoSolicitud] = 'motorizado' AND [Cedula] IS NOT NULL")
+                .HasDatabaseName("IX_SolicitudesRegistro_Cedula_Unique");
+
+            entity.HasIndex(s => s.Email)
+                .HasDatabaseName("IX_SolicitudesRegistro_Email");
+        });
+
+        // ── Motorizado: Cedula unique filtrado ──
+        modelBuilder.Entity<Motorizado>(entity =>
+        {
+            entity.HasIndex(m => m.Cedula)
+                .IsUnique()
+                .HasFilter("[Cedula] IS NOT NULL")
+                .HasDatabaseName("IX_Motorizados_Cedula_Unique");
+        });
+
+        // ── PagoDelivery: FKs y índices ──
+        modelBuilder.Entity<PagoDelivery>(entity =>
+        {
+            entity.HasIndex(p => new { p.TipoPagador, p.Estado })
+                .HasDatabaseName("IX_PagosDelivery_TipoPagador_Estado");
+
+            entity.HasOne(p => p.Motorizado)
+                .WithMany()
+                .HasForeignKey(p => p.MotorizadoId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(p => p.Negocio)
+                .WithMany()
+                .HasForeignKey(p => p.NegocioId)
+                .OnDelete(DeleteBehavior.NoAction);
+        });
+
+        // ── ComisionDelivery: FKs y índices ──
+        modelBuilder.Entity<ComisionDelivery>(entity =>
+        {
+            entity.HasIndex(c => new { c.MotorizadoId, c.Pagada })
+                .HasDatabaseName("IX_ComisionesDelivery_MotorizadoId_Pagada");
+
+            entity.HasIndex(c => new { c.NegocioId, c.Pagada })
+                .HasDatabaseName("IX_ComisionesDelivery_NegocioId_Pagada");
+
+            entity.HasOne(c => c.Motorizado)
+                .WithMany()
+                .HasForeignKey(c => c.MotorizadoId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(c => c.Negocio)
+                .WithMany()
+                .HasForeignKey(c => c.NegocioId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            entity.HasOne(c => c.Pedido)
+                .WithMany()
+                .HasForeignKey(c => c.PedidoId)
+                .OnDelete(DeleteBehavior.NoAction);
         });
 
         // ═══════════════════════════════════════════════════════════

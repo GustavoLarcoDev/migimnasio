@@ -235,18 +235,9 @@ public class FacturacionElectronicaService : IFacturacionElectronicaService
             _db.FacturasElectronicas.Add(factura);
             await _db.SaveChangesAsync();
 
-            // Enviar al SRI (asíncrono, no bloquear al usuario)
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await EnviarAlSriAsync(factura.FacturaId, xmlFirmado, negocio.SriAmbiente);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error enviando factura {FacturaId} al SRI", factura.FacturaId);
-                }
-            });
+            // Enviar al SRI: FacturaReintentoService se encarga de enviar facturas
+            // pendientes cada 10 minutos. No usar Task.Run con DbContext scoped.
+            // El retry automático es más confiable que fire-and-forget.
 
             return (true, $"Factura {numeroCompleto} creada. Enviándose al SRI...", factura);
         }
@@ -400,15 +391,15 @@ public class FacturacionElectronicaService : IFacturacionElectronicaService
             var subject = $"Factura Electrónica {factura.NumeroCompleto} - {factura.Negocio?.NegocioNombre ?? ""}";
             var body = $@"
                 <h2>Factura Electrónica</h2>
-                <p>Estimado/a {factura.CompradorRazonSocial},</p>
+                <p>Estimado/a {System.Net.WebUtility.HtmlEncode(factura.CompradorRazonSocial ?? "")},</p>
                 <p>Adjunto encontrará su factura electrónica:</p>
                 <ul>
-                    <li><strong>Número:</strong> {factura.NumeroCompleto}</li>
+                    <li><strong>Número:</strong> {System.Net.WebUtility.HtmlEncode(factura.NumeroCompleto ?? "")}</li>
                     <li><strong>Fecha:</strong> {factura.FechaEmision:dd/MM/yyyy}</li>
                     <li><strong>Total:</strong> ${factura.ImporteTotal:N2}</li>
-                    <li><strong>Autorización SRI:</strong> {factura.NumeroAutorizacion}</li>
+                    <li><strong>Autorización SRI:</strong> {System.Net.WebUtility.HtmlEncode(factura.NumeroAutorizacion ?? "")}</li>
                 </ul>
-                <p>Emisor: {factura.Negocio?.RazonSocial ?? factura.Negocio?.NegocioNombre}</p>";
+                <p>Emisor: {System.Net.WebUtility.HtmlEncode(factura.Negocio?.RazonSocial ?? factura.Negocio?.NegocioNombre ?? "")}</p>";
 
             await _emailService.SendEmailWithAttachmentsAsync(
                 factura.CompradorEmail, subject, body,
@@ -504,7 +495,7 @@ public class FacturacionElectronicaService : IFacturacionElectronicaService
         string claveAcceso, int secuencial, DateTime fechaEmision,
         decimal totalSinImpuestos, decimal totalDescuento, decimal montoIva, decimal importeTotal)
     {
-        var doc = new XmlDocument();
+        var doc = new XmlDocument { XmlResolver = null };
         var factura = doc.CreateElement("factura");
         factura.SetAttribute("id", "comprobante");
         factura.SetAttribute("version", "1.1.0");
@@ -705,7 +696,7 @@ public class FacturacionElectronicaService : IFacturacionElectronicaService
         using var cert = X509CertificateLoader.LoadPkcs12(p12Bytes, password,
             X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.Exportable);
 
-        var doc = new XmlDocument { PreserveWhitespace = true };
+        var doc = new XmlDocument { PreserveWhitespace = true, XmlResolver = null };
         doc.LoadXml(xml);
 
         var signedXml = new SignedXml(doc)
@@ -778,7 +769,7 @@ public class FacturacionElectronicaService : IFacturacionElectronicaService
             }
 
             // Parsear respuesta de recepción
-            var docResp = new XmlDocument();
+            var docResp = new XmlDocument { XmlResolver = null };
             docResp.LoadXml(bodyRecepcion);
             var estadoNodo = docResp.GetElementsByTagName("estado");
             var estadoRecepcion = estadoNodo.Count > 0 ? estadoNodo[0].InnerText : "";
@@ -826,7 +817,7 @@ public class FacturacionElectronicaService : IFacturacionElectronicaService
 
             var bodyAutorizacion = await respAutorizacion.Content.ReadAsStringAsync();
 
-            var docAuth = new XmlDocument();
+            var docAuth = new XmlDocument { XmlResolver = null };
             docAuth.LoadXml(bodyAutorizacion);
             var estadoAuth = docAuth.GetElementsByTagName("estado");
             var authEstado = estadoAuth.Count > 0 ? estadoAuth[0].InnerText : "";

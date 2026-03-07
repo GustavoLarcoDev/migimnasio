@@ -1,0 +1,206 @@
+@{
+    ViewData["Title"] = "Login Motorizado";
+    Layout = "_Layout";
+}
+
+@section Styles {
+<style>
+    .moto-login-wrapper {
+        min-height: 80vh;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    .moto-login-card {
+        max-width: 420px;
+        width: 100%;
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    .moto-login-header {
+        background: linear-gradient(135deg, #198754, #20c997);
+        padding: 2rem;
+        text-align: center;
+        color: #fff;
+    }
+    .moto-login-header .icon-circle {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 0.75rem;
+    }
+    .moto-login-header h3 {
+        margin: 0;
+        font-weight: 700;
+        font-size: 1.4rem;
+    }
+    .moto-login-header p {
+        margin: 0.25rem 0 0;
+        opacity: 0.85;
+        font-size: 0.9rem;
+    }
+    .moto-login-body {
+        padding: 2rem;
+    }
+    .moto-login-body .form-control {
+        border-radius: 10px;
+        padding: 0.7rem 1rem;
+        border: 1.5px solid #dee2e6;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .moto-login-body .form-control:focus {
+        border-color: #198754;
+        box-shadow: 0 0 0 3px rgba(25,135,84,0.15);
+    }
+    .moto-login-body .form-label {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: #495057;
+    }
+    .btn-moto-login {
+        background: linear-gradient(135deg, #198754, #20c997);
+        border: none;
+        border-radius: 10px;
+        padding: 0.75rem;
+        font-weight: 700;
+        font-size: 1rem;
+        color: #fff;
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .btn-moto-login:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 16px rgba(25,135,84,0.3);
+        color: #fff;
+    }
+    .btn-moto-login:active {
+        transform: translateY(0);
+    }
+    .input-icon-group {
+        position: relative;
+    }
+    .input-icon-group .bi {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #adb5bd;
+        font-size: 1.1rem;
+        z-index: 2;
+    }
+    .input-icon-group .form-control {
+        padding-left: 2.5rem;
+    }
+</style>
+}
+
+<div class="container d-flex align-items-center justify-content-center moto-login-wrapper">
+    <div class="card moto-login-card">
+        <div class="moto-login-header">
+            <div class="icon-circle">
+                <i class="bi bi-bicycle fs-1"></i>
+            </div>
+            <h3>My-Negocio Delivery</h3>
+            <p>Inicia sesion como motorizado</p>
+        </div>
+        <div class="moto-login-body">
+            <div id="error-msg" class="alert alert-danger d-none mb-3" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <span id="error-text"></span>
+            </div>
+
+            <form id="loginForm" onsubmit="login(event)">
+                <div class="mb-3">
+                    <label class="form-label" for="email">Correo electronico</label>
+                    <div class="input-icon-group">
+                        <i class="bi bi-envelope"></i>
+                        <input type="email" id="email" class="form-control" placeholder="tu@email.com" autocomplete="email" required>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label" for="password">Contrasena</label>
+                    <div class="input-icon-group">
+                        <i class="bi bi-lock"></i>
+                        <input type="password" id="password" class="form-control" placeholder="Tu contrasena" autocomplete="current-password" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-moto-login w-100" id="btnLogin">
+                    <span id="btn-text"><i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesion</span>
+                    <span id="btn-spinner" class="d-none">
+                        <span class="spinner-border spinner-border-sm me-2"></span>Ingresando...
+                    </span>
+                </button>
+            </form>
+
+            <div class="text-center mt-3">
+                <a href="/" class="text-muted small text-decoration-none">
+                    <i class="bi bi-arrow-left me-1"></i>Volver a My-Negocio
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    async function login(e) {
+        e.preventDefault();
+        var email = document.getElementById('email').value.trim();
+        var password = document.getElementById('password').value;
+
+        if (!email || !password) {
+            showError('Completa todos los campos');
+            return;
+        }
+
+        toggleLoading(true);
+        hideError();
+
+        try {
+            var res = await fetch('/Motorizado/Login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, password: password })
+            });
+            var data = await res.json();
+            if (data.success) {
+                window.location.href = '/Motorizado';
+            } else {
+                showError(data.message || 'Credenciales incorrectas');
+            }
+        } catch (err) {
+            showError('Error de conexion. Intenta de nuevo.');
+        } finally {
+            toggleLoading(false);
+        }
+    }
+
+    function showError(msg) {
+        var el = document.getElementById('error-msg');
+        document.getElementById('error-text').textContent = msg;
+        el.classList.remove('d-none');
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function hideError() {
+        document.getElementById('error-msg').classList.add('d-none');
+    }
+
+    function toggleLoading(loading) {
+        var btn = document.getElementById('btnLogin');
+        var txt = document.getElementById('btn-text');
+        var spin = document.getElementById('btn-spinner');
+        btn.disabled = loading;
+        txt.classList.toggle('d-none', loading);
+        spin.classList.toggle('d-none', !loading);
+    }
+
+    // Enter key submits form
+    document.getElementById('password').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') login(e);
+    });
+</script>
+}

@@ -477,20 +477,29 @@ public class InventarioService : IInventarioService
             // Nota: no es obligatoria en restock (el proveedor y factura son la documentación)
         });
 
+        using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
             _context.Update(producto);
             await _context.SaveChangesAsync();
+
+            // Log con monto NEGATIVO: el negocio gastó dinero comprando mercancía
+            await _logService.CreateLogAsync(negocioId, "restock_inventario",
+                $"Restock inventario: +{cantidad} {producto.Nombre}, costo ${costoTotal:F2}",
+                -costoTotal);
+
+            await transaction.CommitAsync();
         }
         catch (DbUpdateConcurrencyException)
         {
+            await transaction.RollbackAsync();
             return (false, "El stock fue modificado por otro usuario. Recarga e intenta de nuevo.");
         }
-
-        // Log con monto NEGATIVO: el negocio gastó dinero comprando mercancía
-        await _logService.CreateLogAsync(negocioId, "restock_inventario",
-            $"Restock inventario: +{cantidad} {producto.Nombre}, costo ${costoTotal:F2}",
-            -costoTotal);
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
 
         return (true, $"Restock registrado: +{cantidad} {producto.Nombre}");
     }
@@ -553,23 +562,32 @@ public class InventarioService : IInventarioService
             Fecha          = TimeHelper.Now
         });
 
+        // Texto descriptivo del tipo de ajuste para el log
+        var tipoAjuste = diferencia > 0 ? "incremento" : "reducción";
+
+        using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
             _context.Update(producto);
             await _context.SaveChangesAsync();
+
+            // El log financiero usa 0 porque un ajuste no es ni ingreso ni gasto
+            await _logService.CreateLogAsync(negocioId, "ajuste_inventario",
+                $"Ajuste inventario ({tipoAjuste}): {producto.Nombre}, {stockAnterior} → {stockReal} ({diferencia:+#;-#}). Razón: {nota}",
+                0);
+
+            await transaction.CommitAsync();
         }
         catch (DbUpdateConcurrencyException)
         {
+            await transaction.RollbackAsync();
             return (false, "El stock fue modificado por otro usuario. Recarga e intenta de nuevo.");
         }
-
-        // Texto descriptivo del tipo de ajuste para el log
-        var tipoAjuste = diferencia > 0 ? "incremento" : "reducción";
-
-        // El log financiero usa 0 porque un ajuste no es ni ingreso ni gasto
-        await _logService.CreateLogAsync(negocioId, "ajuste_inventario",
-            $"Ajuste inventario ({tipoAjuste}): {producto.Nombre}, {stockAnterior} → {stockReal} ({diferencia:+#;-#}). Razón: {nota}",
-            0);
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
 
         return (true, $"Stock ajustado: {producto.Nombre} ahora tiene {stockReal} unidades ({diferencia:+#;-#})");
     }

@@ -141,6 +141,8 @@ public class WebhookController : Controller
         var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(dataToSign.ToString()));
         var computedSignature = Convert.ToBase64String(hash);
 
-        return string.Equals(computedSignature, expectedSignature, StringComparison.Ordinal);
+        var computedBytes = Encoding.UTF8.GetBytes(computedSignature);
+        var expectedBytes = Encoding.UTF8.GetBytes(expectedSignature);
+        return CryptographicOperations.FixedTimeEquals(computedBytes, expectedBytes);
     }
 }

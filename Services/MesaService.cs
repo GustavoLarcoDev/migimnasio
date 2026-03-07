@@ -43,6 +43,10 @@ public class MesaService : IMesaService
         if (string.IsNullOrWhiteSpace(nombre))
             return (false, "El nombre de la mesa es obligatorio");
 
+        // Validar unicidad del número de mesa dentro del negocio
+        var duplicado = await _context.Mesas.AnyAsync(m => m.NegocioId == negocioId && m.Numero == numero && m.IsActive);
+        if (duplicado) return (false, "Ya existe una mesa con ese número");
+
         if (capacidad <= 0) capacidad = 4;
 
         var mesa = new Mesa
@@ -71,6 +75,10 @@ public class MesaService : IMesaService
 
         if (string.IsNullOrWhiteSpace(nombre))
             return (false, "El nombre de la mesa es obligatorio");
+
+        // Validar unicidad del número de mesa dentro del negocio (excluyendo la mesa actual)
+        var duplicado = await _context.Mesas.AnyAsync(m => m.NegocioId == negocioId && m.Numero == numero && m.MesaId != mesaId && m.IsActive);
+        if (duplicado) return (false, "Ya existe una mesa con ese número");
 
         mesa.Nombre = nombre.Trim();
         mesa.Numero = numero;

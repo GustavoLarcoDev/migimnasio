@@ -38,7 +38,7 @@
 4. Name: `minegocio-ip`
 5. Click **"Create"**
 6. **ANOTA LA IP** (ej: `44.230.xxx.xxx`) — la necesitas para el dominio
-54.203.178.179
+
 ---
 
 ## PASO 4: Abrir puertos
@@ -123,9 +123,9 @@ De vuelta en la terminal del servidor:
 sudo bash /tmp/setup-server.sh TU_DOMINIO "TU_PASSWORD_SQL" 'TU_HASH_ADMIN'
 ```
 
-**Ejemplo real:**
+**Ejemplo:**
 ```bash
-sudo bash /tmp/setup-server.sh mynegocio.com "M1P@ssw0rd_Segur0!" '$2a$11$ZQkD7m3PfL5s.1QGPyEZFO0ChceFoQ54kO82jqOoy3TyTftJW2aBe'
+sudo bash /tmp/setup-server.sh tudominio.com "TU_PASSWORD_SQL_SEGURA" '$2a$12$TU_HASH_BCRYPT_AQUI'
 ```
 
 **IMPORTANTE sobre los parámetros:**
@@ -268,10 +268,7 @@ ls -la /opt/myapp/releases/
 
 ## Credenciales de prueba
 
-| Rol | Email | Password |
-|-----|-------|----------|
-| Admin | gustavo.larco@mynegocio.com | (tu password) |
-| Negocio | juan@powerfit.com | Test1234! |
-| Vendedor | carlos@mynegocio.com | Test1234! |
+Las credenciales de prueba NO se incluyen en este archivo por seguridad.
+Consulta tu archivo `appsettings.Development.json` local para las credenciales de desarrollo.
 
-**IMPORTANTE:** Cambia las passwords de prueba en producción.
+**IMPORTANTE:** Nunca incluyas credenciales reales o de prueba en documentación versionada.

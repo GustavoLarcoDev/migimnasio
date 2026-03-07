@@ -2055,10 +2055,19 @@ function cargarRecibos() {
             { data: 'numeroRecibo', render: function(d) { return '<span class="badge bg-primary">#' + d + '</span>'; } },
             { data: 'destinatarioNombre', render: function(d) { return escHtml(d || '-'); } },
             { data: 'concepto', render: function(d) { return escHtml(d || '-'); } },
-            { data: 'monto', render: function(d) { return '<span class="fw-bold text-success">$' + d.toFixed(2) + '</span>'; } },
-            { data: 'fechaCreacion', render: function(d) { return new Date(d).toLocaleString('es-EC'); } },
-            { data: 'reciboId', render: function(d) { return '<button class="btn btn-sm btn-outline-info" onclick="verRecibo(\'' + d + '\')"><i class="bi bi-eye me-1"></i>Ver</button>'; } }
-        ], order: [[4, 'desc']]
+            { data: 'monto', render: function(d) { return '<span class="fw-bold text-success">$' + parseFloat(d).toFixed(2) + '</span>'; } },
+            { data: 'fechaCreacion', render: function(d) { return new Date(d).toLocaleDateString('es-EC'); } },
+            { data: null, orderable: false, render: function(d,t,r) {
+                var btns = '<div class="btn-group btn-group-sm">';
+                btns += '<button class="btn btn-outline-primary" onclick="verRecibo(\'' + r.reciboId + '\')" title="Ver"><i class="bi bi-eye"></i></button>';
+                if (window._facturacionActiva && !r.tieneFactura)
+                    btns += '<button class="btn btn-outline-warning" onclick="facturarDesdeRecibo(\'' + r.reciboId + '\')" title="Facturar"><i class="bi bi-receipt"></i></button>';
+                else if (r.tieneFactura)
+                    btns += '<span class="btn btn-success disabled"><i class="bi bi-check-lg"></i></span>';
+                btns += '</div>';
+                return btns;
+            }}
+        ], order: [[4, 'desc']], language: { emptyTable: 'No hay recibos' }, responsive: true
     });
 }
 

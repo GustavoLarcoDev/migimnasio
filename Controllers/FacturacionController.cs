@@ -1,5 +1,7 @@
+using Gimnasio.Data;
 using Gimnasio.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Gimnasio.Controllers;
 
@@ -10,12 +12,18 @@ namespace Gimnasio.Controllers;
 public class FacturacionController : NegocioBaseController
 {
     private readonly IFacturacionElectronicaService _facturacionService;
+    private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ApplicationDbContext _context;
 
     public FacturacionController(
         IAuthService authService,
-        IFacturacionElectronicaService facturacionService) : base(authService)
+        IFacturacionElectronicaService facturacionService,
+        IHttpClientFactory httpClientFactory,
+        ApplicationDbContext context) : base(authService)
     {
         _facturacionService = facturacionService;
+        _httpClientFactory = httpClientFactory;
+        _context = context;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -44,12 +52,11 @@ public class FacturacionController : NegocioBaseController
     public Task<IActionResult> ToggleFacturacion(Guid negocioId, bool activa)
         => Execute(negocioId, async nId =>
         {
-            var db = HttpContext.RequestServices.GetRequiredService<Gimnasio.Data.ApplicationDbContext>();
-            var negocio = await db.Negocios.FindAsync(nId);
+            var negocio = await _context.Negocios.FindAsync(nId);
             if (negocio == null) return NotFound();
 
             negocio.FacturacionElectronicaActiva = activa;
-            await db.SaveChangesAsync();
+            await _context.SaveChangesAsync();
 
             return Ok(new { success = true, message = activa ? "Facturación electrónica activada" : "Facturación electrónica desactivada" });
         });
@@ -63,8 +70,7 @@ public class FacturacionController : NegocioBaseController
         string agenteRetencion)
         => Execute(negocioId, async nId =>
         {
-            var db = HttpContext.RequestServices.GetRequiredService<Gimnasio.Data.ApplicationDbContext>();
-            var negocio = await db.Negocios.FindAsync(nId);
+            var negocio = await _context.Negocios.FindAsync(nId);
             if (negocio == null) return NotFound();
 
             negocio.Ruc = ruc?.Trim();
@@ -79,7 +85,7 @@ public class FacturacionController : NegocioBaseController
             negocio.RegimenContribuyente = regimenContribuyente?.Trim();
             negocio.AgenteRetencion = agenteRetencion?.Trim();
 
-            await db.SaveChangesAsync();
+            await _context.SaveChangesAsync();
             return Ok(new { success = true, message = "Configuración SRI guardada" });
         });
 
@@ -94,6 +100,10 @@ public class FacturacionController : NegocioBaseController
         {
             if (certificado == null || certificado.Length == 0)
                 return BadRequest(new { success = false, message = "No se proporcionó certificado" });
+
+            // Limitar tamaño del certificado a 1MB
+            if (certificado.Length > 1_048_576)
+                return BadRequest(new { success = false, message = "El certificado no puede exceder 1MB" });
 
             if (!certificado.FileName.EndsWith(".p12", StringComparison.OrdinalIgnoreCase)
                 && !certificado.FileName.EndsWith(".pfx", StringComparison.OrdinalIgnoreCase))
@@ -128,27 +138,6 @@ public class FacturacionController : NegocioBaseController
     [HttpPost("EmitirFactura")]
     [IgnoreAntiforgeryToken]
     public Task<IActionResult> EmitirFactura([FromBody] FacturaRequest request)
-        => Execute(request.NegocioId, async nId =>
-        {
-            request.NegocioId = nId;
-            var (success, message, factura) = await _facturacionService.EmitirFacturaAsync(request);
-
-            if (!success)
-                return BadRequest(new { success = false, message });
-
-            return Ok(new
-            {
-                success = true,
-                message,
-                facturaId = factura.FacturaId,
-                numeroCompleto = factura.NumeroCompleto,
-                claveAcceso = factura.ClaveAcceso
-            });
-        });
-
-    [HttpPost("EmitirFacturaDesdeRecibo")]
-    [IgnoreAntiforgeryToken]
-    public Task<IActionResult> EmitirFacturaDesdeRecibo([FromBody] FacturaRequest request)
         => Execute(request.NegocioId, async nId =>
         {
             request.NegocioId = nId;
@@ -268,5 +257,131 @@ public class FacturacionController : NegocioBaseController
         {
             var (success, message) = await _facturacionService.AnularFacturaAsync(nId, facturaId);
             return success ? Ok(new { success, message }) : BadRequest(new { success, message });
+        });
+
+    // ═══════════════════════════════════════════════════════════
+    // BUSQUEDA SRI & RECIBO PARA FACTURA
+    // ═══════════════════════════════════════════════════════════
+
+    [HttpGet("BuscarContribuyenteSri")]
+    public Task<IActionResult> BuscarContribuyenteSri(string identificacion)
+        => ExecuteSelf(async _ =>
+        {
+            if (string.IsNullOrWhiteSpace(identificacion))
+                return BadRequest(new { success = false, message = "Identificación requerida" });
+
+            identificacion = identificacion.Trim();
+
+            // Validar que solo contenga dígitos
+            if (!System.Text.RegularExpressions.Regex.IsMatch(identificacion, @"^\d+$"))
+                return BadRequest(new { success = false, message = "La identificación solo debe contener dígitos" });
+
+            // Si es cédula (10 dígitos), convertir a RUC añadiendo "001"
+            var rucConsulta = identificacion.Length == 10 ? identificacion + "001" : identificacion;
+
+            if (rucConsulta.Length != 13)
+                return Ok(new { success = false, message = "Debe ser cédula (10 dígitos) o RUC (13 dígitos)" });
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient("SRI");
+                var url = $"https://srienlinea.sri.gob.ec/sri-catastro-sujeto-servicio-internet/rest/ConsolidadoContribuyente/obtenerPorNumerosRuc?&ruc={Uri.EscapeDataString(rucConsulta)}";
+
+                var response = await client.GetAsync(url);
+                if (!response.IsSuccessStatusCode)
+                    return Ok(new { success = false, message = "Contribuyente no encontrado en el SRI" });
+
+                var json = await response.Content.ReadAsStringAsync();
+                var doc = System.Text.Json.JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                // El endpoint retorna un array o un objeto con los datos del contribuyente
+                System.Text.Json.JsonElement data;
+                if (root.ValueKind == System.Text.Json.JsonValueKind.Array && root.GetArrayLength() > 0)
+                    data = root[0];
+                else if (root.ValueKind == System.Text.Json.JsonValueKind.Object)
+                    data = root;
+                else
+                    return Ok(new { success = false, message = "Contribuyente no encontrado en el SRI" });
+
+                var razonSocial = data.TryGetProperty("razonSocial", out var rs) ? rs.GetString() : "";
+                var tipoId = identificacion.Length == 10 ? "05" : "04"; // 05=Cédula, 04=RUC
+
+                return Ok(new
+                {
+                    success = true,
+                    razonSocial,
+                    tipoIdentificacion = tipoId,
+                    identificacion,
+                    estado = data.TryGetProperty("estadoContribuyenteRuc", out var est) ? est.GetString() : ""
+                });
+            }
+            catch (Exception ex)
+            {
+                var logger = HttpContext.RequestServices.GetService<ILogger<FacturacionController>>();
+                logger?.LogWarning(ex, "Error consultando SRI para identificación {Id}", identificacion);
+                return Ok(new { success = false, message = "Error al consultar el SRI. Intente de nuevo." });
+            }
+        });
+
+    [HttpGet("GetReciboParaFactura")]
+    public Task<IActionResult> GetReciboParaFactura(Guid reciboId, Guid negocioId)
+        => Execute(negocioId, async nId =>
+        {
+            // Verificar que no tenga factura ya
+            var yaFacturado = await _context.FacturasElectronicas
+                .AnyAsync(f => f.ReciboId == reciboId && f.NegocioId == nId);
+            if (yaFacturado)
+                return BadRequest(new { success = false, message = "Este recibo ya tiene una factura electrónica vinculada" });
+
+            var recibo = await _context.Recibos
+                .Where(r => r.ReciboId == reciboId && r.NegocioId == nId)
+                .FirstOrDefaultAsync();
+            if (recibo == null)
+                return NotFound(new { success = false, message = "Recibo no encontrado" });
+
+            // Buscar si hay una OrdenVenta vinculada a este recibo
+            var orden = await _context.OrdenesVenta
+                .Include(o => o.Detalles).ThenInclude(d => d.Producto)
+                .Where(o => o.ReciboId == reciboId && o.NegocioId == nId)
+                .FirstOrDefaultAsync();
+
+            var items = new List<object>();
+
+            if (orden != null && orden.Detalles.Any())
+            {
+                foreach (var d in orden.Detalles)
+                {
+                    items.Add(new
+                    {
+                        descripcion = d.Producto?.Nombre ?? "Producto",
+                        cantidad = (decimal)d.Cantidad,
+                        precioUnitario = d.PrecioUnitario,
+                        descuento = 0m,
+                        codigo = "001"
+                    });
+                }
+            }
+            else
+            {
+                // Fallback: usar concepto y monto del recibo como un solo item
+                items.Add(new
+                {
+                    descripcion = recibo.Concepto ?? "Servicio",
+                    cantidad = 1m,
+                    precioUnitario = recibo.Monto,
+                    descuento = 0m,
+                    codigo = "001"
+                });
+            }
+
+            return Ok(new
+            {
+                success = true,
+                reciboId = recibo.ReciboId,
+                items,
+                destinatarioNombre = recibo.DestinatarioNombre ?? "",
+                destinatarioEmail = recibo.DestinatarioEmail ?? ""
+            });
         });
 }

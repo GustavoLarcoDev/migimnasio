@@ -55,24 +55,52 @@ public class ReciboService : IReciboService
         string destinatarioEmail, string destinatarioNombre, string negocioNombre,
         string concepto, decimal monto, string contenidoHtml, string metodoPago = "Efectivo")
     {
-        var recibo = new Recibo
+        // Usar serializable transaction para evitar race condition en numero secuencial.
+        // Si dos requests concurrentes leen el mismo MAX, la segunda fallará al commit
+        // y se reintentará con el número correcto.
+        const int maxRetries = 3;
+        for (int attempt = 0; attempt < maxRetries; attempt++)
         {
-            ReciboId = Guid.NewGuid(),
-            NumeroRecibo = int.Parse(numeroRecibo),
-            NegocioId = negocioId,
-            TipoRecibo = tipoRecibo,
-            DestinatarioEmail = destinatarioEmail,
-            DestinatarioNombre = destinatarioNombre,
-            NegocioNombre = negocioNombre,
-            Concepto = concepto,
-            Monto = monto,
-            MetodoPago = metodoPago ?? "Efectivo",
-            ContenidoHtml = contenidoHtml,
-            FechaCreacion = TimeHelper.Now
-        };
+            using var transaction = await _context.Database.BeginTransactionAsync(
+                System.Data.IsolationLevel.Serializable);
+            try
+            {
+                // Re-calcular dentro de la transacción serializable
+                var max = await _context.Recibos
+                    .Where(r => r.NegocioId == negocioId)
+                    .MaxAsync(r => (int?)r.NumeroRecibo) ?? 0;
+                var numero = max + 1;
 
-        _context.Recibos.Add(recibo);
-        await _context.SaveChangesAsync();
+                var recibo = new Recibo
+                {
+                    ReciboId = Guid.NewGuid(),
+                    NumeroRecibo = numero,
+                    NegocioId = negocioId,
+                    TipoRecibo = tipoRecibo,
+                    DestinatarioEmail = destinatarioEmail,
+                    DestinatarioNombre = destinatarioNombre,
+                    NegocioNombre = negocioNombre,
+                    Concepto = concepto,
+                    Monto = monto,
+                    MetodoPago = metodoPago ?? "Efectivo",
+                    ContenidoHtml = contenidoHtml,
+                    FechaCreacion = TimeHelper.Now
+                };
+
+                _context.Recibos.Add(recibo);
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return;
+            }
+            catch (Exception) when (attempt < maxRetries - 1)
+            {
+                // Serialization conflict — retry with new number
+                _context.ChangeTracker.Clear();
+            }
+        }
+
+        // Final attempt failed — fallback to original logic
+        throw new InvalidOperationException("No se pudo generar el numero de recibo después de múltiples intentos");
     }
 
     public async Task<List<object>> GetRecibosAsync(Guid negocioId)
@@ -89,7 +117,8 @@ public class ReciboService : IReciboService
                 r.DestinatarioEmail,
                 r.Concepto,
                 r.Monto,
-                r.FechaCreacion
+                r.FechaCreacion,
+                tieneFactura = _context.FacturasElectronicas.Any(f => f.ReciboId == r.ReciboId && f.NegocioId == negocioId)
             })
             .ToListAsync();
     }

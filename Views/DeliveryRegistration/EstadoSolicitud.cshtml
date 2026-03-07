@@ -1,0 +1,427 @@
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Estado de Solicitud";
+}
+
+@section Styles {
+<style>
+    .status-container {
+        max-width: 500px;
+        margin: 3rem auto;
+        padding: 0 1rem;
+    }
+
+    .status-card {
+        background: #fff;
+        border-radius: 1rem;
+        box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    .status-card-header {
+        background: linear-gradient(135deg, #0047AB, #00D4FF);
+        color: #fff;
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .status-card-header h4 {
+        font-weight: 700;
+        margin-bottom: 0.25rem;
+    }
+
+    .status-card-header p {
+        opacity: 0.85;
+        margin-bottom: 0;
+        font-size: 0.9rem;
+    }
+
+    .status-card-body {
+        padding: 2rem 1.5rem;
+        text-align: center;
+    }
+
+    /* Pendiente */
+    .status-icon-pending {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #fff3cd, #ffeeba);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.25rem;
+        animation: pulse-pending 2s ease-in-out infinite;
+    }
+
+    .status-icon-pending i {
+        font-size: 2.5rem;
+        color: #856404;
+    }
+
+    @@keyframes pulse-pending {
+        0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,193,7,0.4); }
+        50% { transform: scale(1.05); box-shadow: 0 0 0 15px rgba(255,193,7,0); }
+    }
+
+    .progress-indeterminate {
+        height: 4px;
+        border-radius: 2px;
+        background: #e9ecef;
+        overflow: hidden;
+        margin: 1.25rem 0;
+    }
+
+    .progress-indeterminate::after {
+        content: '';
+        display: block;
+        height: 100%;
+        width: 40%;
+        background: linear-gradient(135deg, #0047AB, #00D4FF);
+        border-radius: 2px;
+        animation: indeterminate 1.5s ease-in-out infinite;
+    }
+
+    @@keyframes indeterminate {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(350%); }
+    }
+
+    /* Aprobada */
+    .status-icon-approved {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.25rem;
+        animation: bounce-in 0.6s ease;
+    }
+
+    .status-icon-approved i {
+        font-size: 2.5rem;
+        color: #155724;
+    }
+
+    @@keyframes bounce-in {
+        0% { transform: scale(0); }
+        50% { transform: scale(1.15); }
+        70% { transform: scale(0.95); }
+        100% { transform: scale(1); }
+    }
+
+    /* Rechazada */
+    .status-icon-rejected {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.25rem;
+    }
+
+    .status-icon-rejected i {
+        font-size: 2.5rem;
+        color: #721c24;
+    }
+
+    .motivo-card {
+        background: #fff5f5;
+        border: 1px solid #f5c6cb;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        text-align: left;
+    }
+
+    .motivo-card .motivo-label {
+        font-weight: 600;
+        color: #721c24;
+        font-size: 0.85rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .motivo-card .motivo-text {
+        color: #856404;
+        font-size: 0.9rem;
+        margin-bottom: 0;
+    }
+
+    /* Buttons */
+    .btn-gradient {
+        background: linear-gradient(135deg, #0047AB, #00D4FF);
+        color: #fff;
+        border: none;
+        font-weight: 600;
+        padding: 0.75rem 2rem;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-gradient:hover {
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(0,71,171,0.3);
+        transform: translateY(-1px);
+    }
+
+    .btn-outline-retry {
+        border: 2px solid #dc3545;
+        color: #dc3545;
+        font-weight: 600;
+        padding: 0.75rem 2rem;
+        border-radius: 0.5rem;
+        background: #fff;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-outline-retry:hover {
+        background: #dc3545;
+        color: #fff;
+    }
+
+    .solicitud-id {
+        font-size: 0.8rem;
+        color: #adb5bd;
+        margin-top: 1rem;
+        font-family: monospace;
+    }
+
+    /* Loading skeleton */
+    .status-loading {
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .status-loading .skeleton-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: #e9ecef;
+        margin: 0 auto 1rem;
+        animation: skeleton-pulse 1.5s ease-in-out infinite;
+    }
+
+    .status-loading .skeleton-line {
+        height: 16px;
+        border-radius: 4px;
+        background: #e9ecef;
+        margin: 0.5rem auto;
+        animation: skeleton-pulse 1.5s ease-in-out infinite;
+    }
+
+    @@keyframes skeleton-pulse {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+    }
+
+    @@media (max-width: 576px) {
+        .status-container { margin: 1.5rem auto; }
+        .status-card-body { padding: 1.5rem 1rem; }
+    }
+</style>
+}
+
+<div class="status-container">
+    <div class="status-card">
+        <!-- Header -->
+        <div class="status-card-header">
+            <i class="bi bi-shop fs-3 d-block mb-1"></i>
+            <h4>My-Negocio Delivery</h4>
+            <p>Estado de tu solicitud de registro</p>
+        </div>
+
+        <div class="status-card-body">
+
+            <!-- Loading state -->
+            <div id="estadoLoading">
+                <div class="status-loading">
+                    <div class="skeleton-circle"></div>
+                    <div class="skeleton-line" style="width: 60%;"></div>
+                    <div class="skeleton-line" style="width: 80%;"></div>
+                    <div class="skeleton-line" style="width: 40%;"></div>
+                </div>
+            </div>
+
+            <!-- Pendiente -->
+            <div id="estadoPendiente" class="d-none">
+                <div class="status-icon-pending">
+                    <i class="bi bi-hourglass-split"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Tu solicitud está en revisión</h5>
+                <p class="text-muted mb-0">Nuestro equipo revisará tu información en 1-3 días hábiles. Te notificaremos cuando tengamos una respuesta.</p>
+                <div class="progress-indeterminate"></div>
+                <p class="solicitud-id">ID de solicitud: <span id="displaySolicitudId">-</span></p>
+            </div>
+
+            <!-- Aprobada -->
+            <div id="estadoAprobada" class="d-none">
+                <div class="status-icon-approved">
+                    <i class="bi bi-check-lg"></i>
+                </div>
+                <h5 class="fw-bold mb-2" style="color: #155724;">¡Felicidades! Tu solicitud ha sido aprobada</h5>
+                <p class="text-muted mb-3" id="approvedMessage">Ya puedes iniciar sesión y comenzar.</p>
+                <a href="#" class="btn-gradient" id="loginLink">
+                    <i class="bi bi-box-arrow-in-right me-2"></i>Ir al Login
+                </a>
+            </div>
+
+            <!-- Rechazada -->
+            <div id="estadoRechazada" class="d-none">
+                <div class="status-icon-rejected">
+                    <i class="bi bi-x-lg"></i>
+                </div>
+                <h5 class="fw-bold mb-2" style="color: #721c24;">Tu solicitud ha sido rechazada</h5>
+                <p class="text-muted mb-0">Lamentamos informarte que no pudimos aprobar tu solicitud en este momento.</p>
+
+                <div class="motivo-card">
+                    <div class="motivo-label"><i class="bi bi-info-circle me-1"></i>Motivo:</div>
+                    <p class="motivo-text" id="motivoRechazo">Sin motivo especificado</p>
+                </div>
+
+                <p class="text-muted small mb-3">Puedes corregir la información y volver a intentar.</p>
+                <a href="#" class="btn-outline-retry" id="retryLink">
+                    <i class="bi bi-arrow-counterclockwise me-2"></i>Volver a intentar
+                </a>
+            </div>
+
+            <!-- Error state -->
+            <div id="estadoError" class="d-none">
+                <div class="status-icon-rejected">
+                    <i class="bi bi-exclamation-triangle"></i>
+                </div>
+                <h5 class="fw-bold mb-2" style="color: #856404;">No se pudo cargar el estado</h5>
+                <p class="text-muted mb-3">Hubo un problema al consultar tu solicitud. Intenta recargar la página.</p>
+                <button class="btn-gradient" onclick="checkEstado()">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Reintentar
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function() {
+    'use strict';
+
+    var solicitudId = '@ViewBag.SolicitudId';
+    var pollingTimeout = null;
+    var errorCount = 0;
+
+    // ── Exponential backoff for polling ───────────────────
+    // Start at 5s, increase on consecutive "pendiente" responses,
+    // cap at 60s. Resets on state change or error recovery.
+    var POLL_INTERVALS = [5000, 10000, 20000, 30000, 60000];
+    var pollStep = 0;
+    var lastEstado = null;
+
+    function cleanupPolling() {
+        if (pollingTimeout) { clearTimeout(pollingTimeout); pollingTimeout = null; }
+    }
+
+    function scheduleNextPoll() {
+        cleanupPolling();
+        var delay = POLL_INTERVALS[Math.min(pollStep, POLL_INTERVALS.length - 1)];
+        pollingTimeout = setTimeout(checkEstadoInternal, delay);
+    }
+
+    window.addEventListener('beforeunload', cleanupPolling);
+
+    function hideAll() {
+        document.getElementById('estadoLoading').classList.add('d-none');
+        document.getElementById('estadoPendiente').classList.add('d-none');
+        document.getElementById('estadoAprobada').classList.add('d-none');
+        document.getElementById('estadoRechazada').classList.add('d-none');
+        document.getElementById('estadoError').classList.add('d-none');
+    }
+
+    async function checkEstadoInternal() {
+        try {
+            var res = await fetch('/Delivery/Registro/GetEstadoSolicitud/' + solicitudId);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+
+            var data = await res.json();
+            errorCount = 0;
+            hideAll();
+
+            if (data.estado === 'pendiente') {
+                document.getElementById('estadoPendiente').classList.remove('d-none');
+                document.getElementById('displaySolicitudId').textContent = solicitudId;
+
+                // Increase backoff only if same "pendiente" status as last poll
+                if (lastEstado === 'pendiente') {
+                    pollStep = Math.min(pollStep + 1, POLL_INTERVALS.length - 1);
+                }
+                lastEstado = 'pendiente';
+
+                // Schedule next poll with backoff
+                scheduleNextPoll();
+            } else if (data.estado === 'aprobada') {
+                document.getElementById('estadoAprobada').classList.remove('d-none');
+
+                var loginHref, message;
+                if (data.tipoSolicitud === 'motorizado') {
+                    loginHref = '/Motorizado/Login';
+                    message = 'Ya puedes iniciar sesión y comenzar a entregar pedidos.';
+                } else {
+                    loginHref = '/Negocios/Login';
+                    message = 'Ya puedes iniciar sesión y comenzar a recibir pedidos.';
+                }
+                document.getElementById('loginLink').href = loginHref;
+                document.getElementById('approvedMessage').textContent = message;
+
+                // Terminal state — stop polling
+                lastEstado = 'aprobada';
+                cleanupPolling();
+            } else if (data.estado === 'rechazada') {
+                document.getElementById('estadoRechazada').classList.remove('d-none');
+                document.getElementById('motivoRechazo').textContent = data.motivoRechazo || 'Sin motivo especificado';
+
+                var retryHref = data.tipoSolicitud === 'motorizado'
+                    ? '/Delivery/Registro/Motorizado'
+                    : '/Delivery/Registro/Restaurante';
+                document.getElementById('retryLink').href = retryHref;
+
+                // Terminal state — stop polling
+                lastEstado = 'rechazada';
+                cleanupPolling();
+            }
+        } catch (e) {
+            console.error('Error checking status:', e);
+            errorCount++;
+            if (errorCount >= 3) {
+                hideAll();
+                document.getElementById('estadoError').classList.remove('d-none');
+                cleanupPolling();
+            } else {
+                // Retry with current backoff
+                scheduleNextPoll();
+            }
+        }
+    }
+
+    // Expose for the "Reintentar" button — reset backoff on manual retry
+    window.checkEstado = function () {
+        pollStep = 0;
+        lastEstado = null;
+        errorCount = 0;
+        hideAll();
+        document.getElementById('estadoLoading').classList.remove('d-none');
+        checkEstadoInternal();
+    };
+
+    // Initial check
+    checkEstadoInternal();
+
+})();
+</script>
+}

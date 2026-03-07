@@ -75,7 +75,7 @@ public class CatalogoService : ICatalogoService
 
         // Cabecera HTML5 obligatoria
         sb.AppendLine("<!DOCTYPE html><html><head><meta charset=\"UTF-8\">");
-        sb.AppendLine($"<title>Catálogo - {negocio.NegocioNombre}</title>");
+        sb.AppendLine($"<title>Catálogo - {System.Net.WebUtility.HtmlEncode(negocio.NegocioNombre)}</title>");
 
         // Inyectar CSS segun el estilo elegido por el usuario
         sb.AppendLine("<style>");
@@ -85,7 +85,7 @@ public class CatalogoService : ICatalogoService
 
         // Seccion HERO (portada con nombre del negocio)
         sb.AppendLine("<div class='hero'>");
-        sb.AppendLine($"  <h1>{negocio.NegocioNombre}</h1>");
+        sb.AppendLine($"  <h1>{System.Net.WebUtility.HtmlEncode(negocio.NegocioNombre)}</h1>");
         sb.AppendLine("  <p>Catálogo de Productos</p>");
         sb.AppendLine("</div>");
 
@@ -96,7 +96,7 @@ public class CatalogoService : ICatalogoService
         {
             if (!cat.Productos.Any()) continue; // Omitir categorias sin productos
 
-            sb.AppendLine($"<h2 class='category-title'>{cat.Nombre}</h2>");
+            sb.AppendLine($"<h2 class='category-title'>{System.Net.WebUtility.HtmlEncode(cat.Nombre)}</h2>");
             sb.AppendLine("<div class='grid'>");
 
             foreach (var prod in cat.Productos)
@@ -106,14 +106,14 @@ public class CatalogoService : ICatalogoService
 
                 // Usar imagen placeholder si el producto no tiene foto
                 string imagen = string.IsNullOrEmpty(prod.ImagenUrl)
-                    ? "https://via.placeholder.com/300x300?text=Sin+Imagen"
+                    ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' fill='%23dee2e6' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f8f9fa'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='16' fill='%236c757d'%3ESin Imagen%3C/text%3E%3C/svg%3E"
                     : prod.ImagenUrl;
 
-                sb.AppendLine($"    <img src='{imagen}' alt='{prod.Nombre}' />");
+                sb.AppendLine($"    <img src='{System.Net.WebUtility.HtmlEncode(imagen)}' alt='{System.Net.WebUtility.HtmlEncode(prod.Nombre)}' />");
                 if (agotado)
                     sb.AppendLine("    <span class='sold-out-badge'>No Disponible</span>");
                 sb.AppendLine("    <div class='card-body'>");
-                sb.AppendLine($"      <h3 class='product-title'>{prod.Nombre}</h3>");
+                sb.AppendLine($"      <h3 class='product-title'>{System.Net.WebUtility.HtmlEncode(prod.Nombre)}</h3>");
                 sb.AppendLine($"      <p class='product-price'>${prod.PrecioVenta:F2}</p>");
                 sb.AppendLine("    </div>");
                 sb.AppendLine("  </div>");
@@ -126,7 +126,7 @@ public class CatalogoService : ICatalogoService
 
         // Footer con copyright y creditos
         sb.AppendLine("<div class='footer'>");
-        sb.AppendLine($"  <p>© {TimeHelper.Now.Year} {negocio.NegocioNombre}. Todos los derechos reservados.</p>");
+        sb.AppendLine($"  <p>© {TimeHelper.Now.Year} {System.Net.WebUtility.HtmlEncode(negocio.NegocioNombre)}. Todos los derechos reservados.</p>");
         sb.AppendLine("  <p>Generado a través de My-Negocio</p>");
         sb.AppendLine("</div>");
 

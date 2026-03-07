@@ -92,6 +92,9 @@ public static class BackgroundServicesRegistration
         // Reintento de facturas electrónicas pendientes: cada 10 minutos
         services.AddHostedService<FacturaReintentoService>();
 
+        // Bloqueo automático de motorizados/restaurantes con deuda: medianoche Ecuador
+        services.AddHostedService<DeliveryCommissionBlockingService>();
+
         // Retornar services permite encadenar: builder.Services.AddBackgroundServices().AddOtraCosa()
         return services;
     }

@@ -1,0 +1,336 @@
+@{
+    ViewData["Title"] = "Delivery";
+}
+
+@section Styles {
+<style>
+    .delivery-hero {
+        background: linear-gradient(135deg, #0d6efd 0%, #6610f2 100%);
+        color: #fff;
+        padding: 2.5rem 0 2rem;
+        text-align: center;
+    }
+    .delivery-hero h1 {
+        font-weight: 800;
+        font-size: 2rem;
+    }
+    .delivery-hero p {
+        opacity: .85;
+        font-size: 1.1rem;
+    }
+    .search-box {
+        max-width: 500px;
+        margin: 1.25rem auto 0;
+    }
+    .search-box .form-control {
+        border-radius: 2rem;
+        padding: .75rem 1.25rem .75rem 3rem;
+        border: none;
+        font-size: 1rem;
+        box-shadow: 0 4px 16px rgba(0,0,0,.15);
+    }
+    .search-box .search-icon {
+        position: absolute;
+        left: 1.1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        font-size: 1.15rem;
+    }
+    .restaurant-card {
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 2px 12px rgba(0,0,0,.08);
+        transition: transform .2s, box-shadow .2s;
+        overflow: hidden;
+        cursor: pointer;
+        height: 100%;
+    }
+    .restaurant-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,.12);
+    }
+    .restaurant-logo {
+        width: 64px;
+        height: 64px;
+        border-radius: .75rem;
+        object-fit: cover;
+        background: #f0f0f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 1.8rem;
+        color: #6c757d;
+    }
+    .restaurant-logo img {
+        width: 100%;
+        height: 100%;
+        border-radius: .75rem;
+        object-fit: cover;
+    }
+    .distance-badge {
+        font-size: .8rem;
+        font-weight: 600;
+        padding: .3rem .65rem;
+        border-radius: 2rem;
+    }
+
+    /* States */
+    #loading-state {
+        padding: 4rem 0;
+    }
+    .spinner-grow-lg {
+        width: 3rem;
+        height: 3rem;
+    }
+    #error-state, #empty-state {
+        padding: 3rem 0;
+    }
+    .error-icon, .empty-icon {
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
+    }
+
+    /* Location prompt */
+    .location-prompt {
+        background: #fff;
+        border-radius: 1rem;
+        padding: 2rem;
+        box-shadow: 0 4px 24px rgba(0,0,0,.1);
+        max-width: 420px;
+        margin: 3rem auto;
+        text-align: center;
+    }
+    .location-prompt .bi-geo-alt-fill {
+        font-size: 3rem;
+        color: #0d6efd;
+    }
+</style>
+}
+
+<div class="delivery-hero">
+    <div class="container">
+        <h1><i class="bi bi-bicycle me-2"></i>Pide delivery</h1>
+        <p>Encuentra restaurantes cerca de ti y recibe tu comida en la puerta</p>
+        <div class="search-box position-relative" id="search-wrapper" style="display:none;">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" class="form-control" id="search-input"
+                   placeholder="Buscar restaurante..." autocomplete="off">
+        </div>
+    </div>
+</div>
+
+<div class="container py-4">
+    <!-- Location Prompt (shown first time) -->
+    <div id="location-prompt" style="display:none;">
+        <div class="location-prompt">
+            <i class="bi bi-geo-alt-fill d-block"></i>
+            <h5 class="fw-bold mt-2">Necesitamos tu ubicacion</h5>
+            <p class="text-muted mb-3">Permite el acceso a tu ubicacion para ver restaurantes cercanos</p>
+            <button class="btn btn-primary btn-lg rounded-pill px-4" id="btn-allow-location">
+                <i class="bi bi-crosshair me-2"></i>Permitir ubicacion
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loading-state" class="text-center" style="display:none;">
+        <div class="spinner-grow spinner-grow-lg text-primary" role="status"></div>
+        <p class="text-muted mt-3 fs-5">Buscando restaurantes cercanos...</p>
+    </div>
+
+    <!-- Error State (location denied) -->
+    <div id="error-state" class="text-center" style="display:none;">
+        <div class="error-icon text-warning"><i class="bi bi-exclamation-triangle-fill"></i></div>
+        <h4 class="fw-bold">No pudimos obtener tu ubicacion</h4>
+        <p class="text-muted mb-3">Permite el acceso a tu ubicacion para ver restaurantes cercanos</p>
+        <button class="btn btn-outline-primary rounded-pill px-4" id="btn-retry-location">
+            <i class="bi bi-arrow-clockwise me-2"></i>Intentar de nuevo
+        </button>
+    </div>
+
+    <!-- Empty State -->
+    <div id="empty-state" class="text-center" style="display:none;">
+        <div class="empty-icon text-muted"><i class="bi bi-shop-window"></i></div>
+        <h4 class="fw-bold">No hay restaurantes disponibles</h4>
+        <p class="text-muted">No encontramos restaurantes cerca de tu ubicacion. Intenta mas tarde.</p>
+    </div>
+
+    <!-- Restaurant Grid -->
+    <div class="row g-3" id="restaurants-grid" style="display:none;"></div>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    'use strict';
+
+    const grid = document.getElementById('restaurants-grid');
+    const loadingState = document.getElementById('loading-state');
+    const errorState = document.getElementById('error-state');
+    const emptyState = document.getElementById('empty-state');
+    const locationPrompt = document.getElementById('location-prompt');
+    const searchWrapper = document.getElementById('search-wrapper');
+    const searchInput = document.getElementById('search-input');
+
+    let allRestaurants = [];
+    let userLat = null, userLng = null;
+
+    // ── Show/Hide States ───────────────────────────────────────
+    function showState(state) {
+        [loadingState, errorState, emptyState, locationPrompt, grid].forEach(el => el.style.display = 'none');
+        searchWrapper.style.display = 'none';
+        if (state === 'loading') loadingState.style.display = 'block';
+        else if (state === 'error') errorState.style.display = 'block';
+        else if (state === 'empty') emptyState.style.display = 'block';
+        else if (state === 'prompt') locationPrompt.style.display = 'block';
+        else if (state === 'results') {
+            grid.style.display = 'flex';
+            searchWrapper.style.display = 'block';
+        }
+    }
+
+    // ── Request Geolocation ────────────────────────────────────
+    function requestLocation() {
+        if (!navigator.geolocation) {
+            showState('error');
+            return;
+        }
+        showState('loading');
+        navigator.geolocation.getCurrentPosition(
+            function (pos) {
+                userLat = pos.coords.latitude;
+                userLng = pos.coords.longitude;
+                // Save for later use in checkout
+                localStorage.setItem('delivery_lat', userLat);
+                localStorage.setItem('delivery_lng', userLng);
+                loadRestaurants(userLat, userLng);
+            },
+            function () {
+                showState('error');
+            },
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
+        );
+    }
+
+    // ── Load Restaurants ───────────────────────────────────────
+    async function loadRestaurants(lat, lng) {
+        try {
+            const res = await fetch('/Delivery/GetRestaurantesCercanos?lat=' + lat + '&lng=' + lng);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+
+            allRestaurants = data || [];
+            if (allRestaurants.length === 0) {
+                showState('empty');
+                return;
+            }
+            renderCards(allRestaurants);
+            showState('results');
+        } catch (err) {
+            console.error('Error loading restaurants:', err);
+            showState('empty');
+        }
+    }
+
+    // ── Render Restaurant Cards ────────────────────────────────
+    function renderCards(restaurants) {
+        grid.innerHTML = '';
+        restaurants.forEach(function (r) {
+            var distText = '';
+            if (r.distancia !== undefined && r.distancia !== null && r.distancia > 0) {
+                distText = r.distancia < 1
+                    ? (r.distancia * 1000).toFixed(0) + ' m'
+                    : r.distancia.toFixed(1) + ' km';
+            }
+
+            var logoHtml = '';
+            if (r.logoUrl) {
+                logoHtml = '<img src="' + escAttr(r.logoUrl) + '" alt="' + escAttr(r.negocioNombre) + '">';
+            } else {
+                logoHtml = '<i class="bi bi-shop"></i>';
+            }
+
+            var card = document.createElement('div');
+            card.className = 'col-12 col-sm-6 col-lg-4';
+            card.innerHTML =
+                '<a href="/Delivery/Menu/' + r.negocioId + '" class="text-decoration-none">' +
+                '  <div class="card restaurant-card">' +
+                '    <div class="card-body d-flex align-items-start gap-3 p-3">' +
+                '      <div class="restaurant-logo">' + logoHtml + '</div>' +
+                '      <div class="flex-grow-1 min-width-0">' +
+                '        <h6 class="fw-bold text-dark mb-1 text-truncate">' + escHtml(r.negocioNombre) + '</h6>' +
+                '        <p class="text-muted small mb-1 text-truncate">' +
+                '          <i class="bi bi-geo-alt me-1"></i>' + escHtml(r.direccion || 'Sin direccion') +
+                '        </p>' +
+                (r.telefono ? '<p class="text-muted small mb-0"><i class="bi bi-telephone me-1"></i>' + escHtml(r.telefono) + '</p>' : '') +
+                '      </div>' +
+                (distText
+                    ? '<span class="distance-badge bg-primary bg-opacity-10 text-primary">' + distText + '</span>'
+                    : '') +
+                '    </div>' +
+                '  </div>' +
+                '</a>';
+            grid.appendChild(card);
+        });
+    }
+
+    // ── Search Filter ──────────────────────────────────────────
+    searchInput.addEventListener('input', function () {
+        var q = this.value.toLowerCase().trim();
+        if (!q) {
+            renderCards(allRestaurants);
+            return;
+        }
+        var filtered = allRestaurants.filter(function (r) {
+            return (r.negocioNombre || '').toLowerCase().indexOf(q) !== -1 ||
+                   (r.direccion || '').toLowerCase().indexOf(q) !== -1;
+        });
+        renderCards(filtered);
+        if (filtered.length === 0) {
+            grid.innerHTML = '<div class="col-12 text-center py-5">' +
+                '<i class="bi bi-search text-muted" style="font-size:2.5rem;"></i>' +
+                '<p class="text-muted mt-2">No se encontraron restaurantes para "' + escHtml(q) + '"</p>' +
+                '</div>';
+        }
+    });
+
+    // ── Escape Helpers ─────────────────────────────────────────
+    function escHtml(s) {
+        if (!s) return '';
+        var d = document.createElement('div');
+        d.appendChild(document.createTextNode(s));
+        return d.innerHTML;
+    }
+    function escAttr(s) {
+        return escHtml(s).replace(/"/g, '&quot;');
+    }
+
+    // ── Location Buttons ───────────────────────────────────────
+    document.getElementById('btn-allow-location').addEventListener('click', requestLocation);
+    document.getElementById('btn-retry-location').addEventListener('click', requestLocation);
+
+    // ── Init ───────────────────────────────────────────────────
+    // Check if we have stored location
+    var storedLat = localStorage.getItem('delivery_lat');
+    var storedLng = localStorage.getItem('delivery_lng');
+    if (storedLat && storedLng) {
+        userLat = parseFloat(storedLat);
+        userLng = parseFloat(storedLng);
+        showState('loading');
+        loadRestaurants(userLat, userLng);
+        // Also refresh location in background
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                localStorage.setItem('delivery_lat', pos.coords.latitude);
+                localStorage.setItem('delivery_lng', pos.coords.longitude);
+            }, function () { /* ignore */ }, { enableHighAccuracy: true });
+        }
+    } else {
+        // Show location prompt
+        showState('prompt');
+    }
+})();
+</script>
+}

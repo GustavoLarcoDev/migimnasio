@@ -48,8 +48,10 @@ public class AdminController : Controller
     private readonly IReciboService _reciboService;
     private readonly IWhatsAppService _whatsAppService;
     private readonly IMetodoPagoService _metodoPagoService;
+    private readonly IDeliveryAdminService _deliveryAdminService;
+    private readonly IServiceScopeFactory _scopeFactory;
 
-    public AdminController(INegocioService negocioService, IAuthService authService, IEmailService emailService, IComisionService comisionService, IVendedorService vendedorService, IReciboService reciboService, IWhatsAppService whatsAppService, IMetodoPagoService metodoPagoService)
+    public AdminController(INegocioService negocioService, IAuthService authService, IEmailService emailService, IComisionService comisionService, IVendedorService vendedorService, IReciboService reciboService, IWhatsAppService whatsAppService, IMetodoPagoService metodoPagoService, IDeliveryAdminService deliveryAdminService, IServiceScopeFactory scopeFactory)
     {
         _negocioService = negocioService;
         _authService = authService;
@@ -59,6 +61,8 @@ public class AdminController : Controller
         _reciboService = reciboService;
         _whatsAppService = whatsAppService;
         _metodoPagoService = metodoPagoService;
+        _deliveryAdminService = deliveryAdminService;
+        _scopeFactory = scopeFactory;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -278,10 +282,18 @@ public class AdminController : Controller
                 $"Negocio '{NombreNegocio}' creado ({(esPrueba ? "Prueba" : "Pago")})",
                 NombreNegocio);
 
-            // Enviar correo de bienvenida en segundo plano
+            // Enviar correo de bienvenida en segundo plano (scope factory para evitar usar DbContext dispuesto)
+            var emailNeg = EmailNegocio;
+            var nombreNeg = NombreNegocio;
+            var duenoNeg = duenoNegocio;
+            var passNeg = passwordNegocio;
+            var telNeg = telefono;
+            var tipoNeg = tipoNegocio;
             _ = Task.Run(async () =>
             {
-                try { await _emailService.EnviarBienvenidaNegocioAsync(EmailNegocio, NombreNegocio, duenoNegocio, EmailNegocio, passwordNegocio, telefono, null, tipoNegocio); }
+                using var scope = _scopeFactory.CreateScope();
+                var emailSvc = scope.ServiceProvider.GetRequiredService<IEmailService>();
+                try { await emailSvc.EnviarBienvenidaNegocioAsync(emailNeg, nombreNeg, duenoNeg, emailNeg, passNeg, telNeg, null, tipoNeg); }
                 catch { }
             });
 
@@ -290,7 +302,9 @@ public class AdminController : Controller
             {
                 _ = Task.Run(async () =>
                 {
-                    try { await _whatsAppService.EnviarBienvenidaNegocioWhatsAppAsync(telefono, NombreNegocio, duenoNegocio, EmailNegocio, passwordNegocio, tipoNegocio); }
+                    using var scope = _scopeFactory.CreateScope();
+                    var whatsAppSvc = scope.ServiceProvider.GetRequiredService<IWhatsAppService>();
+                    try { await whatsAppSvc.EnviarBienvenidaNegocioWhatsAppAsync(telNeg, nombreNeg, duenoNeg, emailNeg, passNeg, tipoNeg); }
                     catch { }
                 });
             }
@@ -480,7 +494,7 @@ public class AdminController : Controller
                 $"Negocio bloqueado (ID: {id})",
                 null);
 
-            // Notificar al dueño del negocio por WhatsApp
+            // Notificar al dueño del negocio por WhatsApp (scope factory para evitar usar DbContext dispuesto)
             var negocio = await _negocioService.GetNegocioForImpersonationAsync(id);
             if (negocio != null && !string.IsNullOrWhiteSpace(negocio.Telefono))
             {
@@ -489,7 +503,9 @@ public class AdminController : Controller
                 var dueno = negocio.DuenoNegocio ?? "Estimado cliente";
                 _ = Task.Run(async () =>
                 {
-                    try { await _whatsAppService.EnviarNotificacionNegocioBloqueadoWhatsAppAsync(tel, nom, dueno); }
+                    using var scope = _scopeFactory.CreateScope();
+                    var whatsAppSvc = scope.ServiceProvider.GetRequiredService<IWhatsAppService>();
+                    try { await whatsAppSvc.EnviarNotificacionNegocioBloqueadoWhatsAppAsync(tel, nom, dueno); }
                     catch { }
                 });
             }
@@ -530,7 +546,7 @@ public class AdminController : Controller
                 $"Negocio desbloqueado (ID: {id})",
                 null);
 
-            // Notificar al dueño del negocio por WhatsApp
+            // Notificar al dueño del negocio por WhatsApp (scope factory para evitar usar DbContext dispuesto)
             var negocio = await _negocioService.GetNegocioForImpersonationAsync(id);
             if (negocio != null && !string.IsNullOrWhiteSpace(negocio.Telefono))
             {
@@ -539,7 +555,9 @@ public class AdminController : Controller
                 var dueno = negocio.DuenoNegocio ?? "Estimado cliente";
                 _ = Task.Run(async () =>
                 {
-                    try { await _whatsAppService.EnviarNotificacionNegocioDesbloqueadoWhatsAppAsync(tel, nom, dueno); }
+                    using var scope = _scopeFactory.CreateScope();
+                    var whatsAppSvc = scope.ServiceProvider.GetRequiredService<IWhatsAppService>();
+                    try { await whatsAppSvc.EnviarNotificacionNegocioDesbloqueadoWhatsAppAsync(tel, nom, dueno); }
                     catch { }
                 });
             }
@@ -1269,7 +1287,7 @@ public class AdminController : Controller
     /// </summary>
     [HttpPost("EnviarPromocion")]
     [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> EnviarPromocion([FromBody] List<ContactoPromocionDto> contactos)
+    public IActionResult EnviarPromocion([FromBody] List<ContactoPromocionDto> contactos)
     {
         try
         {
@@ -1282,48 +1300,237 @@ public class AdminController : Controller
             if (contactos.Count > 500)
                 return BadRequest(new { success = false, message = "Máximo 500 contactos por envío" });
 
-            var resultados = new List<object>();
-            int totalEnviados = 0, totalFallidos = 0;
+            // Capturar datos antes de lanzar el background task (evitar usar scoped services dispuestos)
+            var contactosCopia = contactos.Select(c => new { c.Nombre, c.Telefono }).ToList();
+            var totalContactos = contactosCopia.Count;
 
-            for (int i = 0; i < contactos.Count; i++)
+            // Lanzar el envío masivo en segundo plano con su propio scope — retornar inmediatamente
+            _ = Task.Run(async () =>
             {
-                var contacto = contactos[i];
+                using var scope = _scopeFactory.CreateScope();
+                var whatsAppSvc = scope.ServiceProvider.GetRequiredService<IWhatsAppService>();
+                var negocioSvc = scope.ServiceProvider.GetRequiredService<INegocioService>();
+
+                int enviados = 0, fallidos = 0;
+                for (int i = 0; i < contactosCopia.Count; i++)
+                {
+                    var contacto = contactosCopia[i];
+                    try
+                    {
+                        var ok = await whatsAppSvc.EnviarPromocionWhatsAppAsync(contacto.Telefono, contacto.Nombre);
+                        if (ok) enviados++; else fallidos++;
+                    }
+                    catch { fallidos++; }
+
+                    if (i < contactosCopia.Count - 1)
+                        await Task.Delay(1000);
+                }
+
                 try
                 {
-                    var enviado = await _whatsAppService.EnviarPromocionWhatsAppAsync(
-                        contacto.Telefono, contacto.Nombre);
-
-                    if (enviado)
-                    {
-                        totalEnviados++;
-                        resultados.Add(new { contacto.Nombre, contacto.Telefono, estado = "enviado", detalle = "Mensaje enviado exitosamente" });
-                    }
-                    else
-                    {
-                        totalFallidos++;
-                        resultados.Add(new { contacto.Nombre, contacto.Telefono, estado = "fallido", detalle = "Error al enviar mensaje" });
-                    }
+                    await negocioSvc.RegistrarAdminLogAsync(
+                        "PromocionWhatsApp",
+                        $"Promoción enviada: {enviados} exitosos, {fallidos} fallidos de {totalContactos} contactos",
+                        null);
                 }
-                catch (Exception ex)
-                {
-                    totalFallidos++;
-                    resultados.Add(new { contacto.Nombre, contacto.Telefono, estado = "fallido", detalle = ex.Message });
-                }
+                catch { }
+            });
 
-                if (i < contactos.Count - 1)
-                    await Task.Delay(1000);
-            }
-
-            await _negocioService.RegistrarAdminLogAsync(
-                "PromocionWhatsApp",
-                $"Promoción enviada: {totalEnviados} exitosos, {totalFallidos} fallidos de {contactos.Count} contactos",
-                null);
-
-            return Ok(new { success = true, totalEnviados, totalFallidos, total = contactos.Count, resultados });
+            return Ok(new { success = true, message = $"Envío de {totalContactos} mensajes iniciado en segundo plano", total = totalContactos });
         }
         catch (Exception)
         {
             return StatusCode(500, new { success = false, message = "Error al enviar promociones" });
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    // DELIVERY — Solicitudes y Pagos
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Obtiene todas las solicitudes de delivery pendientes de revisión (motorizados + restaurantes).
+    /// </summary>
+    [HttpGet("GetSolicitudesDelivery")]
+    public async Task<IActionResult> GetSolicitudesDelivery()
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var data = await _deliveryAdminService.GetSolicitudesPendientesAsync();
+            return Ok(data);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error al obtener solicitudes de delivery" });
+        }
+    }
+
+    /// <summary>
+    /// Obtiene el detalle completo de una solicitud de delivery específica.
+    /// </summary>
+    [HttpGet("GetSolicitudDelivery/{id}")]
+    public async Task<IActionResult> GetSolicitudDelivery(Guid id)
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var data = await _deliveryAdminService.GetSolicitudAsync(id);
+            if (data == null)
+                return NotFound(new { success = false, message = "Solicitud no encontrada" });
+
+            return Ok(data);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error al obtener la solicitud de delivery" });
+        }
+    }
+
+    /// <summary>
+    /// Aprueba una solicitud de delivery: crea el Motorizado o Restaurante y marca como aprobada.
+    /// </summary>
+    [HttpPost("AprobarSolicitudDelivery")]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> AprobarSolicitudDelivery(Guid solicitudId)
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var result = await _deliveryAdminService.AprobarSolicitudAsync(solicitudId);
+
+            if (!result.success)
+                return BadRequest(new { result.success, result.message });
+
+            return Ok(new { result.success, result.message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error al aprobar la solicitud de delivery" });
+        }
+    }
+
+    /// <summary>
+    /// Rechaza una solicitud de delivery con motivo explicativo.
+    /// </summary>
+    [HttpPost("RechazarSolicitudDelivery")]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> RechazarSolicitudDelivery(Guid solicitudId, string motivo)
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            if (string.IsNullOrWhiteSpace(motivo))
+                return BadRequest(new { success = false, message = "El motivo de rechazo es requerido" });
+
+            var result = await _deliveryAdminService.RechazarSolicitudAsync(solicitudId, motivo);
+
+            if (!result.success)
+                return BadRequest(new { result.success, result.message });
+
+            return Ok(new { result.success, result.message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error al rechazar la solicitud de delivery" });
+        }
+    }
+
+    /// <summary>
+    /// Obtiene todos los pagos de delivery pendientes de confirmación por el admin.
+    /// </summary>
+    [HttpGet("GetPagosDeliveryPendientes")]
+    public async Task<IActionResult> GetPagosDeliveryPendientes()
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var data = await _deliveryAdminService.GetPagosDeliveryPendientesAsync();
+            return Ok(data);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error al obtener pagos de delivery pendientes" });
+        }
+    }
+
+    /// <summary>
+    /// Confirma un pago de delivery: desbloquea al motorizado/restaurante y resetea comisiones.
+    /// </summary>
+    [HttpPost("ConfirmarPagoDelivery")]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> ConfirmarPagoDelivery(Guid pagoId)
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var result = await _deliveryAdminService.ConfirmarPagoDeliveryAsync(pagoId);
+
+            if (!result.success)
+                return BadRequest(new { result.success, result.message });
+
+            return Ok(new { result.success, result.message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error al confirmar el pago de delivery" });
+        }
+    }
+
+    /// <summary>
+    /// Rechaza un pago de delivery con notas explicativas.
+    /// </summary>
+    [HttpPost("RechazarPagoDelivery")]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> RechazarPagoDelivery(Guid pagoId, string notas)
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var result = await _deliveryAdminService.RechazarPagoDeliveryAsync(pagoId, notas);
+
+            if (!result.success)
+                return BadRequest(new { result.success, result.message });
+
+            return Ok(new { result.success, result.message });
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error al rechazar el pago de delivery" });
+        }
+    }
+
+    /// <summary>
+    /// Obtiene estadísticas del sistema de delivery para el dashboard de administración.
+    /// </summary>
+    [HttpGet("GetDeliveryAdminStats")]
+    public async Task<IActionResult> GetDeliveryAdminStats()
+    {
+        try
+        {
+            if (!_authService.IsAdmin(User))
+                return Forbid();
+
+            var data = await _deliveryAdminService.GetDeliveryAdminStatsAsync();
+            return Ok(data);
+        }
+        catch (Exception)
+        {
+            return StatusCode(500, new { success = false, message = "Error al obtener estadísticas de delivery" });
         }
     }
 }

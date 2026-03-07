@@ -908,49 +908,147 @@
             });
         }
 
-        // ── Modal Facturar ──
-        function abrirModalFacturar(items, reciboId) {
-            $('#facModalItems').empty();
+        // ── Modal Facturar (items editables) ──
+        var _facItemCounter = 0;
+
+        function agregarFilaItem(item) {
+            item = item || { descripcion: '', cantidad: 1, precioUnitario: 0, descuento: 0, codigo: '001' };
+            var idx = _facItemCounter++;
+            var sub = ((item.cantidad || 1) * (item.precioUnitario || 0) - (item.descuento || 0));
+            var tr = '<tr data-fac-idx="' + idx + '">' +
+                '<td><input type="text" class="form-control form-control-sm fac-item-input" data-field="descripcion" value="' + escAttr(item.descripcion || '') + '" placeholder="Descripción"></td>' +
+                '<td><input type="number" class="form-control form-control-sm text-center fac-item-input" data-field="cantidad" value="' + (item.cantidad || 1) + '" min="1" step="1" style="width:70px"></td>' +
+                '<td><input type="number" class="form-control form-control-sm text-end fac-item-input" data-field="precioUnitario" value="' + (item.precioUnitario || 0).toFixed(2) + '" min="0" step="0.01" style="width:90px"></td>' +
+                '<td><input type="number" class="form-control form-control-sm text-end fac-item-input" data-field="descuento" value="' + (item.descuento || 0).toFixed(2) + '" min="0" step="0.01" style="width:70px"></td>' +
+                '<td class="text-end fac-row-subtotal">$' + Math.max(0, sub).toFixed(2) + '</td>' +
+                '<td><button type="button" class="btn btn-sm btn-outline-danger fac-remove-item" title="Eliminar"><i class="bi bi-trash"></i></button></td>' +
+                '</tr>';
+            $('#facModalItems').append(tr);
+        }
+
+        function recalcularTotalesFactura() {
             var subtotal = 0;
-            (items || []).forEach(function(item, i) {
-                var sub = item.cantidad * item.precioUnitario;
+            $('#facModalItems tr').each(function() {
+                var cant = parseFloat($(this).find('[data-field="cantidad"]').val()) || 0;
+                var precio = parseFloat($(this).find('[data-field="precioUnitario"]').val()) || 0;
+                var desc = parseFloat($(this).find('[data-field="descuento"]').val()) || 0;
+                var sub = Math.max(0, cant * precio - desc);
+                $(this).find('.fac-row-subtotal').text('$' + sub.toFixed(2));
                 subtotal += sub;
-                $('#facModalItems').append(
-                    '<tr><td>' + escHtml(item.descripcion) + '</td>' +
-                    '<td class="text-center">' + item.cantidad + '</td>' +
-                    '<td class="text-end">$' + item.precioUnitario.toFixed(2) + '</td>' +
-                    '<td class="text-end">$' + sub.toFixed(2) + '</td></tr>'
-                );
             });
             var iva = subtotal * 0.15;
-            var total = subtotal + iva;
             $('#facModalSubtotal').text('$' + subtotal.toFixed(2));
             $('#facModalIva').text('$' + iva.toFixed(2));
-            $('#facModalTotal').text('$' + total.toFixed(2));
-            window._facModalItems = items;
+            $('#facModalTotal').text('$' + (subtotal + iva).toFixed(2));
+        }
+
+        // Event delegation para inputs editables
+        $(document).on('input change', '.fac-item-input', recalcularTotalesFactura);
+        $(document).on('click', '.fac-remove-item', function() {
+            $(this).closest('tr').remove();
+            recalcularTotalesFactura();
+        });
+        $('#btnAgregarItemFac').on('click', function() { agregarFilaItem(); });
+
+        function abrirModalFacturar(items, reciboId, compradorInfo) {
+            $('#facModalItems').empty();
+            _facItemCounter = 0;
+            (items || []).forEach(function(item) { agregarFilaItem(item); });
+            recalcularTotalesFactura();
+
             window._facModalReciboId = reciboId || null;
-            $('#facModalTipoId').val('07'); // Consumidor Final por defecto
-            $('#facModalIdentificacion').val('9999999999999');
-            $('#facModalRazonSocial').val('CONSUMIDOR FINAL');
-            $('#facModalEmail, #facModalDireccion').val('');
+
+            // Datos del comprador
+            if (compradorInfo && compradorInfo.nombre) {
+                $('#facModalRazonSocial').val(compradorInfo.nombre);
+                $('#facModalEmail').val(compradorInfo.email || '');
+                $('#facModalTipoId').val('05');
+                $('#facModalIdentificacion').val('');
+            } else {
+                $('#facModalTipoId').val('07');
+                $('#facModalIdentificacion').val('9999999999999');
+                $('#facModalRazonSocial').val('CONSUMIDOR FINAL');
+                $('#facModalEmail').val('');
+            }
+            $('#facModalDireccion').val('');
             $('#facModalFormaPago').val('01');
-            new bootstrap.Modal($('#modalFacturar')[0]).show();
+            bootstrap.Modal.getOrCreateInstance($('#modalFacturar')[0]).show();
+        }
+
+        // Buscar contribuyente en SRI
+        var _buscandoSri = false;
+        function buscarContribuyenteSri() {
+            if (_buscandoSri) return;
+            var id = $('#facModalIdentificacion').val().trim();
+            if (!id || (id.length !== 10 && id.length !== 13)) {
+                toastr.warning('Ingrese cédula (10 dígitos) o RUC (13 dígitos)');
+                return;
+            }
+            _buscandoSri = true;
+            var btn = $('#btnBuscarSri');
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+            $.get('/Negocios/BuscarContribuyenteSri', { identificacion: id })
+                .done(function(r) {
+                    if (r && r.success) {
+                        $('#facModalRazonSocial').val(r.razonSocial);
+                        $('#facModalTipoId').val(r.tipoIdentificacion);
+                        toastr.success('Datos encontrados: ' + r.razonSocial);
+                    } else {
+                        toastr.warning(r?.message || 'No se encontró contribuyente');
+                    }
+                })
+                .fail(function() { toastr.error('Error al consultar el SRI'); })
+                .always(function() {
+                    btn.prop('disabled', false).html('<i class="bi bi-search"></i>');
+                    _buscandoSri = false;
+                });
+        }
+        $('#btnBuscarSri').on('click', buscarContribuyenteSri);
+        $('#facModalIdentificacion').on('blur', function() {
+            var v = $(this).val().trim();
+            if (v.length === 10 || v.length === 13) buscarContribuyenteSri();
+        });
+
+        // Facturar desde recibo (llamado desde tablas de recibos)
+        function facturarDesdeRecibo(reciboId) {
+            if (!window._facturacionActiva) { toastr.warning('Facturación electrónica no está activa'); return; }
+            mgGet('/Negocios/GetReciboParaFactura', { reciboId: reciboId, negocioId: _negocioId }, function(r) {
+                if (r && r.success) {
+                    abrirModalFacturar(r.items, r.reciboId, { nombre: r.destinatarioNombre, email: r.destinatarioEmail });
+                } else {
+                    toastr.error(r?.message || 'Error al cargar datos del recibo');
+                }
+            });
         }
 
         function emitirFacturaDesdeModal() {
             var btn = $('#btnEmitirFactura');
             btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Emitiendo...');
 
-            var items = (window._facModalItems || []).map(function(it) {
-                return {
-                    codigoPrincipal: it.codigo || '001',
-                    descripcion: it.descripcion,
-                    cantidad: it.cantidad,
-                    precioUnitario: it.precioUnitario,
-                    descuento: it.descuento || 0,
-                    porcentajeIva: 15
-                };
+            // Leer items desde el DOM (editables)
+            var items = [];
+            $('#facModalItems tr').each(function() {
+                var desc = $(this).find('[data-field="descripcion"]').val().trim();
+                var cant = parseFloat($(this).find('[data-field="cantidad"]').val()) || 0;
+                var precio = parseFloat($(this).find('[data-field="precioUnitario"]').val()) || 0;
+                var descuento = parseFloat($(this).find('[data-field="descuento"]').val()) || 0;
+                if (desc && cant > 0 && precio > 0) {
+                    items.push({
+                        codigoPrincipal: '001',
+                        descripcion: desc,
+                        cantidad: cant,
+                        precioUnitario: precio,
+                        descuento: descuento,
+                        porcentajeIva: 15
+                    });
+                }
             });
+
+            if (items.length === 0) {
+                toastr.warning('Agregue al menos un item con descripción y precio');
+                btn.prop('disabled', false).html('<i class="bi bi-file-earmark-check me-1"></i>Emitir Factura');
+                return;
+            }
 
             var payload = {
                 negocioId: _negocioId,
@@ -972,8 +1070,10 @@
                 success: function(r) {
                     if (r.success) {
                         toastr.success(r.message);
-                        bootstrap.Modal.getInstance($('#modalFacturar')[0])?.hide();
+                        bootstrap.Modal.getOrCreateInstance($('#modalFacturar')[0]).hide();
                         if (_facTabCargado) cargarTablaFacturas();
+                        // Recargar tabla de recibos si existe
+                        if (typeof tablaRecibos !== 'undefined' && tablaRecibos) tablaRecibos.ajax.reload();
                     } else {
                         toastr.error(r.message);
                     }
@@ -1012,6 +1112,7 @@
         window._facAbrirModal = abrirModalFacturar;
         window._facEmitir = emitirFacturaDesdeModal;
         window._facFiltrar = cargarTablaFacturas;
+        window.facturarDesdeRecibo = facturarDesdeRecibo;
         window._facNuevaFactura = function() {
             abrirModalFacturar([{ descripcion: '', cantidad: 1, precioUnitario: 0, descuento: 0, codigo: '001' }], null);
         };
@@ -1368,7 +1469,10 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold small">Identificación</label>
-                            <input type="text" class="form-control form-control-sm" id="facModalIdentificacion" placeholder="9999999999999">
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="facModalIdentificacion" placeholder="9999999999999" maxlength="13">
+                                <button class="btn btn-outline-primary" type="button" id="btnBuscarSri" title="Buscar en SRI"><i class="bi bi-search"></i></button>
+                            </div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-semibold small">Razón Social / Nombre</label>
@@ -1394,10 +1498,20 @@
                     </div>
                     <div class="table-responsive">
                         <table class="table table-sm mb-0">
-                            <thead><tr><th>Descripción</th><th class="text-center" style="width:70px">Cant</th><th class="text-end" style="width:90px">P.Unit</th><th class="text-end" style="width:90px">Subtotal</th></tr></thead>
+                            <thead><tr>
+                                <th>Descripción</th>
+                                <th class="text-center" style="width:70px">Cant</th>
+                                <th class="text-end" style="width:90px">P.Unit</th>
+                                <th class="text-end" style="width:70px">Desc.</th>
+                                <th class="text-end" style="width:90px">Subtotal</th>
+                                <th style="width:40px"></th>
+                            </tr></thead>
                             <tbody id="facModalItems"></tbody>
                         </table>
                     </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="btnAgregarItemFac">
+                        <i class="bi bi-plus-circle me-1"></i>Agregar item
+                    </button>
                     <div class="d-flex justify-content-end mt-3">
                         <div class="text-end">
                             <div class="small text-muted">Subtotal: <span class="fw-bold" id="facModalSubtotal">$0.00</span></div>
