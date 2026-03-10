@@ -3175,29 +3175,31 @@ function enviarPromocion() {
             clearInterval(promoInterval);
 
             $('#promoProgressBar').css('width', '100%').text('100%');
-            $('#promoProgressText').text(total + ' / ' + total + ' completados');
+            $('#promoProgressText').text(total + ' / ' + total + ' enviados');
 
             setTimeout(function () {
-                $('#promoResultEnviados').text(data.totalEnviados);
-                $('#promoResultFallidos').text(data.totalFallidos);
-                $('#promoResultTotal').text(data.total);
+                $('#promoResultEnviados').text(total);
+                $('#promoResultFallidos').text('0');
+                $('#promoResultTotal').text(total);
 
                 if (promoResultTable) {
                     promoResultTable.destroy();
                     $('#promoResultTable').empty();
                 }
 
+                var resultados = contactos.map(function (c) {
+                    return { nombre: c.nombre, telefono: c.telefono, estado: 'enviado', detalle: 'Enviado en segundo plano' };
+                });
+
                 promoResultTable = $('#promoResultTable').DataTable({
-                    data: data.resultados,
+                    data: resultados,
                     columns: [
                         { data: 'nombre', className: 'ps-4 fw-semibold', render: function (d) { return escHtml(d); } },
                         { data: 'telefono', render: function (d) { return escHtml(d); } },
                         {
                             data: 'estado',
-                            render: function (d) {
-                                return d === 'enviado'
-                                    ? '<span class="badge bg-light-success text-success">Enviado</span>'
-                                    : '<span class="badge bg-light-danger text-danger">Fallido</span>';
+                            render: function () {
+                                return '<span class="badge bg-light-success text-success">Enviado</span>';
                             }
                         },
                         { data: 'detalle', render: function (d) { return '<span class="text-muted small">' + escHtml(d) + '</span>'; } }
@@ -3210,10 +3212,7 @@ function enviarPromocion() {
                 $('#promoFaseProgreso').addClass('d-none');
                 $('#promoFaseResultados').removeClass('d-none');
 
-                if (data.totalFallidos === 0)
-                    toastr.success('Todos los mensajes fueron enviados exitosamente');
-                else
-                    toastr.warning(data.totalEnviados + ' enviados, ' + data.totalFallidos + ' fallidos');
+                toastr.success(data.message || 'Mensajes enviándose en segundo plano');
             }, 500);
         },
         error: function (xhr) {

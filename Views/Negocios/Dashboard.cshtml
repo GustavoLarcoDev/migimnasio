@@ -2279,14 +2279,13 @@ function actualizarConteoPromocion() {
     var filtro = $('#promoFiltro').val();
     $('#promoConteo').text('Cargando...');
     $.get('/Negocios/ContarDestinatariosPromocion', { negocioId: negocioId, filtro: filtro }, function(r) {
-        if (r.success) {
-            $('#promoConteo').text(r.total + ' clientes con telefono');
-            $('#promoEnviarCount').text(r.total);
-            if (r.total === 0) {
-                $('#promoConteo').removeClass('bg-primary').addClass('bg-secondary');
-            } else {
-                $('#promoConteo').removeClass('bg-secondary').addClass('bg-primary');
-            }
+        var n = r.count ?? 0;
+        $('#promoConteo').text(n + ' clientes con telefono');
+        $('#promoEnviarCount').text(n);
+        if (n === 0) {
+            $('#promoConteo').removeClass('bg-primary').addClass('bg-secondary');
+        } else {
+            $('#promoConteo').removeClass('bg-secondary').addClass('bg-primary');
         }
     }).fail(function() {
         $('#promoConteo').text('Error al contar');
@@ -2324,7 +2323,7 @@ $('#btnConfirmarPromocion').on('click', function() {
             var r = result.value;
             bootstrap.Modal.getInstance(document.getElementById('modalPromocion'))?.hide();
             if (r.success) {
-                swalMG.fire('Enviado', 'Se enviaron ' + r.enviados + ' de ' + r.total + ' mensajes.' + (r.errores > 0 ? ' (' + r.errores + ' errores)' : ''), 'success');
+                swalMG.fire('Enviado', r.message, 'success');
             } else {
                 swalMG.fire('Error', r.message || 'No se pudo enviar', 'error');
             }
