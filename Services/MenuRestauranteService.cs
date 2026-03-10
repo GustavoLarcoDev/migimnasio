@@ -244,15 +244,33 @@ public class MenuRestauranteService : IMenuRestauranteService
     };
 
     // ── Parse JSON de items ──
+    // Soporta dos formatos:
+    //   1) Secciones: [{ nombre: "Sopas", items: [{productoId, nombre, precio}] }]
+    //   2) Plano:     [{ productoId, nombre, precio }]  → se envuelve en sección "General"
     private static List<MenuSeccion> ParseItemsJson(string json)
     {
         if (string.IsNullOrWhiteSpace(json)) return new List<MenuSeccion>();
         try
         {
-            return JsonSerializer.Deserialize<List<MenuSeccion>>(json, new JsonSerializerOptions
+            var opts = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var secciones = JsonSerializer.Deserialize<List<MenuSeccion>>(json, opts)
+                            ?? new List<MenuSeccion>();
+
+            // Detectar formato plano: si todas las secciones tienen Items vacío
+            // pero tienen Nombre (que en realidad es el nombre del plato), re-parsear como items planos
+            if (secciones.Count > 0 && secciones.All(s => s.Items.Count == 0))
             {
-                PropertyNameCaseInsensitive = true
-            }) ?? new List<MenuSeccion>();
+                var items = JsonSerializer.Deserialize<List<MenuItemDto>>(json, opts);
+                if (items != null && items.Any(i => i.Precio > 0 || i.ProductoId.HasValue))
+                {
+                    return new List<MenuSeccion>
+                    {
+                        new MenuSeccion { Nombre = "General", Items = items }
+                    };
+                }
+            }
+
+            return secciones;
         }
         catch { return new List<MenuSeccion>(); }
     }

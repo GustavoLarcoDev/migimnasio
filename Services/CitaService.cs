@@ -635,6 +635,10 @@ public class CitaService : ICitaService
     /// </summary>
     public async Task<(bool success, string message)> MoverCitaAsync(CitaMoveDto dto)
     {
+        // Validar que la fecha no sea un valor por defecto o en el pasado
+        if (dto.NuevaFechaHoraInicio <= DateTime.MinValue)
+            return (false, "Fecha de inicio inválida");
+
         var cita = await _context.Citas
             .FirstOrDefaultAsync(c => c.CitaId == dto.CitaId && c.NegocioId == dto.NegocioId);
 
