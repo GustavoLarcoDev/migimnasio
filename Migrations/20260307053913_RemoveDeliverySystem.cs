@@ -11,47 +11,21 @@ namespace Gimnasio.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "ComisionesDelivery");
+            // Drop tables safely (may not exist in all environments)
+            migrationBuilder.Sql("IF OBJECT_ID('ComisionesDelivery', 'U') IS NOT NULL DROP TABLE [ComisionesDelivery];");
+            migrationBuilder.Sql("IF OBJECT_ID('DetallesPedido', 'U') IS NOT NULL DROP TABLE [DetallesPedido];");
+            migrationBuilder.Sql("IF OBJECT_ID('PagosDelivery', 'U') IS NOT NULL DROP TABLE [PagosDelivery];");
+            migrationBuilder.Sql("IF OBJECT_ID('SolicitudesRegistro', 'U') IS NOT NULL DROP TABLE [SolicitudesRegistro];");
+            migrationBuilder.Sql("IF OBJECT_ID('Pedidos', 'U') IS NOT NULL DROP TABLE [Pedidos];");
+            migrationBuilder.Sql("IF OBJECT_ID('Motorizados', 'U') IS NOT NULL DROP TABLE [Motorizados];");
 
-            migrationBuilder.DropTable(
-                name: "DetallesPedido");
-
-            migrationBuilder.DropTable(
-                name: "PagosDelivery");
-
-            migrationBuilder.DropTable(
-                name: "SolicitudesRegistro");
-
-            migrationBuilder.DropTable(
-                name: "Pedidos");
-
-            migrationBuilder.DropTable(
-                name: "Motorizados");
-
-            migrationBuilder.DropColumn(
-                name: "BloqueadoDelivery",
-                table: "Negocios");
-
-            migrationBuilder.DropColumn(
-                name: "Ciudad",
-                table: "Negocios");
-
-            migrationBuilder.DropColumn(
-                name: "ComisionesDeliveryAcumuladas",
-                table: "Negocios");
-
-            migrationBuilder.DropColumn(
-                name: "TipoPlanDelivery",
-                table: "Negocios");
-
-            migrationBuilder.DropColumn(
-                name: "TiposComida",
-                table: "Negocios");
-
-            migrationBuilder.DropColumn(
-                name: "UltimaLiquidacionComisionesDelivery",
-                table: "Negocios");
+            // Drop columns safely
+            migrationBuilder.Sql("IF COL_LENGTH('Negocios', 'BloqueadoDelivery') IS NOT NULL ALTER TABLE [Negocios] DROP COLUMN [BloqueadoDelivery];");
+            migrationBuilder.Sql("IF COL_LENGTH('Negocios', 'Ciudad') IS NOT NULL ALTER TABLE [Negocios] DROP COLUMN [Ciudad];");
+            migrationBuilder.Sql("IF COL_LENGTH('Negocios', 'ComisionesDeliveryAcumuladas') IS NOT NULL ALTER TABLE [Negocios] DROP COLUMN [ComisionesDeliveryAcumuladas];");
+            migrationBuilder.Sql("IF COL_LENGTH('Negocios', 'TipoPlanDelivery') IS NOT NULL ALTER TABLE [Negocios] DROP COLUMN [TipoPlanDelivery];");
+            migrationBuilder.Sql("IF COL_LENGTH('Negocios', 'TiposComida') IS NOT NULL ALTER TABLE [Negocios] DROP COLUMN [TiposComida];");
+            migrationBuilder.Sql("IF COL_LENGTH('Negocios', 'UltimaLiquidacionComisionesDelivery') IS NOT NULL ALTER TABLE [Negocios] DROP COLUMN [UltimaLiquidacionComisionesDelivery];");
         }
 
         /// <inheritdoc />

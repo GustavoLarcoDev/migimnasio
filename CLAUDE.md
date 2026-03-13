@@ -694,7 +694,8 @@ Cada agente recibe: paleta completa, URLs de CDN, paths de salida, descripción 
 ### Logo Oficial (OBLIGATORIO)
 
 - **Archivos:** `~/Desktop/marketing/logo.png` (1496x942), `logo-corner.png` (500px), `logo-cta.png` (800px) — transparencia nativa perfecta
-- **Flyers:** logo esquina sup-izq, 280px, SIN contenedor blanco, con `drop-shadow` blanco para contraste
+- **Flyers:** logo esquina sup-izq, **150px** (NO 280px — causa superposición), SIN contenedor blanco, con `drop-shadow` para contraste
+- **RUTAS:** SIEMPRE usar `file:///Users/gustavolarco/Desktop/marketing/logo.png` (absoluta) — NUNCA rutas relativas (`../logo.png`)
 - **Videos:** logo POP-UP al final — `scale(0)→scale(1.12)→scale(1)` con glow circular + "$10/mes" + "7 DÍAS GRATIS" + "Tu Negocio, Tu Control."
 - NUNCA procesar el logo (ya tiene transparencia perfecta), solo pre-escalar con LANCZOS
 

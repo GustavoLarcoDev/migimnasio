@@ -1008,10 +1008,18 @@
                                     <th class="ps-4">Negocio</th>
                                     <th>Teléfono</th>
                                     <th>Estado</th>
-                                    <th>Detalle</th>
                                 </tr>
                             </thead>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="promoErroresList" class="d-none mb-4">
+                <div class="mg-card border-danger">
+                    <div class="card-body">
+                        <h6 class="text-danger fw-bold mb-2"><i class="bi bi-exclamation-triangle me-1"></i>Errores de envío</h6>
+                        <ul id="promoErroresUl" class="mb-0 small text-muted"></ul>
                     </div>
                 </div>
             </div>
@@ -3106,8 +3114,13 @@ function procesarExcelPromocion() {
             $('#btnProcesarPromo').prop('disabled', false).html('<i class="bi bi-search me-2"></i>Procesar y Previsualizar');
         },
         error: function (xhr) {
-            var msg = xhr.responseJSON?.message || 'Error al procesar el archivo';
-            toastr.error(msg);
+            if (xhr.status === 400 && !xhr.responseText) {
+                toastr.error('Tu sesión ha expirado. Recarga la página e inténtalo de nuevo.');
+                setTimeout(function() { location.reload(); }, 2000);
+            } else {
+                var msg = xhr.responseJSON?.message || 'Error al procesar el archivo';
+                toastr.error(msg);
+            }
             $('#btnProcesarPromo').prop('disabled', false).html('<i class="bi bi-search me-2"></i>Procesar y Previsualizar');
         }
     });
@@ -3153,74 +3166,109 @@ function enviarPromocion() {
     $('#promoProgressBar').css('width', '0%').text('0%');
     $('#promoProgressText').text('0 / ' + total + ' enviados');
 
-    // Simular progreso durante el envío (1 por segundo aproximadamente)
-    var progreso = 0;
-    var promoInterval = setInterval(function () {
-        progreso++;
-        if (progreso >= total) {
-            clearInterval(promoInterval);
-            return;
-        }
-        var pct = Math.round((progreso / total) * 100);
-        $('#promoProgressBar').css('width', pct + '%').text(pct + '%');
-        $('#promoProgressText').text(progreso + ' / ' + total + ' enviados');
-    }, 1100);
-
     $.ajax({
         url: '/Negocios/EnviarPromocion',
         type: 'POST',
         contentType: 'application/json',
         data: JSON.stringify(contactos),
         success: function (data) {
-            clearInterval(promoInterval);
+            if (!data.success || !data.promoId) {
+                toastr.error(data.message || 'Error al iniciar envío');
+                volverUploadPromo();
+                return;
+            }
 
-            $('#promoProgressBar').css('width', '100%').text('100%');
-            $('#promoProgressText').text(total + ' / ' + total + ' enviados');
+            var promoId = data.promoId;
+            var pollInterval = setInterval(function () {
+                $.get('/Negocios/GetPromocionProgress?id=' + promoId, function (prog) {
+                    var processed = prog.enviados + prog.fallidos;
+                    var pct = total > 0 ? Math.round((processed / total) * 100) : 0;
+                    $('#promoProgressBar').css('width', pct + '%').text(pct + '%');
+                    $('#promoProgressText').text(processed + ' / ' + total + ' procesados');
 
-            setTimeout(function () {
-                $('#promoResultEnviados').text(total);
-                $('#promoResultFallidos').text('0');
-                $('#promoResultTotal').text(total);
+                    if (prog.completado) {
+                        clearInterval(pollInterval);
+                        $('#promoProgressBar').css('width', '100%').text('100%');
 
-                if (promoResultTable) {
-                    promoResultTable.destroy();
-                    $('#promoResultTable').empty();
-                }
+                        setTimeout(function () {
+                            $('#promoResultEnviados').text(prog.enviados);
+                            $('#promoResultFallidos').text(prog.fallidos);
+                            $('#promoResultTotal').text(total);
 
-                var resultados = contactos.map(function (c) {
-                    return { nombre: c.nombre, telefono: c.telefono, estado: 'enviado', detalle: 'Enviado en segundo plano' };
-                });
-
-                promoResultTable = $('#promoResultTable').DataTable({
-                    data: resultados,
-                    columns: [
-                        { data: 'nombre', className: 'ps-4 fw-semibold', render: function (d) { return escHtml(d); } },
-                        { data: 'telefono', render: function (d) { return escHtml(d); } },
-                        {
-                            data: 'estado',
-                            render: function () {
-                                return '<span class="badge bg-light-success text-success">Enviado</span>';
+                            if (promoResultTable) {
+                                promoResultTable.destroy();
+                                $('#promoResultTable').empty();
                             }
-                        },
-                        { data: 'detalle', render: function (d) { return '<span class="text-muted small">' + escHtml(d) + '</span>'; } }
-                    ],
-                    pageLength: 25,
-                    ordering: true,
-                    searching: true
+
+                            // Build results: mark first N as enviado, rest as fallido
+                            var resultados = contactos.map(function (c, idx) {
+                                var esFallido = idx >= prog.enviados;
+                                return {
+                                    nombre: c.nombre,
+                                    telefono: c.telefono,
+                                    estado: esFallido ? 'fallido' : 'enviado'
+                                };
+                            });
+
+                            promoResultTable = $('#promoResultTable').DataTable({
+                                data: resultados,
+                                columns: [
+                                    { data: 'nombre', className: 'ps-4 fw-semibold', render: function (d) { return escHtml(d); } },
+                                    { data: 'telefono', render: function (d) { return escHtml(d); } },
+                                    {
+                                        data: 'estado',
+                                        render: function (d) {
+                                            return d === 'enviado'
+                                                ? '<span class="badge bg-light-success text-success">Enviado</span>'
+                                                : '<span class="badge bg-light-danger text-danger">Fallido</span>';
+                                        }
+                                    }
+                                ],
+                                pageLength: 25,
+                                order: [[2, 'desc']],
+                                language: dtLangES || {}
+                            });
+
+                            // Show error details if any
+                            var $errList = $('#promoErroresList');
+                            var $errUl = $('#promoErroresUl');
+                            $errList.addClass('d-none');
+                            $errUl.empty();
+                            if (prog.errores && prog.errores.length > 0) {
+                                var maxShow = Math.min(prog.errores.length, 10);
+                                for (var i = 0; i < maxShow; i++) {
+                                    $errUl.append('<li>' + escHtml(prog.errores[i]) + '</li>');
+                                }
+                                if (prog.errores.length > maxShow) {
+                                    $errUl.append('<li class="text-muted fst-italic">...y ' + (prog.errores.length - maxShow) + ' errores más</li>');
+                                }
+                                $errList.removeClass('d-none');
+                            }
+
+                            if (prog.fallidos > 0) {
+                                toastr.warning(prog.enviados + ' enviados, ' + prog.fallidos + ' fallidos de ' + total);
+                            } else {
+                                toastr.success('¡' + prog.enviados + ' mensajes enviados exitosamente!');
+                            }
+
+                            $('#promoFaseProgreso').addClass('d-none');
+                            $('#promoFaseResultados').removeClass('d-none');
+                        }, 500);
+                    }
+                }).fail(function () {
+                    // Poll failure is transient, keep retrying
                 });
-
-                $('#promoFaseProgreso').addClass('d-none');
-                $('#promoFaseResultados').removeClass('d-none');
-
-                toastr.success(data.message || 'Mensajes enviándose en segundo plano');
-            }, 500);
+            }, 2000);
         },
         error: function (xhr) {
-            clearInterval(promoInterval);
-            var msg = xhr.responseJSON?.message || 'Error al enviar promociones';
-            toastr.error(msg);
-            $('#promoFaseProgreso').addClass('d-none');
-            $('#promoFasePreview').removeClass('d-none');
+            if (xhr.status === 400 && !xhr.responseText) {
+                toastr.error('Tu sesión ha expirado. Recarga la página e inténtalo de nuevo.');
+                setTimeout(function () { location.reload(); }, 2000);
+            } else {
+                var msg = xhr.responseJSON?.message || 'Error al enviar promociones';
+                toastr.error(msg);
+            }
+            volverUploadPromo();
         }
     });
 }
@@ -3228,6 +3276,8 @@ function enviarPromocion() {
 function reiniciarPromocion() {
     promoContactosValidos = [];
     limpiarPromoArchivo();
+    $('#promoErroresList').addClass('d-none');
+    $('#promoErroresUl').empty();
     $('#promoFaseResultados').addClass('d-none');
     $('#promoFaseUpload').removeClass('d-none');
 }

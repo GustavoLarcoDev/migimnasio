@@ -56,19 +56,20 @@ Colores auxiliares (solo para badges/estados):
 
 **Reglas de uso en FLYERS:**
 1. Logo en la **esquina superior izquierda**, directo sobre el fondo (SIN contenedor blanco, SIN background)
-2. CSS: `width: 280px`, con `filter: drop-shadow(0 0 12px rgba(255,255,255,0.6)) drop-shadow(0 2px 6px rgba(0,0,0,0.2))` para que resalte sobre fondos oscuros/gradiente
-3. Usar `logo-corner.png` (500px) como source — NUNCA escalar el full-res en HTML
+2. CSS: `width: 150px`, con `filter: drop-shadow(0 2px 10px rgba(0,0,0,0.4))` para que resalte sobre fondos oscuros/gradiente
+3. Usar `logo.png` con **ruta absoluta `file:///`** — NUNCA usar rutas relativas (`../logo.png`) porque se rompen según la profundidad de carpetas del HTML
+4. **IMPORTANTE:** 150px es el tamaño correcto — 280px causa superposición con el badge y headline
 
 ```css
 .logo-corner {
     position: absolute;
-    top: 30px;
-    left: 30px;
+    top: 35px;
+    left: 50px;
 }
 .logo-corner img {
-    width: 280px;
+    width: 150px;
     height: auto;
-    filter: drop-shadow(0 0 12px rgba(255,255,255,0.6)) drop-shadow(0 2px 6px rgba(0,0,0,0.2));
+    filter: drop-shadow(0 2px 10px rgba(0,0,0,0.4));
 }
 ```
 
@@ -121,13 +122,18 @@ Colores auxiliares (solo para badges/estados):
 <div class="scene scene-4">
     <div class="cta-logo-wrap">
         <div class="cta-logo-glow"></div>
-        <div class="cta-logo"><img src="/Users/gustavolarco/Desktop/marketing/logo-cta.png" alt="My-Negocio"></div>
+        <div class="cta-logo"><img src="file:///Users/gustavolarco/Desktop/marketing/logo-cta.png" alt="My-Negocio"></div>
     </div>
     <div class="cta-price">$10<small>/mes</small></div>
     <div class="cta-trial">7 DÍAS GRATIS</div>
     <div class="cta-slogan">Tu Negocio, Tu Control.</div>
 </div>
 ```
+
+**IMPORTANTE — Rutas absolutas OBLIGATORIAS:**
+- SIEMPRE usar `file:///Users/gustavolarco/Desktop/marketing/logo.png` (flyers) y `file:///Users/gustavolarco/Desktop/marketing/logo-cta.png` (videos)
+- NUNCA usar rutas relativas (`../logo.png`, `../../logo.png`) — se rompen según la profundidad de carpetas del HTML
+- Verificar carga del logo con Playwright: `naturalWidth > 0` confirma que cargó, `naturalWidth === 0` significa que falló
 
 **IMPORTANTE — NO procesar el logo:**
 - El logo actual ya tiene transparencia PERFECTA nativa (generada por Picsart BackgroundRemover)

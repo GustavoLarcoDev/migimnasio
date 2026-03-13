@@ -603,14 +603,8 @@ namespace Gimnasio.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
-                    b.Property<double?>("Latitud")
-                        .HasColumnType("float");
-
                     b.Property<string>("LogoUrl")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<double?>("Longitud")
-                        .HasColumnType("float");
 
                     b.Property<bool>("NegocioBloqueado")
                         .HasColumnType("bit");

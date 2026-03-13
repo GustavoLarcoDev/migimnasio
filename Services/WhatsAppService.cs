@@ -289,9 +289,7 @@ public class WhatsAppService : IWhatsAppService
             _settings.Templates.BienvenidaVendedor,
             new Dictionary<string, string>
             {
-                ["1"] = nombre,
-                ["2"] = email,
-                ["3"] = password
+                ["1"] = nombre
             },
             $"Bienvenido al equipo de ventas de My-Negocio, {nombre}.\n\nAccede al panel de vendedor con:\nEmail: {email}\nClave: {password}\n\nIngresa en app.mi-negocio.net\n\n— My-Negocio"
         );
@@ -315,10 +313,7 @@ public class WhatsAppService : IWhatsAppService
             new Dictionary<string, string>
             {
                 ["1"] = dueno,
-                ["2"] = negocio,
-                ["3"] = tipo,
-                ["4"] = email,
-                ["5"] = password
+                ["2"] = negocio
             },
             $"Bienvenido a My-Negocio, {dueno}.\n\nTu negocio {negocio} ({tipo}) ya está listo.\n\nEmail: {email}\nClave: {password}\n\nIngresa en app.mi-negocio.net\n\nSi tienes dudas, escríbenos.\n\n— My-Negocio"
         );

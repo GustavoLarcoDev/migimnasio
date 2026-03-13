@@ -1,0 +1,1424 @@
+@{ Layout = null; }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gus's Party Control Center</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --coral: #ff6b6b;
+      --yellow: #ffd93d;
+      --green: #6bcb77;
+      --blue: #4d96ff;
+      --bg-start: #0f0c29;
+      --bg-mid: #302b63;
+      --bg-end: #24243e;
+      --glass-bg: rgba(255, 255, 255, 0.06);
+      --glass-border: rgba(255, 255, 255, 0.12);
+      --glass-hover: rgba(255, 255, 255, 0.1);
+      --text-primary: #f0f0f0;
+      --text-secondary: rgba(255, 255, 255, 0.6);
+      --text-muted: rgba(255, 255, 255, 0.35);
+      --danger: #ff4757;
+      --radius: 16px;
+      --radius-sm: 10px;
+      --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: linear-gradient(135deg, var(--bg-start), var(--bg-mid), var(--bg-end));
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Toast */
+    #toast-container {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast {
+      pointer-events: auto;
+      padding: 14px 22px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      animation: toastIn 0.4s ease, toastOut 0.4s ease forwards;
+      animation-delay: 0s, 3s;
+      max-width: 380px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .toast.success { background: rgba(107, 203, 119, 0.2); border-color: var(--green); color: var(--green); }
+    .toast.error { background: rgba(255, 71, 87, 0.2); border-color: var(--danger); color: var(--danger); }
+    .toast.info { background: rgba(77, 150, 255, 0.2); border-color: var(--blue); color: var(--blue); }
+
+    @@keyframes toastIn {
+      from { opacity: 0; transform: translateX(60px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @@keyframes toastOut {
+      from { opacity: 1; transform: translateX(0); }
+      to { opacity: 0; transform: translateX(60px); }
+    }
+
+    /* Login Screen */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .login-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(24px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+      animation: fadeUp 0.6s ease;
+    }
+
+    .login-card .emoji-title {
+      font-size: 56px;
+      margin-bottom: 12px;
+    }
+
+    .login-card h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, var(--coral), var(--yellow));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .login-card p {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 14px 18px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .input-group input:focus {
+      border-color: var(--coral);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.15);
+    }
+
+    .input-group input::placeholder { color: var(--text-muted); }
+
+    .btn {
+      padding: 13px 28px;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: 'Outfit', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--coral), #ff8e8e);
+      color: #fff;
+      width: 100%;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(255, 107, 107, 0.3);
+    }
+
+    .btn-accent {
+      background: linear-gradient(135deg, var(--blue), #6db3ff);
+      color: #fff;
+    }
+
+    .btn-accent:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(77, 150, 255, 0.3);
+    }
+
+    .btn-danger {
+      background: rgba(255, 71, 87, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(255, 71, 87, 0.3);
+    }
+
+    .btn-danger:hover:not(:disabled) {
+      background: rgba(255, 71, 87, 0.25);
+    }
+
+    .btn-sm {
+      padding: 8px 16px;
+      font-size: 13px;
+      border-radius: 8px;
+    }
+
+    .btn-ghost {
+      background: var(--glass-bg);
+      color: var(--text-secondary);
+      border: 1px solid var(--glass-border);
+    }
+
+    .btn-ghost:hover:not(:disabled) {
+      background: var(--glass-hover);
+      color: var(--text-primary);
+    }
+
+    /* Dashboard */
+    #dashboard {
+      display: none;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 20px 60px;
+      animation: fadeUp 0.5s ease;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .header h1 span {
+      background: linear-gradient(135deg, var(--coral), var(--yellow));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .btn-logout {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-secondary);
+      border: 1px solid var(--glass-border);
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .btn-logout:hover {
+      background: rgba(255, 71, 87, 0.15);
+      color: var(--danger);
+      border-color: rgba(255, 71, 87, 0.3);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 5px;
+      margin-bottom: 28px;
+      overflow-x: auto;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px 20px;
+      background: none;
+      border: none;
+      border-radius: 12px;
+      color: var(--text-secondary);
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .tab-btn.active {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-primary);
+      font-weight: 600;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeUp 0.35s ease;
+    }
+
+    .tab-content.active { display: block; }
+
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 24px;
+      transition: var(--transition);
+      animation: fadeUp 0.5s ease backwards;
+    }
+
+    .stat-card:nth-child(1) { animation-delay: 0.05s; }
+    .stat-card:nth-child(2) { animation-delay: 0.1s; }
+    .stat-card:nth-child(3) { animation-delay: 0.15s; }
+    .stat-card:nth-child(4) { animation-delay: 0.2s; }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .stat-card .stat-icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    .stat-card .stat-value {
+      font-size: 36px;
+      font-weight: 800;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .stat-card .stat-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    .stat-card:nth-child(1) .stat-value { color: var(--coral); }
+    .stat-card:nth-child(2) .stat-value { color: var(--yellow); }
+    .stat-card:nth-child(3) .stat-value { color: var(--green); }
+    .stat-card:nth-child(4) .stat-value { color: var(--blue); }
+
+    /* Food Chart */
+    .chart-section {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 28px;
+    }
+
+    .chart-section h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+
+    .chart-bar-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .chart-bar-label {
+      width: 140px;
+      font-size: 13px;
+      font-weight: 500;
+      text-align: right;
+      flex-shrink: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .chart-bar-track {
+      flex: 1;
+      height: 28px;
+      background: rgba(255, 255, 255, 0.04);
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .chart-bar-fill {
+      height: 100%;
+      border-radius: 8px;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      padding-left: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      min-width: 36px;
+    }
+
+    .chart-bar-fill.latino { background: linear-gradient(90deg, var(--coral), #ff8e8e); }
+    .chart-bar-fill.gringo { background: linear-gradient(90deg, var(--blue), #6db3ff); }
+
+    .chart-legend {
+      display: flex;
+      gap: 20px;
+      margin-top: 16px;
+      justify-content: center;
+    }
+
+    .chart-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .chart-legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 4px;
+    }
+
+    .chart-legend-dot.latino { background: var(--coral); }
+    .chart-legend-dot.gringo { background: var(--blue); }
+
+    /* Glass Table */
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--glass-border);
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .card-header h3 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .card-header .count-badge {
+      background: rgba(255, 255, 255, 0.08);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      text-align: left;
+      padding: 14px 20px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--glass-border);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 14px 20px;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      vertical-align: middle;
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-yes { background: rgba(107, 203, 119, 0.15); color: var(--green); }
+    .badge-no { background: rgba(255, 255, 255, 0.06); color: var(--text-muted); }
+    .badge-latino { background: rgba(255, 107, 107, 0.15); color: var(--coral); }
+    .badge-gringo { background: rgba(77, 150, 255, 0.15); color: var(--blue); }
+    .badge-claimed { background: rgba(255, 217, 61, 0.15); color: var(--yellow); }
+    .badge-available { background: rgba(107, 203, 119, 0.15); color: var(--green); }
+
+    .food-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .food-tag {
+      padding: 3px 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 5px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* Item Grid */
+    .items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+      padding: 20px 24px;
+    }
+
+    .item-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      transition: var(--transition);
+      animation: fadeUp 0.4s ease backwards;
+    }
+
+    .item-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, 0.2);
+    }
+
+    .item-card-img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .item-card-placeholder {
+      width: 100%;
+      height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 56px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .item-card-body {
+      padding: 16px;
+    }
+
+    .item-card-body h4 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .item-card-body .meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .item-card-body .meta a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    .item-card-body .meta a:hover { text-decoration: underline; }
+
+    .item-card-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    /* Modals / Forms */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(6px);
+      z-index: 5000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: linear-gradient(145deg, #1a1740, #251f52);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 480px;
+      padding: 32px;
+      animation: fadeUp 0.3s ease;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal h3 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 24px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: var(--transition);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(77, 150, 255, 0.15);
+    }
+
+    .form-group select option {
+      background: #1a1740;
+      color: var(--text-primary);
+    }
+
+    .form-group .file-input-wrap {
+      position: relative;
+    }
+
+    .form-group input[type="file"] {
+      padding: 10px 14px;
+      cursor: pointer;
+    }
+
+    .form-group input[type="file"]::file-selector-button {
+      background: rgba(77, 150, 255, 0.15);
+      border: 1px solid rgba(77, 150, 255, 0.3);
+      color: var(--blue);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-family: 'Outfit', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      margin-right: 10px;
+      transition: var(--transition);
+    }
+
+    .form-group input[type="file"]::file-selector-button:hover {
+      background: rgba(77, 150, 255, 0.25);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state .empty-icon {
+      font-size: 56px;
+      margin-bottom: 16px;
+    }
+
+    .empty-state p {
+      font-size: 15px;
+      font-weight: 400;
+    }
+
+    /* Loading */
+    .loading-spinner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid var(--glass-border);
+      border-top-color: var(--coral);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @@keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @@keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+    /* Responsive */
+    @@media (max-width: 768px) {
+      .header h1 { font-size: 22px; }
+      .stat-card .stat-value { font-size: 28px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .tabs { overflow-x: auto; }
+      .tab-btn { padding: 10px 14px; font-size: 13px; }
+      .items-grid { grid-template-columns: 1fr; }
+      .chart-bar-label { width: 100px; font-size: 12px; }
+      th, td { padding: 10px 14px; font-size: 13px; }
+    }
+
+    @@media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .login-card { padding: 36px 24px; }
+      .modal { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <!-- Login Screen -->
+  <div id="login-screen">
+    <div class="login-card">
+      <div class="emoji-title">&#127874;</div>
+      <h1>Gus's Party Control Center</h1>
+      <p>Enter the admin password to manage your birthday bash</p>
+      <form id="login-form">
+        <div class="input-group">
+          <input type="password" id="password-input" placeholder="Admin password..." autocomplete="off" autofocus>
+        </div>
+        <button type="submit" class="btn btn-primary" id="login-btn">
+          Enter the Party &#127881;
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div id="dashboard">
+    <div class="header">
+      <h1>&#127874; <span>Party Control</span></h1>
+      <button class="btn-logout" onclick="logout()">&#128682; Logout</button>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="overview">&#128202; Overview</button>
+      <button class="tab-btn" data-tab="rsvps">&#128203; RSVPs</button>
+      <button class="tab-btn" data-tab="foods">&#127860; Foods</button>
+      <button class="tab-btn" data-tab="gifts">&#127873; Gifts</button>
+    </div>
+
+    <!-- TAB: Overview -->
+    <div class="tab-content active" id="tab-overview">
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">&#128100;</div>
+          <div class="stat-value" id="stat-guests">-</div>
+          <div class="stat-label">Total Guests</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">&#128101;</div>
+          <div class="stat-value" id="stat-plusones">-</div>
+          <div class="stat-label">Plus Ones</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">&#127881;</div>
+          <div class="stat-value" id="stat-attending">-</div>
+          <div class="stat-label">Total Attending</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">&#127873;</div>
+          <div class="stat-value" id="stat-gifts">-</div>
+          <div class="stat-label">Gifts Claimed</div>
+        </div>
+      </div>
+
+      <div class="chart-section" id="food-chart-section">
+        <h3>&#127869; Food Preferences</h3>
+        <div id="food-chart"></div>
+        <div class="chart-legend">
+          <div class="chart-legend-item">
+            <div class="chart-legend-dot latino"></div> Latino
+          </div>
+          <div class="chart-legend-item">
+            <div class="chart-legend-dot gringo"></div> Gringo
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: RSVPs -->
+    <div class="tab-content" id="tab-rsvps">
+      <div class="glass-card">
+        <div class="card-header">
+          <h3>&#128203; RSVPs</h3>
+          <span class="count-badge" id="rsvp-count">0 responses</span>
+        </div>
+        <div id="rsvps-body">
+          <div class="loading-spinner"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Foods -->
+    <div class="tab-content" id="tab-foods">
+      <div class="glass-card">
+        <div class="card-header">
+          <h3>&#127860; Food Items</h3>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <span class="count-badge" id="food-count">0 items</span>
+            <button class="btn btn-accent btn-sm" onclick="openModal('food')">+ Add Food</button>
+          </div>
+        </div>
+        <div id="foods-body">
+          <div class="loading-spinner"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Gifts -->
+    <div class="tab-content" id="tab-gifts">
+      <div class="glass-card">
+        <div class="card-header">
+          <h3>&#127873; Gift Registry</h3>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <span class="count-badge" id="gift-count">0 / 0 claimed</span>
+            <button class="btn btn-accent btn-sm" onclick="openModal('gift')">+ Add Gift</button>
+          </div>
+        </div>
+        <div id="gifts-body">
+          <div class="loading-spinner"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Food Modal -->
+  <div class="modal-overlay" id="modal-food">
+    <div class="modal">
+      <h3>&#127860; Add Food Item</h3>
+      <form id="food-form">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="food-name" placeholder="e.g. Tacos al Pastor" required>
+        </div>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="food-type" required>
+            <option value="latino">Latino</option>
+            <option value="gringo">Gringo</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Photo (optional)</label>
+          <input type="file" id="food-photo" accept="image/*">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal('food')">Cancel</button>
+          <button type="submit" class="btn btn-accent btn-sm" id="food-submit-btn">Add Food</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Add Gift Modal -->
+  <div class="modal-overlay" id="modal-gift">
+    <div class="modal">
+      <h3>&#127873; Add Gift</h3>
+      <form id="gift-form">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="gift-name" placeholder="e.g. Bluetooth Speaker" required>
+        </div>
+        <div class="form-group">
+          <label>Link (optional)</label>
+          <input type="url" id="gift-link" placeholder="https://amazon.com/...">
+        </div>
+        <div class="form-group">
+          <label>Photo (optional)</label>
+          <input type="file" id="gift-photo" accept="image/*">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost btn-sm" onclick="closeModal('gift')">Cancel</button>
+          <button type="submit" class="btn btn-accent btn-sm" id="gift-submit-btn">Add Gift</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // ---- State ----
+    let password = sessionStorage.getItem('admin-password') || '';
+
+    // ---- Toast ----
+    function toast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.textContent = message;
+      container.appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+
+    // ---- API Helper ----
+    async function api(method, path, body = null, isFormData = false) {
+      const opts = {
+        method,
+        headers: { 'x-admin-password': password }
+      };
+      if (body) {
+        if (isFormData) {
+          opts.body = body;
+        } else {
+          opts.headers['Content-Type'] = 'application/json';
+          opts.body = JSON.stringify(body);
+        }
+      }
+      const res = await fetch(path, opts);
+      if (res.status === 401 || res.status === 403) {
+        sessionStorage.removeItem('admin-password');
+        password = '';
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+        toast('Session expired. Please log in again.', 'error');
+        throw new Error('Unauthorized');
+      }
+      if (!res.ok) {
+        const errText = await res.text().catch(() => 'Unknown error');
+        throw new Error(errText || `HTTP ${res.status}`);
+      }
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return res.json();
+      }
+      return null;
+    }
+
+    // ---- Login ----
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('password-input');
+      const btn = document.getElementById('login-btn');
+      const pw = input.value.trim();
+      if (!pw) return;
+
+      btn.disabled = true;
+      btn.textContent = 'Verifying...';
+      password = pw;
+
+      try {
+        await api('GET', '/birthday/api/admin/stats');
+        sessionStorage.setItem('admin-password', pw);
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        toast('Welcome to the control center!', 'success');
+        loadAll();
+      } catch (err) {
+        if (err.message !== 'Unauthorized') {
+          toast('Wrong password or server error', 'error');
+        }
+        password = '';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Enter the Party \u{1F389}';
+      }
+    });
+
+    function logout() {
+      sessionStorage.removeItem('admin-password');
+      password = '';
+      document.getElementById('dashboard').style.display = 'none';
+      document.getElementById('login-screen').style.display = 'flex';
+      document.getElementById('password-input').value = '';
+      toast('Logged out', 'info');
+    }
+
+    // Auto-login if password in session
+    if (password) {
+      api('GET', '/birthday/api/admin/stats')
+        .then(() => {
+          document.getElementById('login-screen').style.display = 'none';
+          document.getElementById('dashboard').style.display = 'block';
+          loadAll();
+        })
+        .catch(() => {
+          sessionStorage.removeItem('admin-password');
+          password = '';
+        });
+    }
+
+    // ---- Tabs ----
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+      });
+    });
+
+    // ---- Load All Data ----
+    function loadAll() {
+      loadStats();
+      loadRsvps();
+      loadFoods();
+      loadGifts();
+    }
+
+    // ---- Overview / Stats ----
+    async function loadStats() {
+      try {
+        const stats = await api('GET', '/birthday/api/admin/stats');
+        document.getElementById('stat-guests').textContent = stats.totalGuests ?? 0;
+        document.getElementById('stat-plusones').textContent = stats.plusOnes ?? 0;
+        document.getElementById('stat-attending').textContent = stats.totalAttending ?? 0;
+        document.getElementById('stat-gifts').textContent = stats.giftsClaimed ?? 0;
+
+        // Render food chart
+        renderFoodChart(stats.foodCounts || {});
+      } catch (err) {
+        if (err.message !== 'Unauthorized') {
+          toast('Failed to load stats', 'error');
+        }
+      }
+    }
+
+    function renderFoodChart(foodCounts) {
+      const container = document.getElementById('food-chart');
+      const entries = Object.entries(foodCounts);
+
+      if (entries.length === 0) {
+        container.innerHTML = '<div class="empty-state"><p>No food selections yet</p></div>';
+        return;
+      }
+
+      const max = Math.max(...entries.map(([, v]) => (typeof v === 'object' ? v.count : v)), 1);
+      container.innerHTML = entries.map(([name, data]) => {
+        const count = typeof data === 'object' ? data.count : data;
+        const type = typeof data === 'object' ? (data.type || 'latino') : 'latino';
+        const pct = Math.max((count / max) * 100, 8);
+        return `
+          <div class="chart-bar-row">
+            <div class="chart-bar-label">${escHtml(name)}</div>
+            <div class="chart-bar-track">
+              <div class="chart-bar-fill ${type}" style="width:${pct}%">${count}</div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // ---- RSVPs ----
+    async function loadRsvps() {
+      const body = document.getElementById('rsvps-body');
+      body.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+
+      try {
+        const rsvps = await api('GET', '/birthday/api/admin/rsvps');
+        document.getElementById('rsvp-count').textContent = `${rsvps.length} response${rsvps.length !== 1 ? 's' : ''}`;
+
+        if (rsvps.length === 0) {
+          body.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">&#128172;</div>
+              <p>No RSVPs yet. Share the invite!</p>
+            </div>`;
+          return;
+        }
+
+        body.innerHTML = `
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Plus One</th>
+                  <th>Foods</th>
+                  <th>Extra Requests</th>
+                  <th>Date</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rsvps.map(r => `
+                  <tr>
+                    <td><strong>${escHtml(r.name || '')}</strong></td>
+                    <td>
+                      ${r.plusOne
+                        ? `<span class="badge badge-yes">Yes</span> ${r.plusOneName ? escHtml(r.plusOneName) : ''}`
+                        : '<span class="badge badge-no">No</span>'}
+                    </td>
+                    <td>
+                      <div class="food-tags">
+                        ${(r.foods || []).map(f => `<span class="food-tag">${escHtml(f)}</span>`).join('')}
+                        ${(!r.foods || r.foods.length === 0) ? '<span style="color:var(--text-muted)">None</span>' : ''}
+                      </div>
+                    </td>
+                    <td style="max-width:200px;color:var(--text-secondary)">${escHtml(r.extraRequests || r.extra || '-')}</td>
+                    <td style="white-space:nowrap;color:var(--text-muted);font-size:12px">${r.createdAt ? new Date(r.createdAt).toLocaleDateString() : '-'}</td>
+                    <td>
+                      <button class="btn btn-danger btn-sm" onclick="deleteRsvp('${r.id || r._id}')">Delete</button>
+                    </td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`;
+      } catch (err) {
+        if (err.message !== 'Unauthorized') {
+          body.innerHTML = `<div class="empty-state"><p>Failed to load RSVPs</p></div>`;
+          toast('Failed to load RSVPs', 'error');
+        }
+      }
+    }
+
+    async function deleteRsvp(id) {
+      if (!confirm('Delete this RSVP?')) return;
+      try {
+        await api('DELETE', `/birthday/api/admin/rsvps/${id}`);
+        toast('RSVP deleted', 'success');
+        loadRsvps();
+        loadStats();
+      } catch (err) {
+        toast('Failed to delete RSVP', 'error');
+      }
+    }
+
+    // ---- Foods ----
+    async function loadFoods() {
+      const body = document.getElementById('foods-body');
+      body.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+
+      try {
+        const foods = await api('GET', '/birthday/api/admin/foods');
+        document.getElementById('food-count').textContent = `${foods.length} item${foods.length !== 1 ? 's' : ''}`;
+
+        if (foods.length === 0) {
+          body.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">&#127860;</div>
+              <p>No food items yet. Add some tasty options!</p>
+            </div>`;
+          return;
+        }
+
+        body.innerHTML = `
+          <div class="items-grid">
+            ${foods.map((f, i) => `
+              <div class="item-card" style="animation-delay:${i * 0.05}s">
+                ${f.photoUrl
+                  ? `<img class="item-card-img" src="${escAttr(f.photoUrl)}" alt="${escAttr(f.name)}" loading="lazy">`
+                  : `<div class="item-card-placeholder">\u{1F356}</div>`}
+                <div class="item-card-body">
+                  <h4>${escHtml(f.name)}</h4>
+                  <div class="meta">
+                    <span class="badge badge-${f.type === 'gringo' ? 'gringo' : 'latino'}">${escHtml(f.type || 'latino')}</span>
+                  </div>
+                  <div class="item-card-actions">
+                    <button class="btn btn-danger btn-sm" onclick="deleteFood('${f.id || f._id}')">Delete</button>
+                  </div>
+                </div>
+              </div>`).join('')}
+          </div>`;
+      } catch (err) {
+        if (err.message !== 'Unauthorized') {
+          body.innerHTML = `<div class="empty-state"><p>Failed to load foods</p></div>`;
+          toast('Failed to load foods', 'error');
+        }
+      }
+    }
+
+    async function deleteFood(id) {
+      if (!confirm('Delete this food item?')) return;
+      try {
+        await api('DELETE', `/birthday/api/admin/foods/${id}`);
+        toast('Food deleted', 'success');
+        loadFoods();
+        loadStats();
+      } catch (err) {
+        toast('Failed to delete food', 'error');
+      }
+    }
+
+    // ---- Gifts ----
+    async function loadGifts() {
+      const body = document.getElementById('gifts-body');
+      body.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+
+      try {
+        const gifts = await api('GET', '/birthday/api/admin/gifts');
+        const claimed = gifts.filter(g => g.claimed).length;
+        document.getElementById('gift-count').textContent = `${claimed} / ${gifts.length} claimed`;
+
+        if (gifts.length === 0) {
+          body.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">&#127873;</div>
+              <p>No gifts in the registry yet. Add some wishes!</p>
+            </div>`;
+          return;
+        }
+
+        body.innerHTML = `
+          <div class="items-grid">
+            ${gifts.map((g, i) => `
+              <div class="item-card" style="animation-delay:${i * 0.05}s">
+                ${g.photoUrl
+                  ? `<img class="item-card-img" src="${escAttr(g.photoUrl)}" alt="${escAttr(g.name)}" loading="lazy">`
+                  : `<div class="item-card-placeholder">\u{1F381}</div>`}
+                <div class="item-card-body">
+                  <h4>${escHtml(g.name)}</h4>
+                  <div class="meta">
+                    <span class="badge ${g.claimed ? 'badge-claimed' : 'badge-available'}">${g.claimed ? 'Claimed' : 'Available'}</span>
+                    ${g.link ? ` &middot; <a href="${escAttr(g.link)}" target="_blank" rel="noopener">View Link</a>` : ''}
+                  </div>
+                  <div class="item-card-actions">
+                    ${g.claimed ? `<button class="btn btn-ghost btn-sm" onclick="unclaimGift('${g.id || g._id}')">Unclaim</button>` : ''}
+                    <button class="btn btn-danger btn-sm" onclick="deleteGift('${g.id || g._id}')">Delete</button>
+                  </div>
+                </div>
+              </div>`).join('')}
+          </div>`;
+      } catch (err) {
+        if (err.message !== 'Unauthorized') {
+          body.innerHTML = `<div class="empty-state"><p>Failed to load gifts</p></div>`;
+          toast('Failed to load gifts', 'error');
+        }
+      }
+    }
+
+    async function deleteGift(id) {
+      if (!confirm('Delete this gift?')) return;
+      try {
+        await api('DELETE', `/birthday/api/admin/gifts/${id}`);
+        toast('Gift deleted', 'success');
+        loadGifts();
+        loadStats();
+      } catch (err) {
+        toast('Failed to delete gift', 'error');
+      }
+    }
+
+    async function unclaimGift(id) {
+      if (!confirm('Mark this gift as unclaimed?')) return;
+      try {
+        await api('PUT', `/birthday/api/admin/gifts/${id}/unclaim`);
+        toast('Gift unclaimed', 'success');
+        loadGifts();
+        loadStats();
+      } catch (err) {
+        toast('Failed to unclaim gift', 'error');
+      }
+    }
+
+    // ---- Modals ----
+    function openModal(type) {
+      document.getElementById(`modal-${type}`).classList.add('open');
+    }
+
+    function closeModal(type) {
+      document.getElementById(`modal-${type}`).classList.remove('open');
+    }
+
+    // Close modals on backdrop click
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+          overlay.classList.remove('open');
+        }
+      });
+    });
+
+    // Close modals on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+      }
+    });
+
+    // ---- Add Food Form ----
+    document.getElementById('food-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('food-submit-btn');
+      const name = document.getElementById('food-name').value.trim();
+      const type = document.getElementById('food-type').value;
+      const photo = document.getElementById('food-photo').files[0];
+
+      if (!name) { toast('Name is required', 'error'); return; }
+
+      btn.disabled = true;
+      btn.textContent = 'Adding...';
+
+      try {
+        const fd = new FormData();
+        fd.append('name', name);
+        fd.append('type', type);
+        if (photo) fd.append('photo', photo);
+
+        await api('POST', '/birthday/api/admin/foods', fd, true);
+        toast('Food added!', 'success');
+        closeModal('food');
+        document.getElementById('food-form').reset();
+        loadFoods();
+        loadStats();
+      } catch (err) {
+        toast('Failed to add food: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Add Food';
+      }
+    });
+
+    // ---- Add Gift Form ----
+    document.getElementById('gift-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('gift-submit-btn');
+      const name = document.getElementById('gift-name').value.trim();
+      const link = document.getElementById('gift-link').value.trim();
+      const photo = document.getElementById('gift-photo').files[0];
+
+      if (!name) { toast('Name is required', 'error'); return; }
+
+      btn.disabled = true;
+      btn.textContent = 'Adding...';
+
+      try {
+        const fd = new FormData();
+        fd.append('name', name);
+        if (link) fd.append('link', link);
+        if (photo) fd.append('photo', photo);
+
+        await api('POST', '/birthday/api/admin/gifts', fd, true);
+        toast('Gift added!', 'success');
+        closeModal('gift');
+        document.getElementById('gift-form').reset();
+        loadGifts();
+        loadStats();
+      } catch (err) {
+        toast('Failed to add gift: ' + err.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Add Gift';
+      }
+    });
+
+    // ---- Util ----
+    function escHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    function escAttr(str) {
+      return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+  </script>
+</body>
+</html>

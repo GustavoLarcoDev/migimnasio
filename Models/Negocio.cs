@@ -141,22 +141,6 @@ public class Gym
     public string LogoUrl { get; set; }
 
     // ═══════════════════════════════════════════════════════════
-    // GPS (para búsqueda de restaurantes cercanos)
-    // ═══════════════════════════════════════════════════════════
-
-    /// <summary>
-    /// Latitud GPS del negocio. Se usa para calcular distancias
-    /// en la búsqueda de restaurantes cercanos (fórmula Haversine).
-    /// </summary>
-    public double? Latitud { get; set; }
-
-    /// <summary>
-    /// Longitud GPS del negocio. Se usa para calcular distancias
-    /// en la búsqueda de restaurantes cercanos (fórmula Haversine).
-    /// </summary>
-    public double? Longitud { get; set; }
-
-    // ═══════════════════════════════════════════════════════════
     // FECHAS
     // ═══════════════════════════════════════════════════════════
 

@@ -25,6 +25,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Concurrent;
 using System.Security.Claims;
 using System.Text.Json;
 
@@ -39,6 +40,9 @@ namespace Gimnasio.Controllers;
 [Authorize] // Requiere que el usuario haya iniciado sesión antes de acceder a cualquier acción
 public class AdminController : Controller
 {
+    // ── Tracking de promociones en segundo plano ──────────────────────────────────────
+    private static readonly ConcurrentDictionary<string, PromocionProgress> _promoProgress = new();
+
     // ── Servicios inyectados por el contenedor de dependencias (Program.cs) ──────────
     private readonly INegocioService _negocioService;
     private readonly IAuthService _authService;
@@ -1282,6 +1286,7 @@ public class AdminController : Controller
     /// <summary>
     /// Envía mensajes promocionales de WhatsApp a una lista de contactos validados.
     /// Delay de 1 segundo entre cada mensaje para respetar rate limits de Twilio.
+    /// Retorna un trackingId para consultar el progreso via GetPromocionProgress.
     /// </summary>
     [HttpPost("EnviarPromocion")]
     [IgnoreAntiforgeryToken]
@@ -1302,6 +1307,19 @@ public class AdminController : Controller
             var contactosCopia = contactos.Select(c => new { c.Nombre, c.Telefono }).ToList();
             var totalContactos = contactosCopia.Count;
 
+            // Generar ID de tracking para que el frontend pueda consultar el progreso
+            var trackingId = Guid.NewGuid().ToString("N");
+            var progress = new PromocionProgress { Total = totalContactos };
+            _promoProgress[trackingId] = progress;
+
+            // Limpiar entradas antiguas (> 1 hora) para evitar memory leaks
+            var cutoff = TimeHelper.Now.AddHours(-1);
+            foreach (var key in _promoProgress.Keys)
+            {
+                if (_promoProgress.TryGetValue(key, out var old) && old.CreadoEn < cutoff)
+                    _promoProgress.TryRemove(key, out _);
+            }
+
             // Lanzar el envío masivo en segundo plano con su propio scope — retornar inmediatamente
             _ = Task.Run(async () =>
             {
@@ -1309,37 +1327,84 @@ public class AdminController : Controller
                 var whatsAppSvc = scope.ServiceProvider.GetRequiredService<IWhatsAppService>();
                 var negocioSvc = scope.ServiceProvider.GetRequiredService<INegocioService>();
 
-                int enviados = 0, fallidos = 0;
                 for (int i = 0; i < contactosCopia.Count; i++)
                 {
                     var contacto = contactosCopia[i];
                     try
                     {
                         var ok = await whatsAppSvc.EnviarPromocionWhatsAppAsync(contacto.Telefono, contacto.Nombre);
-                        if (ok) enviados++; else fallidos++;
+                        if (ok)
+                            Interlocked.Increment(ref progress._enviados);
+                        else
+                        {
+                            Interlocked.Increment(ref progress._fallidos);
+                            lock (progress.Errores) { progress.Errores.Add($"{contacto.Telefono}: envío falló"); }
+                        }
                     }
-                    catch { fallidos++; }
+                    catch (Exception ex)
+                    {
+                        Interlocked.Increment(ref progress._fallidos);
+                        lock (progress.Errores) { progress.Errores.Add($"{contacto.Telefono}: {ex.Message}"); }
+                    }
 
                     if (i < contactosCopia.Count - 1)
                         await Task.Delay(1000);
                 }
 
+                progress.Completado = true;
+
                 try
                 {
                     await negocioSvc.RegistrarAdminLogAsync(
                         "PromocionWhatsApp",
-                        $"Promoción enviada: {enviados} exitosos, {fallidos} fallidos de {totalContactos} contactos",
+                        $"Promoción enviada: {progress.Enviados} exitosos, {progress.Fallidos} fallidos de {totalContactos} contactos",
                         null);
                 }
                 catch { }
             });
 
-            return Ok(new { success = true, message = $"Envío de {totalContactos} mensajes iniciado en segundo plano", total = totalContactos });
+            return Ok(new { success = true, message = $"Envío de {totalContactos} mensajes iniciado en segundo plano", total = totalContactos, trackingId });
         }
         catch (Exception)
         {
             return StatusCode(500, new { success = false, message = "Error al enviar promociones" });
         }
+    }
+
+    /// <summary>
+    /// Consulta el progreso de un envío de promoción masiva por WhatsApp.
+    /// El frontend puede hacer polling a este endpoint para actualizar la UI en tiempo real.
+    /// </summary>
+    [HttpGet("GetPromocionProgress")]
+    public IActionResult GetPromocionProgress(string id)
+    {
+        if (!_authService.IsAdmin(User))
+            return Forbid();
+
+        if (!_promoProgress.TryGetValue(id, out var progress))
+            return NotFound(new { success = false, message = "Promoción no encontrada" });
+
+        return Ok(new
+        {
+            success = true,
+            total = progress.Total,
+            enviados = progress.Enviados,
+            fallidos = progress.Fallidos,
+            completado = progress.Completado,
+            errores = progress.Errores.Take(20)
+        });
+    }
+
+    private class PromocionProgress
+    {
+        public int Total { get; set; }
+        internal int _enviados;
+        internal int _fallidos;
+        public int Enviados => _enviados;
+        public int Fallidos => _fallidos;
+        public bool Completado { get; set; }
+        public List<string> Errores { get; set; } = new();
+        public DateTime CreadoEn { get; set; } = TimeHelper.Now;
     }
 
 }
