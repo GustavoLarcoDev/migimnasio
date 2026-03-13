@@ -7,6 +7,7 @@ using System.Text.Json;
 namespace Gimnasio.Controllers;
 
 [Route("birthday")]
+[IgnoreAntiforgeryToken]
 public class BirthdayController : Controller
 {
     private readonly ApplicationDbContext _context;
