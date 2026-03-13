@@ -239,6 +239,11 @@ public class ApplicationDbContext : DbContext
     /// </summary>
     public DbSet<DisenoMarketing> DisenosMarketing { get; set; }
 
+    // Birthday RSVP (pagina secreta /birthday)
+    public DbSet<BirthdayComida> BirthdayComidas { get; set; }
+    public DbSet<BirthdayRegalo> BirthdayRegalos { get; set; }
+    public DbSet<BirthdayRsvp> BirthdayRsvps { get; set; }
+
     // ═══════════════════════════════════════════════════════════
     // CONFIGURACIÓN DEL MODELO (OnModelCreating)
     //

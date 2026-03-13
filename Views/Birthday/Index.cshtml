@@ -1489,7 +1489,7 @@
       grid.innerHTML = foods.map(food => {
         const emoji = getFoodEmoji(food.name);
         const photoHtml = food.photo
-          ? `<img class="food-photo" src="/birthday-uploads/${food.photo}" alt="${food.name}">`
+          ? `<img class="food-photo" src="${food.photo}" alt="${food.name}">`
           : `<span class="food-emoji">${emoji}</span>`;
         const typeClass = food.type || '';
         const typeLabel = food.type === 'latino' ? 'Latino' : food.type === 'gringo' ? 'Gringo' : '';
@@ -1569,7 +1569,7 @@
         const isClaimed = gift.claimed;
         const isClaimedByMe = claimedByMe.has(gift.id);
         const photoHtml = gift.photo
-          ? `<img class="gift-photo" src="/birthday-uploads/${gift.photo}" alt="${escHtml(gift.name)}">`
+          ? `<img class="gift-photo" src="${gift.photo}" alt="${escHtml(gift.name)}">`
           : `<span class="gift-emoji">\u{1F381}</span>`;
         const linkHtml = gift.link
           ? `<a class="gift-link" href="${escAttr(gift.link)}" target="_blank" rel="noopener">View \u2192</a><br>`

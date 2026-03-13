@@ -1,4 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Gimnasio.Data;
+using Gimnasio.Models;
 using System.Text.Json;
 
 namespace Gimnasio.Controllers;
@@ -6,25 +9,16 @@ namespace Gimnasio.Controllers;
 [Route("birthday")]
 public class BirthdayController : Controller
 {
-    private static readonly string DataDir = Path.Combine(
-        Directory.GetCurrentDirectory(), "birthday-data");
+    private readonly ApplicationDbContext _context;
+    private const string AdminPassword = "gus0604";
 
     private static readonly string UploadsDir = Path.Combine(
         Directory.GetCurrentDirectory(), "wwwroot", "birthday-uploads");
 
-    private const string AdminPassword = "gus0604";
-
-    private static readonly JsonSerializerOptions JsonOpts = new()
+    public BirthdayController(ApplicationDbContext context)
     {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-        WriteIndented = true
-    };
-
-    public BirthdayController()
-    {
-        if (!Directory.Exists(DataDir)) Directory.CreateDirectory(DataDir);
+        _context = context;
         if (!Directory.Exists(UploadsDir)) Directory.CreateDirectory(UploadsDir);
-        SeedFoods();
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -42,56 +36,70 @@ public class BirthdayController : Controller
     // ═══════════════════════════════════════════════════════════════════════════
 
     [HttpGet("api/foods")]
-    public IActionResult GetFoods()
+    public async Task<IActionResult> GetFoods()
     {
-        var foods = ReadJson<BirthdayFood>("foods.json");
-        return Json(foods.Select(f => new { f.Id, f.Name, f.Type, f.Photo }));
+        var foods = await _context.BirthdayComidas
+            .Where(c => c.IsActive)
+            .Select(c => new { id = c.ComidaId, name = c.Nombre, type = c.EsGringo ? "gringo" : "latino", photo = c.FotoUrl })
+            .ToListAsync();
+        return Json(foods);
     }
 
     [HttpGet("api/gifts")]
-    public IActionResult GetGifts()
+    public async Task<IActionResult> GetGifts()
     {
-        var gifts = ReadJson<BirthdayGift>("gifts.json");
-        return Json(gifts.Select(g => new { g.Id, g.Name, g.Photo, g.Link, g.Claimed }));
+        var gifts = await _context.BirthdayRegalos
+            .Where(r => r.IsActive)
+            .Select(r => new { id = r.RegaloId, name = r.Nombre, photo = r.FotoUrl, link = r.Link, claimed = r.Claimed })
+            .ToListAsync();
+        return Json(gifts);
     }
 
     [HttpPost("api/gifts/claim")]
-    public IActionResult ClaimGift([FromBody] ClaimRequest req)
+    public async Task<IActionResult> ClaimGift([FromBody] ClaimRequest req)
     {
-        if (string.IsNullOrWhiteSpace(req?.GiftId))
+        if (req?.GiftId == null || !Guid.TryParse(req.GiftId, out var giftId))
             return BadRequest(new { error = "giftId is required" });
 
-        var gifts = ReadJson<BirthdayGift>("gifts.json");
-        var gift = gifts.FirstOrDefault(g => g.Id == req.GiftId);
+        var gift = await _context.BirthdayRegalos.FirstOrDefaultAsync(r => r.RegaloId == giftId && r.IsActive);
         if (gift == null) return NotFound(new { error = "Gift not found" });
         if (gift.Claimed) return Conflict(new { error = "Gift already claimed" });
 
         gift.Claimed = true;
-        WriteJson("gifts.json", gifts);
+        await _context.SaveChangesAsync();
         return Json(new { success = true });
     }
 
     [HttpPost("api/rsvp")]
-    public IActionResult SaveRsvp([FromBody] RsvpRequest req)
+    public async Task<IActionResult> SaveRsvp([FromBody] RsvpRequest req)
     {
         if (string.IsNullOrWhiteSpace(req?.Name))
             return BadRequest(new { error = "Name is required" });
 
-        var rsvps = ReadJson<BirthdayRsvp>("rsvps.json");
         var rsvp = new BirthdayRsvp
         {
-            Id = Guid.NewGuid().ToString(),
-            Name = req.Name.Trim(),
+            RsvpId = Guid.NewGuid(),
+            Nombre = req.Name.Trim(),
             PlusOne = req.PlusOne,
-            PlusOneName = req.PlusOneName?.Trim(),
-            Foods = req.Foods ?? new List<string>(),
+            PlusOneNombre = req.PlusOneName?.Trim(),
+            ComidasJson = req.Foods != null ? JsonSerializer.Serialize(req.Foods) : null,
             Extra = req.Extra?.Trim(),
-            CreatedAt = DateTime.UtcNow.ToString("o")
+            FechaCreacion = DateTime.UtcNow
         };
 
-        rsvps.Add(rsvp);
-        WriteJson("rsvps.json", rsvps);
-        return StatusCode(201, rsvp);
+        _context.BirthdayRsvps.Add(rsvp);
+        await _context.SaveChangesAsync();
+
+        return StatusCode(201, new
+        {
+            id = rsvp.RsvpId,
+            name = rsvp.Nombre,
+            plusOne = rsvp.PlusOne,
+            plusOneName = rsvp.PlusOneNombre,
+            foods = req.Foods ?? new List<string>(),
+            extra = rsvp.Extra,
+            createdAt = rsvp.FechaCreacion
+        });
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -99,30 +107,46 @@ public class BirthdayController : Controller
     // ═══════════════════════════════════════════════════════════════════════════
 
     [HttpGet("api/admin/rsvps")]
-    public IActionResult GetAdminRsvps()
+    public async Task<IActionResult> GetAdminRsvps()
     {
         if (!IsAdmin()) return Unauthorized(new { error = "Unauthorized" });
-        return Json(ReadJson<BirthdayRsvp>("rsvps.json"));
+        var rsvps = await _context.BirthdayRsvps
+            .OrderByDescending(r => r.FechaCreacion)
+            .Select(r => new
+            {
+                id = r.RsvpId,
+                name = r.Nombre,
+                plusOne = r.PlusOne,
+                plusOneName = r.PlusOneNombre,
+                foods = r.ComidasJson,
+                extra = r.Extra,
+                createdAt = r.FechaCreacion
+            })
+            .ToListAsync();
+        return Json(rsvps);
     }
 
     [HttpDelete("api/admin/rsvps/{id}")]
-    public IActionResult DeleteRsvp(string id)
+    public async Task<IActionResult> DeleteRsvp(Guid id)
     {
         if (!IsAdmin()) return Unauthorized(new { error = "Unauthorized" });
-        var rsvps = ReadJson<BirthdayRsvp>("rsvps.json");
-        var index = rsvps.FindIndex(r => r.Id == id);
-        if (index == -1) return NotFound(new { error = "RSVP not found" });
+        var rsvp = await _context.BirthdayRsvps.FindAsync(id);
+        if (rsvp == null) return NotFound(new { error = "RSVP not found" });
 
-        rsvps.RemoveAt(index);
-        WriteJson("rsvps.json", rsvps);
+        _context.BirthdayRsvps.Remove(rsvp);
+        await _context.SaveChangesAsync();
         return Json(new { success = true });
     }
 
     [HttpGet("api/admin/foods")]
-    public IActionResult GetAdminFoods()
+    public async Task<IActionResult> GetAdminFoods()
     {
         if (!IsAdmin()) return Unauthorized(new { error = "Unauthorized" });
-        return Json(ReadJson<BirthdayFood>("foods.json"));
+        var foods = await _context.BirthdayComidas
+            .Where(c => c.IsActive)
+            .Select(c => new { id = c.ComidaId, name = c.Nombre, type = c.EsGringo ? "gringo" : "latino", photo = c.FotoUrl })
+            .ToListAsync();
+        return Json(foods);
     }
 
     [HttpPost("api/admin/foods")]
@@ -132,50 +156,50 @@ public class BirthdayController : Controller
         if (string.IsNullOrWhiteSpace(name))
             return BadRequest(new { error = "Name is required" });
 
-        string? photoFilename = null;
+        string? photoUrl = null;
         if (photo != null)
         {
-            photoFilename = $"{Guid.NewGuid()}{Path.GetExtension(photo.FileName)}";
-            var filePath = Path.Combine(UploadsDir, photoFilename);
+            var filename = $"{Guid.NewGuid()}{Path.GetExtension(photo.FileName)}";
+            var filePath = Path.Combine(UploadsDir, filename);
             using var stream = new FileStream(filePath, FileMode.Create);
             await photo.CopyToAsync(stream);
+            photoUrl = $"/birthday-uploads/{filename}";
         }
 
-        var foods = ReadJson<BirthdayFood>("foods.json");
-        var food = new BirthdayFood
+        var food = new BirthdayComida
         {
-            Id = Guid.NewGuid().ToString(),
-            Name = name.Trim(),
-            Type = type?.Trim(),
-            Photo = photoFilename
+            ComidaId = Guid.NewGuid(),
+            Nombre = name.Trim(),
+            EsGringo = type?.ToLower() == "gringo",
+            FotoUrl = photoUrl
         };
 
-        foods.Add(food);
-        WriteJson("foods.json", foods);
-        return StatusCode(201, food);
+        _context.BirthdayComidas.Add(food);
+        await _context.SaveChangesAsync();
+        return StatusCode(201, new { id = food.ComidaId, name = food.Nombre, type = food.EsGringo ? "gringo" : "latino", photo = food.FotoUrl });
     }
 
     [HttpDelete("api/admin/foods/{id}")]
-    public IActionResult DeleteFood(string id)
+    public async Task<IActionResult> DeleteFood(Guid id)
     {
         if (!IsAdmin()) return Unauthorized(new { error = "Unauthorized" });
-        var foods = ReadJson<BirthdayFood>("foods.json");
-        var index = foods.FindIndex(f => f.Id == id);
-        if (index == -1) return NotFound(new { error = "Food not found" });
+        var food = await _context.BirthdayComidas.FindAsync(id);
+        if (food == null) return NotFound(new { error = "Food not found" });
 
-        var food = foods[index];
-        DeleteUploadedFile(food.Photo);
-        foods.RemoveAt(index);
-        WriteJson("foods.json", foods);
+        food.IsActive = false;
+        await _context.SaveChangesAsync();
         return Json(new { success = true });
     }
 
     [HttpGet("api/admin/gifts")]
-    public IActionResult GetAdminGifts()
+    public async Task<IActionResult> GetAdminGifts()
     {
         if (!IsAdmin()) return Unauthorized(new { error = "Unauthorized" });
-        var gifts = ReadJson<BirthdayGift>("gifts.json");
-        return Json(gifts.Select(g => new { g.Id, g.Name, g.Photo, g.Link, g.Claimed }));
+        var gifts = await _context.BirthdayRegalos
+            .Where(r => r.IsActive)
+            .Select(r => new { id = r.RegaloId, name = r.Nombre, photo = r.FotoUrl, link = r.Link, claimed = r.Claimed })
+            .ToListAsync();
+        return Json(gifts);
     }
 
     [HttpPost("api/admin/gifts")]
@@ -185,65 +209,60 @@ public class BirthdayController : Controller
         if (string.IsNullOrWhiteSpace(name))
             return BadRequest(new { error = "Name is required" });
 
-        string? photoFilename = null;
+        string? photoUrl = null;
         if (photo != null)
         {
-            photoFilename = $"{Guid.NewGuid()}{Path.GetExtension(photo.FileName)}";
-            var filePath = Path.Combine(UploadsDir, photoFilename);
+            var filename = $"{Guid.NewGuid()}{Path.GetExtension(photo.FileName)}";
+            var filePath = Path.Combine(UploadsDir, filename);
             using var stream = new FileStream(filePath, FileMode.Create);
             await photo.CopyToAsync(stream);
+            photoUrl = $"/birthday-uploads/{filename}";
         }
 
-        var gifts = ReadJson<BirthdayGift>("gifts.json");
-        var gift = new BirthdayGift
+        var gift = new BirthdayRegalo
         {
-            Id = Guid.NewGuid().ToString(),
-            Name = name.Trim(),
+            RegaloId = Guid.NewGuid(),
+            Nombre = name.Trim(),
             Link = link?.Trim(),
-            Photo = photoFilename,
-            Claimed = false
+            FotoUrl = photoUrl
         };
 
-        gifts.Add(gift);
-        WriteJson("gifts.json", gifts);
-        return StatusCode(201, gift);
+        _context.BirthdayRegalos.Add(gift);
+        await _context.SaveChangesAsync();
+        return StatusCode(201, new { id = gift.RegaloId, name = gift.Nombre, photo = gift.FotoUrl, link = gift.Link, claimed = gift.Claimed });
     }
 
     [HttpDelete("api/admin/gifts/{id}")]
-    public IActionResult DeleteGift(string id)
+    public async Task<IActionResult> DeleteGift(Guid id)
     {
         if (!IsAdmin()) return Unauthorized(new { error = "Unauthorized" });
-        var gifts = ReadJson<BirthdayGift>("gifts.json");
-        var index = gifts.FindIndex(g => g.Id == id);
-        if (index == -1) return NotFound(new { error = "Gift not found" });
+        var gift = await _context.BirthdayRegalos.FindAsync(id);
+        if (gift == null) return NotFound(new { error = "Gift not found" });
 
-        var gift = gifts[index];
-        DeleteUploadedFile(gift.Photo);
-        gifts.RemoveAt(index);
-        WriteJson("gifts.json", gifts);
+        gift.IsActive = false;
+        await _context.SaveChangesAsync();
         return Json(new { success = true });
     }
 
     [HttpPut("api/admin/gifts/{id}/unclaim")]
-    public IActionResult UnclaimGift(string id)
+    public async Task<IActionResult> UnclaimGift(Guid id)
     {
         if (!IsAdmin()) return Unauthorized(new { error = "Unauthorized" });
-        var gifts = ReadJson<BirthdayGift>("gifts.json");
-        var gift = gifts.FirstOrDefault(g => g.Id == id);
+        var gift = await _context.BirthdayRegalos.FirstOrDefaultAsync(r => r.RegaloId == id && r.IsActive);
         if (gift == null) return NotFound(new { error = "Gift not found" });
 
         gift.Claimed = false;
-        WriteJson("gifts.json", gifts);
+        await _context.SaveChangesAsync();
         return Json(new { success = true });
     }
 
     [HttpGet("api/admin/stats")]
-    public IActionResult GetStats()
+    public async Task<IActionResult> GetStats()
     {
         if (!IsAdmin()) return Unauthorized(new { error = "Unauthorized" });
 
-        var rsvps = ReadJson<BirthdayRsvp>("rsvps.json");
-        var gifts = ReadJson<BirthdayGift>("gifts.json");
+        var rsvps = await _context.BirthdayRsvps.ToListAsync();
+        var gifts = await _context.BirthdayRegalos.Where(r => r.IsActive).ToListAsync();
 
         var totalGuests = rsvps.Count;
         var totalPlusOnes = rsvps.Count(r => r.PlusOne);
@@ -254,12 +273,18 @@ public class BirthdayController : Controller
         var foodCounts = new Dictionary<string, int>();
         foreach (var rsvp in rsvps)
         {
-            if (rsvp.Foods != null)
+            if (!string.IsNullOrEmpty(rsvp.ComidasJson))
             {
-                foreach (var food in rsvp.Foods)
+                try
                 {
-                    foodCounts[food] = foodCounts.GetValueOrDefault(food) + 1;
+                    var foods = JsonSerializer.Deserialize<List<string>>(rsvp.ComidasJson);
+                    if (foods != null)
+                    {
+                        foreach (var food in foods)
+                            foodCounts[food] = foodCounts.GetValueOrDefault(food) + 1;
+                    }
                 }
+                catch { }
             }
         }
 
@@ -275,52 +300,6 @@ public class BirthdayController : Controller
         return Request.Headers["x-admin-password"].FirstOrDefault() == AdminPassword;
     }
 
-    private static List<T> ReadJson<T>(string filename)
-    {
-        var filePath = Path.Combine(DataDir, filename);
-        try
-        {
-            if (!System.IO.File.Exists(filePath)) return new List<T>();
-            var raw = System.IO.File.ReadAllText(filePath);
-            return JsonSerializer.Deserialize<List<T>>(raw, JsonOpts) ?? new List<T>();
-        }
-        catch
-        {
-            return new List<T>();
-        }
-    }
-
-    private static void WriteJson<T>(string filename, T data)
-    {
-        var filePath = Path.Combine(DataDir, filename);
-        System.IO.File.WriteAllText(filePath, JsonSerializer.Serialize(data, JsonOpts));
-    }
-
-    private static void DeleteUploadedFile(string? filename)
-    {
-        if (string.IsNullOrEmpty(filename)) return;
-        var filePath = Path.Combine(UploadsDir, filename);
-        try { if (System.IO.File.Exists(filePath)) System.IO.File.Delete(filePath); } catch { }
-    }
-
-    private static void SeedFoods()
-    {
-        var foods = ReadJson<BirthdayFood>("foods.json");
-        if (foods.Count > 0) return;
-
-        var seed = new List<BirthdayFood>
-        {
-            new() { Id = Guid.NewGuid().ToString(), Name = "Carne Asada Fajitas", Type = "latino" },
-            new() { Id = Guid.NewGuid().ToString(), Name = "Pollo Asado Fajitas", Type = "latino" },
-            new() { Id = Guid.NewGuid().ToString(), Name = "Chorizo Fajitas", Type = "latino" },
-            new() { Id = Guid.NewGuid().ToString(), Name = "Hot Dogs", Type = "gringo" },
-            new() { Id = Guid.NewGuid().ToString(), Name = "Burgers", Type = "gringo" },
-            new() { Id = Guid.NewGuid().ToString(), Name = "Patacones", Type = "latino" }
-        };
-
-        WriteJson("foods.json", seed);
-    }
-
     // ═══════════════════════════════════════════════════════════════════════════
     // DTOs
     // ═══════════════════════════════════════════════════════════════════════════
@@ -334,33 +313,5 @@ public class BirthdayController : Controller
         public string? PlusOneName { get; set; }
         public List<string>? Foods { get; set; }
         public string? Extra { get; set; }
-    }
-
-    public class BirthdayFood
-    {
-        public string Id { get; set; } = "";
-        public string Name { get; set; } = "";
-        public string? Type { get; set; }
-        public string? Photo { get; set; }
-    }
-
-    public class BirthdayGift
-    {
-        public string Id { get; set; } = "";
-        public string Name { get; set; } = "";
-        public string? Link { get; set; }
-        public string? Photo { get; set; }
-        public bool Claimed { get; set; }
-    }
-
-    public class BirthdayRsvp
-    {
-        public string Id { get; set; } = "";
-        public string Name { get; set; } = "";
-        public bool PlusOne { get; set; }
-        public string? PlusOneName { get; set; }
-        public List<string>? Foods { get; set; }
-        public string? Extra { get; set; }
-        public string CreatedAt { get; set; } = "";
     }
 }

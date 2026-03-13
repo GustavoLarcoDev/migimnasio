@@ -1158,8 +1158,7 @@
                     </td>
                     <td>
                       <div class="food-tags">
-                        ${(r.foods || []).map(f => `<span class="food-tag">${escHtml(f)}</span>`).join('')}
-                        ${(!r.foods || r.foods.length === 0) ? '<span style="color:var(--text-muted)">None</span>' : ''}
+                        ${(() => { try { const f = typeof r.foods === 'string' ? JSON.parse(r.foods) : (r.foods || []); return f.length ? f.map(x => `<span class="food-tag">${escHtml(x)}</span>`).join('') : '<span style="color:var(--text-muted)">None</span>'; } catch { return '<span style="color:var(--text-muted)">None</span>'; } })()}
                       </div>
                     </td>
                     <td style="max-width:200px;color:var(--text-secondary)">${escHtml(r.extraRequests || r.extra || '-')}</td>
@@ -1213,8 +1212,8 @@
           <div class="items-grid">
             ${foods.map((f, i) => `
               <div class="item-card" style="animation-delay:${i * 0.05}s">
-                ${f.photoUrl
-                  ? `<img class="item-card-img" src="${escAttr(f.photoUrl)}" alt="${escAttr(f.name)}" loading="lazy">`
+                ${f.photo
+                  ? `<img class="item-card-img" src="${escAttr(f.photo)}" alt="${escAttr(f.name)}" loading="lazy">`
                   : `<div class="item-card-placeholder">\u{1F356}</div>`}
                 <div class="item-card-body">
                   <h4>${escHtml(f.name)}</h4>
@@ -1270,8 +1269,8 @@
           <div class="items-grid">
             ${gifts.map((g, i) => `
               <div class="item-card" style="animation-delay:${i * 0.05}s">
-                ${g.photoUrl
-                  ? `<img class="item-card-img" src="${escAttr(g.photoUrl)}" alt="${escAttr(g.name)}" loading="lazy">`
+                ${g.photo
+                  ? `<img class="item-card-img" src="${escAttr(g.photo)}" alt="${escAttr(g.name)}" loading="lazy">`
                   : `<div class="item-card-placeholder">\u{1F381}</div>`}
                 <div class="item-card-body">
                   <h4>${escHtml(g.name)}</h4>
