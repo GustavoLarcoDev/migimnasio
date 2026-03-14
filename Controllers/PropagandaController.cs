@@ -16,7 +16,15 @@ public class PropagandaController : NegocioBaseController
         _propagandaService = propagandaService;
     }
 
-    private Guid GetOwnerId() => AuthService.GetNegocioId(User) ?? AdminDesignOwner;
+    private Guid GetOwnerId()
+    {
+        var negocioId = AuthService.GetNegocioId(User);
+        if (negocioId.HasValue) return negocioId.Value;
+
+        if (AuthService.IsAdmin(User)) return AdminDesignOwner;
+
+        return Guid.Empty; // vendedor or unknown — will return empty results
+    }
 
     [HttpGet("GetDisenos")]
     public Task<IActionResult> GetDisenos(Guid negocioId)
@@ -41,22 +49,38 @@ public class PropagandaController : NegocioBaseController
     [HttpPost("CrearDiseno")]
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> CrearDiseno([FromBody] CrearDisenoRequest req)
-        => ServiceResult(await _propagandaService.CrearDisenoAsync(GetOwnerId(), req.Nombre, req.CanvasJson, req.ThumbnailDataUri, req.Ancho, req.Alto));
+    {
+        var ownerId = GetOwnerId();
+        if (ownerId == Guid.Empty) return Forbid();
+        return ServiceResult(await _propagandaService.CrearDisenoAsync(ownerId, req.Nombre, req.CanvasJson, req.ThumbnailDataUri, req.Ancho, req.Alto));
+    }
 
     [HttpPost("GuardarDiseno")]
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> GuardarDiseno([FromBody] GuardarDisenoRequest req)
-        => ServiceResult(await _propagandaService.GuardarDisenoAsync(req.DisenoId, GetOwnerId(), req.Nombre, req.CanvasJson, req.ThumbnailDataUri));
+    {
+        var ownerId = GetOwnerId();
+        if (ownerId == Guid.Empty) return Forbid();
+        return ServiceResult(await _propagandaService.GuardarDisenoAsync(req.DisenoId, ownerId, req.Nombre, req.CanvasJson, req.ThumbnailDataUri));
+    }
 
     [HttpPost("EliminarDiseno")]
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> EliminarDiseno([FromBody] EliminarDisenoRequest req)
-        => ServiceResult(await _propagandaService.EliminarDisenoAsync(req.DisenoId, GetOwnerId()));
+    {
+        var ownerId = GetOwnerId();
+        if (ownerId == Guid.Empty) return Forbid();
+        return ServiceResult(await _propagandaService.EliminarDisenoAsync(req.DisenoId, ownerId));
+    }
 
     [HttpPost("DuplicarDiseno")]
     [IgnoreAntiforgeryToken]
     public async Task<IActionResult> DuplicarDiseno([FromBody] DuplicarDisenoRequest req)
-        => ServiceResult(await _propagandaService.DuplicarDisenoAsync(req.DisenoId, GetOwnerId()));
+    {
+        var ownerId = GetOwnerId();
+        if (ownerId == Guid.Empty) return Forbid();
+        return ServiceResult(await _propagandaService.DuplicarDisenoAsync(req.DisenoId, ownerId));
+    }
 
     public record CrearDisenoRequest(string Nombre, string CanvasJson, string ThumbnailDataUri, int Ancho, int Alto);
     public record GuardarDisenoRequest(Guid DisenoId, string Nombre, string CanvasJson, string ThumbnailDataUri);

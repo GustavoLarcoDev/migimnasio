@@ -54,5 +54,5 @@ public class BirthdayRsvp
 
     public string? Extra { get; set; }
 
-    public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+    public DateTime FechaCreacion { get; set; }
 }

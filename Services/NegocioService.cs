@@ -577,27 +577,27 @@ public class NegocioService : INegocioService
     /// </summary>
     public async Task<object> GetAdminDashboardStatsAsync()
     {
-        // Cargar todos los negocios en una sola consulta
-        var negocios = await _context.Negocios.ToListAsync();
-        var totalNegocios = negocios.Count;
-        var activos = negocios.Count(n => n.IsActive);
-        var prueba = negocios.Count(n => n.EsPrueba);
+        // Usar agregación server-side en lugar de cargar todos los negocios a memoria
+        var totalNegocios = await _context.Negocios.CountAsync();
+        var activos = await _context.Negocios.CountAsync(n => n.IsActive);
+        var prueba = await _context.Negocios.CountAsync(n => n.EsPrueba);
 
-        // Contar clientes usando HashSet para búsqueda O(1) en el Where
-        var negocioIds = negocios.Select(n => n.NegocioId).ToHashSet();
-        var totalClientes = await _context.Clientes
-            .Where(c => negocioIds.Contains(c.NegocioId))
-            .CountAsync();
+        var totalClientes = await _context.Clientes.CountAsync();
 
         // ─── MRR: suma de suscripciones activas que pagan ────────────
-        var mrr = negocios
+        var mrr = await _context.Negocios
             .Where(n => n.IsActive && !n.EsPrueba && n.PrecioSuscripcion > 0)
-            .Sum(n => n.PrecioSuscripcion);
+            .SumAsync(n => n.PrecioSuscripcion);
 
         // ─── Ingresos por mes (basados en FechaPago, últimos 12 meses) ──
+        // Solo cargar los campos necesarios para el cálculo del gráfico
         var hace12Meses = TimeHelper.Now.AddMonths(-12);
-        var ingresosporMes = negocios
+        var ingresosporMes = await _context.Negocios.AsNoTracking()
             .Where(n => n.FechaPago.HasValue && n.FechaPago.Value >= hace12Meses && n.PrecioSuscripcion > 0)
+            .Select(n => new { n.FechaPago, n.PrecioSuscripcion })
+            .ToListAsync();
+
+        var ingresosAgrupados = ingresosporMes
             .GroupBy(n => new { n.FechaPago!.Value.Year, n.FechaPago.Value.Month })
             .Select(g => new
             {
@@ -609,7 +609,7 @@ public class NegocioService : INegocioService
             .ToList();
 
         // ─── Completar meses faltantes con $0 para el gráfico ─────────
-        // Iteramos de más antiguo a más reciente (i=11 → i=0)
+        // Iteramos de más antiguo a más reciente (i=11 -> i=0)
         // y si un mes no tuvo ingresos, lo añadimos con total=0
         var revenuePorMes = new List<object>();
         for (int i = 11; i >= 0; i--)
@@ -617,7 +617,7 @@ public class NegocioService : INegocioService
             var fecha = TimeHelper.Now.AddMonths(-i);
             var mesKey = $"{fecha.Year}-{fecha.Month:D2}";
             var mesNombre = fecha.ToString("MMM yyyy"); // Ej: "Feb 2026" para la etiqueta del gráfico
-            var ingreso = ingresosporMes.FirstOrDefault(x => x.Mes == mesKey);
+            var ingreso = ingresosAgrupados.FirstOrDefault(x => x.Mes == mesKey);
             revenuePorMes.Add(new { mes = mesNombre, total = ingreso?.Total ?? 0m });
         }
 
@@ -761,11 +761,21 @@ public class NegocioService : INegocioService
     /// </summary>
     public async Task<byte[]> ExportExcelAsync()
     {
-        // Include para evitar el problema N+1: sin esto, cada acceso a negocio.Clientes.Count
-        // generaría una consulta SQL adicional por negocio
-        var negocios = await _context.Negocios
-            .Include(g => g.Clientes)
+        // Usar proyección con subquery para el conteo de clientes en lugar de
+        // Include (que cargaría todos los clientes completos en memoria solo para contar)
+        var negocios = await _context.Negocios.AsNoTracking()
             .OrderByDescending(g => g.FechaCreacion)
+            .Select(g => new
+            {
+                g.NegocioNombre,
+                g.DuenoNegocio,
+                g.Email,
+                g.Telefono,
+                g.IsActive,
+                g.EsPrueba,
+                g.FechaCreacion,
+                ClienteCount = g.Clientes.Count
+            })
             .ToListAsync();
 
         using var workbook = new XLWorkbook();
@@ -797,8 +807,7 @@ public class NegocioService : INegocioService
             worksheet.Cell(row, 4).Value = negocio.Telefono;
             worksheet.Cell(row, 5).Value = negocio.IsActive ? "Activo" : "Inactivo";
             worksheet.Cell(row, 6).Value = negocio.EsPrueba ? "Sí" : "No";
-            // Clientes ya están en memoria gracias al Include, no hay query adicional
-            worksheet.Cell(row, 7).Value = negocio.Clientes.Count;
+            worksheet.Cell(row, 7).Value = negocio.ClienteCount;
             worksheet.Cell(row, 8).Value = negocio.FechaCreacion.ToString("dd/MM/yyyy");
             row++;
         }

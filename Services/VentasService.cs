@@ -74,14 +74,15 @@ public class VentasService : IVentasService
         // al formato donde lunes=0, martes=1, ... domingo=6.
         var inicioSemana = hoy.AddDays(-(((int)hoy.DayOfWeek + 6) % 7));
 
-        // Cargar clientes y logs en memoria para hacer todos los cálculos
+        // Cargar clientes y logs filtrados por fecha para hacer los cálculos
         // en LINQ to Objects (más flexible para operaciones de fecha).
+        // Solo cargamos datos desde inicio de año (el periodo más amplio necesario).
         var clientes = await _context.Clientes.AsNoTracking()
-            .Where(c => c.NegocioId == negocioId)
+            .Where(c => c.NegocioId == negocioId && c.FechaDeCreacion >= inicioAnio)
             .ToListAsync();
 
         var logs = await _context.Logs.AsNoTracking()
-            .Where(l => l.NegocioId == negocioId)
+            .Where(l => l.NegocioId == negocioId && l.Fecha >= inicioAnio)
             .ToListAsync();
 
         // Membresías de 30+ días creadas este mes.
@@ -157,9 +158,19 @@ public class VentasService : IVentasService
         var hoy = TimeHelper.Now.Date;
         var ahora = TimeHelper.Now;
 
-        // Cargar todos los logs en memoria para hacer los cálculos por periodo
+        // Calcular la fecha más antigua necesaria según el periodo
+        // para no cargar logs innecesarios
+        DateTime earliestDate = periodo.ToLower() switch
+        {
+            "dia" => ahora.AddHours(-24),
+            "semana" => hoy.AddDays(-6),
+            "mes" => hoy.AddDays(-28),
+            "anio" => hoy.AddMonths(-11),
+            _ => hoy.AddMonths(-11)
+        };
+
         var logs = await _context.Logs.AsNoTracking()
-            .Where(l => l.NegocioId == negocioId)
+            .Where(l => l.NegocioId == negocioId && l.Fecha >= earliestDate)
             .ToListAsync();
 
         var labels = new List<string>();
@@ -248,9 +259,19 @@ public class VentasService : IVentasService
         var hoy = TimeHelper.Now.Date;
         var ahora = TimeHelper.Now;
 
-        // Cargar todos los clientes del negocio para filtrar por fecha en memoria
+        // Calcular la fecha más antigua necesaria según el periodo
+        // para no cargar clientes innecesarios
+        DateTime earliestDate = periodo.ToLower() switch
+        {
+            "dia" => ahora.AddHours(-24),
+            "semana" => hoy.AddDays(-6),
+            "mes" => hoy.AddDays(-28),
+            "anio" => hoy.AddMonths(-11),
+            _ => hoy.AddMonths(-11)
+        };
+
         var clientes = await _context.Clientes.AsNoTracking()
-            .Where(c => c.NegocioId == negocioId)
+            .Where(c => c.NegocioId == negocioId && c.FechaDeCreacion >= earliestDate)
             .ToListAsync();
 
         var labels = new List<string>();

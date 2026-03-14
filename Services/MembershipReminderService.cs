@@ -159,21 +159,15 @@ public class MembershipReminderService : BackgroundService
             var negocioNombres = negociosActivos.ToDictionary(n => n.NegocioId, n => n.NegocioNombre);
             var negocioTelefonos = negociosActivos.ToDictionary(n => n.NegocioId, n => n.Telefono);
 
-            // Cargar todos los clientes de estos negocios en una sola consulta.
-            // El filtrado de días se hace en memoria (más flexible que SQL para lógica de fechas).
-            var clientes = await context.Clientes
-                .Where(c => negocioIds.Contains(c.NegocioId))
-                .ToListAsync(stoppingToken);
+            // Cargar solo los clientes cuya membresía vence en exactamente 3 o 1 día.
+            // El filtro de fecha se ejecuta en SQL para evitar cargar todos los clientes.
+            var en3Dias = hoy.AddDays(3);
+            var en1Dia = hoy.AddDays(1);
 
-            // Filtrar: solo los que vencen exactamente en 3 o 1 día.
-            // Se usa TotalDays truncado a entero para comparación exacta de fechas.
-            var clientesParaNotificar = clientes
-                .Where(c =>
-                {
-                    var dias = (int)(c.FechaQueTermina.Date - hoy).TotalDays;
-                    return dias == 3 || dias == 1;
-                })
-                .ToList();
+            var clientesParaNotificar = await context.Clientes
+                .Where(c => negocioIds.Contains(c.NegocioId)
+                    && (c.FechaQueTermina.Date == en3Dias || c.FechaQueTermina.Date == en1Dia))
+                .ToListAsync(stoppingToken);
 
             _logger.LogInformation(
                 "Encontrados {Count} clientes con membresía próxima a vencer",

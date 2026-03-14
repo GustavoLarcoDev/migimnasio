@@ -80,74 +80,6 @@
       to { opacity: 0; transform: translateX(60px); }
     }
 
-    /* Login Screen */
-    #login-screen {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 20px;
-    }
-
-    .login-card {
-      background: var(--glass-bg);
-      backdrop-filter: blur(24px);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--radius);
-      padding: 48px 40px;
-      width: 100%;
-      max-width: 420px;
-      text-align: center;
-      animation: fadeUp 0.6s ease;
-    }
-
-    .login-card .emoji-title {
-      font-size: 56px;
-      margin-bottom: 12px;
-    }
-
-    .login-card h1 {
-      font-size: 24px;
-      font-weight: 700;
-      margin-bottom: 8px;
-      background: linear-gradient(135deg, var(--coral), var(--yellow));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .login-card p {
-      color: var(--text-secondary);
-      font-size: 14px;
-      margin-bottom: 32px;
-    }
-
-    .input-group {
-      position: relative;
-      margin-bottom: 20px;
-    }
-
-    .input-group input {
-      width: 100%;
-      padding: 14px 18px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid var(--glass-border);
-      border-radius: var(--radius-sm);
-      color: var(--text-primary);
-      font-family: 'Outfit', sans-serif;
-      font-size: 15px;
-      outline: none;
-      transition: var(--transition);
-    }
-
-    .input-group input:focus {
-      border-color: var(--coral);
-      background: rgba(255, 255, 255, 0.08);
-      box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.15);
-    }
-
-    .input-group input::placeholder { color: var(--text-muted); }
-
     .btn {
       padding: 13px 28px;
       border: none;
@@ -217,7 +149,7 @@
 
     /* Dashboard */
     #dashboard {
-      display: none;
+      display: block;
       max-width: 1200px;
       margin: 0 auto;
       padding: 24px 20px 60px;
@@ -776,7 +708,6 @@
 
     @@media (max-width: 480px) {
       .stats-grid { grid-template-columns: 1fr; }
-      .login-card { padding: 36px 24px; }
       .modal { padding: 24px 20px; }
     }
   </style>
@@ -786,24 +717,7 @@
   <!-- Toast Container -->
   <div id="toast-container"></div>
 
-  <!-- Login Screen -->
-  <div id="login-screen">
-    <div class="login-card">
-      <div class="emoji-title">&#127874;</div>
-      <h1>Gus's Party Control Center</h1>
-      <p>Enter the admin password to manage your birthday bash</p>
-      <form id="login-form">
-        <div class="input-group">
-          <input type="password" id="password-input" placeholder="Admin password..." autocomplete="off" autofocus>
-        </div>
-        <button type="submit" class="btn btn-primary" id="login-btn">
-          Enter the Party &#127881;
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Dashboard -->
+  <!-- Dashboard (cookie auth — must be logged in as admin via main app) -->
   <div id="dashboard">
     <div class="header">
       <h1>&#127874; <span>Party Control</span></h1>
@@ -956,9 +870,6 @@
   </div>
 
   <script>
-    // ---- State ----
-    let password = sessionStorage.getItem('admin-password') || '';
-
     // ---- Toast ----
     function toast(message, type = 'info') {
       const container = document.getElementById('toast-container');
@@ -969,11 +880,12 @@
       setTimeout(() => el.remove(), 3500);
     }
 
-    // ---- API Helper ----
+    // ---- API Helper (cookie auth — no password header needed) ----
     async function api(method, path, body = null, isFormData = false) {
       const opts = {
         method,
-        headers: { 'x-admin-password': password }
+        credentials: 'same-origin',
+        headers: {}
       };
       if (body) {
         if (isFormData) {
@@ -985,11 +897,8 @@
       }
       const res = await fetch(path, opts);
       if (res.status === 401 || res.status === 403) {
-        sessionStorage.removeItem('admin-password');
-        password = '';
-        document.getElementById('dashboard').style.display = 'none';
-        document.getElementById('login-screen').style.display = 'flex';
-        toast('Session expired. Please log in again.', 'error');
+        toast('Not authenticated. Redirecting to login...', 'error');
+        setTimeout(() => { window.location.href = '/Negocios/Login'; }, 1500);
         throw new Error('Unauthorized');
       }
       if (!res.ok) {
@@ -1003,58 +912,22 @@
       return null;
     }
 
-    // ---- Login ----
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const input = document.getElementById('password-input');
-      const btn = document.getElementById('login-btn');
-      const pw = input.value.trim();
-      if (!pw) return;
+    function logout() {
+      window.location.href = '/Negocios/Logout';
+    }
 
-      btn.disabled = true;
-      btn.textContent = 'Verifying...';
-      password = pw;
-
-      try {
-        await api('GET', '/birthday/api/admin/stats');
-        sessionStorage.setItem('admin-password', pw);
-        document.getElementById('login-screen').style.display = 'none';
-        document.getElementById('dashboard').style.display = 'block';
+    // Auto-load on page load (cookie auth handles authentication)
+    document.getElementById('dashboard').style.display = 'block';
+    api('GET', '/birthday/api/admin/stats')
+      .then(() => {
         toast('Welcome to the control center!', 'success');
         loadAll();
-      } catch (err) {
+      })
+      .catch((err) => {
         if (err.message !== 'Unauthorized') {
-          toast('Wrong password or server error', 'error');
+          toast('Failed to load. You may not have admin access.', 'error');
         }
-        password = '';
-      } finally {
-        btn.disabled = false;
-        btn.textContent = 'Enter the Party \u{1F389}';
-      }
-    });
-
-    function logout() {
-      sessionStorage.removeItem('admin-password');
-      password = '';
-      document.getElementById('dashboard').style.display = 'none';
-      document.getElementById('login-screen').style.display = 'flex';
-      document.getElementById('password-input').value = '';
-      toast('Logged out', 'info');
-    }
-
-    // Auto-login if password in session
-    if (password) {
-      api('GET', '/birthday/api/admin/stats')
-        .then(() => {
-          document.getElementById('login-screen').style.display = 'none';
-          document.getElementById('dashboard').style.display = 'block';
-          loadAll();
-        })
-        .catch(() => {
-          sessionStorage.removeItem('admin-password');
-          password = '';
-        });
-    }
+      });
 
     // ---- Tabs ----
     document.querySelectorAll('.tab-btn').forEach(btn => {

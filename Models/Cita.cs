@@ -224,4 +224,17 @@ public class Cita
     /// Es null si la cita no ha sido completada o si aún no se registró el pago.
     /// </summary>
     public PagoCita Pago { get; set; }
+
+    // ═══════════════════════════════════════════════════════════
+    // CONCURRENCY CONTROL
+    // ═══════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Token de concurrencia optimista (timestamp de SQL Server).
+    /// EF Core lo usa para detectar si otro usuario modificó la cita
+    /// entre que se leyó y se guardó. Si hay conflicto, lanza
+    /// DbUpdateConcurrencyException.
+    /// </summary>
+    [Timestamp]
+    public byte[] RowVersion { get; set; } = null!;
 }

@@ -142,6 +142,7 @@ public class LogService : ILogService
         return await _context.Logs.AsNoTracking()
             .Where(l => l.NegocioId == negocioId)
             .OrderByDescending(l => l.Fecha)
+            .Take(1000)
             .Select(l => new
             {
                 l.Id,
@@ -248,15 +249,14 @@ public class LogService : ILogService
     /// <param name="negocioId">ID del negocio cuyos logs se eliminarán.</param>
     public async Task<(bool success, string message)> EliminarTodosLogsAsync(Guid negocioId)
     {
-        var logs = await _context.Logs.Where(l => l.NegocioId == negocioId).ToListAsync();
+        var count = await _context.Logs
+            .Where(l => l.NegocioId == negocioId)
+            .ExecuteDeleteAsync();
 
-        if (!logs.Any())
+        if (count == 0)
             return (true, "No hay logs para eliminar");
 
-        _context.Logs.RemoveRange(logs);
-        await _context.SaveChangesAsync();
-
-        return (true, $"Se eliminaron {logs.Count} logs exitosamente");
+        return (true, $"Se eliminaron {count} logs exitosamente");
     }
 
     // ═══════════════════════════════════════════════════════════

@@ -43,6 +43,7 @@ Read ALL controllers, Program.cs, auth configuration, and middleware. Audit:
 - Multi-tenant isolation (NegocioId filtering on EVERY query)
 - Rate limiting, security headers, secrets in source
 - Admin impersonation security
+- BirthdayController: verify [IgnoreAntiforgeryToken] is present, admin password auth via x-admin-password header is secure, file upload validation (birthday-uploads), no path traversal in photo uploads
 Report format: CRITICAL/HIGH/MEDIUM/LOW with file:line references and fixes.
 ```
 
@@ -55,12 +56,13 @@ Read ApplicationDbContext, all migrations, all services that query the DB. Audit
 - DbContext lifetime (scoped vs singleton misuse)
 - Decimal precision for money, DateTime timezone consistency
 - Nullable handling on required fields
+- Birthday tables (BirthdayComida, BirthdayRegalo, BirthdayRsvp): verify migration correctness, indexes on frequently queried columns, ComidasJson field integrity
 Report format: CRITICAL/HIGH/MEDIUM/LOW with file:line references and fixes.
 ```
 
 **Agent 3 — API & Controller Audit:**
 ```
-Read ALL 15 controllers. Audit:
+Read ALL 21 controllers. Audit:
 - Missing [Authorize], missing input validation
 - Missing null checks (404 vs 500)
 - FORBIDDEN: global ValidateModelStateAttribute or any global ModelState filter in Program.cs — forms send empty Guid fields for new entities and global filters reject them with 400. Flag as CRITICAL if found.

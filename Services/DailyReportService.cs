@@ -142,15 +142,48 @@ public class DailyReportService : BackgroundService
         try
         {
             var hoy = TimeHelper.Now.Date;
+            var manana = hoy.AddDays(1);
 
-            // Procesar TODOS los negocios activos, sin importar el tipo.
+            // Usar proyección para cargar solo los campos necesarios (no password hashes).
             var negociosActivos = await context.Negocios
                 .Where(n => n.IsActive)
+                .Select(n => new { n.NegocioId, n.NegocioNombre, n.Telefono, n.TipoNegocio })
                 .ToListAsync(stoppingToken);
 
             _logger.LogInformation(
                 "Procesando resúmenes para {Count} negocios activos",
                 negociosActivos.Count);
+
+            // Batch-load: ingresos y gastos del día agrupados por NegocioId
+            var negocioIds = negociosActivos.Select(n => n.NegocioId).ToList();
+
+            var logsHoy = await context.Logs
+                .Where(l => negocioIds.Contains(l.NegocioId) && l.Fecha.Date == hoy)
+                .GroupBy(l => l.NegocioId)
+                .Select(g => new
+                {
+                    NegocioId = g.Key,
+                    Ingresos = g.Where(l => l.Monto > 0).Sum(l => l.Monto),
+                    Gastos = g.Where(l => l.Monto < 0).Sum(l => Math.Abs(l.Monto))
+                })
+                .ToListAsync(stoppingToken);
+            var logsPorNegocio = logsHoy.ToDictionary(l => l.NegocioId);
+
+            // Batch-load: nuevos clientes de hoy por NegocioId
+            var nuevosClientesHoy = await context.Clientes
+                .Where(c => negocioIds.Contains(c.NegocioId) && c.FechaDeCreacion.Date == hoy)
+                .GroupBy(c => c.NegocioId)
+                .Select(g => new { NegocioId = g.Key, Count = g.Count() })
+                .ToListAsync(stoppingToken);
+            var nuevosClientesPorNegocio = nuevosClientesHoy.ToDictionary(x => x.NegocioId, x => x.Count);
+
+            // Batch-load: clientes que vencen mañana (solo para membresias) por NegocioId
+            var vencenManana = await context.Clientes
+                .Where(c => negocioIds.Contains(c.NegocioId) && c.FechaQueTermina.Date == manana)
+                .GroupBy(c => c.NegocioId)
+                .Select(g => new { NegocioId = g.Key, Count = g.Count() })
+                .ToListAsync(stoppingToken);
+            var vencenMananaPorNegocio = vencenManana.ToDictionary(x => x.NegocioId, x => x.Count);
 
             var enviados = 0;
             var errores = 0;
@@ -172,29 +205,17 @@ public class DailyReportService : BackgroundService
                         continue;
                     }
 
-                    // Ingresos del día: suma de todos los Logs con monto positivo.
-                    var ingresosDia = await context.Logs
-                        .Where(l => l.NegocioId == negocio.NegocioId
-                                    && l.Fecha.Date == hoy
-                                    && l.Monto > 0)
-                        .SumAsync(l => l.Monto, stoppingToken);
-
-                    // Clientes registrados hoy en este negocio
-                    var nuevosClientes = await context.Clientes
-                        .CountAsync(c => c.NegocioId == negocio.NegocioId
-                                         && c.FechaDeCreacion.Date == hoy,
-                            stoppingToken);
+                    // Lookup pre-cargado en lugar de queries individuales
+                    logsPorNegocio.TryGetValue(negocio.NegocioId, out var logsData);
+                    var ingresosDia = logsData?.Ingresos ?? 0m;
+                    nuevosClientesPorNegocio.TryGetValue(negocio.NegocioId, out var nuevosClientes);
 
                     bool resultado;
 
                     if (negocio.TipoNegocio == "membresias")
                     {
                         // Membresías: resumen específico con vencimientos
-                        var manana = hoy.AddDays(1);
-                        var porVencerManana = await context.Clientes
-                            .CountAsync(c => c.NegocioId == negocio.NegocioId
-                                             && c.FechaQueTermina.Date == manana,
-                                stoppingToken);
+                        vencenMananaPorNegocio.TryGetValue(negocio.NegocioId, out var porVencerManana);
 
                         resultado = await whatsAppService.EnviarResumenDiarioAsync(
                             negocio.Telefono,
@@ -206,12 +227,7 @@ public class DailyReportService : BackgroundService
                     else
                     {
                         // Artesanal, tienda, restaurante: resumen con ingresos, gastos y ganancia
-                        var gastosDia = await context.Logs
-                            .Where(l => l.NegocioId == negocio.NegocioId
-                                        && l.Fecha.Date == hoy
-                                        && l.Monto < 0)
-                            .SumAsync(l => Math.Abs(l.Monto), stoppingToken);
-
+                        var gastosDia = logsData?.Gastos ?? 0m;
                         var ganancia = ingresosDia - gastosDia;
 
                         resultado = await whatsAppService.EnviarResumenDiarioGeneralWhatsAppAsync(

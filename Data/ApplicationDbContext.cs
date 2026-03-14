@@ -592,6 +592,23 @@ public class ApplicationDbContext : DbContext
                 .HasDatabaseName("IX_DisenosMarketing_NegocioId");
         });
 
+        // ── Configuración Birthday tables ──
+        modelBuilder.Entity<BirthdayComida>(e =>
+        {
+            e.HasIndex(c => c.IsActive)
+                .HasDatabaseName("IX_BirthdayComidas_IsActive");
+        });
+        modelBuilder.Entity<BirthdayRegalo>(e =>
+        {
+            e.HasIndex(r => r.IsActive)
+                .HasDatabaseName("IX_BirthdayRegalos_IsActive");
+        });
+        modelBuilder.Entity<BirthdayRsvp>(e =>
+        {
+            e.HasIndex(r => r.FechaCreacion)
+                .HasDatabaseName("IX_BirthdayRsvps_FechaCreacion");
+        });
+
         // ═══════════════════════════════════════════════════════════
         // H8: Decimal precision for money fields
         // ═══════════════════════════════════════════════════════════

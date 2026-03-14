@@ -606,6 +606,7 @@ public class InventarioService : IInventarioService
         return await _context.MovimientosInventario.AsNoTracking()
             .Where(m => m.NegocioId == negocioId)
             .OrderByDescending(m => m.Fecha)
+            .Take(1000)
             .Select(m => new
             {
                 m.MovimientoId,

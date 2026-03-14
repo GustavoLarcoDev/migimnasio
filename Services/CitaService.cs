@@ -639,6 +639,10 @@ public class CitaService : ICitaService
         if (dto.NuevaFechaHoraInicio <= DateTime.MinValue)
             return (false, "Fecha de inicio inválida");
 
+        // No se puede mover una cita al pasado
+        if (dto.NuevaFechaHoraInicio < TimeHelper.Now)
+            return (false, "No se puede mover una cita al pasado.");
+
         var cita = await _context.Citas
             .FirstOrDefaultAsync(c => c.CitaId == dto.CitaId && c.NegocioId == dto.NegocioId);
 
@@ -651,6 +655,40 @@ public class CitaService : ICitaService
 
         // La duración se conserva; solo cambia el punto de inicio
         var nuevaFechaFin = dto.NuevaFechaHoraInicio.AddMinutes(cita.DuracionMinutos);
+
+        // --- VALIDAR HORARIO DEL EMPLEADO EN LA NUEVA FECHA ---
+        var diaSemana = (int)dto.NuevaFechaHoraInicio.DayOfWeek;
+        var excepcionHorario = await _context.Horarios
+            .FirstOrDefaultAsync(h => h.TipoHorario == "excepcion" && h.EmpleadoId == cita.EmpleadoId && h.NegocioId == dto.NegocioId && h.Fecha.Value.Date == dto.NuevaFechaHoraInicio.Date);
+
+        if (excepcionHorario != null && excepcionHorario.EsDiaLibre)
+            return (false, "El empleado no trabaja este día");
+
+        string horaInicioEmp, horaFinEmp;
+        if (excepcionHorario != null)
+        {
+            if (string.IsNullOrWhiteSpace(excepcionHorario.HoraInicio) || string.IsNullOrWhiteSpace(excepcionHorario.HoraFin))
+                return (false, "El empleado no tiene horario definido para este día");
+            horaInicioEmp = excepcionHorario.HoraInicio;
+            horaFinEmp = excepcionHorario.HoraFin;
+        }
+        else
+        {
+            var horarioEmpleado = await _context.Horarios
+                .FirstOrDefaultAsync(h => h.TipoHorario == "regular" && h.EmpleadoId == cita.EmpleadoId && h.NegocioId == dto.NegocioId && h.DiaSemana == diaSemana);
+            if (horarioEmpleado == null || !horarioEmpleado.Activo)
+                return (false, "El empleado no trabaja este día");
+            horaInicioEmp = horarioEmpleado.HoraInicio;
+            horaFinEmp = horarioEmpleado.HoraFin;
+        }
+
+        if (TimeSpan.TryParse(horaInicioEmp, out var hInicioEmpTs) && TimeSpan.TryParse(horaFinEmp, out var hFinEmpTs))
+        {
+            var horaCita = dto.NuevaFechaHoraInicio.TimeOfDay;
+            var horaFinCita = nuevaFechaFin.TimeOfDay;
+            if (horaCita < hInicioEmpTs || horaFinCita > hFinEmpTs)
+                return (false, "La cita está fuera del horario del empleado");
+        }
 
         // Verificar conflictos en la nueva posición.
         // IMPORTANTE: excluimos la propia cita (c.CitaId != cita.CitaId) porque
@@ -672,7 +710,14 @@ public class CitaService : ICitaService
         cita.FechaHoraFin = nuevaFechaFin;
         cita.FechaDeActualizacion = TimeHelper.Now;
 
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return (false, "La cita fue modificada por otro usuario. Recargue la página.");
+        }
 
         return (true, "Cita movida exitosamente");
     }
@@ -736,7 +781,14 @@ public class CitaService : ICitaService
         if (nuevoEstado == "cancelada")
             cita.MotivoCancelacion = motivoCancelacion;
 
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return (false, "La cita fue modificada por otro usuario. Recargue la página.");
+        }
 
         return (true, $"Estado cambiado a {nuevoEstado}");
     }
@@ -823,7 +875,15 @@ public class CitaService : ICitaService
         };
 
         _context.PagosCita.Add(pago);
-        await _context.SaveChangesAsync();
+
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return (false, "La cita fue modificada por otro usuario. Recargue la página.");
+        }
 
         // Crear log inmutable de auditoría. Esto sirve para que el dueño del negocio
         // pueda auditar todos los ingresos del día incluso si alguien intenta borrar pagos.

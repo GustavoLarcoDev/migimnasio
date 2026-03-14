@@ -689,9 +689,14 @@ app.Use(async (context, next) =>
 });
 
 // ── Archivos Estáticos ─────────────────────────────────────
-// Sirve archivos de wwwroot/ (CSS, JS, imágenes, fuentes).
+// UseStaticFiles sirve archivos dinámicamente subidos a wwwroot/
+// (birthday-uploads/, uploads/) que no están en el manifiesto
+// de assets estáticos fingerprinted.
+app.UseStaticFiles();
+
 // MapStaticAssets es la versión optimizada de ASP.NET Core 9
-// que incluye fingerprinting (cache-busting) y compresión.
+// que incluye fingerprinting (cache-busting) y compresión
+// para archivos estáticos conocidos en build time.
 app.MapStaticAssets();
 
 // ── Enrutamiento MVC ───────────────────────────────────────

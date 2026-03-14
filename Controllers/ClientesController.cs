@@ -367,17 +367,25 @@ public class ClientesController : NegocioBaseController
             var scopeFactory = _scopeFactory;
             _ = Task.Run(async () =>
             {
-                using var scope = scopeFactory.CreateScope();
-                var whatsApp = scope.ServiceProvider.GetRequiredService<IWhatsAppService>();
-                foreach (var telefono in telefonos)
+                try
                 {
-                    try
+                    using var scope = scopeFactory.CreateScope();
+                    var whatsApp = scope.ServiceProvider.GetRequiredService<IWhatsAppService>();
+                    foreach (var telefono in telefonos)
                     {
-                        var mensajeCompleto = $"*{negocioNombre}*\n\n{mensaje}{disclaimer}";
-                        await whatsApp.EnviarMensajeTextoAsync(telefono, mensajeCompleto);
+                        try
+                        {
+                            var mensajeCompleto = $"*{negocioNombre}*\n\n{mensaje}{disclaimer}";
+                            await whatsApp.EnviarMensajeTextoAsync(telefono, mensajeCompleto);
+                        }
+                        catch { }
+                        await Task.Delay(1000);
                     }
-                    catch { }
-                    await Task.Delay(1000);
+                }
+                catch (Exception ex)
+                {
+                    // Log but don't crash — fire and forget
+                    Console.WriteLine($"Error en envío masivo: {ex.Message}");
                 }
             });
 

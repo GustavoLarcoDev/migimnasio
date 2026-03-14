@@ -36,15 +36,18 @@ public class VentaProductoService : IVentaProductoService
     private readonly ApplicationDbContext _context;
     private readonly ILogService _logService;
     private readonly IReciboService _reciboService;
+    private readonly ILogger<VentaProductoService> _logger;
 
     public VentaProductoService(
         ApplicationDbContext context,
         ILogService logService,
-        IReciboService reciboService)
+        IReciboService reciboService,
+        ILogger<VentaProductoService> logger)
     {
         _context = context;
         _logService = logService;
         _reciboService = reciboService;
+        _logger = logger;
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -222,7 +225,8 @@ public class VentaProductoService : IVentaProductoService
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            return (false, $"Error general: {ex.Message}", null, null);
+            _logger.LogError(ex, "Error al procesar la venta POS");
+            return (false, "Error interno al procesar la operación.", null, null);
         }
     }
 
@@ -251,6 +255,7 @@ public class VentaProductoService : IVentaProductoService
             .Include(o => o.Detalles)
             .Where(o => o.NegocioId == negocioId)
             .OrderByDescending(o => o.FechaCreacion)
+            .Take(500)
             .ToListAsync();
     }
 
