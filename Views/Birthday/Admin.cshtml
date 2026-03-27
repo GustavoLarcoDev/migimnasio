@@ -354,6 +354,12 @@
         else { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
       }
       const res = await fetch(path, opts);
+      // Detect redirect to login page (session expired after deploy)
+      if (res.redirected || (res.url && !res.url.includes('/birthday/'))) {
+        toast('Session expired. Redirecting to login...', 'error');
+        setTimeout(() => { window.location.href = '/Negocios/Login'; }, 1500);
+        throw new Error('Unauthorized');
+      }
       if (res.status === 401 || res.status === 403) {
         toast('Not authenticated. Redirecting to login...', 'error');
         setTimeout(() => { window.location.href = '/Negocios/Login'; }, 1500);
@@ -364,7 +370,12 @@
         throw new Error(errText || `HTTP ${res.status}`);
       }
       const ct = res.headers.get('content-type');
-      return (ct && ct.includes('application/json')) ? res.json() : null;
+      if (!ct || !ct.includes('application/json')) {
+        toast('Session expired. Redirecting to login...', 'error');
+        setTimeout(() => { window.location.href = '/Negocios/Login'; }, 1500);
+        throw new Error('Unauthorized');
+      }
+      return res.json();
     }
 
     function logout() { window.location.href = '/Negocios/Logout'; }
