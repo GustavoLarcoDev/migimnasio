@@ -74,11 +74,27 @@ public class BirthdayController : Controller
         return Json(new { success = true });
     }
 
+    [HttpGet("api/check-name")]
+    public async Task<IActionResult> CheckName([FromQuery] string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return Json(new { exists = false });
+
+        var exists = await _context.BirthdayRsvps
+            .AnyAsync(r => r.Nombre.ToLower() == name.Trim().ToLower());
+        return Json(new { exists });
+    }
+
     [HttpPost("api/rsvp")]
     public async Task<IActionResult> SaveRsvp([FromBody] RsvpRequest req)
     {
         if (string.IsNullOrWhiteSpace(req?.Name))
             return BadRequest(new { error = "Name is required" });
+
+        var duplicate = await _context.BirthdayRsvps
+            .AnyAsync(r => r.Nombre.ToLower() == req.Name.Trim().ToLower());
+        if (duplicate)
+            return Conflict(new { error = "You already RSVP'd! No take-backs \ud83d\ude0e" });
 
         var rsvp = new BirthdayRsvp
         {

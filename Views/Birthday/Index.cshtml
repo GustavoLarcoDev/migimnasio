@@ -1231,6 +1231,7 @@
         Good food, cold drinks, and even better company. Come eat some fajitas with me &mdash;
         let's fire up the grill and make it a day to remember!
       </p>
+      <p class="small-text" style="margin-bottom: 20px; font-style: italic;">Warning: attendance may result in food coma and questionable dance moves</p>
       <button class="btn btn-primary btn-glow" onclick="goToStep(2)">
         Count Me In! &#128293;
       </button>
@@ -1250,6 +1251,7 @@
           <input type="text" class="input-field" id="guestName" placeholder="What's your name?" autocomplete="name">
           <div class="input-line"></div>
         </div>
+        <div id="nameError" class="error-msg" style="margin-bottom: 16px;"></div>
 
         <div class="toggle-row">
           <span class="toggle-label">Bringing a +1? &#128107;</span>
@@ -1264,13 +1266,13 @@
             <input type="text" class="input-field" id="plusOneName" placeholder="What's their name?">
             <div class="input-line"></div>
           </div>
-          <p class="small-text">The more the merrier! (but seriously, we need to know for the food)</p>
+          <p class="small-text">The more the merrier! (but seriously, Gus needs to know for the grocery budget)</p>
         </div>
       </div>
 
       <div class="btn-group">
         <button class="btn btn-secondary" onclick="goToStep(1)">&#8592; Back</button>
-        <button class="btn btn-primary" id="btnStep2Next" disabled onclick="goToStep(3)">
+        <button class="btn btn-primary" id="btnStep2Next" disabled onclick="checkNameAndProceed()">
           Next &#8594;
         </button>
       </div>
@@ -1284,6 +1286,7 @@
     <div class="step-content">
       <h2 class="title-big">El Asado &#128293;</h2>
       <p class="subtitle">Everything's fajita-style! Pick the meats you want so I know how much to buy</p>
+      <p class="small-text" style="margin-bottom: 8px; font-style: italic;">This is basically Gus's grocery list... help a guy out</p>
 
       <!-- Meat selection cards -->
       <div class="food-grid" id="foodGrid"></div>
@@ -1314,6 +1317,7 @@
           Any dietary restrictions or allergies? Let me know!
         </label>
         <textarea class="input-field" id="dietaryRestrictions" placeholder="E.g., Vegetarian, no pork, allergic to something..."></textarea>
+        <p class="small-text" style="font-style: italic;">We want everyone to eat, not just watch</p>
       </div>
 
       <!-- Zelle Card -->
@@ -1325,6 +1329,7 @@
         <div class="zelle-number">Zelle: 7372876304</div>
         <div class="zelle-note">
           Your presence is more than enough! I just want everyone to eat well and have a great time &#128293;
+          <br><span style="font-size: 0.75rem; font-style: italic; opacity: 0.6;">Gus's wallet will personally thank you</span>
         </div>
       </div>
 
@@ -1344,6 +1349,7 @@
       <p class="subtitle" style="line-height: 1.6;">
         If you wanna surprise me... here are some ideas &#128521;
       </p>
+      <p class="small-text" style="margin-bottom: 8px; font-style: italic;">Your presence is the real gift... but a present doesn't hurt &#128064;</p>
 
       <div class="gift-grid" id="giftGrid">
         <div class="loading-placeholder">
@@ -1388,6 +1394,7 @@
         <p class="paragraph" style="margin-top: 28px;">
           Gus is already fired up to see you. Don't be late... the fajitas won't wait &#128527;&#128293;
         </p>
+        <p class="small-text" style="font-style: italic;">If you ghost him, he WILL notice. And he WILL bring it up. Forever.</p>
 
         <p class="footer-text">Made with &#10084;&#65039; and way too much code</p>
       </div>
@@ -1557,6 +1564,42 @@
           setTimeout(() => document.getElementById('plusOneName').focus(), 350);
         }
       });
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       CHECK NAME FOR DUPLICATES
+       ═══════════════════════════════════════════════════════════════════════════ */
+    async function checkNameAndProceed() {
+      const name = document.getElementById('guestName').value.trim();
+      const errEl = document.getElementById('nameError');
+      errEl.classList.remove('show');
+
+      if (!name) {
+        document.getElementById('guestName').focus();
+        return;
+      }
+
+      const btn = document.getElementById('btnStep2Next');
+      btn.disabled = true;
+      btn.textContent = 'Checking...';
+
+      try {
+        const res = await fetch(`/birthday/api/check-name?name=${encodeURIComponent(name)}`);
+        const data = await res.json();
+        if (data.exists) {
+          errEl.textContent = "You already RSVP'd! Nice try though \u{1F60F} No take-backs.";
+          errEl.classList.add('show');
+          btn.disabled = false;
+          btn.innerHTML = 'Next \u2192';
+          return;
+        }
+      } catch {
+        // If check fails, let them continue — backend will catch duplicates on submit
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = 'Next \u2192';
+      goToStep(3);
     }
 
     /* ═══════════════════════════════════════════════════════════════════════════
@@ -1777,6 +1820,14 @@
             message: message || null
           })
         });
+
+        if (res.status === 409) {
+          const data = await res.json().catch(() => ({}));
+          document.getElementById('submittingView').style.display = 'none';
+          errEl.textContent = data.error || "You already RSVP'd! No take-backs \u{1F60E}";
+          errEl.classList.add('show');
+          return;
+        }
 
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
