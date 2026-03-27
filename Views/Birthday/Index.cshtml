@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>You're Invited! - Gus's Birthday Bash</title>
+  <title>You're Invited! - Gus's Birthday Asado 🔥</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap" rel="stylesheet">
@@ -20,16 +20,19 @@
 
     :root {
       --coral: #ff6b6b;
+      --orange: #ff9f43;
       --yellow: #ffd93d;
       --green: #6bcb77;
       --blue: #4d96ff;
       --purple: #9b59b6;
-      --bg-start: #0f0c29;
-      --bg-mid: #302b63;
-      --bg-end: #24243e;
+      --fire: #ff4500;
+      --bg-start: #1a0a2e;
+      --bg-mid: #2d1b4e;
+      --bg-end: #1a0a2e;
       --glass-bg: rgba(255, 255, 255, 0.06);
       --glass-border: rgba(255, 255, 255, 0.1);
-      --accent-gradient: linear-gradient(135deg, #ff6b6b, #ffd93d);
+      --accent-gradient: linear-gradient(135deg, #ff6b6b, #ff9f43);
+      --fire-gradient: linear-gradient(135deg, #ff4500, #ff6b6b, #ffd93d);
       --text-primary: #f0f0f0;
       --text-secondary: rgba(255, 255, 255, 0.6);
       --text-muted: rgba(255, 255, 255, 0.35);
@@ -83,13 +86,13 @@
     .particle:nth-child(10) { width: 2px; height: 2px; left: 92%; top: 35%;  animation-duration: 23s; animation-delay: -9s;  opacity: 0.3; }
     .particle:nth-child(11) { width: 2px; height: 2px; left: 10%; top: 90%;  animation-duration: 19s; animation-delay: -11s; opacity: 0.5; }
     .particle:nth-child(12) { width: 1px; height: 1px; left: 30%; top: 5%;   animation-duration: 24s; animation-delay: -13s; opacity: 0.7; }
-    .particle:nth-child(13) { width: 3px; height: 3px; left: 50%; top: 85%;  animation-duration: 29s; animation-delay: -10s; opacity: 0.3; }
+    .particle:nth-child(13) { width: 3px; height: 3px; left: 50%; top: 85%;  animation-duration: 29s; animation-delay: -10s; opacity: 0.3; background: rgba(255, 69, 0, 0.5); }
     .particle:nth-child(14) { width: 1px; height: 1px; left: 70%; top: 55%;  animation-duration: 17s; animation-delay: -12s; opacity: 0.6; }
     .particle:nth-child(15) { width: 2px; height: 2px; left: 88%; top: 25%;  animation-duration: 31s; animation-delay: -14s; opacity: 0.4; }
     .particle:nth-child(16) { width: 2px; height: 2px; left: 3%;  top: 40%;  animation-duration: 20s; animation-delay: -15s; opacity: 0.5; background: rgba(255, 107, 107, 0.5); }
-    .particle:nth-child(17) { width: 3px; height: 3px; left: 40%; top: 95%;  animation-duration: 25s; animation-delay: -16s; opacity: 0.3; background: rgba(255, 217, 61, 0.4); }
-    .particle:nth-child(18) { width: 1px; height: 1px; left: 60%; top: 8%;   animation-duration: 22s; animation-delay: -17s; opacity: 0.7; background: rgba(77, 150, 255, 0.5); }
-    .particle:nth-child(19) { width: 2px; height: 2px; left: 80%; top: 65%;  animation-duration: 28s; animation-delay: -18s; opacity: 0.4; background: rgba(155, 89, 182, 0.4); }
+    .particle:nth-child(17) { width: 3px; height: 3px; left: 40%; top: 95%;  animation-duration: 25s; animation-delay: -16s; opacity: 0.3; background: rgba(255, 159, 67, 0.4); }
+    .particle:nth-child(18) { width: 1px; height: 1px; left: 60%; top: 8%;   animation-duration: 22s; animation-delay: -17s; opacity: 0.7; background: rgba(255, 217, 61, 0.5); }
+    .particle:nth-child(19) { width: 2px; height: 2px; left: 80%; top: 65%;  animation-duration: 28s; animation-delay: -18s; opacity: 0.4; background: rgba(255, 69, 0, 0.4); }
     .particle:nth-child(20) { width: 1px; height: 1px; left: 20%; top: 75%;  animation-duration: 16s; animation-delay: -19s; opacity: 0.6; background: rgba(107, 203, 119, 0.5); }
 
     @@keyframes particleFloat {
@@ -100,7 +103,7 @@
     }
 
     /* ═══════════════════════════════════════════════════════════════════════════
-       FLOATING EMOJIS (Step 1)
+       FLOATING EMOJIS
        ═══════════════════════════════════════════════════════════════════════════ */
     .floating-emojis {
       position: fixed;
@@ -120,7 +123,7 @@
       opacity: 0.15;
     }
 
-    .float-emoji:nth-child(1) { left: 8%;  animation-duration: 18s; animation-delay: 0s;   content: ''; }
+    .float-emoji:nth-child(1) { left: 8%;  animation-duration: 18s; animation-delay: 0s;   }
     .float-emoji:nth-child(2) { left: 20%; animation-duration: 22s; animation-delay: -4s;  }
     .float-emoji:nth-child(3) { left: 35%; animation-duration: 15s; animation-delay: -8s;  }
     .float-emoji:nth-child(4) { left: 50%; animation-duration: 20s; animation-delay: -2s;  }
@@ -128,6 +131,8 @@
     .float-emoji:nth-child(6) { left: 78%; animation-duration: 24s; animation-delay: -10s; }
     .float-emoji:nth-child(7) { left: 90%; animation-duration: 19s; animation-delay: -3s;  }
     .float-emoji:nth-child(8) { left: 12%; animation-duration: 21s; animation-delay: -12s; }
+    .float-emoji:nth-child(9) { left: 42%; animation-duration: 16s; animation-delay: -7s;  }
+    .float-emoji:nth-child(10){ left: 73%; animation-duration: 23s; animation-delay: -14s; }
 
     @@keyframes emojiFloat {
       0%   { transform: translateY(110vh) rotate(0deg);   opacity: 0; }
@@ -150,7 +155,7 @@
       justify-content: center;
       gap: 12px;
       padding: 16px 20px;
-      background: rgba(15, 12, 41, 0.85);
+      background: rgba(26, 10, 46, 0.85);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-bottom: 1px solid rgba(255, 255, 255, 0.06);
@@ -166,8 +171,8 @@
     }
 
     .progress-dot.active {
-      background: var(--coral);
-      box-shadow: 0 0 12px rgba(255, 107, 107, 0.5);
+      background: var(--orange);
+      box-shadow: 0 0 12px rgba(255, 159, 67, 0.5);
       transform: scale(1.3);
     }
 
@@ -184,7 +189,7 @@
     }
 
     .progress-line.completed {
-      background: linear-gradient(90deg, var(--green), var(--coral));
+      background: linear-gradient(90deg, var(--green), var(--orange));
     }
 
     /* ═══════════════════════════════════════════════════════════════════════════
@@ -252,9 +257,9 @@
     .title-big {
       font-size: clamp(1.8rem, 5vw, 2.8rem);
       font-weight: 700;
-      color: var(--yellow);
+      color: var(--orange);
       margin-bottom: 8px;
-      text-shadow: 0 0 30px rgba(255, 217, 61, 0.3);
+      text-shadow: 0 0 30px rgba(255, 159, 67, 0.3);
     }
 
     .subtitle {
@@ -270,7 +275,7 @@
       color: var(--text-secondary);
       line-height: 1.7;
       margin-bottom: 40px;
-      max-width: 520px;
+      max-width: 560px;
       margin-left: auto;
       margin-right: auto;
     }
@@ -302,16 +307,16 @@
     }
 
     @@keyframes badgePulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 217, 61, 0.2); }
-      50%      { box-shadow: 0 0 20px 4px rgba(255, 217, 61, 0.15); }
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 159, 67, 0.2); }
+      50%      { box-shadow: 0 0 20px 4px rgba(255, 159, 67, 0.15); }
     }
 
     /* ═══════════════════════════════════════════════════════════════════════════
-       TYPING ANIMATION (Step 1 subtitle)
+       TYPING ANIMATION
        ═══════════════════════════════════════════════════════════════════════════ */
     .typing-text {
       display: inline-block;
-      border-right: 2px solid var(--coral);
+      border-right: 2px solid var(--orange);
       padding-right: 4px;
       animation: blink 0.7s step-end infinite;
       white-space: nowrap;
@@ -323,7 +328,7 @@
     }
 
     /* ═══════════════════════════════════════════════════════════════════════════
-       LETTER-BY-LETTER REVEAL (Step 1 title)
+       LETTER-BY-LETTER REVEAL
        ═══════════════════════════════════════════════════════════════════════════ */
     .reveal-letter {
       display: inline-block;
@@ -392,7 +397,7 @@
 
     @@keyframes btnGlow {
       0%, 100% { box-shadow: 0 4px 20px rgba(255, 107, 107, 0.3); }
-      50%      { box-shadow: 0 4px 40px rgba(255, 107, 107, 0.6), 0 0 60px rgba(255, 217, 61, 0.2); }
+      50%      { box-shadow: 0 4px 40px rgba(255, 107, 107, 0.6), 0 0 60px rgba(255, 159, 67, 0.2); }
     }
 
     .btn-secondary {
@@ -468,7 +473,7 @@
     }
 
     .input-field:focus {
-      border-bottom-color: var(--coral);
+      border-bottom-color: var(--orange);
     }
 
     .input-field:focus + .input-line {
@@ -497,7 +502,7 @@
     }
 
     textarea.input-field:focus {
-      border-color: var(--coral);
+      border-color: var(--orange);
     }
 
     /* ═══════════════════════════════════════════════════════════════════════════
@@ -573,21 +578,21 @@
     }
 
     /* ═══════════════════════════════════════════════════════════════════════════
-       FOOD CARDS GRID
+       MEAT CARDS GRID
        ═══════════════════════════════════════════════════════════════════════════ */
     .food-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      grid-template-columns: repeat(3, 1fr);
       gap: 16px;
-      margin: 28px 0;
-      max-width: 700px;
+      margin: 28px auto;
+      max-width: 500px;
     }
 
     .food-card {
       background: var(--glass-bg);
       border: 2px solid var(--glass-border);
       border-radius: var(--radius);
-      padding: 20px 12px;
+      padding: 24px 12px;
       cursor: pointer;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       text-align: center;
@@ -602,9 +607,9 @@
     }
 
     .food-card.selected {
-      border-color: var(--coral);
-      background: rgba(255, 107, 107, 0.1);
-      box-shadow: 0 0 20px rgba(255, 107, 107, 0.15);
+      border-color: var(--orange);
+      background: rgba(255, 159, 67, 0.1);
+      box-shadow: 0 0 20px rgba(255, 159, 67, 0.15);
     }
 
     .food-card.selected .food-check {
@@ -618,40 +623,10 @@
       display: block;
     }
 
-    .food-photo {
-      width: 80px;
-      height: 80px;
-      border-radius: 12px;
-      object-fit: cover;
-      margin: 0 auto 8px;
-      display: block;
-    }
-
     .food-name {
       font-size: 0.9rem;
       font-weight: 600;
       color: var(--text-primary);
-    }
-
-    .food-type-tag {
-      display: inline-block;
-      font-size: 0.65rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      padding: 3px 8px;
-      border-radius: 50px;
-      margin-top: 6px;
-    }
-
-    .food-type-tag.latino {
-      background: rgba(107, 203, 119, 0.15);
-      color: var(--green);
-    }
-
-    .food-type-tag.gringo {
-      background: rgba(77, 150, 255, 0.15);
-      color: var(--blue);
     }
 
     .food-check {
@@ -691,15 +666,7 @@
       white-space: nowrap;
       box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
       animation: reactionPop 2.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    }
-
-    .reaction-toast.latino {
-      background: linear-gradient(135deg, var(--green), #2ecc71);
-      color: #fff;
-    }
-
-    .reaction-toast.gringo {
-      background: linear-gradient(135deg, var(--blue), #3498db);
+      background: linear-gradient(135deg, var(--orange), var(--coral));
       color: #fff;
     }
 
@@ -723,6 +690,83 @@
 
     .shake {
       animation: screenShake 0.4s ease-out;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       MENU INFO SECTIONS (sides, drinks)
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .menu-section {
+      margin: 24px auto;
+      max-width: 500px;
+      text-align: left;
+    }
+
+    .menu-section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--orange);
+      margin-bottom: 12px;
+    }
+
+    .menu-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .menu-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: 50px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-primary);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .menu-pill .pill-emoji {
+      font-size: 1.1rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       ZELLE CARD
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .zelle-card {
+      background: linear-gradient(135deg, rgba(255, 159, 67, 0.08), rgba(255, 107, 107, 0.05));
+      border: 1px solid rgba(255, 159, 67, 0.2);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin: 28px auto;
+      max-width: 500px;
+      text-align: center;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .zelle-card .zelle-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--orange);
+      margin-bottom: 8px;
+    }
+
+    .zelle-card .zelle-number {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--yellow);
+      margin: 12px 0;
+      letter-spacing: 1px;
+    }
+
+    .zelle-card .zelle-note {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.5;
     }
 
     /* ═══════════════════════════════════════════════════════════════════════════
@@ -785,7 +829,7 @@
     }
 
     .gift-link:hover {
-      color: var(--coral);
+      color: var(--orange);
     }
 
     .btn-gift {
@@ -822,7 +866,7 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: rgba(15, 12, 41, 0.75);
+      background: rgba(26, 10, 46, 0.75);
       border-radius: var(--radius);
       z-index: 1;
     }
@@ -880,7 +924,7 @@
     .hug-banner .hug-main {
       font-size: 1.6rem;
       font-weight: 700;
-      color: var(--coral);
+      color: var(--orange);
       margin-bottom: 6px;
     }
 
@@ -912,7 +956,7 @@
     }
 
     /* ═══════════════════════════════════════════════════════════════════════════
-       CONFETTI (Step 5)
+       CONFETTI
        ═══════════════════════════════════════════════════════════════════════════ */
     .confetti-container {
       position: fixed;
@@ -937,7 +981,7 @@
     }
 
     /* ═══════════════════════════════════════════════════════════════════════════
-       SUMMARY CARD (Step 5)
+       SUMMARY CARD
        ═══════════════════════════════════════════════════════════════════════════ */
     .summary-card {
       background: var(--glass-bg);
@@ -1002,7 +1046,7 @@
       width: 28px;
       height: 28px;
       border: 3px solid rgba(255, 255, 255, 0.1);
-      border-top-color: var(--coral);
+      border-top-color: var(--orange);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
       margin: 20px auto;
@@ -1023,7 +1067,7 @@
        ═══════════════════════════════════════════════════════════════════════════ */
     @@media (max-width: 600px) {
       .food-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 12px;
       }
 
@@ -1057,16 +1101,24 @@
       .progress-line {
         width: 24px;
       }
+
+      .zelle-card {
+        padding: 20px;
+      }
+
+      .menu-section {
+        text-align: center;
+      }
     }
 
-    @@media (max-width: 380px) {
+    @@media (max-width: 420px) {
       .food-grid {
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 8px;
       }
 
       .food-card {
-        padding: 14px 8px;
+        padding: 16px 8px;
       }
 
       .food-emoji {
@@ -1075,6 +1127,10 @@
 
       .gift-grid {
         grid-template-columns: 1fr 1fr;
+      }
+
+      .menu-pills {
+        justify-content: center;
       }
     }
 
@@ -1101,6 +1157,23 @@
       from { opacity: 0; transform: translateY(-5px); }
       to   { opacity: 1; transform: translateY(0); }
     }
+
+    /* ═══════════════════════════════════════════════════════════════════════════
+       MESSAGE TEXTAREA SECTION
+       ═══════════════════════════════════════════════════════════════════════════ */
+    .message-section {
+      max-width: 500px;
+      margin: 32px auto 0;
+      text-align: left;
+    }
+
+    .message-section label {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--orange);
+      display: block;
+      margin-bottom: 8px;
+    }
   </style>
 </head>
 <body>
@@ -1118,14 +1191,16 @@
 
   <!-- Floating Emojis -->
   <div class="floating-emojis">
-    <div class="float-emoji">&#127874;</div>
+    <div class="float-emoji">&#128293;</div>
+    <div class="float-emoji">&#127881;</div>
+    <div class="float-emoji">&#129385;</div>
+    <div class="float-emoji">&#127866;</div>
+    <div class="float-emoji">&#127790;</div>
     <div class="float-emoji">&#127880;</div>
-    <div class="float-emoji">&#127873;</div>
     <div class="float-emoji">&#129395;</div>
-    <div class="float-emoji">&#127874;</div>
-    <div class="float-emoji">&#127880;</div>
-    <div class="float-emoji">&#127873;</div>
-    <div class="float-emoji">&#129395;</div>
+    <div class="float-emoji">&#128293;</div>
+    <div class="float-emoji">&#127382;</div>
+    <div class="float-emoji">&#127867;</div>
   </div>
 
   <!-- Progress Bar -->
@@ -1150,13 +1225,14 @@
       <p class="subtitle">
         <span class="typing-text" id="typingSubtitle"></span>
       </p>
-      <div class="date-badge">&#128197; April 6th, 2026</div>
+      <div class="date-badge">&#128197; Saturday, April 4th &#183; 4:00 PM</div>
       <p class="paragraph">
-        Because you're pretty cool, we want to know if you can make it. We know your schedule is
-        probably packed... but Gus's isn't. So come hang out!
+        Nothing would make me happier than spending my birthday with the people I care about.
+        Good food, cold drinks, and even better company. Come eat some fajitas with me &mdash;
+        let's fire up the grill and make it a day to remember!
       </p>
       <button class="btn btn-primary btn-glow" onclick="goToStep(2)">
-        Count Me In! &#127881;
+        Count Me In! &#128293;
       </button>
     </div>
   </div>
@@ -1167,7 +1243,7 @@
   <div class="step" id="step2">
     <div class="step-content">
       <h2 class="title-big">First Things First...</h2>
-      <p class="subtitle">Let us know who's coming</p>
+      <p class="subtitle">Who's coming to the party?</p>
 
       <div class="glass-card" style="text-align: left;">
         <div class="input-group">
@@ -1202,26 +1278,54 @@
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════════════════════
-       STEP 3 — FOOD SELECTION
+       STEP 3 — EL ASADO
        ═══════════════════════════════════════════════════════════════════════════ -->
   <div class="step" id="step3">
     <div class="step-content">
-      <h2 class="title-big">Now The Important Stuff... &#127830;</h2>
-      <p class="subtitle">Pick what you want to eat &mdash; this helps Gus know what to buy more of</p>
+      <h2 class="title-big">El Asado &#128293;</h2>
+      <p class="subtitle">Everything's fajita-style! Pick the meats you want so I know how much to buy</p>
 
-      <div class="food-grid" id="foodGrid">
-        <div class="loading-placeholder">
-          <div class="spinner"></div>
-          <p>Loading the menu...</p>
+      <!-- Meat selection cards -->
+      <div class="food-grid" id="foodGrid"></div>
+
+      <!-- Sides -->
+      <div class="menu-section">
+        <div class="menu-section-title">&#127860; Also On The Table</div>
+        <div class="menu-pills">
+          <span class="menu-pill"><span class="pill-emoji">&#127834;</span> Patacones / Tostones</span>
+          <span class="menu-pill"><span class="pill-emoji">&#129747;</span> Tortillas</span>
+          <span class="menu-pill"><span class="pill-emoji">&#129367;</span> Ensalada de Frutas</span>
         </div>
       </div>
 
-      <div style="max-width: 700px; text-align: left; margin-top: 24px;">
+      <!-- Drinks -->
+      <div class="menu-section">
+        <div class="menu-section-title">&#127865; Drinks</div>
+        <div class="menu-pills">
+          <span class="menu-pill"><span class="pill-emoji">&#127865;</span> Margaritas</span>
+          <span class="menu-pill"><span class="pill-emoji">&#127864;</span> Mojitos</span>
+          <span class="menu-pill"><span class="pill-emoji">&#127866;</span> Modelos</span>
+        </div>
+      </div>
+
+      <!-- Dietary Restrictions -->
+      <div class="menu-section">
         <label style="font-size: 0.95rem; color: var(--text-secondary); display: block; margin-bottom: 4px;">
-          Want something else? Let us know! (Extra requests)
+          Any dietary restrictions or allergies? Let me know!
         </label>
-        <textarea class="input-field" id="extraFood" placeholder="E.g., Veggie option, special diet, etc."></textarea>
-        <p class="small-text">No promises, but we'll try &#128517;</p>
+        <textarea class="input-field" id="dietaryRestrictions" placeholder="E.g., Vegetarian, no pork, allergic to something..."></textarea>
+      </div>
+
+      <!-- Zelle Card -->
+      <div class="zelle-card">
+        <div class="zelle-title">Want to chip in for the meats? &#129385;</div>
+        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px;">
+          Totally not necessary &mdash; but if you want to help out:
+        </p>
+        <div class="zelle-number">Zelle: 7372876304</div>
+        <div class="zelle-note">
+          Your presence is more than enough! I just want everyone to eat well and have a great time &#128293;
+        </div>
       </div>
 
       <div class="btn-group">
@@ -1232,13 +1336,13 @@
   </div>
 
   <!-- ═══════════════════════════════════════════════════════════════════════════
-       STEP 4 — GIFT SECTION
+       STEP 4 — GIFTS + BIRTHDAY MESSAGE
        ═══════════════════════════════════════════════════════════════════════════ -->
   <div class="step" id="step4">
     <div class="step-content">
-      <h2 class="title-big">One More Thing... &#127873;</h2>
+      <h2 class="title-big">Almost Done! &#127873;</h2>
       <p class="subtitle" style="line-height: 1.6;">
-        You don't have to buy me anything... but if you're not cheap, here are some options:
+        If you wanna surprise me... here are some ideas &#128521;
       </p>
 
       <div class="gift-grid" id="giftGrid">
@@ -1250,9 +1354,15 @@
 
       <div id="giftError" class="error-msg"></div>
 
+      <!-- Birthday Message -->
+      <div class="message-section">
+        <label>&#127874; Leave me a birthday message!</label>
+        <textarea class="input-field" id="birthdayMessage" placeholder="Happy birthday Gus! ..."></textarea>
+      </div>
+
       <div class="btn-group">
         <button class="btn btn-secondary" onclick="goToStep(3)">&#8592; Back</button>
-        <button class="btn btn-primary" onclick="submitRSVP()">Almost Done &#8594;</button>
+        <button class="btn btn-primary btn-glow" onclick="submitRSVP()">Send RSVP! &#127881;</button>
       </div>
     </div>
   </div>
@@ -1269,14 +1379,14 @@
 
       <div id="successView" style="display: none;">
         <h1 class="title-huge">You're All Set! &#129395;</h1>
-        <p class="subtitle">See you on April 6th!</p>
+        <p class="subtitle">See you on Saturday, April 4th at 4 PM! &#128293;</p>
 
         <div class="summary-card" id="summaryCard">
           <!-- Filled dynamically -->
         </div>
 
         <p class="paragraph" style="margin-top: 28px;">
-          Gus is already excited to see you. Don't be late... or do, we'll probably start without you &#128527;
+          Gus is already fired up to see you. Don't be late... the fajitas won't wait &#128527;&#128293;
         </p>
 
         <p class="footer-text">Made with &#10084;&#65039; and way too much code</p>
@@ -1291,7 +1401,7 @@
     <div class="hug-hearts" id="hugHearts"></div>
     <div style="font-size: 3rem; margin-bottom: 12px;">&#129303;</div>
     <div class="hug-main">You are so sweet</div>
-    <div class="hug-sub">(and cheap as shit...)</div>
+    <div class="hug-sub">(and cheap as s***...)</div>
   </div>
 
   <!-- Confetti Container -->
@@ -1302,11 +1412,16 @@
        STATE
        ═══════════════════════════════════════════════════════════════════════════ */
     let currentStep = 1;
-    let foods = [];
     let gifts = [];
     let selectedFoods = new Set();
     let claimedByMe = new Set();
     let hugBannerVisible = false;
+
+    const MENU_MEATS = [
+      { id: 'carne-asada', name: 'Carne Asada', emoji: '\u{1F969}', reaction: 'Great choice! \u{1F525}\u{1F969}' },
+      { id: 'pollo-asado', name: 'Pollo Asado', emoji: '\u{1F357}', reaction: 'Pollo gang! \u{1F357}\u{1F525}' },
+      { id: 'chorizo',     name: 'Chorizo Asado', emoji: '\u{1F32D}', reaction: '\u00A1Que rico! \u{1F32D}\u{1F525}' },
+    ];
 
     /* ═══════════════════════════════════════════════════════════════════════════
        INITIALIZATION
@@ -1314,7 +1429,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       animateTitle();
       animateSubtitle();
-      loadFoods();
+      renderFoods();
       loadGifts();
       setupNameInput();
       setupPlusOneToggle();
@@ -1324,7 +1439,7 @@
        LETTER-BY-LETTER TITLE REVEAL
        ═══════════════════════════════════════════════════════════════════════════ */
     function animateTitle() {
-      const title = "You've Been Invited!";
+      const title = "You're Invited!";
       const container = document.getElementById('revealTitle');
       container.innerHTML = '';
 
@@ -1341,19 +1456,18 @@
        TYPING SUBTITLE EFFECT
        ═══════════════════════════════════════════════════════════════════════════ */
     function animateSubtitle() {
-      const text = "to Gus's Birthday Bash \u{1F389}";
+      const text = "to Gus's Birthday Asado \u{1F525}";
       const el = document.getElementById('typingSubtitle');
       el.textContent = '';
       let i = 0;
 
-      const delay = 1200; // wait for title to mostly finish
+      const delay = 1200;
       setTimeout(() => {
         const interval = setInterval(() => {
           el.textContent = text.slice(0, i + 1);
           i++;
           if (i >= text.length) {
             clearInterval(interval);
-            // Stop blinking cursor after typing completes
             setTimeout(() => { el.style.borderRight = 'none'; }, 1500);
           }
         }, 55);
@@ -1365,7 +1479,6 @@
        ═══════════════════════════════════════════════════════════════════════════ */
     function goToStep(step) {
       if (step === currentStep) return;
-      // Validate step 2 → 3 requires name
       if (step > 2 && currentStep === 2) {
         const name = document.getElementById('guestName').value.trim();
         if (!name) {
@@ -1378,21 +1491,17 @@
       const oldStep = document.getElementById(`step${currentStep}`);
       const newStep = document.getElementById(`step${step}`);
 
-      // Update progress dots
       updateProgress(step);
 
-      // Animate out old step
       oldStep.classList.add(goingForward ? 'exit-left' : 'enter-right');
 
       setTimeout(() => {
         oldStep.classList.remove('active', 'exit-left', 'enter-right');
         oldStep.style.display = 'none';
 
-        // Prepare new step
         newStep.style.display = 'flex';
         newStep.classList.add(goingForward ? 'enter-right' : 'enter-left');
 
-        // Force reflow
         newStep.offsetHeight;
 
         requestAnimationFrame(() => {
@@ -1451,58 +1560,17 @@
     }
 
     /* ═══════════════════════════════════════════════════════════════════════════
-       FOOD EMOJI MAPPING
+       RENDER MEAT CARDS
        ═══════════════════════════════════════════════════════════════════════════ */
-    function getFoodEmoji(name) {
-      const n = name.toLowerCase();
-      if (n.includes('carne') || n.includes('asada')) return '\u{1F969}';
-      if (n.includes('pollo'))                         return '\u{1F357}';
-      if (n.includes('chorizo'))                       return '\u{1F32D}';
-      if (n.includes('hot dog'))                       return '\u{1F32D}';
-      if (n.includes('burger') || n.includes('hamburger')) return '\u{1F354}';
-      if (n.includes('patacon'))                       return '\u{1F34C}';
-      return '\u{1F37D}\uFE0F';
-    }
-
-    /* ═══════════════════════════════════════════════════════════════════════════
-       LOAD FOODS
-       ═══════════════════════════════════════════════════════════════════════════ */
-    async function loadFoods() {
-      try {
-        const res = await fetch('/birthday/api/foods');
-        if (!res.ok) throw new Error('Failed to load foods');
-        foods = await res.json();
-        renderFoods();
-      } catch (err) {
-        document.getElementById('foodGrid').innerHTML =
-          '<p style="color: var(--coral); grid-column: 1/-1;">Could not load the menu. Please refresh the page.</p>';
-      }
-    }
-
     function renderFoods() {
       const grid = document.getElementById('foodGrid');
-      if (foods.length === 0) {
-        grid.innerHTML = '<p style="color: var(--text-muted); grid-column: 1/-1;">No food options yet. Check back soon!</p>';
-        return;
-      }
-
-      grid.innerHTML = foods.map(food => {
-        const emoji = getFoodEmoji(food.name);
-        const photoHtml = food.photo
-          ? `<img class="food-photo" src="${food.photo}" alt="${food.name}">`
-          : `<span class="food-emoji">${emoji}</span>`;
-        const typeClass = food.type || '';
-        const typeLabel = food.type === 'latino' ? 'Latino' : food.type === 'gringo' ? 'Gringo' : '';
-
-        return `
-          <div class="food-card" data-food-id="${food.id}" data-food-type="${food.type || ''}" data-food-name="${food.name}" onclick="toggleFood(this)">
-            <div class="food-check">\u2713</div>
-            ${photoHtml}
-            <div class="food-name">${escHtml(food.name)}</div>
-            ${typeLabel ? `<span class="food-type-tag ${typeClass}">${typeLabel}</span>` : ''}
-          </div>
-        `;
-      }).join('');
+      grid.innerHTML = MENU_MEATS.map(meat => `
+        <div class="food-card" data-food-id="${meat.id}" data-food-name="${meat.name}" data-reaction="${escAttr(meat.reaction)}" onclick="toggleFood(this)">
+          <div class="food-check">\u2713</div>
+          <span class="food-emoji">${meat.emoji}</span>
+          <div class="food-name">${escHtml(meat.name)}</div>
+        </div>
+      `).join('');
     }
 
     /* ═══════════════════════════════════════════════════════════════════════════
@@ -1510,8 +1578,6 @@
        ═══════════════════════════════════════════════════════════════════════════ */
     function toggleFood(card) {
       const id = card.dataset.foodId;
-      const type = card.dataset.foodType;
-      const name = card.dataset.foodName;
 
       if (selectedFoods.has(id)) {
         selectedFoods.delete(id);
@@ -1519,31 +1585,20 @@
       } else {
         selectedFoods.add(id);
         card.classList.add('selected');
-
-        // Show reaction
-        showFoodReaction(type, name);
+        showFoodReaction(card.dataset.reaction);
       }
     }
 
-    function showFoodReaction(type, name) {
-      if (!type) return;
+    function showFoodReaction(text) {
+      if (!text) return;
 
       const toast = document.createElement('div');
-      toast.className = `reaction-toast ${type}`;
-
-      if (type === 'latino') {
-        toast.innerHTML = 'You are latino yeeey! \u{1F389}\u{1F1EA}\u{1F1E8}';
-      } else if (type === 'gringo') {
-        toast.innerHTML = 'You are kinda gringo :( \u{1F1FA}\u{1F1F8}';
-      }
-
+      toast.className = 'reaction-toast';
+      toast.textContent = text;
       document.body.appendChild(toast);
 
-      // Screen shake
       document.body.classList.add('shake');
       setTimeout(() => document.body.classList.remove('shake'), 400);
-
-      // Remove toast after animation
       setTimeout(() => toast.remove(), 2600);
     }
 
@@ -1629,7 +1684,6 @@
         });
 
         if (res.status === 409) {
-          // Already claimed — re-fetch and re-render
           const updatedRes = await fetch('/birthday/api/gifts');
           gifts = await updatedRes.json();
           renderGifts();
@@ -1641,7 +1695,6 @@
         if (!res.ok) throw new Error('Failed to claim gift');
 
         claimedByMe.add(giftId);
-        // Update local gift state
         const gift = gifts.find(g => g.id === giftId);
         if (gift) gift.claimed = true;
         renderGifts();
@@ -1653,7 +1706,7 @@
     }
 
     /* ═══════════════════════════════════════════════════════════════════════════
-       CLAIM HUG (Always Available)
+       CLAIM HUG
        ═══════════════════════════════════════════════════════════════════════════ */
     function claimHug() {
       if (hugBannerVisible) return;
@@ -1662,7 +1715,6 @@
       const banner = document.getElementById('hugBanner');
       banner.classList.add('show');
 
-      // Spawn floating hearts
       const heartsContainer = document.getElementById('hugHearts');
       heartsContainer.innerHTML = '';
       for (let i = 0; i < 12; i++) {
@@ -1689,7 +1741,8 @@
       const name = document.getElementById('guestName').value.trim();
       const plusOne = document.getElementById('plusOneToggle').checked;
       const plusOneName = document.getElementById('plusOneName').value.trim();
-      const extra = document.getElementById('extraFood').value.trim();
+      const extra = document.getElementById('dietaryRestrictions').value.trim();
+      const message = document.getElementById('birthdayMessage').value.trim();
       const errEl = document.getElementById('submitError');
       errEl.classList.remove('show');
 
@@ -1698,10 +1751,10 @@
         return;
       }
 
-      // Get selected food names
-      const selectedFoodNames = foods
-        .filter(f => selectedFoods.has(f.id))
-        .map(f => f.name);
+      // Get selected meat names
+      const selectedFoodNames = MENU_MEATS
+        .filter(m => selectedFoods.has(m.id))
+        .map(m => m.name);
 
       // Show step 5 with loading
       document.getElementById('submittingView').style.display = 'block';
@@ -1709,7 +1762,6 @@
       document.getElementById('submitError').classList.remove('show');
       goToStep(5);
 
-      // Wait for step transition to finish before calling API
       await new Promise(r => setTimeout(r, 400));
 
       try {
@@ -1721,7 +1773,8 @@
             plusOne,
             plusOneName: plusOne ? plusOneName : null,
             foods: selectedFoodNames,
-            extra: extra || null
+            extra: extra || null,
+            message: message || null
           })
         });
 
@@ -1730,14 +1783,11 @@
           throw new Error(data.error || 'Failed to submit RSVP');
         }
 
-        // Show success
         document.getElementById('submittingView').style.display = 'none';
         document.getElementById('successView').style.display = 'block';
 
-        // Build summary
-        buildSummary(name, plusOne, plusOneName, selectedFoodNames, extra);
+        buildSummary(name, plusOne, plusOneName, selectedFoodNames, extra, message);
 
-        // Launch confetti
         launchConfetti();
 
       } catch (err) {
@@ -1750,7 +1800,7 @@
     /* ═══════════════════════════════════════════════════════════════════════════
        BUILD SUMMARY CARD
        ═══════════════════════════════════════════════════════════════════════════ */
-    function buildSummary(name, plusOne, plusOneName, foodNames, extra) {
+    function buildSummary(name, plusOne, plusOneName, foodNames, extra, message) {
       const card = document.getElementById('summaryCard');
       let rows = '';
 
@@ -1759,10 +1809,13 @@
         rows += summaryRow('\u{1F46B}', '+1', plusOneName || 'Yes (name not provided)');
       }
       if (foodNames.length > 0) {
-        rows += summaryRow('\u{1F37D}\uFE0F', 'Food', foodNames.join(', '));
+        rows += summaryRow('\u{1F969}', 'Meats', foodNames.join(', '));
       }
       if (extra) {
-        rows += summaryRow('\u{1F4DD}', 'Extra', extra);
+        rows += summaryRow('\u{26A0}\uFE0F', 'Dietary', extra);
+      }
+      if (message) {
+        rows += summaryRow('\u{1F4AC}', 'Message', message);
       }
       if (claimedByMe.size > 0) {
         const claimedNames = gifts.filter(g => claimedByMe.has(g.id)).map(g => g.name);
@@ -1793,7 +1846,7 @@
       const container = document.getElementById('confettiContainer');
       container.innerHTML = '';
 
-      const colors = ['#ff6b6b', '#ffd93d', '#6bcb77', '#4d96ff', '#9b59b6', '#ff9ff3', '#feca57', '#00d2d3', '#ff6348', '#a29bfe'];
+      const colors = ['#ff6b6b', '#ff9f43', '#ffd93d', '#6bcb77', '#4d96ff', '#ff4500', '#feca57', '#00d2d3', '#ff6348', '#a29bfe'];
       const shapes = ['square', 'circle', 'strip'];
 
       for (let i = 0; i < 60; i++) {
@@ -1830,7 +1883,6 @@
         container.appendChild(piece);
       }
 
-      // Remove confetti after animations complete
       setTimeout(() => { container.innerHTML = ''; }, 7000);
     }
 

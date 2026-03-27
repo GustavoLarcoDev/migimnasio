@@ -54,5 +54,8 @@ public class BirthdayRsvp
 
     public string? Extra { get; set; }
 
+    [StringLength(1000)]
+    public string? Mensaje { get; set; }
+
     public DateTime FechaCreacion { get; set; }
 }

@@ -88,6 +88,7 @@ public class BirthdayController : Controller
             PlusOneNombre = req.PlusOneName?.Trim(),
             ComidasJson = req.Foods != null ? JsonSerializer.Serialize(req.Foods) : null,
             Extra = req.Extra?.Trim(),
+            Mensaje = req.Message?.Trim(),
             FechaCreacion = Gimnasio.Helpers.TimeHelper.Now
         };
 
@@ -102,6 +103,7 @@ public class BirthdayController : Controller
             plusOneName = rsvp.PlusOneNombre,
             foods = req.Foods ?? new List<string>(),
             extra = rsvp.Extra,
+            message = rsvp.Mensaje,
             createdAt = rsvp.FechaCreacion
         });
     }
@@ -125,6 +127,7 @@ public class BirthdayController : Controller
                 plusOneName = r.PlusOneNombre,
                 foods = r.ComidasJson,
                 extra = r.Extra,
+                message = r.Mensaje,
                 createdAt = r.FechaCreacion
             })
             .ToListAsync();
@@ -338,5 +341,6 @@ public class BirthdayController : Controller
         public string? PlusOneName { get; set; }
         public List<string>? Foods { get; set; }
         public string? Extra { get; set; }
+        public string? Message { get; set; }
     }
 }
