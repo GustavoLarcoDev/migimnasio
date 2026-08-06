@@ -103,4 +103,5 @@ node_modules/
 wwwroot/uploads/
 
 # Misc
-*.DS_Store
+*.DS_Storebin/
+obj/

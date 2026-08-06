@@ -1,36 +1,51 @@
-# MiGimnasio
+# My-Negocio — Multi-Tenant Business Management SaaS
 
-Software SaaS de gestión para gimnasios. Controla clientes, membresías, pagos, logs y notificaciones desde una plataforma web responsive.
+**Production SaaS platform built, launched, and operated solo (2025–2026).** My-Negocio gave small businesses across Latin America — gyms, salons, restaurants, and retail stores — a single web platform to run their entire operation: clients, appointments, sales, inventory, invoicing, and automated customer communication.
 
-## Funcionalidades
+> El SaaS todo-en-uno para gestionar tu negocio: clientes, citas, ventas, inventario y facturación electrónica.
 
-- **Gestión de Clientes** - CRUD completo con import/export Excel
-- **Dashboard** - Estadísticas en tiempo real con gráficos interactivos
-- **Control de Membresías** - Renovaciones, vencimientos, seguimiento de pagos
-- **Logs de Actividad** - Registro de operaciones con montos
-- **Notificaciones** - Alertas automáticas de membresías por vencer (3 días)
-- **Panel Admin** - Gestión multi-gimnasio con estadísticas globales
-- **Seguridad** - Contraseñas con BCrypt + lazy migration
-- **Diseño Responsive** - Mobile-first con Metronic v8 design system
+---
 
-## Stack
+## Highlights
 
-ASP.NET Core 9.0 | Entity Framework Core | SQL Server | Bootstrap 5 | DataTables | ApexCharts
+- **Multi-tenant architecture** — strict per-tenant data isolation (`NegocioId` claim filtering on every query), 4 business models served from one codebase
+- **Role-based access control** — Owner / Admin / Seller / Employee roles, cookie auth with BCrypt password hashing (lazy migration)
+- **Ecuador SRI electronic invoicing** — XAdES-BES digital signatures, SRI-compliant XML generation, QR-coded RIDE PDFs, background services with automatic retry ([docs/PROTOCOLO_SRI.md](docs/PROTOCOLO_SRI.md))
+- **WhatsApp Cloud API automation** — 17+ notification templates: appointment reminders, membership expirations, payment confirmations
+- **Appointment scheduling** — FullCalendar-based engine with conflict prevention and per-employee calendars
+- **POS + inventory** — point of sale with digital receipts, stock control with audit trails, Excel import/export (ClosedXML)
+- **Employee commissions** — per-sale commission tracking and payout reports
+- **Real-time dashboards** — ApexCharts financial and operational analytics per tenant, daily email digest reports (MailKit)
+- **Production deployment** — AWS Lightsail behind Nginx, GitHub Actions CI/CD, blue-green deployments, automated daily backups, Let's Encrypt HTTPS
 
-## Inicio Rápido
+## Tech Stack
 
-```bash
-dotnet restore
-# Editar appsettings.json con tu conexión a SQL Server
-dotnet ef database update
-dotnet run
-```
+| Layer | Technology |
+|---|---|
+| Backend | C#, ASP.NET Core 9 MVC, Entity Framework Core 9 |
+| Database | SQL Server |
+| Auth | Cookie Authentication + BCrypt |
+| Frontend | Bootstrap 5, Metronic v8, DataTables, ApexCharts, FullCalendar, Toastr, SweetAlert2 |
+| Integrations | WhatsApp Cloud API, MailKit (SMTP), ClosedXML (Excel), SRI e-invoicing (XAdES-BES) |
+| Infrastructure | AWS Lightsail, Nginx, GitHub Actions CI/CD, Let's Encrypt |
 
-Navegar a `/Gimnasios/Login` para acceder.
+## Architecture
 
-## Documentación
+ASP.NET Core MVC with a layered structure — Controllers → Services → Data — plus hosted background services for invoicing retries, notifications, and daily reports. Every business-scoped query is filtered by the tenant claim; timezone handling is centralized (`TimeHelper`, UTC-5 Ecuador).
 
-- [Estructura del Proyecto](docs/PROJECT_STRUCTURE.md)
-- [API Endpoints](docs/API_ENDPOINTS.md)
-- [Guía de Instalación](docs/SETUP.md)
-- [Arquitectura](docs/ARCHITECTURE.md)
+More detail in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md), and [docs/API_ENDPOINTS.md](docs/API_ENDPOINTS.md), including the ER diagram (`docs/modelos-er-diagram.excalidraw`).
+
+## Running Locally
+
+1. Copy `appsettings.template.json` → `appsettings.json` and fill in your connection string and credentials (never committed — see [docs/SETUP.md](docs/SETUP.md))
+2. `dotnet ef database update`
+3. `dotnet run`
+
+## Status
+
+The platform ran in production during 2025–2026 and is currently offline (the AWS environment was decommissioned as a business decision). The codebase is published as a portfolio piece; build artifacts and configuration were scrubbed from git history before publishing.
+
+---
+
+**Gustavo Larco** — Full Stack Software Engineer
+[gustavolarcodev.github.io](https://gustavolarcodev.github.io) · [linkedin.com/in/gustavo-larco](https://linkedin.com/in/gustavo-larco) · gustavo.larcoj@gmail.com
